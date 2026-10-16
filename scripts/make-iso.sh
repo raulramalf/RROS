@@ -13,8 +13,9 @@ iso_dir=$ROOT_DIR/build/iso-$profile
 iso=$ROOT_DIR/build/rros-$profile.iso
 
 [ -d "$rootfs" ] || die "no existe $rootfs (ejecuta build-rootfs-ubuntu.sh)"
-vmlinuz=$(ls "$rootfs"/boot/vmlinuz-* | sort -V | tail -1)
-initrd=$(ls "$rootfs"/boot/initrd.img-* | sort -V | tail -1)
+vmlinuz=$(find "$rootfs/boot" -maxdepth 1 -name 'vmlinuz-*' | sort -V | tail -1)
+initrd=$(find "$rootfs/boot" -maxdepth 1 -name 'initrd.img-*' | sort -V | tail -1)
+[ -n "$vmlinuz" ] && [ -n "$initrd" ] || die "el rootfs no tiene kernel/initrd en /boot"
 
 rm -rf "${iso_dir:?}"
 mkdir -p "$iso_dir/casper" "$iso_dir/boot/grub"

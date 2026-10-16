@@ -23,4 +23,4 @@ jobs:
           make docs-schema
           git diff --exit-code docs/CUSTOMIZATION.md
       - name: ShellCheck
-        run: shellcheck -x scripts/*.sh tests/cli.sh
+        run: shellcheck -x -P SCRIPTDIR scripts/*.sh tests/cli.sh

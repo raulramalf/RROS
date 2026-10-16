@@ -9,7 +9,7 @@ src=${2:?uso: $0 PERFIL DIR_KERNEL}
 check_profile "$profile"
 [ -f "$src/Makefile" ] || die "$src no parece un árbol del kernel"
 
-cd "$src"
+cd "$src" || die "no se pudo entrar en $src"
 make defconfig
 scripts/kconfig/merge_config.sh -m .config \
 	"$ROOT_DIR/kernel/base.config" "$ROOT_DIR/kernel/$profile.config"

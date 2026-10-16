@@ -103,6 +103,7 @@ static void usage(void)
 	      "  config    personalización            (rros-config)\n"
 	      "  theme     tema del escritorio        (rros-theme)\n"
 	      "  settings  interfaz de ajustes        (rros-settings)\n"
+	      "  apps      tienda de aplicaciones     (rros-apps)\n"
 	      "  apply     aplica el perfil al sistema (rros-apply)\n"
 	      "  budget    presupuesto de RAM/disco   (rros-budget)\n"
 	      "  hw        hardware y perfil          (rros-hwdetect)\n"
@@ -117,7 +118,7 @@ int main(int argc, char **argv)
 {
 	static const struct { const char *name, *tool; } map[] = {
 		{ "info", "rros-fetch" }, { "config", "rros-config" }, { "theme", "rros-theme" },
-		{ "settings", "rros-settings" }, { "apply", "rros-apply" },
+		{ "settings", "rros-settings" }, { "apps", "rros-apps" }, { "apply", "rros-apply" },
 		{ "budget", "rros-budget" }, { "hw", "rros-hwdetect" }, { "install", "rros-installer" },
 	};
 	char *slash = strrchr(argv[0], '/');

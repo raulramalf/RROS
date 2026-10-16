@@ -1,0 +1,21 @@
+#!/bin/sh
+# Lanza el panel (waybar): espera a que exista el bus de la sesión y lo reinicia si se cierra.
+# Si se cierra cinco veces seguidas en menos de dos segundos, se rinde para no ciclar sin fin.
+n=0
+while [ "$n" -lt 40 ] && ! busctl --user status >/dev/null 2>&1; do
+	sleep 0.5
+	n=$((n + 1))
+done
+fails=0
+while [ "$fails" -lt 5 ]; do
+	start=$(date +%s)
+	waybar
+	if [ $(($(date +%s) - start)) -lt 2 ]; then
+		fails=$((fails + 1))
+	else
+		fails=0
+	fi
+	sleep 1
+done
+echo "rros-panel: waybar se cierra al arrancar; revisa ~/.config/waybar" >&2
+exit 1

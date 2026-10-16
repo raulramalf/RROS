@@ -1,0 +1,364 @@
+# Catálogo de aplicaciones de RROS. `rros apps install ID` instala con apt o con Flatpak (Flathub).
+# Campos: name, category, desc, apt (paquete de Ubuntu), flatpak (id en Flathub),
+#         shipped (perfiles que ya la traen), cmd (programa que se lanza).
+# Los paquetes apt están comprobados contra Ubuntu 24.04; los ids de Flatpak no se pueden comprobar sin red.
+
+# ---------------- Internet ----------------
+[app.epiphany]
+name = "Web (Epiphany)"
+category = "internet"
+desc = "Navegador ligero de GNOME. Es el navegador por defecto."
+apt = "epiphany-browser"
+shipped = "lite,standard,pro"
+cmd = "epiphany"
+
+[app.firefox]
+name = "Firefox"
+category = "internet"
+desc = "El navegador de Mozilla, con sus extensiones."
+flatpak = "org.mozilla.firefox"
+cmd = "firefox"
+
+[app.chromium]
+name = "Chromium"
+category = "internet"
+desc = "Navegador de código abierto basado en Chromium."
+flatpak = "org.chromium.Chromium"
+cmd = "chromium"
+
+[app.brave]
+name = "Brave"
+category = "internet"
+desc = "Navegador con bloqueo de anuncios integrado."
+flatpak = "com.brave.Browser"
+
+[app.thunderbird]
+name = "Thunderbird"
+category = "internet"
+desc = "Correo, calendario y contactos de Mozilla."
+flatpak = "org.mozilla.Thunderbird"
+
+[app.geary]
+name = "Geary"
+category = "internet"
+desc = "Cliente de correo sencillo."
+apt = "geary"
+shipped = "standard,pro"
+
+[app.transmission]
+name = "Transmission"
+category = "internet"
+desc = "Cliente BitTorrent ligero."
+apt = "transmission-gtk"
+
+[app.qbittorrent]
+name = "qBittorrent"
+category = "internet"
+desc = "Cliente BitTorrent completo."
+apt = "qbittorrent"
+
+[app.filezilla]
+name = "FileZilla"
+category = "internet"
+desc = "Cliente FTP y SFTP."
+apt = "filezilla"
+
+[app.telegram]
+name = "Telegram"
+category = "internet"
+desc = "Mensajería."
+flatpak = "org.telegram.desktop"
+
+[app.signal]
+name = "Signal"
+category = "internet"
+desc = "Mensajería cifrada."
+flatpak = "org.signal.Signal"
+
+[app.discord]
+name = "Discord"
+category = "internet"
+desc = "Chat de voz y texto."
+flatpak = "com.discordapp.Discord"
+
+# ---------------- Oficina ----------------
+[app.libreoffice]
+name = "LibreOffice"
+category = "office"
+desc = "Suite ofimática completa: Writer, Calc, Impress."
+apt = "libreoffice"
+flatpak = "org.libreoffice.LibreOffice"
+shipped = "pro"
+
+[app.abiword]
+name = "AbiWord"
+category = "office"
+desc = "Procesador de textos ligero."
+apt = "abiword"
+shipped = "standard"
+
+[app.gnumeric]
+name = "Gnumeric"
+category = "office"
+desc = "Hoja de cálculo ligera."
+apt = "gnumeric"
+shipped = "standard"
+
+[app.evince]
+name = "Documentos (Evince)"
+category = "office"
+desc = "Visor de PDF y documentos."
+apt = "evince"
+shipped = "lite,standard,pro"
+
+[app.calibre]
+name = "calibre"
+category = "office"
+desc = "Biblioteca y lector de libros electrónicos."
+apt = "calibre"
+
+[app.obsidian]
+name = "Obsidian"
+category = "office"
+desc = "Notas enlazadas en Markdown."
+flatpak = "md.obsidian.Obsidian"
+
+# ---------------- Multimedia ----------------
+[app.mpv]
+name = "mpv"
+category = "media"
+desc = "Reproductor de vídeo y música."
+apt = "mpv"
+shipped = "lite,standard,pro"
+
+[app.vlc]
+name = "VLC"
+category = "media"
+desc = "Reproduce casi cualquier formato."
+apt = "vlc"
+shipped = "pro"
+
+[app.audacious]
+name = "Audacious"
+category = "media"
+desc = "Reproductor de música."
+apt = "audacious"
+shipped = "standard,pro"
+
+[app.audacity]
+name = "Audacity"
+category = "media"
+desc = "Editor de audio."
+apt = "audacity"
+
+[app.obs]
+name = "OBS Studio"
+category = "media"
+desc = "Grabación y retransmisión de pantalla."
+apt = "obs-studio"
+flatpak = "com.obsproject.Studio"
+
+[app.kdenlive]
+name = "Kdenlive"
+category = "media"
+desc = "Editor de vídeo."
+apt = "kdenlive"
+flatpak = "org.kde.kdenlive"
+
+[app.handbrake]
+name = "HandBrake"
+category = "media"
+desc = "Convierte vídeo entre formatos."
+apt = "handbrake"
+flatpak = "fr.handbrake.ghb"
+
+[app.spotify]
+name = "Spotify"
+category = "media"
+desc = "Música en streaming."
+flatpak = "com.spotify.Client"
+
+# ---------------- Gráficos ----------------
+[app.imv]
+name = "imv"
+category = "graphics"
+desc = "Visor de imágenes rápido."
+apt = "imv"
+shipped = "lite,standard,pro"
+
+[app.gimp]
+name = "GIMP"
+category = "graphics"
+desc = "Edición de imágenes."
+apt = "gimp"
+shipped = "pro"
+
+[app.inkscape]
+name = "Inkscape"
+category = "graphics"
+desc = "Dibujo vectorial."
+apt = "inkscape"
+flatpak = "org.inkscape.Inkscape"
+
+[app.krita]
+name = "Krita"
+category = "graphics"
+desc = "Pintura digital."
+apt = "krita"
+flatpak = "org.kde.krita"
+
+[app.blender]
+name = "Blender"
+category = "graphics"
+desc = "Modelado y animación 3D."
+apt = "blender"
+flatpak = "org.blender.Blender"
+
+[app.darktable]
+name = "darktable"
+category = "graphics"
+desc = "Revelado de fotografías RAW."
+apt = "darktable"
+
+# ---------------- Desarrollo ----------------
+[app.vscode]
+name = "Visual Studio Code"
+category = "dev"
+desc = "Editor de código."
+flatpak = "com.visualstudio.code"
+
+[app.geany]
+name = "Geany"
+category = "dev"
+desc = "Editor de código ligero."
+apt = "geany"
+
+[app.neovim]
+name = "Neovim"
+category = "dev"
+desc = "Editor modal para la terminal."
+apt = "neovim"
+
+[app.git]
+name = "Git"
+category = "dev"
+desc = "Control de versiones."
+apt = "git"
+shipped = "standard,pro"
+
+[app.python]
+name = "Python 3 y pip"
+category = "dev"
+desc = "Python con el gestor de paquetes pip."
+apt = "python3-pip"
+
+[app.nodejs]
+name = "Node.js"
+category = "dev"
+desc = "JavaScript fuera del navegador."
+apt = "nodejs"
+
+[app.docker]
+name = "Docker"
+category = "dev"
+desc = "Contenedores."
+apt = "docker.io"
+
+# ---------------- Sistema ----------------
+[app.thunar]
+name = "Archivos (Thunar)"
+category = "system"
+desc = "Gestor de archivos."
+apt = "thunar"
+shipped = "lite,standard,pro"
+
+[app.gparted]
+name = "GParted"
+category = "system"
+desc = "Particiones de disco."
+apt = "gparted"
+shipped = "pro"
+
+[app.disks]
+name = "Discos"
+category = "system"
+desc = "Estado de los discos, formateo y comprobaciones."
+apt = "gnome-disk-utility"
+shipped = "standard,pro"
+
+[app.sysmon]
+name = "Monitor del sistema"
+category = "system"
+desc = "Procesos, memoria y red con gráficas."
+apt = "gnome-system-monitor"
+shipped = "standard,pro"
+
+[app.btop]
+name = "btop"
+category = "system"
+desc = "Monitor del sistema en la terminal."
+apt = "btop"
+shipped = "lite,standard,pro"
+
+[app.timeshift]
+name = "Timeshift"
+category = "system"
+desc = "Copias de seguridad del sistema para volver atrás."
+apt = "timeshift"
+
+[app.bleachbit]
+name = "BleachBit"
+category = "system"
+desc = "Limpia archivos temporales y libera espacio."
+apt = "bleachbit"
+
+[app.virtmanager]
+name = "Máquinas virtuales"
+category = "system"
+desc = "Crea y ejecuta máquinas virtuales."
+apt = "virt-manager"
+
+# ---------------- Juegos ----------------
+[app.steam]
+name = "Steam"
+category = "games"
+desc = "Tienda y biblioteca de juegos."
+flatpak = "com.valvesoftware.Steam"
+
+[app.lutris]
+name = "Lutris"
+category = "games"
+desc = "Juegos de otras plataformas en un solo sitio."
+apt = "lutris"
+
+[app.supertuxkart]
+name = "SuperTuxKart"
+category = "games"
+desc = "Carreras de karts."
+apt = "supertuxkart"
+
+# ---------------- Utilidades ----------------
+[app.keepassxc]
+name = "KeePassXC"
+category = "utility"
+desc = "Gestor de contraseñas."
+apt = "keepassxc"
+
+[app.bitwarden]
+name = "Bitwarden"
+category = "utility"
+desc = "Gestor de contraseñas en la nube."
+flatpak = "com.bitwarden.desktop"
+
+[app.galculator]
+name = "Calculadora"
+category = "utility"
+desc = "Calculadora científica."
+apt = "galculator"
+shipped = "lite,standard,pro"
+
+[app.flatseal]
+name = "Flatseal"
+category = "utility"
+desc = "Controla los permisos de las aplicaciones Flatpak."
+flatpak = "com.github.tchx84.Flatseal"

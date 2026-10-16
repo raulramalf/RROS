@@ -1,0 +1,10 @@
+#!/bin/sh
+# Primer inicio de sesión: carpetas del usuario, Flathub y un mensaje de bienvenida.
+flag="${XDG_CONFIG_HOME:-$HOME/.config}/rros/.primer-inicio"
+[ -e "$flag" ] && exit 0
+mkdir -p "$(dirname "$flag")" "$HOME/.local/bin"
+xdg-user-dirs-update 2>/dev/null
+# Flathub para la tienda de aplicaciones (necesita red; si no hay, se reintenta al instalar)
+(rros-apps setup >/dev/null 2>&1) &
+touch "$flag"
+notify-send "Bienvenido a RROS" "Mod+D aplicaciones · Mod+B navegador · Mod+E archivos · Mod+, ajustes" 2>/dev/null

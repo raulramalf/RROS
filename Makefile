@@ -13,7 +13,7 @@ LIB_SRC := $(wildcard src/lib/*.c)
 PLAN_SRC := src/installer/plan.c
 THEME_SRC := src/theme/theme.c src/theme/palettes.c
 BINS := build/rros-hwdetect build/rros-config build/rros-budget build/rros-installer \
-        build/rros-theme build/rros-fetch build/rros build/rros-apply build/rros-settings
+        build/rros-theme build/rros-fetch build/rros build/rros-apply build/rros-settings build/rros-apps
 
 TESTS := $(patsubst tests/%.c,build/tests/%,$(wildcard tests/test_*.c))
 SAN := -fsanitize=address,undefined -fno-omit-frame-pointer -g -O1
@@ -28,6 +28,7 @@ build/rros-theme: src/theme/main.c $(THEME_SRC) $(LIB_SRC)
 build/rros-fetch: src/fetch/main.c $(THEME_SRC) $(LIB_SRC)
 build/rros: src/rros/main.c $(LIB_SRC)
 build/rros-apply: src/apply/main.c $(LIB_SRC)
+build/rros-apps: src/apps/main.c $(LIB_SRC)
 SETTINGS_SRC := $(wildcard src/settings/*.c)
 build/rros-settings: $(SETTINGS_SRC) $(THEME_SRC) $(LIB_SRC)
 
@@ -48,7 +49,8 @@ install: $(BINS)
 	           $(DESTDIR)$(PREFIX)/lib/systemd/system $(DESTDIR)/etc/rros
 	install -m 755 $(BINS) $(DESTDIR)$(PREFIX)/bin/
 	install -m 644 profiles/*.toml $(DESTDIR)$(PREFIX)/share/rros/profiles/
-	install -d $(DESTDIR)$(PREFIX)/share/rros/settings
+	install -d $(DESTDIR)$(PREFIX)/share/rros/settings $(DESTDIR)$(PREFIX)/share/rros/apps
+	install -m 644 apps/catalog.toml $(DESTDIR)$(PREFIX)/share/rros/apps/catalog.toml
 	install -m 644 gui/index.html $(DESTDIR)$(PREFIX)/share/rros/settings/index.html
 	install -m 644 dist/systemd/*.service $(DESTDIR)$(PREFIX)/lib/systemd/system/
 

@@ -428,3 +428,75 @@ int run_tool(const char *tool, char *const argv[], int quiet)
 		return -1;
 	return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 }
+
+static void exec_in_tool_dir(const char *tool, char *const argv[])
+{
+	char path[640];
+
+	if (tool_dir[0]) {
+		snprintf(path, sizeof path, "%s/%s", tool_dir, tool);
+		if (access(path, X_OK) == 0)
+			execv(path, argv);
+	}
+	execvp(tool, argv);
+}
+
+int run_capture(const char *tool, char *const argv[], struct sbuf *out)
+{
+	int pfd[2], st;
+	pid_t pid;
+	char buf[4096];
+	ssize_t k;
+
+	if (pipe(pfd) != 0)
+		return -1;
+	fflush(stdout);
+	pid = fork();
+	if (pid < 0)
+		return -1;
+	if (pid == 0) {
+		dup2(pfd[1], STDOUT_FILENO);
+		close(pfd[0]);
+		close(pfd[1]);
+		if (!freopen("/dev/null", "w", stderr))
+			_exit(127);
+		exec_in_tool_dir(tool, argv);
+		_exit(127);
+	}
+	close(pfd[1]);
+	while ((k = read(pfd[0], buf, sizeof buf - 1)) > 0) {
+		buf[k] = '\0';
+		if (sb_put(out, buf)) {
+			close(pfd[0]);
+			waitpid(pid, &st, 0);
+			return -1;
+		}
+	}
+	close(pfd[0]);
+	if (waitpid(pid, &st, 0) < 0)
+		return -1;
+	return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+int spawn_detached(const char *tool, char *const argv[])
+{
+	pid_t pid = fork();
+
+	if (pid < 0)
+		return -1;
+	if (pid == 0) {
+		pid_t pid2;
+
+		setsid();
+		pid2 = fork(); /* doble fork: no deja procesos zombi */
+		if (pid2 != 0)
+			_exit(0);
+		if (!freopen("/dev/null", "r", stdin) || !freopen("/dev/null", "w", stdout) ||
+		    !freopen("/dev/null", "w", stderr))
+			_exit(127);
+		exec_in_tool_dir(tool, argv);
+		_exit(127);
+	}
+	waitpid(pid, NULL, 0);
+	return 0;
+}

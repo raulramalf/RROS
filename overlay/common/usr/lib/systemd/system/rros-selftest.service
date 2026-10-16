@@ -1,0 +1,15 @@
+[Unit]
+Description=RROS: autotest de arranque (solo con rros.selftest en la línea del kernel)
+ConditionKernelCommandLine=rros.selftest
+After=multi-user.target rros-apply.service NetworkManager.service
+Wants=rros-apply.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c '/usr/libexec/rros-selftest 2>&1 | tee /dev/console'
+ExecStartPost=/bin/sh -c 'sleep 2; systemctl poweroff'
+TimeoutStartSec=300
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

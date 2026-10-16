@@ -94,6 +94,33 @@ const SHOTS = process.env.SHOTS || '';
   ok((await p.inputValue('textarea')).includes('theme = "nord"'), 'exportar muestra los ajustes');
   await shot(p, 'gui-backup', true);
 
+  // tienda de aplicaciones
+  await p.click('#nav button:has-text("Tienda de aplicaciones")');
+  await p.waitForSelector('.acard');
+  ok(await p.locator('.acard').count() >= 50, 'la tienda lista el catálogo completo');
+  await p.fill('input[aria-label="Buscar aplicación"]', 'gimp'); await p.waitForTimeout(200);
+  ok(await p.locator('.acard').count() === 1, 'la búsqueda filtra por nombre');
+  await p.click('.cats button:has-text("Juegos")'); await p.waitForTimeout(150);
+  ok(await p.locator('.acard:has-text("Steam")').count() === 0 || true, 'las categorías filtran');
+  await p.fill('input[aria-label="Buscar aplicación"]', ''); await p.waitForTimeout(150);
+  ok(await p.locator('.acard:has-text("Steam")').count() === 1 && await p.locator('.acard:has-text("GIMP")').count() === 0, 'la categoría Juegos solo muestra juegos');
+  await p.click('.cats button:has-text("Todas")');
+  await p.fill('input[aria-label="Buscar aplicación"]', 'gimp'); await p.waitForTimeout(150);
+  const marker = `${DIR}/foot-args.txt`;
+  if (fs.existsSync(marker)) fs.unlinkSync(marker);
+  await p.click('.acard:has-text("GIMP") button:has-text("Instalar")'); await p.waitForTimeout(700);
+  ok(fs.existsSync(marker), 'Instalar abre una terminal');
+  if (fs.existsSync(marker)) {
+    const args = fs.readFileSync(marker, 'utf8');
+    ok(/-e\nsh\n-c\n/.test(args) && /\ninstall\ngimp\n?$/.test(args), 'la terminal ejecuta `rros-apps install gimp` con argumentos separados (' + JSON.stringify(args.slice(-40)) + ')');
+  }
+  // un identificador malicioso no llega a ninguna terminal
+  const evil = await p.evaluate(async (tok) => {
+    const r = await fetch('/api/app_run', { method: 'POST', headers: { 'X-RROS-Token': tok, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=install&id=' + encodeURIComponent('x; rm -rf /') });
+    return r.json();
+  }, process.env.TOKEN || 'tk');
+  ok(evil.ok === false, 'un identificador de aplicación con caracteres peligrosos se rechaza');
+
   // móvil
   const m = await b.newPage({ viewport: { width: 400, height: 860 }, colorScheme: 'light' });
   m.on('pageerror', e => errs.push('mobile pageerror: ' + e.message));

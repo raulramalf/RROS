@@ -171,6 +171,47 @@ eq "$(PATH="$T/bin:$PATH" "$B/rros" saluda hola mundo)" "extension hola mundo"
 if PATH="$T/bin:$PATH" "$B/rros" '../saluda' 2>/dev/null; then fail "rros no debe aceptar rutas como extensión"; fi
 if "$B/rros" noexiste 2>/dev/null; then fail "rros noexiste debía fallar"; fi
 
+# --- tienda de aplicaciones: rros-apps (dpkg-query y flatpak simulados) ---
+mkdir -p "$T/fakebin"
+# shellcheck disable=SC2016
+printf '#!/bin/sh\n[ "$3" = "mpv" ] && { printf installed; exit 0; }\nexit 1\n' > "$T/fakebin/dpkg-query"
+# shellcheck disable=SC2016
+printf '#!/bin/sh\n[ "$2" = "org.signal.Signal" ] && exit 0\nexit 1\n' > "$T/fakebin/flatpak"
+chmod +x "$T/fakebin/dpkg-query" "$T/fakebin/flatpak"
+export RROS_APPS_CATALOG=$PWD/apps/catalog.toml
+APPS="env PATH=$T/fakebin:$PATH $B/rros-apps"
+# la salida se captura antes de buscar: con pipefail, `grep -q` cortaría la tubería (SIGPIPE) y daría falso error
+LIST=$($APPS list)
+grep -q 'mpv .*instalada' <<<"$LIST" || fail "apps: mpv debe figurar instalada"
+grep -q 'signal .*instalada' <<<"$LIST" || fail "apps: Signal (Flatpak) debe figurar instalada"
+grep -q 'firefox .* -$' <<<"$LIST" || fail "apps: Firefox sin instalar"
+[ "$(wc -l <<<"$LIST")" -ge 50 ] || fail "apps: catálogo con menos de 50 entradas"
+GAMES=$($APPS list --category games)
+grep -q steam <<<"$GAMES" || fail "apps: filtro por categoría"
+if grep -q firefox <<<"$GAMES"; then fail "apps: el filtro no excluye otras categorías"; fi
+grep -q firefox <<<"$($APPS search navegador)" || fail "apps: búsqueda"
+grep -q 'org.mozilla.firefox' <<<"$($APPS info firefox)" || fail "apps: info"
+FF=$($APPS install firefox --dry-run)
+grep -q 'flatpak install --user -y --noninteractive flathub org.mozilla.firefox' <<<"$FF" || fail "apps: instalar por Flatpak"
+grep -q 'flatpak remote-add --user --if-not-exists flathub' <<<"$FF" || fail "apps: añade Flathub"
+grep -q 'apt-get install -y gimp' <<<"$($APPS install gimp --dry-run)" || fail "apps: instalar por apt"
+grep -q 'com.obsproject.Studio' <<<"$($APPS install obs --flatpak --dry-run)" || fail "apps: --flatpak elige Flatpak"
+grep -q 'apt-get remove -y vlc' <<<"$($APPS remove vlc --dry-run)" || fail "apps: quitar"
+grep -q 'ya está instalada' <<<"$($APPS install mpv)" || fail "apps: no reinstala lo instalado"
+for bad in "nada" "x;y" '../etc' 'FIREFOX'; do
+	if $APPS install "$bad" --dry-run 2>/dev/null; then fail "apps: id no válido aceptado: $bad"; fi
+done
+JSON=$($APPS list --json)
+python3 -c 'import json,sys; d=json.load(sys.stdin); assert len(d)>=50 and all("id" in x and "installed" in x for x in d)' <<<"$JSON" || fail "apps: JSON"
+# el catálogo es coherente: categorías conocidas y todo tiene un origen de instalación
+python3 -c '
+import json,sys
+cats={"internet","office","media","graphics","dev","system","games","utility"}
+for a in json.load(sys.stdin):
+    assert a["category"] in cats, a["id"]
+    assert a["apt"] or a["flatpak"], a["id"]
+' <<<"$JSON" || fail "apps: catálogo incoherente"
+
 # --- interfaces: rros-settings (TUI en un pty y servidor web local) ---
 if command -v python3 >/dev/null 2>&1; then
 	python3 tests/tui_test.py || fail "TUI"

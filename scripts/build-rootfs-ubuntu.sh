@@ -22,7 +22,8 @@ debootstrap --variant=minbase --arch "$arch" "$suite" "$out" "$mirror"
 mount --bind /dev "$out/dev"
 mount -t proc proc "$out/proc"
 mount -t sysfs sys "$out/sys"
-trap 'umount -lf "$out/dev" "$out/proc" "$out/sys" 2>/dev/null || true' EXIT
+mount -t devpts devpts "$out/dev/pts" 2>/dev/null || true
+trap 'umount -lf "$out/dev/pts" "$out/dev" "$out/proc" "$out/sys" 2>/dev/null || true' EXIT
 
 cat > "$out/etc/apt/sources.list" <<APT
 deb $mirror $suite main universe
@@ -34,7 +35,7 @@ APT::Install-Recommends "false";
 APT::Install-Suggests "false";
 APT
 
-pkgs=$(read_list "$ROOT_DIR/packages/ubuntu-base.list" "$ROOT_DIR/packages/ubuntu-$profile.list")
+pkgs=$(read_list "$ROOT_DIR/packages/ubuntu-base.list" "$ROOT_DIR/packages/ubuntu-$profile.list" "$ROOT_DIR/packages/ubuntu-live.list")
 log "instalando paquetes: $pkgs"
 chroot "$out" apt-get update
 # shellcheck disable=SC2086
@@ -43,9 +44,12 @@ DEBIAN_FRONTEND=noninteractive chroot "$out" apt-get install -y $pkgs
 log "instalando componentes RROS"
 make -C "$ROOT_DIR" install DESTDIR="$out" PREFIX=/usr
 "$ROOT_DIR/scripts/apply-overlay.sh" "$out" "$profile" ubuntu
-chroot "$out" systemctl enable rros-firstboot.service rros-apply.service rros-live.service || true
+# casper lee su configuración (usuario y nombre de equipo) desde el initramfs: se regenera tras la capa RROS
+log "regenerando el initramfs"
+chroot "$out" update-initramfs -u -k all
+chroot "$out" systemctl enable rros-firstboot.service rros-apply.service rros-live.service rros-selftest.service rros-serial-shell.service || true
+chroot "$out" systemctl mask casper-md5check.service || true
 chroot "$out" systemctl mask snapd.service snapd.socket apport.service whoopsie.service motd-news.timer ua-timer.timer 2>/dev/null || true
-chroot "$out" useradd -m -s /bin/bash -G sudo,video,audio,input rros 2>/dev/null || true
 
 log "limpieza"
 chroot "$out" apt-get clean

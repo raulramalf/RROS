@@ -5,6 +5,7 @@
   "use strict";
   var S0 = window.RROS_MOCK_STATE, S = JSON.parse(JSON.stringify(S0));
   var snaps = {};
+  var APPS = JSON.parse(JSON.stringify(window.RROS_MOCK_APPS || []));
   delete S.hw;
   S.user_conf = "~/.config/rros/rros.toml";
 
@@ -97,6 +98,14 @@
     switch (path) {
       case "/api/state": return JSON.parse(JSON.stringify(S));
       case "/api/export": return exportToml();
+      case "/api/apps": return JSON.parse(JSON.stringify(APPS));
+      case "/api/app_run": {
+        var app = APPS.filter(function (a) { return a.id === b.id; })[0];
+        if (!app) return { ok: false, error: "identificador de aplicación no válido" };
+        if (b.action !== "install" && b.action !== "remove") return { ok: false, error: "acción desconocida" };
+        app.installed = b.action === "install"; /* en la demo se instala al instante */
+        return { ok: true };
+      }
       case "/api/ping": case "/api/apply": case "/api/quit": return { ok: true };
       case "/api/set": return setKey(b.key, b.value);
       case "/api/unset": return unsetKey(b.key);

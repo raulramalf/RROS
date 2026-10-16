@@ -1,0 +1,51 @@
+#!/bin/sh
+# Autotest de arranque: comprueba que el sistema está completo y lo cuenta por la consola.
+# Se activa con el parámetro del kernel `rros.selftest` (ver rros-selftest.service).
+ok=0 bad=0
+check() { # check "descripción" comando...
+	desc=$1; shift
+	if "$@" >/dev/null 2>&1; then ok=$((ok + 1)); echo "[ok]   $desc"; else bad=$((bad + 1)); echo "[FALLO] $desc"; fi
+}
+as_user() { su rros -c "$*"; }
+mkdir -p /tmp/xrd-selftest && chown rros /tmp/xrd-selftest && chmod 700 /tmp/xrd-selftest
+has() { command -v "$1" >/dev/null 2>&1; }
+
+echo "=== RROS selftest ==="
+# shellcheck source=/dev/null
+. /etc/os-release
+check "identidad: ID=rros ($PRETTY_NAME)" test "$ID" = rros
+check "perfil activo: $(cat /etc/rros/profile 2>/dev/null)" test -s /etc/rros/profile
+check "usuario live 'rros'" id rros
+check "no existe el usuario 'ubuntu'" sh -c '! id ubuntu'
+check "nombre de equipo: $(hostname)" test "$(hostname)" = rros
+check "kernel $(uname -r)" test -n "$(uname -r)"
+
+for app in sway waybar foot fuzzel mako epiphany thunar mousepad evince mpv file-roller galculator btop flatpak \
+           calamares swaylock swayidle nm-applet blueman-applet udiskie pavucontrol grim slurp cliphist wdisplays \
+           rros rros-config rros-theme rros-apps rros-settings rros-apply; do
+	check "programa: $app" has "$app"
+done
+for desk in org.gnome.Epiphany thunar org.xfce.mousepad org.gnome.Evince mpv org.gnome.FileRoller galculator imv calamares; do
+	check "lanzador: $desk.desktop" test -e "/usr/share/applications/$desk.desktop"
+done
+
+check "NetworkManager activo" systemctl is-active --quiet NetworkManager
+check "polkit activo (o disponible)" sh -c 'systemctl is-active --quiet polkit || test -x /usr/bin/pkexec'
+check "snap no instalado" sh -c '! test -e /usr/bin/snap'
+check "rros-apply se ejecutó" systemctl is-active --quiet rros-apply
+check "zram como swap" sh -c 'swapon --show | grep -q zram'
+check "sin telemetría (apport/whoopsie)" sh -c '! systemctl is-enabled --quiet apport 2>/dev/null'
+
+check "rros doctor (usuario)" as_user "rros doctor"
+# shellcheck disable=SC2016
+check "catálogo de apps (54)" sh -c 'test "$(rros-apps list | wc -l)" -ge 50'
+check "rros-theme apply (usuario)" as_user "rros-theme apply --quiet"
+check "configuración de sway válida" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sway --validate"
+# arranca sway de verdad sin pantalla: si algún comando de la configuración falla, sway lanza swaynag (la barra roja)
+check "sway arranca sin errores de configuración" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sh -c 'timeout 5 sway -d > /tmp/sway-selftest.log 2>&1; ! grep -q \"namespace swaynag\" /tmp/sway-selftest.log'"
+check "waybar: configuración generada" as_user "grep -q modules-left ~/.config/waybar/config"
+check "GTK y terminal configurados" as_user "test -s ~/.config/gtk-4.0/gtk.css && test -s ~/.config/foot/foot.ini && test -s ~/.config/swaylock/config"
+check "mimeapps: navegador por defecto" sh -c 'grep -q Epiphany /etc/xdg/mimeapps.list'
+
+echo "=== resultado: $ok correctas, $bad con fallo ==="
+[ "$bad" -eq 0 ] && echo "RROS_SELFTEST_OK" || echo "RROS_SELFTEST_FAIL"

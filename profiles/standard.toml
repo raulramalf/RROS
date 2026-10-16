@@ -45,6 +45,12 @@ indexer = false
 location = false
 flatpak = true
 
+[apps]
+terminal = "foot"
+browser = "epiphany"
+files = "thunar"
+editor = "mousepad"
+
 [boot]
 splash = true
 quiet = true

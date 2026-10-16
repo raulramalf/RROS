@@ -106,6 +106,17 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
 .swatches button.dot[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--text); }
 .swatches button.dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .swatches input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: none; cursor: pointer; }
+.apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.acard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.acard .an { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.acard .an b { font-weight: 600; overflow-wrap: anywhere; }
+.acard p { margin: 0; color: var(--muted); flex: 1; }
+.acard .ab { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.badge.ok { color: var(--green); border-color: var(--green); }
+.cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.cats button { all: unset; cursor: pointer; padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 13px; }
+.cats button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+.cats button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pad { padding: 14px; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .wrapline { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -272,6 +283,8 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     }
     nav.appendChild(h("div", { class: "grp", text: "Apariencia" }));
     item("themes", "Temas y colores");
+    nav.appendChild(h("div", { class: "grp", text: "Aplicaciones" }));
+    item("apps", "Tienda de aplicaciones");
     nav.appendChild(h("div", { class: "grp", text: "Ajustes" }));
     S.categories.forEach(function (c) { item("cat:" + c.id, c.label, counts[c.id] || 0); });
     nav.appendChild(h("div", { class: "grp", text: "Personalización" }));
@@ -340,6 +353,7 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     if (query) return drawSearch(root);
     if (page === "themes") return drawThemes(root);
     if (page === "backup") return drawBackup(root);
+    if (page === "apps") return drawApps(root);
     if (page.indexOf("dyn:") === 0) return drawDynamic(root, page.slice(4));
     var cat = page.slice(4), c = S.categories.filter(function (x) { return x.id === cat; })[0] || S.categories[0];
     root.appendChild(h("h1", { text: c.label }));
@@ -348,6 +362,60 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     S.keys.filter(function (k) { return k.category === c.id; }).forEach(function (k) { rows.appendChild(settingRow(k)); });
     root.appendChild(rows);
   }
+  var APPS = null, appCat = "all", appQuery = "";
+  var CATLABEL = { internet: "Internet", office: "Oficina", media: "Multimedia", graphics: "Gráficos", dev: "Desarrollo", system: "Sistema", games: "Juegos", utility: "Utilidades" };
+  function loadApps() {
+    return api("/api/apps").then(function (a) { APPS = Array.isArray(a) ? a : []; });
+  }
+  function appRun(action, a) {
+    api("/api/app_run", { action: action, id: a.id }).then(function (r) {
+      if (!r.ok) return toast(r.error, true);
+      toast((action === "install" ? "Instalando " : "Quitando ") + a.name + ": mira la terminal que se ha abierto");
+    });
+  }
+  function drawApps(root) {
+    root.appendChild(h("h1", { text: "Tienda de aplicaciones" }));
+    root.appendChild(h("p", { class: "sub", text: "Instala programas con un clic. Se usa apt (el repositorio de Ubuntu) y, si no hay otra opción, Flatpak (Flathub). La instalación se hace en una terminal para que veas el progreso y puedas escribir tu contraseña." }));
+    if (APPS === null) {
+      root.appendChild(h("div", { class: "empty", text: "Cargando el catálogo…" }));
+      loadApps().then(function () { if (page === "apps") drawPage(); });
+      return;
+    }
+    var search = h("input", { type: "search", placeholder: "Buscar aplicación", "aria-label": "Buscar aplicación", value: appQuery });
+    search.addEventListener("input", function () { appQuery = search.value; drawList(); });
+    var top = h("div", { class: "wrapline" }, search,
+      h("button", { class: "btn ghost small", type: "button", text: "Actualizar estado", onclick: function () { APPS = null; drawPage(); } }));
+    top.style.marginBottom = "12px";
+    root.appendChild(top);
+    var cats = h("div", { class: "cats", role: "group", "aria-label": "Categorías" });
+    var ids = ["all"].concat(Object.keys(CATLABEL));
+    ids.forEach(function (c) {
+      cats.appendChild(h("button", { type: "button", text: c === "all" ? "Todas" : CATLABEL[c], "aria-pressed": String(appCat === c), onclick: function () { appCat = c; drawApps2(); } }));
+    });
+    root.appendChild(cats);
+    var list = h("div", { class: "apps", id: "app-list" });
+    root.appendChild(list);
+    drawList();
+    function drawApps2() { var r = document.getElementById("page"); r.textContent = ""; drawApps(r); }
+    function drawList() {
+      list.textContent = "";
+      var q = appQuery.trim().toLowerCase();
+      var shown = APPS.filter(function (a) {
+        return (appCat === "all" || a.category === appCat) && (!q || (a.id + " " + a.name + " " + a.desc).toLowerCase().indexOf(q) >= 0);
+      });
+      shown.forEach(function (a) {
+        var origin = a.apt ? "apt" : "Flatpak";
+        var state = a.installed ? h("span", { class: "badge ok", text: "instalada" }) : a.shipped ? h("span", { class: "badge", text: "incluida" }) : h("span", { class: "badge", text: origin });
+        var btn = a.installed
+          ? h("button", { class: "btn danger small", type: "button", text: "Quitar", onclick: function () { appRun("remove", a); } })
+          : h("button", { class: "btn small", type: "button", text: "Instalar", onclick: function () { appRun("install", a); } });
+        list.appendChild(h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: a.name }), state), h("p", { text: a.desc }),
+          h("div", { class: "ab" }, btn, h("code", { text: "rros apps install " + a.id }))));
+      });
+      if (!shown.length) list.appendChild(h("div", { class: "empty", text: "Ninguna aplicación coincide." }));
+    }
+  }
+
   function drawSearch(root) {
     var q = query.toLowerCase(), found = S.keys.filter(function (k) { return k.key.toLowerCase().indexOf(q) >= 0 || k.desc.toLowerCase().indexOf(q) >= 0; });
     root.appendChild(h("h1", { text: "Resultados" }));
@@ -534,6 +602,7 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA" && document.activeElement.tagName !== "SELECT") { e.preventDefault(); st.focus(); }
     if (e.key === "Escape" && document.activeElement === st) { st.value = ""; query = ""; st.blur(); drawNav(); drawPage(); }
   });
+  window.addEventListener("focus", function () { if (page === "apps" && APPS !== null) { APPS = null; drawPage(); } });
   if (!window.RROS_MOCK) setInterval(function () { api("/api/ping", {}); }, 8000);
   load();
 })();

@@ -42,6 +42,10 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.reduce_motion` | booleano | true / false | Reducir movimiento (accesibilidad) |
 | `ui.night_light` | opción | off|auto|on | Filtro de luz nocturna |
 | `ui.night_light_temp` | entero | 1000 – 6500 | Temperatura del filtro nocturno (K) |
+| `apps.terminal` | texto |  | Terminal (comando) |
+| `apps.browser` | texto |  | Navegador (comando) |
+| `apps.files` | texto |  | Gestor de archivos (comando) |
+| `apps.editor` | texto |  | Editor de texto (comando) |
 | `panel.style` | opción | flat|floating|pill | Estilo del panel |
 | `panel.left` | texto |  | Módulos a la izquierda, separados por comas |
 | `panel.center` | texto |  | Módulos en el centro, separados por comas |

@@ -1,17 +1,108 @@
-# Paquetes comunes a todos los perfiles (Ubuntu 24.04). Punto de partida: se ajusta al medir.
+# Sistema y escritorio comunes a TODOS los perfiles (Ubuntu 24.04). Cada nombre se comprueba
+# contra el archivo con scripts/check-packages.sh.
+
+# --- núcleo y arranque ---
 systemd-sysv
 udev
 dbus
+dbus-user-session
 linux-image-generic     # se sustituirá por el kernel propio (scripts/build-kernel.sh)
+linux-firmware          # Wi-Fi, GPU y demás hardware real
 initramfs-tools
+zstd                    # initramfs comprimido con zstd
 casper
 grub-efi-amd64-bin
+grub-efi-amd64-signed
+shim-signed
 grub-pc-bin
+systemd-zram-generator
+
+# --- red ---
 network-manager
+wpasupplicant
+network-manager-gnome   # applet de Wi-Fi en la bandeja
+iproute2
+iputils-ping
+openssh-client
+
+# --- sistema ---
 sudo
+polkitd
+pkexec
+policykit-1-gnome       # ventana de contraseña al instalar o cambiar ajustes
 locales
 ca-certificates
+bash-completion
+curl
+wget
+nano
+less
+pciutils
+usbutils
+xdg-user-dirs
+xdg-utils
+
+# --- discos y USB ---
+udisks2
+gvfs
+udiskie                 # monta USB y discos al enchufarlos
+
+# --- audio, Bluetooth y energía ---
 pipewire
 pipewire-pulse
+pipewire-alsa
 wireplumber
-systemd-zram-generator
+libspa-0.2-bluetooth
+pavucontrol
+bluez
+blueman
+upower
+power-profiles-daemon
+brightnessctl
+
+# --- escritorio (RROS Shell) ---
+sway
+swaybg
+swayidle
+swaylock
+xwayland
+waybar
+foot
+fuzzel
+mako-notifier
+grim
+slurp
+wl-clipboard
+cliphist
+wdisplays
+kanshi
+libnotify-bin
+xdg-desktop-portal
+xdg-desktop-portal-gtk
+xdg-desktop-portal-wlr
+
+# --- fuentes e iconos ---
+fonts-noto-core
+fonts-noto-color-emoji
+fonts-inter
+fonts-jetbrains-mono
+fonts-liberation
+adwaita-icon-theme
+
+# --- aplicaciones esenciales (todo sistema usable las trae) ---
+epiphany-browser        # navegador web (sin snap)
+thunar                  # archivos
+thunar-archive-plugin
+thunar-volman
+tumbler                 # miniaturas
+mousepad                # editor de texto
+imv                     # visor de imágenes
+evince                  # visor de PDF
+mpv                     # vídeo y música
+file-roller             # comprime y descomprime
+galculator              # calculadora
+btop                    # monitor del sistema
+zip
+unzip
+p7zip-full
+flatpak                 # tienda de aplicaciones adicionales (Flathub)

@@ -1,0 +1,18 @@
+[Unit]
+Description=RROS depuración: consola de administrador en el puerto serie (solo con rros.serialshell)
+ConditionKernelCommandLine=rros.serialshell
+Conflicts=serial-getty@ttyS0.service
+After=systemd-user-sessions.service
+
+[Service]
+Type=idle
+ExecStart=-/sbin/agetty --autologin root --noclear ttyS0 vt220
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/ttyS0
+TTYReset=yes
+TTYVHangup=yes
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

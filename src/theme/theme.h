@@ -28,6 +28,8 @@ struct rros_theme {
 	int natural_scroll, tap_to_click, dwt, numlock, pointer_speed;
 	int repeat_delay, repeat_rate, battery_low;
 	int full_compositor;
+	char app_term[48], app_browser[48], app_files[48], app_editor[48];
+	int lock_min, screen_off_min, suspend_min;
 };
 
 struct rros_theme_info {
@@ -58,6 +60,7 @@ void rros_render_waybar_css(const struct rros_theme *, const struct rros_palette
 void rros_render_foot(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 void rros_render_mako(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 void rros_render_fuzzel(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
+void rros_render_swaylock(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 void rros_render_gtk_settings(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 void rros_render_gtk_css(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 

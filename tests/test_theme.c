@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include "check.h"
 #include "theme.h"
@@ -194,6 +195,112 @@ int main(void)
 	CHECK(strstr(s, "style=beam") != NULL);
 	CHECK(strstr(s, "pad=20x16") != NULL);
 	free(s);
+
+	/* ---- esenciales de un sistema usable ---- */
+	from_text(&t, "");
+	s = render(rros_render_sway, &t);
+	CHECK(strstr(s, "exec rros-polkit-agent") != NULL);
+	CHECK(strstr(s, "exec nm-applet --indicator") != NULL);
+	CHECK(strstr(s, "exec blueman-applet") != NULL);
+	CHECK(strstr(s, "exec udiskie") != NULL);
+	CHECK(strstr(s, "exec wl-paste --watch cliphist store") != NULL);
+	CHECK(strstr(s, "bindsym $mod+b exec epiphany") != NULL);
+	CHECK(strstr(s, "bindsym $mod+e exec thunar") != NULL);
+	CHECK(strstr(s, "bindsym $mod+Shift+e exec rros-power") != NULL);
+	CHECK(strstr(s, "bindsym $mod+Escape exec swaylock -f") != NULL);
+	CHECK(strstr(s, "set $term foot") != NULL);
+	/* bloqueo a los 10 min, pantalla a los 15, suspensión a los 30 */
+	CHECK(strstr(s, "timeout 600 'swaylock -f'") != NULL);
+	CHECK(strstr(s, "timeout 900 'swaymsg \"output * power off\"'") != NULL);
+	CHECK(strstr(s, "timeout 1800 'systemctl suspend'") != NULL);
+	free(s);
+
+	/* aplicaciones por defecto cambiables, y saneadas */
+	from_text(&t, "[apps]\nbrowser = \"firefox\"\nterminal = \"kitty\"\neditor = \"vim; rm -rf /\"\n");
+	s = render(rros_render_sway, &t);
+	CHECK(strstr(s, "bindsym $mod+b exec firefox") != NULL);
+	CHECK(strstr(s, "set $term kitty") != NULL);
+	CHECK(strstr(s, "rm -rf") == NULL);                      /* nada de inyección */
+	CHECK(strstr(s, "bindsym $mod+Shift+n exec mousepad") != NULL); /* cae al valor por defecto */
+	free(s);
+
+	/* bloqueo e inactividad configurables; 0 los desactiva */
+	from_text(&t, "[privacy]\nlock_minutes = 0\n[power]\nscreen_off_minutes = 5\nsuspend_minutes = 0\n");
+	s = render(rros_render_sway, &t);
+	CHECK(strstr(s, "swaylock -f'") != NULL);                /* before-sleep sigue bloqueando */
+	CHECK(strstr(s, "timeout 300 'swaymsg") != NULL);
+	CHECK(strstr(s, "systemctl suspend") == NULL);
+	CHECK(strstr(s, "timeout 600") == NULL);
+	free(s);
+	from_text(&t, "[privacy]\nlock_minutes = 0\n[power]\nscreen_off_minutes = 0\nsuspend_minutes = 0\n");
+	s = render(rros_render_sway, &t);
+	CHECK(strstr(s, "exec swayidle") == NULL);
+	free(s);
+
+	/* pantalla de bloqueo con la paleta del tema */
+	from_text(&t, "[ui]\ntheme = \"nord\"\n");
+	s = render(rros_render_swaylock, &t);
+	CHECK(strstr(s, "color=2e3440") != NULL);
+	CHECK(strstr(s, "key-hl-color=88c0d0") != NULL);
+	free(s);
+
+	/* el panel lo lanza rros-panel; no hay bloque bar (sway lo arrancaba antes de tener el bus de sesión) */
+	from_text(&t, "");
+	s = render(rros_render_sway, &t);
+	CHECK(strstr(s, "exec rros-panel") != NULL);
+	CHECK(strstr(s, "swaybar_command") == NULL);
+	free(s);
+
+	/* panel con botón de aplicaciones y de energía */
+	from_text(&t, "");
+	s = render(rros_render_waybar, &t);
+	CHECK(strstr(s, "\"modules-left\": [\"custom/apps\", \"sway/workspaces\", \"sway/mode\"]") != NULL);
+	CHECK(strstr(s, "\"custom/power\"]") != NULL);
+	CHECK(strstr(s, "\"on-click\": \"pavucontrol\"") != NULL);
+	free(s);
+
+	/* ---- sway rechaza combinaciones repetidas: nunca debe haber dos iguales ---- */
+	{
+		static const char *confs[] = {
+			"",
+			"[keybind]\na = \"Mod+e exec foo\"\nb = \"Mod+B exec bar\"\nc = \"Mod+Shift+e exec baz\"\n"
+			"d = \"Mod+r exec nada\"\ne = \"Mod+1 workspace number 7\"\n",
+			"[ui]\nworkspaces = 10\n[keybind]\nx = \"Print exec otra\"\n",
+		};
+
+		for (size_t k = 0; k < sizeof confs / sizeof *confs; k++) {
+			char *line, *save = NULL, *seen[200];
+			int n = 0, dup = 0;
+
+			from_text(&t, confs[k]);
+			s = render(rros_render_sway, &t);
+			for (line = strtok_r(s, "\n", &save); line; line = strtok_r(NULL, "\n", &save)) {
+				char *sp;
+
+				if (strncmp(line, "bindsym ", 8) != 0)
+					continue;           /* los de dentro de un modo van con sangría */
+				sp = strchr(line + 8, ' ');
+				if (!sp)
+					continue;
+				*sp = '\0';
+				for (int q = 0; q < n; q++)
+					if (strcasecmp(seen[q], line + 8) == 0)
+						dup++;
+				if (n < 200)
+					seen[n++] = line + 8;
+			}
+			CHECK(dup == 0);
+			CHECK(n > 30);
+			free(s);
+		}
+		/* el atajo del usuario sustituye al de RROS, no se suma */
+		from_text(&t, "[keybind]\na = \"Mod+e exec foo\"\n");
+		s = render(rros_render_sway, &t);
+		CHECK(strstr(s, "bindsym $mod+e exec foo") != NULL);
+		CHECK(strstr(s, "bindsym $mod+e exec thunar") == NULL);
+		CHECK(strstr(s, "bindsym $mod+b exec epiphany") != NULL); /* el resto se mantiene */
+		free(s);
+	}
 
 	rros_conf_free(&cur);
 	DONE();

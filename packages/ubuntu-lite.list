@@ -1,11 +1,1 @@
-sway
-foot
-wl-clipboard
-fuzzel
-grim
-slurp
-brightnessctl
-libnotify-bin
-mako-notifier
-fonts-inter
-fonts-jetbrains-mono
+# Lite: el sistema completo de ubuntu-base.list y nada más.

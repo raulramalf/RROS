@@ -5,6 +5,8 @@ set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 RROS=$ROOT_DIR/build
+# las herramientas que se ejecutan en el anfitrión (rros-budget...) leen los perfiles del repositorio
+export RROS_PROFILE_DIR=${RROS_PROFILE_DIR:-$ROOT_DIR/profiles}
 
 die() { echo "error: $*" >&2; exit 1; }
 log() { echo "==> $*"; }
@@ -21,3 +23,18 @@ profile_get() { "$RROS/rros-config" -f "$ROOT_DIR/profiles/$1.toml" get "$2"; }
 
 # Lista de paquetes sin comentarios ni líneas vacías.
 read_list() { sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$@" | tr '\n' ' '; }
+
+# Ejecuta un comando dentro de un rootfs, con /dev, /proc, /sys y /dev/pts montados.
+# uso: chroot_run RAIZ comando...
+chroot_run() {
+	local root=$1 rc=0
+	shift
+	[ -d "$root" ] || die "no existe $root"
+	mount --bind /dev "$root/dev"
+	mount -t proc proc "$root/proc"
+	mount -t sysfs sys "$root/sys"
+	mount -t devpts devpts "$root/dev/pts" 2>/dev/null || true
+	chroot "$root" "$@" || rc=$?
+	umount -lf "$root/dev/pts" "$root/dev" "$root/proc" "$root/sys" 2>/dev/null || true
+	return "$rc"
+}

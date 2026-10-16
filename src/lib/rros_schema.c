@@ -64,6 +64,12 @@ const struct rros_key rros_schema[] = {
 	E("ui.night_light", "off|auto|on", "Filtro de luz nocturna"),
 	I("ui.night_light_temp", 1000, 6500, "Temperatura del filtro nocturno (K)"),
 
+	/* ---- aplicaciones por defecto ---- */
+	S("apps.terminal", "Terminal (comando)"),
+	S("apps.browser", "Navegador (comando)"),
+	S("apps.files", "Gestor de archivos (comando)"),
+	S("apps.editor", "Editor de texto (comando)"),
+
 	/* ---- panel (waybar) ---- */
 	E("panel.style", "flat|floating|pill", "Estilo del panel"),
 	S("panel.left", "Módulos a la izquierda, separados por comas"),

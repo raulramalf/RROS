@@ -23,6 +23,7 @@ static const struct target targets[] = {
 	{ "foot/foot.ini", rros_render_foot },
 	{ "mako/config", rros_render_mako },
 	{ "fuzzel/fuzzel.ini", rros_render_fuzzel },
+	{ "swaylock/config", rros_render_swaylock },
 	{ "gtk-3.0/settings.ini", rros_render_gtk_settings },
 	{ "gtk-3.0/gtk.css", rros_render_gtk_css },
 	{ "gtk-4.0/settings.ini", rros_render_gtk_settings },

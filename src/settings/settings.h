@@ -33,6 +33,8 @@ int model_state_json(const struct model *m, struct sbuf *out);
 /* Utilidades de proceso. */
 void tool_dir_from_argv0(const char *argv0);
 int run_tool(const char *tool, char *const argv[], int quiet);   /* devuelve código de salida */
+int run_capture(const char *tool, char *const argv[], struct sbuf *out);   /* guarda la salida estándar */
+int spawn_detached(const char *tool, char *const argv[]);               /* 0 si se lanzó */
 
 /* Modos. */
 int run_tui(int auto_apply);

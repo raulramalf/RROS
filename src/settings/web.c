@@ -365,6 +365,78 @@ static void do_export(int fd)
 	fclose(f);
 }
 
+static void do_apps(int fd)
+{
+	struct sbuf b = { 0 };
+	char *args[] = { "rros-apps", "list", "--json", NULL };
+
+	if (run_capture("rros-apps", args, &b) == 0 && b.p)
+		respond_json(fd, 200, b.p);
+	else
+		respond_json(fd, 400, "{\"ok\":false,\"error\":\"no se pudo leer el catálogo de aplicaciones\"}");
+	sb_free(&b);
+}
+
+static int id_valid(const char *id)
+{
+	size_t n = strlen(id);
+
+	if (n == 0 || n > 39)
+		return 0;
+	for (size_t i = 0; i < n; i++)
+		if (!((id[i] >= 'a' && id[i] <= 'z') || (id[i] >= '0' && id[i] <= '9') || id[i] == '-'))
+			return 0;
+	return 1;
+}
+
+/* Abre una terminal con `rros-apps install|remove ID` para ver el progreso y escribir la contraseña. */
+static int run_in_terminal(const char *action, const char *id, char *err, size_t en)
+{
+	struct model m;
+	char term[64] = "foot", *words[6], copy[64], *tok, *save = NULL;
+	char *argv[16];
+	int n = 0, nw = 0;
+	static const char script[] = "rros-apps \"$1\" \"$2\"; printf '\\nPulsa Enter para cerrar... '; read -r _";
+
+	if (strcmp(action, "install") && strcmp(action, "remove")) {
+		snprintf(err, en, "acción desconocida");
+		return -1;
+	}
+	if (!id_valid(id)) {
+		snprintf(err, en, "identificador de aplicación no válido");
+		return -1;
+	}
+	if (model_load(&m) == 0) {
+		const char *t = rros_conf_get(&m.eff, "apps.terminal");
+
+		if (t && *t && strlen(t) < sizeof term)
+			snprintf(term, sizeof term, "%s", t);
+		model_free(&m);
+	}
+	snprintf(copy, sizeof copy, "%s", term);
+	for (tok = strtok_r(copy, " ", &save); tok && nw < 3; tok = strtok_r(NULL, " ", &save))
+		words[nw++] = tok;
+	if (nw == 0) {
+		snprintf(err, en, "no hay terminal configurada (apps.terminal)");
+		return -1;
+	}
+	for (int i = 0; i < nw; i++)
+		argv[n++] = words[i];
+	argv[n++] = "-e";
+	argv[n++] = "sh";
+	argv[n++] = "-c";
+	argv[n++] = (char *)script;
+	argv[n++] = "rros";
+	argv[n++] = (char *)action;
+	argv[n++] = (char *)id;
+	argv[n] = NULL;
+	if (spawn_detached(argv[0], argv) != 0) {
+		snprintf(err, en, "no se pudo abrir la terminal");
+		return -1;
+	}
+	return 0;
+}
+
 static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 {
 	struct req r;
@@ -404,6 +476,8 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 		do_state(fd);
 	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/export")) {
 		do_export(fd);
+	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/apps")) {
+		do_apps(fd);
 	} else if (strcmp(r.method, "POST") != 0) {
 		respond(fd, 404, "text/plain", "no", 2, NULL);
 	} else if (!strcmp(r.path, "/api/ping")) {
@@ -427,6 +501,13 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 				apply_desktop();
 			respond_ok(fd, 1, "");
 		}
+	} else if (!strcmp(r.path, "/api/app_run")) {
+		form_get(r.body, "action", a, sizeof a);
+		form_get(r.body, "id", b, sizeof b);
+		if (run_in_terminal(a, b, err, sizeof err))
+			respond_ok(fd, 0, err);
+		else
+			respond_ok(fd, 1, "");
 	} else if (!strcmp(r.path, "/api/theme_new")) {
 		form_get(r.body, "name", a, sizeof a);
 		form_get(r.body, "base", b, sizeof b);

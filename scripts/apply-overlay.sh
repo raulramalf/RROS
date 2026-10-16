@@ -12,6 +12,17 @@ check_profile "$profile"
 
 cp -a "$ROOT_DIR/overlay/common/." "$root/"
 [ -d "$ROOT_DIR/overlay/$base" ] && cp -a "$ROOT_DIR/overlay/$base/." "$root/"
+# Lo propio de Ubuntu que no debe verse en RROS: avisos legales de inicio de sesión (documentación,
+# Landscape, Ubuntu Pro...) y los ajustes de casper para escritorios de Ubuntu que aquí no existen.
+if [ "$base" = ubuntu ]; then
+	rm -f "${root:?}"/etc/update-motd.d/*
+	rm -rf "${root:?}/etc/legal"
+	for hook in 22desktop_settings 31disable_update_notifier 33enable_apport_crashes 34disable_kde_services \
+	            37disable_screensaver_lubuntu 45jackd2 52gnome_initial_setup 53disable_unattended_upgrades \
+	            55disable_snap_refresh 57pollinate 59disable_mozc_autosetup 61desktop_canary_tweaks; do
+		rm -f "${root:?}/usr/share/initramfs-tools/scripts/casper-bottom/$hook"
+	done
+fi
 "$ROOT_DIR/scripts/apply-identity.sh" "$root" "$profile"
 mkdir -p "$root/etc/rros"
 echo "$profile" > "$root/etc/rros/profile"

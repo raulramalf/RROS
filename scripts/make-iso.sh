@@ -25,7 +25,7 @@ cp "$vmlinuz" "$iso_dir/casper/vmlinuz"
 cp "$initrd" "$iso_dir/casper/initrd"
 
 log "squashfs (zstd)"
-mksquashfs "$rootfs" "$iso_dir/casper/filesystem.squashfs" -comp zstd -Xcompression-level 15 \
+mksquashfs "$rootfs" "$iso_dir/casper/filesystem.squashfs" -comp zstd -Xcompression-level "${SQUASH_LEVEL:-15}" \
 	-e boot/vmlinuz-* boot/initrd.img-* -noappend
 
 cat > "$iso_dir/boot/grub/grub.cfg" <<GRUB
@@ -37,7 +37,7 @@ menuentry "RROS Aurora ($profile)" {
 	initrd /casper/initrd
 }
 menuentry "RROS Aurora ($profile) - modo seguro" {
-	linux /casper/vmlinuz boot=casper nomodeset ---
+	linux /casper/vmlinuz boot=casper quiet nomodeset ---
 	initrd /casper/initrd
 }
 GRUB

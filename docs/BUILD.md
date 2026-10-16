@@ -20,7 +20,7 @@ Herramientas de prueba y depuración (probadas con la ISO Lite):
 scripts/check-packages.sh lite                # comprueba que los paquetes existen en noble
 scripts/refresh-rootfs.sh lite                # reaplica la capa RROS sobre un rootfs ya construido
 SQUASH_LEVEL=3 scripts/make-iso.sh lite       # ISO más rápida de generar (zstd nivel 3)
-scripts/test-iso.sh lite selftest             # arranca en QEMU por serie y ejecuta ~59 comprobaciones
+scripts/test-iso.sh lite selftest             # arranca en QEMU por serie y ejecuta ~72 comprobaciones
 scripts/test-iso.sh lite screenshot           # arranca con GRUB y guarda una captura
 python3 scripts/qemu-console.py start|exec|shot|stop   # VM persistente con consola de administrador
 ```

@@ -23,6 +23,10 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 
 *Captura real de la ISO Lite arrancada en QEMU (sin KVM), tema Aurora.*
 
+![RROS instalado en disco: terminal y RROS Ajustes en Epiphany](docs/img/rros-lite-instalado-ajustes.png)
+
+*Captura real del sistema ya instalado en un disco virtual con `rros-install`: inicio de sesión en tty1, escritorio, red por cable y la ventana de Ajustes.*
+
 ## Estado
 
 | Pieza | Estado |

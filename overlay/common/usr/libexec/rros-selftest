@@ -41,6 +41,8 @@ for tool in rros-install rros-installer sfdisk mkfs.ext4 mkfs.vfat grub-install 
 	check "instalador: $tool" has "$tool"
 done
 check "red: el cable lo gestiona NetworkManager" sh -c '! nmcli -t dev status | grep -q ":ethernet:unmanaged"'
+check "teclado de la consola: rros-vconsole activo" systemctl is-active --quiet rros-vconsole
+check "blueman-mechanism no arranca en el boot (solo por D-Bus)" sh -c '! systemctl is-enabled --quiet blueman-mechanism'
 check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'
 # shellcheck disable=SC2016
 check "catálogo de apps (54)" sh -c 'test "$(rros-apps list | wc -l)" -ge 50'

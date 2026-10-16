@@ -42,11 +42,10 @@ DEBIAN_FRONTEND=noninteractive chroot "$out" apt-get install -y $pkgs
 
 log "instalando componentes RROS"
 make -C "$ROOT_DIR" install DESTDIR="$out" PREFIX=/usr
-echo "$profile" > "$out/etc/rros/profile"
-echo "rros-$profile" > "$out/etc/hostname"
-sed -i -e 's/^NAME=.*/NAME="RROS"/' -e 's/^PRETTY_NAME=.*/PRETTY_NAME="RROS ('"$profile"')"/' \
-	"$out/etc/os-release" 2>/dev/null || true
-chroot "$out" systemctl enable rros-firstboot.service || true
+"$ROOT_DIR/scripts/apply-overlay.sh" "$out" "$profile" ubuntu
+chroot "$out" systemctl enable rros-firstboot.service rros-apply.service rros-live.service || true
+chroot "$out" systemctl mask snapd.service snapd.socket apport.service whoopsie.service motd-news.timer ua-timer.timer 2>/dev/null || true
+chroot "$out" useradd -m -s /bin/bash -G sudo,video,audio,input rros 2>/dev/null || true
 
 log "limpieza"
 chroot "$out" apt-get clean

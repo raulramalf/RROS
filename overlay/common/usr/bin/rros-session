@@ -1,0 +1,9 @@
+#!/bin/sh
+# Prepara el tema y arranca el escritorio RROS (sway/SwayFX).
+rros-theme apply --quiet || echo "rros-session: aviso: no se pudo aplicar el tema" >&2
+export XDG_CURRENT_DESKTOP=sway XDG_SESSION_TYPE=wayland XDG_SESSION_DESKTOP=sway
+export MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM=wayland _JAVA_AWT_WM_NONREPARENTING=1
+if [ "$(rros-config get ui.compositor 2>/dev/null)" = full ] && command -v swayfx >/dev/null 2>&1; then
+	exec swayfx "$@"
+fi
+exec sway "$@"

@@ -135,3 +135,48 @@ int rros_write_active_profile(const char *name)
 	}
 	return 0;
 }
+
+static int merge_into(struct rros_conf *dst, const struct rros_conf *src)
+{
+	for (size_t i = 0; i < src->n; i++)
+		if (rros_conf_set(dst, src->items[i].key, src->items[i].val, src->items[i].quoted))
+			return -1;
+	return 0;
+}
+
+static int merge_optional(struct rros_conf *dst, const char *path)
+{
+	struct rros_conf l;
+	int rc, line = 0;
+
+	rros_conf_init(&l);
+	rc = rros_conf_load(&l, path, &line);
+	if (rc == -1 && errno == ENOENT)
+		return 0;
+	if (rc != 0 || merge_into(dst, &l)) {
+		rros_conf_free(&l);
+		return -2;
+	}
+	rros_conf_free(&l);
+	return 0;
+}
+
+int rros_load_effective(struct rros_conf *out, const char *profile)
+{
+	struct rros_conf l;
+	char user[1024];
+	int line = 0, rc;
+
+	rros_conf_init(&l);
+	rc = rros_load_profile(&l, profile, &line);
+	if (rc == 0 && merge_into(out, &l))
+		rc = -1;
+	rros_conf_free(&l);
+	if (rc)
+		return -1;
+	if (merge_optional(out, rros_system_conf()))
+		return -2;
+	if (rros_user_conf(user, sizeof user) == 0 && merge_optional(out, user))
+		return -2;
+	return 0;
+}

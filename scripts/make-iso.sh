@@ -27,11 +27,13 @@ mksquashfs "$rootfs" "$iso_dir/casper/filesystem.squashfs" -comp zstd -Xcompress
 
 cat > "$iso_dir/boot/grub/grub.cfg" <<GRUB
 set timeout=3
-menuentry "RROS ($profile) - live" {
+set color_normal=cyan/black
+set color_highlight=black/cyan
+menuentry "RROS Aurora ($profile)" {
 	linux /casper/vmlinuz boot=casper quiet splash ---
 	initrd /casper/initrd
 }
-menuentry "RROS ($profile) - live (modo seguro)" {
+menuentry "RROS Aurora ($profile) - modo seguro" {
 	linux /casper/vmlinuz boot=casper nomodeset ---
 	initrd /casper/initrd
 }

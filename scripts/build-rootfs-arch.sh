@@ -20,9 +20,8 @@ mkdir -p "$out"
 pacstrap -c -K "$out" $pkgs
 
 make -C "$ROOT_DIR" install DESTDIR="$out" PREFIX=/usr
-echo "$profile" > "$out/etc/rros/profile"
-echo "rros-$profile" > "$out/etc/hostname"
-arch-chroot "$out" systemctl enable rros-firstboot.service || true
+"$ROOT_DIR/scripts/apply-overlay.sh" "$out" "$profile" arch
+arch-chroot "$out" systemctl enable rros-firstboot.service rros-apply.service || true
 
 rm -rf "${out:?}"/var/cache/pacman/pkg/* "${out:?}"/usr/share/doc/* "${out:?}"/usr/share/man/* \
        "${out:?}"/usr/share/info/*

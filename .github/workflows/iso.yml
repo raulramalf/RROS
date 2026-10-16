@@ -1,0 +1,33 @@
+name: ISO
+
+# Construye la ISO de RROS en GitHub y la deja como artefacto descargable
+# para abrirla en QEMU, VirtualBox o GNOME Boxes. Ejecución manual.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Perfil de hardware
+        type: choice
+        options: [lite, standard, pro]
+        default: lite
+
+jobs:
+  iso:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debootstrap squashfs-tools grub-pc-bin grub-efi-amd64-bin xorriso mtools
+      - name: Compilar herramientas
+        run: make WERROR=1
+      - name: Rootfs
+        run: sudo scripts/build-rootfs-ubuntu.sh "${{ inputs.profile }}"
+      - name: ISO
+        run: sudo scripts/make-iso.sh "${{ inputs.profile }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rros-${{ inputs.profile }}-iso
+          path: build/rros-${{ inputs.profile }}.iso
+          if-no-files-found: error

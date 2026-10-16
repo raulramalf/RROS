@@ -1,0 +1,6 @@
+# Tus ajustes de RROS. Mira todas las claves con: rros config schema
+# Ejemplos (descomenta o usa `rros config set`):
+# [ui]
+# accent = "#22d3ee"
+# gap = 12
+# panel_position = "bottom"

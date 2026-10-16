@@ -1,0 +1,8 @@
+# RROS no usa snap ni los servicios de telemetría/publicidad de Ubuntu.
+Package: snapd
+Pin: release *
+Pin-Priority: -1
+
+Package: ubuntu-advantage-tools ubuntu-pro-client ubuntu-pro-client-l10n ubuntu-report apport whoopsie popularity-contest motd-news-config ubuntu-release-upgrader-core update-notifier-common
+Pin: release *
+Pin-Priority: -1

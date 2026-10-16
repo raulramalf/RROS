@@ -67,4 +67,47 @@ if RROS_ROOT=$T/fakeroot "$B/rros-budget" ram -p lite >/dev/null; then fail "bud
 # hwdetect con raíz falsa y salidas
 eq "$("$B/rros-hwdetect" --root "$T/fakeroot" --profile)" standard
 "$B/rros-hwdetect" --json | grep -q '"profile"' || fail "json"
+# --- escritorio propio: rros-theme, rros-fetch, rros ---
+export XDG_CONFIG_HOME=$T/xdg
+"$B/rros-theme" -p lite apply --quiet
+for f in sway/config sway/rros-effects.conf waybar/config waybar/style.css foot/foot.ini; do
+	[ -s "$XDG_CONFIG_HOME/$f" ] || fail "rros-theme no generó $f"
+done
+grep -q 'gaps inner 4' "$XDG_CONFIG_HOME/sway/config" || fail "gap de Lite"
+sed 1d "$XDG_CONFIG_HOME/waybar/config" | python3 -m json.tool >/dev/null || fail "waybar JSON inválido"
+"$B/rros-config" -p lite set ui.gap 20
+"$B/rros-theme" -p lite apply --quiet
+grep -q 'gaps inner 20' "$XDG_CONFIG_HOME/sway/config" || fail "el ajuste no llega al escritorio"
+# alternar oscuro/claro
+"$B/rros-theme" -p lite toggle >/dev/null
+eq "$("$B/rros-config" -p lite get ui.color_scheme)" light
+grep -q 'background=f5f7ff' "$XDG_CONFIG_HOME/foot/foot.ini" || fail "tema claro"
+"$B/rros-theme" -p lite toggle >/dev/null
+eq "$("$B/rros-config" -p lite get ui.color_scheme)" dark
+# no pisa archivos manuales: hace copia
+echo "# mio" > "$XDG_CONFIG_HOME/foot/foot.ini"
+"$B/rros-theme" -p lite apply --quiet 2>/dev/null
+[ "$(cat "$XDG_CONFIG_HOME/foot/foot.ini.bak-rros")" = "# mio" ] || fail "copia del archivo manual"
+# ficha y diagnóstico
+"$B/rros-fetch" --plain | grep -q 'Perfil' || fail "rros-fetch"
+"$B/rros-fetch" --plain | grep -q 'SO\|Sistema' || fail "rros-fetch sistema"
+"$B/rros" version | grep -q 'Aurora' || fail "rros version"
+"$B/rros" doctor | grep -q 'sin snap' || fail "rros doctor"
+"$B/rros" info --plain | grep -q 'Perfil' || fail "rros info"
+if "$B/rros" bogus 2>/dev/null; then fail "rros bogus debía fallar"; fi
+# --- rros-apply: el perfil cambia el sistema ---
+mkdir -p "$T/sysroot"
+"$B/rros-apply" -p lite --root "$T/sysroot" >/dev/null
+grep -q 'compression-algorithm = lz4' "$T/sysroot/etc/systemd/zram-generator.conf" || fail "zram lite"
+grep -q 'zram-size = ram \* 50 / 100' "$T/sysroot/etc/systemd/zram-generator.conf" || fail "zram tamaño"
+grep -q 'vm.swappiness = 100' "$T/sysroot/etc/sysctl.d/90-rros-profile.conf" || fail "swappiness lite"
+"$B/rros-apply" -p pro --root "$T/sysroot" >/dev/null
+grep -q 'vm.swappiness = 60' "$T/sysroot/etc/sysctl.d/90-rros-profile.conf" || fail "swappiness pro"
+grep -q 'zram-size = ram \* 25 / 100' "$T/sysroot/etc/systemd/zram-generator.conf" || fail "zram pro"
+"$B/rros-config" -p pro set system.io_scheduler bfq
+"$B/rros-apply" -p pro --root "$T/sysroot" >/dev/null
+grep -q 'scheduler}="bfq"' "$T/sysroot/etc/udev/rules.d/60-rros-ioscheduler.rules" || fail "scheduler"
+"$B/rros-config" -p pro set system.swap none
+"$B/rros-apply" -p pro --root "$T/sysroot" >/dev/null
+! grep -q '^\[zram0\]' "$T/sysroot/etc/systemd/zram-generator.conf" || fail "swap none"
 echo "  cli OK"

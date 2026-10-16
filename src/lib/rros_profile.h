@@ -14,6 +14,8 @@ int rros_user_conf(char *buf, size_t n);
 int rros_valid_profile_name(const char *name);
 /* 0 ok, -1 nombre inválido, -2 no existe/ilegible, -3 error de sintaxis (*errline) */
 int rros_load_profile(struct rros_conf *c, const char *name, int *errline);
+/* Configuración efectiva: perfil < sistema < usuario. 0 ok, -1 perfil, -2 capa ilegible. */
+int rros_load_effective(struct rros_conf *out, const char *profile);
 /* Perfil activo: contenido de rros_profile_file(), o "standard". */
 int rros_read_active_profile(char *buf, size_t n);
 int rros_write_active_profile(const char *name);

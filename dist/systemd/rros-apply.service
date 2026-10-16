@@ -1,0 +1,13 @@
+[Unit]
+Description=RROS: aplicar perfil y ajustes (swap, zram, disco, red, servicios)
+After=rros-firstboot.service local-fs.target
+ConditionPathExists=/etc/rros/profile
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rros-apply --services
+ExecStartPost=-/usr/sbin/sysctl -q -p /etc/sysctl.d/90-rros-profile.conf
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

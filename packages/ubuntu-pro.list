@@ -8,3 +8,11 @@ flatpak
 cups
 mesa-vulkan-drivers
 libvulkan1
+fuzzel
+grim
+slurp
+brightnessctl
+libnotify-bin
+mako-notifier
+fonts-inter
+fonts-jetbrains-mono

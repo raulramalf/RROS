@@ -11,6 +11,14 @@ kernel = "standard"
 multilib = false
 
 [ui]
+accent = "#7c5cff"
+color_scheme = "dark"
+font = "Inter"
+font_mono = "JetBrains Mono"
+gap = 8
+border_width = 2
+panel_position = "top"
+panel_size = 32
 compositor = "full"
 effects = "basic"
 animations = true

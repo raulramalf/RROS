@@ -14,4 +14,4 @@ ca-certificates
 pipewire
 pipewire-pulse
 wireplumber
-zram-tools
+systemd-zram-generator

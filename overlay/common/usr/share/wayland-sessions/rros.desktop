@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=RROS Shell
+Comment=Escritorio RROS (Wayland)
+Exec=rros-session
+Type=Application
+DesktopNames=sway

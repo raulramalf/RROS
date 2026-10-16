@@ -1,6 +1,46 @@
+# Perfil Standard: equipos de 4 GB de RAM, gama media.
+[profile]
 name = "standard"
 min_ram_mb = 3072
 max_idle_ram_mb = 2048
 max_disk_gb = 12
+
+[build]
+libc = "glibc"
+kernel = "standard"
+multilib = false
+
+[ui]
 compositor = "full"
 effects = "basic"
+animations = true
+animation_speed = 100
+blur = false
+shadows = true
+transparency = 10
+scale = 100
+font_size = 11
+corner_radius = 8
+layout = "floating"
+workspaces = 4
+
+[system]
+swap = "zram"
+zram_percent = 50
+zram_algo = "zstd"
+swappiness = 100
+
+[services]
+bluetooth = true
+printing = false
+indexer = false
+location = false
+flatpak = true
+
+[boot]
+splash = true
+quiet = true
+timeout_seconds = 3
+
+[privacy]
+telemetry = false

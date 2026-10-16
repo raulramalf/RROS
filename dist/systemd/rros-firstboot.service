@@ -1,0 +1,13 @@
+[Unit]
+Description=RROS: seleccionar perfil de hardware en el primer arranque
+ConditionPathExists=!/etc/rros/profile
+After=local-fs.target
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rros-hwdetect --apply
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

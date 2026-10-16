@@ -10,9 +10,10 @@ Escribir un kernel propio supone años de trabajo en drivers (Intel, AMD, NVIDIA
 | Init | Opción A: systemd recortado. Opción B: init propio en C (fase avanzada) |
 | libc | glibc (compatibilidad) en Standard/Pro; musl en Lite |
 | Gráficos | Wayland. Lite: compositor mínimo; Pro: efectos y aceleración |
-| **rros-hwdetect** | **C, propio.** Detecta CPU/RAM/GPU y elige perfil |
-| **rros-config** | **C, propio.** Motor de personalización declarativa |
-| **rros-installer** | **C, propio.** Instalador por perfil |
+| **rros-hwdetect** | **C, propio.** Detecta RAM/CPU/GPU/UEFI y elige perfil (CPU y GPU solo pueden bajarlo) |
+| **rros-config** | **C, propio.** Capas perfil < sistema < usuario, validadas con un esquema |
+| **rros-budget** | **C, propio.** Mide disco/RAM frente al presupuesto del perfil (CI) |
+| **rros-installer** | **C, propio.** Hoy solo calcula el plan de particiones (no escribe en disco) |
 
 ## Presupuesto de recursos
 - Disco: imagen base ≤ 6 GB, perfil Pro completo ≤ 20 GB.
@@ -20,7 +21,7 @@ Escribir un kernel propio supone años de trabajo en drivers (Intel, AMD, NVIDIA
 - CI mide ambos en cada build y falla si se superan.
 
 ## Personalización "al detalle"
-Todo ajuste vive en archivos declarativos (`~/.config/rros/*.toml`) con valores por defecto del perfil. `rros-config` valida, aplica y revierte cambios.
+Todo ajuste vive en archivos TOML: `/usr/share/rros/profiles/<perfil>.toml` (valores por defecto) < `/etc/rros/rros.toml` (sistema) < `~/.config/rros/rros.toml` (usuario). `rros-config` valida cada valor (tipo, rango, opciones). Las claves disponibles están en [CUSTOMIZATION.md](CUSTOMIZATION.md). Aplicar los ajustes a compositor y servicios llegará con la interfaz propia.
 
 ## Compatibilidad de hardware
 Soporte amplio mediante el kernel Linux + firmware empaquetado (`linux-firmware`). Intel, AMD y ARM64 desde el inicio. NVIDIA: driver abierto `nouveau`/`nvidia-open` opcional.

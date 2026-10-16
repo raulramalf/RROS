@@ -1,6 +1,44 @@
+# Perfil Lite: equipos de 1-2 GB de RAM, CPU antiguas, sin GPU dedicada.
+[profile]
 name = "lite"
 min_ram_mb = 1024
 max_idle_ram_mb = 512
 max_disk_gb = 6
+
+[build]
+libc = "musl"
+kernel = "lite"
+multilib = false
+
+[ui]
 compositor = "minimal"
-effects = false
+effects = "off"
+animations = false
+blur = false
+shadows = false
+transparency = 0
+scale = 100
+font_size = 10
+layout = "tiling"
+workspaces = 4
+
+[system]
+swap = "zram"
+zram_percent = 50
+zram_algo = "lz4"
+swappiness = 100
+
+[services]
+bluetooth = false
+printing = false
+indexer = false
+location = false
+flatpak = false
+
+[boot]
+splash = false
+quiet = true
+timeout_seconds = 2
+
+[privacy]
+telemetry = false

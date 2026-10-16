@@ -1,0 +1,17 @@
+# Paquetes comunes a todos los perfiles (Ubuntu 24.04). Punto de partida: se ajusta al medir.
+systemd-sysv
+udev
+dbus
+linux-image-generic     # se sustituirá por el kernel propio (scripts/build-kernel.sh)
+initramfs-tools
+casper
+grub-efi-amd64-bin
+grub-pc-bin
+network-manager
+sudo
+locales
+ca-certificates
+pipewire
+pipewire-pulse
+wireplumber
+zram-tools

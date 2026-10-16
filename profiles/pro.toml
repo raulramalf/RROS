@@ -1,6 +1,46 @@
+# Perfil Pro: equipos de 8 GB de RAM, gama alta con GPU.
+[profile]
 name = "pro"
 min_ram_mb = 6144
 max_idle_ram_mb = 4096
 max_disk_gb = 20
+
+[build]
+libc = "glibc"
+kernel = "pro"
+multilib = true
+
+[ui]
 compositor = "full"
 effects = "advanced"
+animations = true
+animation_speed = 100
+blur = true
+shadows = true
+transparency = 20
+scale = 100
+font_size = 11
+corner_radius = 12
+layout = "hybrid"
+workspaces = 6
+
+[system]
+swap = "zram"
+zram_percent = 25
+zram_algo = "zstd"
+swappiness = 60
+
+[services]
+bluetooth = true
+printing = true
+indexer = true
+location = false
+flatpak = true
+
+[boot]
+splash = true
+quiet = true
+timeout_seconds = 3
+
+[privacy]
+telemetry = false

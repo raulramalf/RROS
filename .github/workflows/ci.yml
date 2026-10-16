@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compilar (warnings como errores)
+        run: make WERROR=1
+      - name: Tests (ASan + UBSan)
+        run: make test WERROR=1
+      - name: Validar perfiles
+        run: |
+          for p in lite standard pro; do
+            RROS_PROFILE_DIR=profiles build/rros-config validate --profile-file profiles/$p.toml
+          done
+      - name: Documentación de personalización al día
+        run: |
+          make docs-schema
+          git diff --exit-code docs/CUSTOMIZATION.md
+      - name: ShellCheck
+        run: shellcheck -x scripts/*.sh tests/cli.sh

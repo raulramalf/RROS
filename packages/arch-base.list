@@ -1,0 +1,11 @@
+base
+linux
+linux-firmware
+networkmanager
+sudo
+pipewire
+pipewire-pulse
+wireplumber
+zram-generator
+grub
+efibootmgr

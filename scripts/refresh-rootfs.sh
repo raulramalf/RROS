@@ -19,7 +19,9 @@ if grep -q '^rros:' "$out/etc/passwd"; then
 fi
 log "regenerando el initramfs"
 chroot_run "$out" update-initramfs -u -k all
-systemctl --root="$out" enable rros-firstboot.service rros-apply.service rros-live.service rros-selftest.service rros-serial-shell.service >/dev/null 2>&1 || true
+systemctl --root="$out" enable rros-firstboot.service rros-apply.service rros-live.service rros-selftest.service rros-serial-shell.service rros-vconsole.service >/dev/null 2>&1 || true
 systemctl --root="$out" mask casper-md5check.service >/dev/null 2>&1 || true
+# blueman-mechanism se activa por D-Bus cuando hace falta; arrancarlo en el boot solo añade RAM y, en máquinas lentas, un fallo
+systemctl --root="$out" disable blueman-mechanism.service >/dev/null 2>&1 || true
 log "rootfs actualizado"
 "$RROS/rros-budget" disk "$out" -p "$profile"

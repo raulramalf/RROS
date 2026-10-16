@@ -1,0 +1,17 @@
+[Unit]
+Description=RROS: teclado de la consola (/etc/vconsole.conf)
+# Ubuntu no trae systemd-vconsole-setup: este servicio carga el mapa con loadkeys antes del login en tty1
+DefaultDependencies=no
+After=systemd-remount-fs.service
+Before=getty.target getty@tty1.service
+ConditionPathExists=/etc/vconsole.conf
+ConditionFileIsExecutable=/usr/bin/loadkeys
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/vconsole.conf
+ExecStart=/usr/bin/loadkeys -q ${KEYMAP}
+
+[Install]
+WantedBy=sysinit.target

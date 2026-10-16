@@ -47,8 +47,10 @@ make -C "$ROOT_DIR" install DESTDIR="$out" PREFIX=/usr
 # casper lee su configuración (usuario y nombre de equipo) desde el initramfs: se regenera tras la capa RROS
 log "regenerando el initramfs"
 chroot "$out" update-initramfs -u -k all
-chroot "$out" systemctl enable rros-firstboot.service rros-apply.service rros-live.service rros-selftest.service rros-serial-shell.service || true
+chroot "$out" systemctl enable rros-firstboot.service rros-apply.service rros-live.service rros-selftest.service rros-serial-shell.service rros-vconsole.service || true
 chroot "$out" systemctl mask casper-md5check.service || true
+# blueman-mechanism se activa por D-Bus cuando hace falta; arrancarlo en el boot solo añade RAM y, en máquinas lentas, un fallo
+chroot "$out" systemctl disable blueman-mechanism.service || true
 chroot "$out" systemctl mask snapd.service snapd.socket apport.service whoopsie.service motd-news.timer ua-timer.timer 2>/dev/null || true
 
 log "limpieza"

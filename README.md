@@ -27,6 +27,10 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 
 *Captura real del sistema ya instalado en un disco virtual con `rros-install`: inicio de sesión en tty1, escritorio, red por cable y la ventana de Ajustes.*
 
+![RROS Ajustes en la página de Seguridad, dentro del sistema live](docs/img/rros-seguridad.png)
+
+*Captura real: `rros settings open seguridad` en la ISO Lite (QEMU). Auditoría con puntuación, cortafuegos activo y kernel endurecido.*
+
 ## Estado
 
 | Pieza | Estado |

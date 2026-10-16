@@ -1,0 +1,6 @@
+name = "lite"
+min_ram_mb = 1024
+max_idle_ram_mb = 512
+max_disk_gb = 6
+compositor = "minimal"
+effects = false

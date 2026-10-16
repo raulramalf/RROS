@@ -1,0 +1,6 @@
+name = "pro"
+min_ram_mb = 6144
+max_idle_ram_mb = 4096
+max_disk_gb = 20
+compositor = "full"
+effects = "advanced"

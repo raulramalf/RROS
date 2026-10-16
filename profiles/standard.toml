@@ -1,0 +1,6 @@
+name = "standard"
+min_ram_mb = 3072
+max_idle_ram_mb = 2048
+max_disk_gb = 12
+compositor = "full"
+effects = "basic"

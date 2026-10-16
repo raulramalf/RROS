@@ -35,6 +35,10 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 
 *Captura real: `rros settings open dispositivos`. El CD del sistema live no ofrece «Expulsar» porque está en uso.*
 
+![Thunar mostrando ~/Plantillas y las carpetas del usuario en español](docs/img/rros-plantillas.png)
+
+*Captura real: las plantillas de `rros nuevo` en `~/Plantillas` (el menú «Crear documento» del gestor de archivos) y las carpetas del usuario en español. Los menús de las aplicaciones siguen en inglés: faltan los paquetes de idioma.*
+
 ## Estado
 
 | Pieza | Estado |

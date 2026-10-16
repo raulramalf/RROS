@@ -61,4 +61,8 @@ En RROS Ajustes, estos ajustes llevan la marca «sistema · contraseña»: al ca
 - Bloquear memorias USB o la cámara no expulsa lo que ya está conectado si está en uso: vale para lo que se conecte después o tras reiniciar.
 - Desactivar el endurecimiento del kernel no deshace los valores ya aplicados hasta reiniciar.
 - El instalador aún no cifra el disco (LUKS): la auditoría lo avisa.
-- Falta comprobarlo en hardware real.
+- En el sistema live Ubuntu no carga los perfiles de AppArmor; como la restricción de espacios de nombres de Ubuntu dejaría sin arrancar el navegador y las apps Flatpak, RROS la desactiva **solo en el live** (`rros-live-userns.service`). En el sistema instalado la restricción sigue activa y los perfiles `epiphany` y `flatpak` dan el permiso.
+
+## Qué se ha comprobado
+
+En QEMU, sobre la ISO Lite: cortafuegos cargado (`nft list table inet rros`), ajustes del kernel aplicados, `sudoers` válido, actualizaciones automáticas, la auditoría real (100/100 en el live con el nivel estándar) y el bloqueo por intentos: con `security.login_attempts = 3`, tres contraseñas malas con `su` bloquean la cuenta, la buena se rechaza («10 minutes left to unlock») y tras `faillock --reset` vuelve a entrar. También que Epiphany arranca con la restricción de espacios de nombres y el perfil cargado (como en el sistema instalado). Falta probarlo en hardware real y repetir una instalación completa con estas directivas.

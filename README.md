@@ -41,8 +41,8 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 | Overlay de identidad (sin snap, sin telemetría, tty1 directo) | ✅ aplicado y comprobado sobre un directorio |
 | ISO Lite: rootfs Ubuntu 24.04, GRUB, casper live, autotest | ✅ construida y arrancada en QEMU (BIOS, sin KVM): autotest de arranque, escritorio con panel y apps (captura arriba) |
 | Aplicaciones incluidas (navegador, archivos, editor, visores, multimedia, red, Bluetooth, USB, bloqueo, energía) y tienda `rros-apps` | ✅ paquetes verificados contra Ubuntu noble; probadas las que se abrieron en la VM (terminal, calculadora, editor, archivos); el resto, sin abrir aún |
-| Seguridad: cortafuegos, kernel endurecido, bloqueo por intentos, sudo, USB/cámara, actualizaciones; `rros seguridad` (auditoría y niveles) | ✅ probado con pruebas automáticas ([docs/SEGURIDAD.md](docs/SEGURIDAD.md)) |
-| Dispositivos: `rros dispositivos` (discos, USB, red, radios, sonido, pantallas, batería; montar, expulsar, Wi-Fi/Bluetooth) | ✅ probado con un /sys simulado |
+| Seguridad: cortafuegos, kernel endurecido, bloqueo por intentos, sudo, USB/cámara, actualizaciones; `rros seguridad` (auditoría y niveles) | ✅ probado con pruebas automáticas y en QEMU, incluido el bloqueo tras contraseñas fallidas ([docs/SEGURIDAD.md](docs/SEGURIDAD.md)) |
+| Dispositivos: `rros dispositivos` (discos, USB, red, radios, sonido, pantallas, batería; montar, expulsar, Wi-Fi/Bluetooth) | ✅ probado con un /sys simulado y en QEMU (inventario real de la VM) |
 | Creación de archivos: `rros nuevo` (plantillas, proyectos, lanzadores), «Crear documento» en Thunar, carpetas en español | ✅ probado |
 | `rros-install` – instalador de texto a disco (BIOS, Lite/ext4) | ✅ probado en QEMU: instala, arranca desde el disco, login y escritorio |
 | Instalación en UEFI y btrfs (Standard/Pro), instalador gráfico, hardware real, kernel por perfil, SwayFX, repositorio propio, móvil | ⏳ pendiente / sin probar |

@@ -10,6 +10,8 @@ export RROS_SYSTEM_CONF=$T/etc/rros.toml
 export RROS_USER_CONF=$T/home/rros.toml
 export RROS_PROFILE_FILE=$T/etc/profile
 fail() { echo "  FALLO: $*" >&2; exit 1; }
+# grep -q que lee toda la entrada: con `pipefail`, un grep que sale al primer acierto mata al productor por SIGPIPE
+gq() { local out; out=$(cat); printf '%s\n' "$out" | command grep -q "$@"; }
 eq() { [ "$1" = "$2" ] || fail "esperado '$2', obtenido '$1'"; }
 
 # perfil activo por defecto y escritura
@@ -24,8 +26,8 @@ eq "$("$B/rros-config" -p pro get ui.effects)" advanced
 eq "$("$B/rros-config" -p lite get ui.effects)" basic
 "$B/rros-config" -p lite set ui.effects advanced
 eq "$("$B/rros-config" -p lite get ui.effects)" advanced
-"$B/rros-config" -p lite list | grep -q 'ui.effects = "advanced"  (usuario)' || fail "list/capa usuario"
-"$B/rros-config" -p lite list | grep -q 'ui.blur = false  (perfil)' || fail "list/capa perfil"
+"$B/rros-config" -p lite list | gq 'ui.effects = "advanced"  (usuario)' || fail "list/capa usuario"
+"$B/rros-config" -p lite list | gq 'ui.blur = false  (perfil)' || fail "list/capa perfil"
 "$B/rros-config" -p lite unset ui.effects
 eq "$("$B/rros-config" -p lite get ui.effects)" basic
 
@@ -58,15 +60,15 @@ eq "$("$B/rros-config" -f profiles/lite.toml get build.libc)" musl
 
 # budget
 mkdir "$T/rootfs" && head -c 3000000 /dev/zero > "$T/rootfs/f"
-"$B/rros-budget" disk "$T/rootfs" -p lite | grep -q 'status=ok' || fail "budget disk ok"
+"$B/rros-budget" disk "$T/rootfs" -p lite | gq 'status=ok' || fail "budget disk ok"
 mkdir -p "$T/fakeroot/proc" && printf 'MemTotal: 4194304 kB\nMemAvailable: 1048576 kB\n' > "$T/fakeroot/proc/meminfo"
 printf 'processor : 0\nprocessor : 1\nprocessor : 2\nprocessor : 3\n' > "$T/fakeroot/proc/cpuinfo"
-RROS_ROOT=$T/fakeroot "$B/rros-budget" ram -p pro | grep -q 'status=ok' || fail "budget ram pro"
+RROS_ROOT=$T/fakeroot "$B/rros-budget" ram -p pro | gq 'status=ok' || fail "budget ram pro"
 if RROS_ROOT=$T/fakeroot "$B/rros-budget" ram -p lite >/dev/null; then fail "budget ram lite debía superar"; fi
 
 # hwdetect con raíz falsa y salidas
 eq "$("$B/rros-hwdetect" --root "$T/fakeroot" --profile)" standard
-"$B/rros-hwdetect" --json | grep -q '"profile"' || fail "json"
+"$B/rros-hwdetect" --json | gq '"profile"' || fail "json"
 # --- escritorio propio: rros-theme, rros-fetch, rros ---
 export XDG_CONFIG_HOME=$T/xdg
 "$B/rros-theme" -p lite apply --quiet
@@ -89,13 +91,14 @@ echo "# mio" > "$XDG_CONFIG_HOME/foot/foot.ini"
 "$B/rros-theme" -p lite apply --quiet 2>/dev/null
 [ "$(cat "$XDG_CONFIG_HOME/foot/foot.ini.bak-rros")" = "# mio" ] || fail "copia del archivo manual"
 # ficha y diagnóstico
-"$B/rros-fetch" --plain | grep -q 'Perfil' || fail "rros-fetch"
-"$B/rros-fetch" --plain | grep -q 'SO\|Sistema' || fail "rros-fetch sistema"
-"$B/rros" version | grep -q 'Aurora' || fail "rros version"
+"$B/rros-fetch" --plain | gq 'Perfil' || fail "rros-fetch"
+"$B/rros-fetch" --plain | gq 'SO\|Sistema' || fail "rros-fetch sistema"
+"$B/rros" version | gq 'Aurora' || fail "rros version"
 # el resultado de la comprobación de snap depende del equipo (los runners de CI lo tienen)
-"$B/rros" doctor | grep -q 'snap' || fail "rros doctor no informa de snap"
-"$B/rros" doctor | grep -q 'telemetría desactivada' || fail "rros doctor no informa de telemetría"
-"$B/rros" info --plain | grep -q 'Perfil' || fail "rros info"
+doc_out=$("$B/rros" doctor) || true
+case $doc_out in *snap*) ;; *) fail "rros doctor no informa de snap" ;; esac
+case $doc_out in *'telemetría desactivada'*) ;; *) fail "rros doctor no informa de telemetría" ;; esac
+"$B/rros" info --plain | gq 'Perfil' || fail "rros info"
 if "$B/rros" bogus 2>/dev/null; then fail "rros bogus debía fallar"; fi
 # --- rros-apply: el perfil cambia el sistema ---
 mkdir -p "$T/sysroot"
@@ -114,22 +117,22 @@ grep -q 'scheduler}="bfq"' "$T/sysroot/etc/udev/rules.d/60-rros-ioscheduler.rule
 ! grep -q '^\[zram0\]' "$T/sysroot/etc/systemd/zram-generator.conf" || fail "swap none"
 # --- temas, atajos, reglas, instantáneas (consola) ---
 export RROS_THEMES_DIR=$T/themes
-"$B/rros-theme" -p standard list | grep -q '^\* aurora' || fail "tema por defecto"
+"$B/rros-theme" -p standard list | gq '^\* aurora' || fail "tema por defecto"
 "$B/rros-theme" -p standard use nord >/dev/null
-"$B/rros-theme" -p standard list | grep -q '^\* nord' || fail "rros-theme use"
+"$B/rros-theme" -p standard list | gq '^\* nord' || fail "rros-theme use"
 grep -q 'background=2e3440' "$XDG_CONFIG_HOME/foot/foot.ini" || fail "el tema llega a foot"
 grep -q 'window_bg_color #2e3440' "$XDG_CONFIG_HOME/gtk-4.0/gtk.css" || fail "el tema llega a GTK"
 grep -q 'background-color=#2e3440' "$XDG_CONFIG_HOME/mako/config" || fail "el tema llega a mako"
 if "$B/rros-theme" use no-existe 2>/dev/null; then fail "tema inexistente debía fallar"; fi
 "$B/rros-theme" -p standard cycle >/dev/null
-"$B/rros-theme" -p standard list | grep -q '^\* dracula' || fail "rros-theme cycle"
-"$B/rros-theme" new miotema --base nord | grep -q 'creado' || fail "rros-theme new"
+"$B/rros-theme" -p standard list | gq '^\* dracula' || fail "rros-theme cycle"
+"$B/rros-theme" new miotema --base nord | gq 'creado' || fail "rros-theme new"
 if "$B/rros-theme" new miotema 2>/dev/null; then fail "new debía negarse a pisar un tema"; fi
 if "$B/rros-theme" new nord 2>/dev/null; then fail "new debía negarse con nombre incluido"; fi
 sed -i 's/^bg = "#2e3440"/bg = "#101820"/' "$RROS_THEMES_DIR/miotema.toml"
 "$B/rros-theme" -p standard use miotema >/dev/null
 grep -q 'background=101820' "$XDG_CONFIG_HOME/foot/foot.ini" || fail "tema propio aplicado"
-"$B/rros-theme" -p standard list | grep -q 'miotema *propio' || fail "tema propio en la lista"
+"$B/rros-theme" -p standard list | gq 'miotema *propio' || fail "tema propio en la lista"
 
 "$B/rros-config" set keybind.nav 'Mod+Shift+b exec firefox'
 "$B/rros-config" set rule.ff 'app_id=firefox workspace 2'
@@ -150,7 +153,7 @@ done
 grep -q 'ui.theme\|theme = "miotema"' "$T/export.toml" || fail "export"
 "$B/rros-config" snapshot save base
 "$B/rros-config" set ui.gap 30
-"$B/rros-config" snapshot list | grep -qx base || fail "snapshot list"
+"$B/rros-config" snapshot list | gq -x base || fail "snapshot list"
 "$B/rros-config" snapshot restore base
 eq "$("$B/rros-config" -p standard get ui.gap)" 20  # el valor que había al guardar la instantánea
 if "$B/rros-config" snapshot restore ../x 2>/dev/null; then fail "nombre de snapshot inválido"; fi
@@ -160,10 +163,10 @@ if "$B/rros-config" reset 2>/dev/null; then fail "reset sin --yes debía fallar"
 eq "$("$B/rros-config" -p standard get ui.theme)" aurora
 printf '[ui]\ngap = 9999\n' > "$T/mal-import.toml"
 if "$B/rros-config" import "$T/mal-import.toml" 2>/dev/null; then fail "import inválido debía fallar"; fi
-"$B/rros-config" help | grep -q 'keybind' || fail "ayuda con ejemplos"
+"$B/rros-config" help | gq 'keybind' || fail "ayuda con ejemplos"
 # --- comando rros: subcomandos y extensiones ---
-"$B/rros" settings help | grep -q 'tui' || fail "rros settings"
-"$B/rros" config help | grep -q 'keybind' || fail "rros config help"
+"$B/rros" settings help | gq 'tui' || fail "rros settings"
+"$B/rros" config help | gq 'keybind' || fail "rros config help"
 mkdir -p "$T/bin"
 printf '#!/bin/sh\necho "extension $*"\n' > "$T/bin/rros-saluda"
 chmod +x "$T/bin/rros-saluda"

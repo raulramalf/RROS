@@ -199,6 +199,7 @@ int main(void)
 	/* ---- esenciales de un sistema usable ---- */
 	from_text(&t, "");
 	s = render(rros_render_sway, &t);
+	CHECK(strstr(s, "exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY") != NULL);
 	CHECK(strstr(s, "exec rros-polkit-agent") != NULL);
 	CHECK(strstr(s, "exec nm-applet --indicator") != NULL);
 	CHECK(strstr(s, "exec blueman-applet") != NULL);

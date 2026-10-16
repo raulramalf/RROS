@@ -304,6 +304,9 @@ void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p,
 
 	/* esenciales de un sistema usable: contraseñas, red, Bluetooth, USB, portapapeles, bloqueo */
 	fputs("\n# Servicios de la sesión\n", f);
+	/* sin esto el portal XDG, Flatpak y los diálogos de archivos no ven la sesión gráfica y se quedan esperando */
+	fputs("exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY SWAYSOCK "
+	      "XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DESKTOP\n", f);
 	fputs("exec rros-polkit-agent\nexec nm-applet --indicator\nexec blueman-applet\nexec udiskie\n", f);
 	fputs("exec wl-paste --watch cliphist store\nexec rros-first-login\n", f);
 	if (t->lock_min || t->screen_off_min || t->suspend_min) {

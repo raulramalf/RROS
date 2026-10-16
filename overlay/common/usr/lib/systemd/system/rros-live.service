@@ -1,7 +1,6 @@
 [Unit]
 Description=RROS live: inicio de sesión automático en tty1
 ConditionKernelCommandLine=boot=casper
-Conflicts=getty@tty1.service
 After=systemd-user-sessions.service
 
 [Service]

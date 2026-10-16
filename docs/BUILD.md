@@ -6,7 +6,7 @@ make WERROR=1 && make test
 ```
 Necesita `gcc` y `make`.
 
-## ISO sobre Ubuntu 24.04 (estado: sin probar)
+## ISO sobre Ubuntu 24.04 (estado: Lite construida y arrancada en QEMU; Standard y Pro sin construir)
 Requisitos (Ubuntu/Debian): `debootstrap squashfs-tools grub-pc-bin grub-efi-amd64-bin xorriso mtools qemu-system-x86 ovmf`.
 ```
 make
@@ -14,6 +14,17 @@ sudo scripts/build-rootfs-ubuntu.sh lite      # rootfs + presupuesto de disco
 sudo scripts/make-iso.sh lite                 # build/rros-lite.iso
 scripts/run-qemu.sh lite [--uefi]             # RAM acotada al perfil
 ```
+
+Herramientas de prueba y depuración (probadas con la ISO Lite):
+```
+scripts/check-packages.sh lite                # comprueba que los paquetes existen en noble
+scripts/refresh-rootfs.sh lite                # reaplica la capa RROS sobre un rootfs ya construido
+SQUASH_LEVEL=3 scripts/make-iso.sh lite       # ISO más rápida de generar (zstd nivel 3)
+scripts/test-iso.sh lite selftest             # arranca en QEMU por serie y ejecuta ~59 comprobaciones
+scripts/test-iso.sh lite screenshot           # arranca con GRUB y guarda una captura
+python3 scripts/qemu-console.py start|exec|shot|stop   # VM persistente con consola de administrador
+```
+Sin KVM (por ejemplo en contenedores) QEMU emula por software y el arranque tarda minutos; con KVM es mucho más rápido.
 
 ## Rootfs sobre Arch (estado: sin probar)
 Requiere `arch-install-scripts` en un Arch.

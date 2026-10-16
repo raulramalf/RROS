@@ -24,10 +24,21 @@ accel=()
 case "$mode" in
 	selftest)
 		log "arranque por consola serie con autotest (RAM ${ram} MB); puede tardar varios minutos sin KVM"
-		timeout "${TIMEOUT:-1500}" qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot \
+		: > "$out/serial.log"
+		qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot \
 			-kernel "$iso_dir/casper/vmlinuz" -initrd "$iso_dir/casper/initrd" \
 			-append "boot=casper quiet console=ttyS0 rros.selftest loglevel=3" \
-			-cdrom "$iso" > "$out/serial.log" 2>&1 || true
+			-cdrom "$iso" > "$out/serial.log" 2>&1 &
+		qpid=$!
+		# se corta en cuanto el autotest da su veredicto (el apagado del live puede tardar mucho sin KVM)
+		waited=0
+		while kill -0 "$qpid" 2>/dev/null && [ "$waited" -lt "${TIMEOUT:-1500}" ]; do
+			grep -aq 'RROS_SELFTEST_\(OK\|FAIL\)' "$out/serial.log" && break
+			sleep 5
+			waited=$((waited + 5))
+		done
+		kill "$qpid" 2>/dev/null || true
+		wait "$qpid" 2>/dev/null || true
 		grep -a -E '^\[(ok|FALLO)\]|=== ' "$out/serial.log" | tr -d '\r' || true
 		if grep -aq RROS_SELFTEST_OK "$out/serial.log"; then
 			log "AUTOTEST CORRECTO"

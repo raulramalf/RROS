@@ -215,6 +215,16 @@ for a in json.load(sys.stdin):
     assert a["apt"] or a["flatpak"], a["id"]
 ' <<<"$JSON" || fail "apps: catálogo incoherente"
 
+# --- instalador: la parte que no toca discos (plan y validación de argumentos) ---
+INST=$PWD/overlay/common/usr/bin/rros-install
+inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 8 --bios -p lite)
+case $inst_out in *rros-root*ext4*) ;; *) fail "rros-install plan" ;; esac
+if PATH=$B:$PATH "$INST" --user 'Mal Usuario' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un usuario no válido"; fi
+if PATH=$B:$PATH "$INST" --hostname 'a;b' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un nombre de equipo no válido"; fi
+# shellcheck disable=SC2016  # el $( ) literal es justo lo que se prueba
+if PATH=$B:$PATH "$INST" --cmdline 'x$(id)' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un --cmdline peligroso"; fi
+if PATH=$B:$PATH "$INST" --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un dispositivo que no es un disco"; fi
+
 # --- interfaces: rros-settings (TUI en un pty y servidor web local) ---
 if command -v python3 >/dev/null 2>&1; then
 	python3 tests/tui_test.py || fail "TUI"

@@ -17,7 +17,11 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 ## Probarlo
 - **Navegador:** demo del escritorio en [`preview/index.html`](preview/index.html) y de la ventana de ajustes (`scripts/build-gui-demo.sh` genera `build/gui-demo.html`).
 - **Contenedor:** `scripts/try-docker.sh lite` (identidad y herramientas).
-- **Máquina virtual:** ISO construida en GitHub Actions (workflow *ISO*). Ver [docs/TRY.md](docs/TRY.md).
+- **Máquina virtual:** ISO Lite real (`scripts/make-iso.sh lite`, ~1,4 GB) que arranca en QEMU con escritorio y aplicaciones; también se puede construir en GitHub Actions (workflow *ISO*, aún sin ejecutar allí). Ver [docs/TRY.md](docs/TRY.md).
+
+![RROS Lite arrancado en QEMU: panel, terminal, calculadora, editor y archivos](docs/img/rros-lite-escritorio.png)
+
+*Captura real de la ISO Lite arrancada en QEMU (sin KVM), tema Aurora.*
 
 ## Estado
 
@@ -31,12 +35,14 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 | `rros-apply` – aplica perfil a zram, swap, disco, red y servicios | ✅ hecha y probada (con raíz alternativa) |
 | `rros-fetch`, `rros` (`doctor`, `info`, …) | ✅ hechas y probadas |
 | Overlay de identidad (sin snap, sin telemetría, tty1 directo) | ✅ aplicado y comprobado sobre un directorio |
-| ISO: rootfs, GRUB, autologin live, QEMU | ⚠️ escrita, **sin ejecutar** |
-| Kernel por perfil, SwayFX, instalador real, repositorio propio, móvil | ⏳ pendiente |
+| ISO Lite: rootfs Ubuntu 24.04, GRUB, casper live, autotest | ✅ construida y arrancada en QEMU (BIOS, sin KVM): autotest de arranque, escritorio con panel y apps (captura arriba) |
+| Aplicaciones incluidas (navegador, archivos, editor, visores, multimedia, red, Bluetooth, USB, bloqueo, energía) y tienda `rros-apps` | ✅ paquetes verificados contra Ubuntu noble; probadas las que se abrieron en la VM (terminal, calculadora, editor, archivos); el resto, sin abrir aún |
+| `rros-install` – instalador de texto a disco (BIOS, Lite/ext4) | ✅ probado en QEMU: instala, arranca desde el disco, login y escritorio |
+| Instalación en UEFI y btrfs (Standard/Pro), instalador gráfico, hardware real, kernel por perfil, SwayFX, repositorio propio, móvil | ⏳ pendiente / sin probar |
 
 La GUI es una aplicación web local: necesita un navegador (Standard y Pro lo incluyen; Lite usa la TUI). No hay todavía una ventana con toolkit nativo (GTK/Qt).
 
-Las medidas de tamaño y RAM de la ISO aún no existen: los presupuestos son objetivos, no resultados. Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
+Medido en la ISO Lite: sistema de archivos 2,3 GB (límite 6) y, con el escritorio y cuatro apps abiertas en la VM, ~370 MB de RAM usada (límite 512 MB). Standard y Pro aún no se han construido ni medido; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
 
 ## Uso rápido
 

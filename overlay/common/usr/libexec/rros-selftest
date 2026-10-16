@@ -37,6 +37,11 @@ check "zram como swap" sh -c 'swapon --show | grep -q zram'
 check "sin telemetría (apport/whoopsie)" sh -c '! systemctl is-enabled --quiet apport 2>/dev/null'
 
 check "rros doctor (usuario)" as_user "rros doctor"
+for tool in rros-install rros-installer sfdisk mkfs.ext4 mkfs.vfat grub-install efibootmgr tar; do
+	check "instalador: $tool" has "$tool"
+done
+check "red: el cable lo gestiona NetworkManager" sh -c '! nmcli -t dev status | grep -q ":ethernet:unmanaged"'
+check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'
 # shellcheck disable=SC2016
 check "catálogo de apps (54)" sh -c 'test "$(rros-apps list | wc -l)" -ge 50'
 check "rros-theme apply (usuario)" as_user "rros-theme apply --quiet"

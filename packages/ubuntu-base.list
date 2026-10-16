@@ -16,6 +16,8 @@ grub-efi-amd64-signed
 shim-signed
 grub-pc-bin
 systemd-zram-generator
+dosfstools              # formatear la partición EFI (rros-install)
+efibootmgr              # entrada de arranque UEFI (rros-install)
 
 # --- red ---
 network-manager
@@ -39,6 +41,7 @@ nano
 less
 pciutils
 usbutils
+kbd                     # teclado de la consola (loadkeys; systemd lo usa con /etc/vconsole.conf)
 xdg-user-dirs
 xdg-utils
 

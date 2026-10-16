@@ -1,0 +1,261 @@
+#!/bin/bash
+# rros-install: instala RROS en un disco desde el sistema live (modo texto).
+#   rros-install                       asistente: elige disco, usuario y contraseña
+#   rros-install --disk /dev/vda --user ana --hostname rros --password-file F --yes
+#   rros-install --disk /dev/vda --dry-run     muestra lo que haría sin tocar el disco
+# Borra TODO el disco elegido. El esquema de particiones lo calcula `rros-installer plan`.
+set -euo pipefail
+
+usage() {
+	cat <<'EOF'
+uso: rros-install [opciones]
+  --disk DISCO          disco destino, p. ej. /dev/vda (se borra entero)
+  --user NOMBRE         usuario a crear (por defecto: rros)
+  --hostname NOMBRE     nombre del equipo (por defecto: rros)
+  --password-file RUTA  primera línea = contraseña del usuario (si falta, se pregunta)
+  --profile PERFIL      lite, standard o pro (por defecto: el perfil activo)
+  --bios | --uefi       firmware de arranque (por defecto: el del equipo actual)
+  --keymap NOMBRE       teclado, en consola y en el escritorio (por defecto: es)
+  --timezone ZONA       zona horaria, p. ej. Europe/Madrid (por defecto: UTC)
+  --cmdline TEXTO       parámetros extra del kernel (p. ej. "console=ttyS0")
+  --source DIR          sistema a copiar (por defecto: el sistema de archivos de la ISO)
+  --dry-run             solo muestra el plan
+  --yes                 no pide confirmación (para scripts)
+Sin argumentos se ejecuta como asistente. Ejemplo no interactivo:
+  echo 'mi-clave' > /tmp/pw && rros-install --disk /dev/vda --user ana --password-file /tmp/pw --yes
+EOF
+}
+
+# `rros install plan ...` sigue siendo el cálculo de particiones, que no toca ningún disco
+if [ "${1:-}" = plan ]; then
+	shift
+	exec rros-installer plan "$@"
+fi
+
+die() { echo "rros-install: $*" >&2; exit 1; }
+log() { echo "==> $*"; }
+
+disk="" user=rros host=rros pwfile="" profile="" fw="" extra="" src="" keymap=es tz=Etc/UTC dry=0 yes=0
+while [ $# -gt 0 ]; do
+	case $1 in
+	--disk) disk=${2:?falta el disco}; shift 2 ;;
+	--user) user=${2:?falta el usuario}; shift 2 ;;
+	--hostname) host=${2:?falta el nombre del equipo}; shift 2 ;;
+	--password-file) pwfile=${2:?falta la ruta}; shift 2 ;;
+	--profile) profile=${2:?falta el perfil}; shift 2 ;;
+	--bios) fw=bios; shift ;;
+	--uefi) fw=uefi; shift ;;
+	--keymap) keymap=${2:?falta el teclado}; shift 2 ;;
+	--timezone) tz=${2:?falta la zona horaria}; shift 2 ;;
+	--cmdline) extra=${2:-}; shift 2 ;;
+	--source) src=${2:?falta el directorio}; shift 2 ;;
+	--dry-run) dry=1; shift ;;
+	--yes) yes=1; shift ;;
+	-h | --help) usage; exit 0 ;;
+	*) usage >&2; exit 2 ;;
+	esac
+done
+
+[ "$(id -u)" -eq 0 ] || { [ "$dry" -eq 1 ] || exec sudo "$0" "$@"; }
+
+# nombres válidos: evitan que un valor escrito a mano acabe en una orden o en un archivo
+echo "$user" | grep -Eq '^[a-z_][a-z0-9_-]{0,30}$' || die "usuario no válido (minúsculas, cifras, - y _)"
+echo "$host" | grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' || die "nombre de equipo no válido"
+echo "$extra" | grep -Eq '^[A-Za-z0-9_=,.: /-]*$' || die "--cmdline contiene caracteres no permitidos"
+echo "$keymap" | grep -Eq '^[a-z0-9_-]{2,20}$' || die "teclado no válido"
+echo "$tz" | grep -Eq '^[A-Za-z0-9_+/-]{1,40}$' || die "zona horaria no válida"
+case $tz in *..*) die "zona horaria no válida" ;; esac
+tmpconf=$(mktemp)
+RROS_USER_CONF=$tmpconf rros-config set input.keymap "$keymap" >/dev/null 2>&1 || { rm -f "$tmpconf"; die "teclado no aceptado: $keymap"; }
+rm -f "$tmpconf"
+[ -z "$profile" ] || echo "$profile" | grep -Eq '^[a-z0-9_-]+$' || die "perfil no válido"
+
+# --- disco ---
+live_dev=""
+for m in /cdrom /run/live/medium; do
+	if [ -z "$live_dev" ]; then live_dev=$(findmnt -no SOURCE "$m" 2>/dev/null | head -1 || true); fi
+done
+live_disk=""
+[ -n "$live_dev" ] && live_disk=$(lsblk -no PKNAME "$live_dev" 2>/dev/null | head -1 || true)
+list_disks() {
+	lsblk -dnpo NAME,SIZE,MODEL,TYPE | awk '$NF=="disk"' | while read -r line; do
+		name=${line%% *}
+		[ "$name" = "/dev/${live_disk:-none}" ] && continue
+		echo "  $line"
+	done
+}
+if [ -z "$disk" ]; then
+	[ -t 0 ] || die "falta --disk (no hay terminal para preguntar)"
+	echo "Discos disponibles (se borrará por completo el que elijas):"
+	list_disks
+	read -r -p "Disco destino (por ejemplo /dev/vda): " disk
+fi
+[ -b "$disk" ] || die "$disk no es un disco"
+[ "$(lsblk -dno TYPE "$disk")" = disk ] || die "$disk no es un disco entero"
+[ "$disk" != "/dev/${live_disk:-none}" ] || die "$disk contiene el sistema live"
+if lsblk -no MOUNTPOINT "$disk" | grep -q .; then die "$disk tiene particiones montadas"; fi
+disk_bytes=$(lsblk -bdno SIZE "$disk")
+disk_gb=$((disk_bytes / 1024 / 1024 / 1024))
+
+if [ -z "$fw" ]; then
+	if [ -d /sys/firmware/efi ]; then fw=uefi; else fw=bios; fi
+fi
+[ -n "$profile" ] || profile=$(rros-config profile 2>/dev/null || echo lite)
+plan_args=(--disk-gb "$disk_gb" "--$fw" -p "$profile")
+
+echo "Instalación de RROS"
+echo "  disco:    $disk (${disk_gb} GiB)   firmware: $fw   perfil: $profile"
+echo "  usuario:  $user   equipo: $host   teclado: $keymap   zona horaria: $tz"
+rros-installer plan "${plan_args[@]}" || die "el disco no sirve para este perfil"
+if [ "$dry" -eq 1 ]; then
+	echo "(simulación: no se ha tocado el disco)"
+	exit 0
+fi
+
+# --- contraseña ---
+password=""
+if [ -n "$pwfile" ]; then
+	[ -r "$pwfile" ] || die "no puedo leer $pwfile"
+	IFS= read -r password < "$pwfile" || true
+else
+	[ -t 0 ] || die "falta --password-file (no hay terminal para preguntar)"
+	read -r -s -p "Contraseña para $user: " password; echo
+	read -r -s -p "Repítela: " again; echo
+	[ "$password" = "$again" ] || die "las contraseñas no coinciden"
+fi
+[ -n "$password" ] || die "la contraseña no puede estar vacía"
+
+if [ "$yes" -ne 1 ]; then
+	[ -t 0 ] || die "falta --yes (no hay terminal para confirmar)"
+	echo
+	echo "ATENCIÓN: se borrará todo el contenido de $disk."
+	read -r -p "Escribe la ruta del disco para confirmar: " conf
+	[ "$conf" = "$disk" ] || die "cancelado"
+fi
+
+# --- origen: el sistema de archivos comprimido de la ISO (limpio, sin cambios de la sesión live) ---
+if [ -z "$src" ]; then
+	for c in /rofs /run/live/rootfs/filesystem.squashfs; do
+		if [ -d "$c/etc" ]; then src=$c; break; fi
+	done
+fi
+[ -d "$src/etc" ] || die "no encuentro el sistema a copiar (usa --source DIR)"
+[ -e "$src/usr/share/zoneinfo/$tz" ] || die "zona horaria desconocida: $tz"
+
+target=$(mktemp -d /tmp/rros-target.XXXXXX)
+cleanup() {
+	set +e
+	for m in run sys/firmware/efi/efivars sys proc dev/pts dev; do
+		mountpoint -q "$target/$m" && umount "$target/$m"
+	done
+	mountpoint -q "$target/boot/efi" && umount "$target/boot/efi"
+	mountpoint -q "$target" && umount "$target"
+	rmdir "$target" 2>/dev/null
+}
+trap cleanup EXIT
+
+# --- particiones y sistemas de archivos ---
+part() { case $disk in *[0-9]) echo "${disk}p$1" ;; *) echo "${disk}$1" ;; esac; }
+log "particionando $disk"
+wipefs -a "$disk" >/dev/null
+rros-installer plan "${plan_args[@]}" --sfdisk | sfdisk --wipe always --quiet "$disk"
+udevadm settle 2>/dev/null || true
+partprobe "$disk" 2>/dev/null || true
+udevadm settle 2>/dev/null || true
+if [ "$fw" = uefi ]; then esp=$(part 1); root=$(part 2); else root=$(part 2); fi
+[ -b "$root" ] || die "no aparece la partición $root"
+
+rootfs=ext4
+[ "$profile" = lite ] || rootfs=btrfs
+command -v "mkfs.$rootfs" >/dev/null || die "falta mkfs.$rootfs en este sistema"
+log "formateando ($rootfs)"
+case $rootfs in
+ext4) mkfs.ext4 -q -F -L rros-root "$root"; mopts=defaults,noatime ;;
+btrfs) mkfs.btrfs -q -f -L rros-root "$root"; mopts=defaults,noatime,compress=zstd:3 ;;
+*) die "sistema de archivos no soportado" ;;
+esac
+if [ "$fw" = uefi ]; then
+	command -v mkfs.vfat >/dev/null || die "falta mkfs.vfat (dosfstools)"
+	mkfs.vfat -F 32 -n ESP "$esp" >/dev/null
+fi
+mount -o "$mopts" "$root" "$target"
+if [ "$fw" = uefi ]; then
+	mkdir -p "$target/boot/efi"
+	mount "$esp" "$target/boot/efi"
+fi
+
+# --- copia ---
+log "copiando el sistema (puede tardar unos minutos)"
+tar -C "$src" --numeric-owner --xattrs --acls -cf - \
+	--exclude=./proc/* --exclude=./sys/* --exclude=./dev/* --exclude=./run/* --exclude=./tmp/* . |
+	tar -C "$target" --numeric-owner --xattrs --acls -xpf -
+mkdir -p "$target"/{proc,sys,dev,run,tmp}
+chmod 1777 "$target/tmp"
+
+# --- configuración del equipo ---
+log "configurando"
+echo "$host" > "$target/etc/hostname"
+{
+	echo "127.0.0.1 localhost"
+	echo "127.0.1.1 $host"
+	echo "::1 localhost ip6-localhost ip6-loopback"
+} > "$target/etc/hosts"
+root_uuid=$(blkid -s UUID -o value "$root")
+{
+	echo "# /etc/fstab - generado por rros-install"
+	echo "UUID=$root_uuid / $rootfs $mopts 0 1"
+	if [ "$fw" = uefi ]; then
+		echo "UUID=$(blkid -s UUID -o value "$esp") /boot/efi vfat umask=0077 0 2"
+	fi
+} > "$target/etc/fstab"
+: > "$target/etc/machine-id"
+rm -f "$target/var/lib/dbus/machine-id"
+
+for m in dev dev/pts proc sys run; do mount --bind "/$m" "$target/$m"; done
+if [ "$fw" = uefi ] && [ -d /sys/firmware/efi/efivars ]; then
+	mount --bind /sys/firmware/efi/efivars "$target/sys/firmware/efi/efivars" 2>/dev/null || true
+fi
+in_target() { chroot "$target" "$@"; }
+
+# usuario con los grupos habituales de un escritorio (solo los que existen)
+groups=""
+for g in sudo adm audio video input netdev plugdev render cdrom bluetooth lpadmin dialout; do
+	if grep -q "^$g:" "$target/etc/group"; then groups="$groups,$g"; fi
+done
+in_target useradd -m -s /bin/bash -G "${groups#,}" "$user"
+printf '%s:%s\n' "$user" "$password" | in_target chpasswd
+in_target passwd -l root >/dev/null 2>&1 || true
+password=""
+
+# teclado (consola y escritorio) y zona horaria
+printf 'KEYMAP=%s\n' "$keymap" > "$target/etc/vconsole.conf"
+in_target su - "$user" -c "rros-config set input.keymap '$keymap'" >/dev/null
+ln -sf "/usr/share/zoneinfo/$tz" "$target/etc/localtime"
+echo "$tz" > "$target/etc/timezone"
+
+# --- gestor de arranque ---
+log "instalando GRUB ($fw)"
+# la identidad de GRUB (nombre, colores y parámetros base) vive en /etc/default/grub.d/rros.cfg, que se lee
+# después de /etc/default/grub; los parámetros extra van en un archivo posterior para que no se pierdan
+cat > "$target/etc/default/grub" <<'EOF'
+# Edita y ejecuta: sudo update-grub (los valores de RROS están en /etc/default/grub.d/)
+GRUB_DEFAULT=0
+GRUB_DISABLE_RECOVERY=true
+EOF
+if [ -n "$extra" ]; then
+	mkdir -p "$target/etc/default/grub.d"
+	# shellcheck disable=SC2016  # la variable debe expandirla GRUB al leer el archivo, no esta orden
+	printf 'GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT %s"\n' "$extra" > "$target/etc/default/grub.d/zz-rros-install.cfg"
+fi
+if [ "$fw" = uefi ]; then
+	in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=RROS --recheck ||
+		echo "aviso: no se pudo registrar la entrada en la NVRAM; se usa la ruta de arranque por defecto"
+	in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable --recheck
+else
+	in_target grub-install --target=i386-pc --recheck "$disk"
+fi
+in_target update-grub
+
+sync
+log "listo: RROS instalado en $disk. Apaga, quita la ISO y arranca desde el disco."
+echo "Usuario: $user   (se inicia sesión en tty1 y el escritorio arranca solo)"

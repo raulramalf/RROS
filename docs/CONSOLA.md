@@ -36,6 +36,7 @@ rros config set ui.accent '#22d3ee'
 | `rros budget` | Comprueba el presupuesto de memoria y disco |
 | `rros hw` | Hardware detectado y perfil recomendado |
 | `rros install plan` | Calcula las particiones (no toca ningún disco) |
+| `rros install` | Instala RROS en un disco desde el sistema live (borra el disco elegido; `--dry-run` solo simula) |
 
 ---
 

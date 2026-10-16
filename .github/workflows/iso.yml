@@ -26,6 +26,17 @@ jobs:
         run: sudo scripts/build-rootfs-ubuntu.sh "${{ inputs.profile }}"
       - name: ISO
         run: sudo scripts/make-iso.sh "${{ inputs.profile }}"
+      - name: Autotest de arranque en QEMU
+        run: |
+          sudo apt-get install -y qemu-system-x86
+          sudo chmod a+rw /dev/kvm || true
+          scripts/test-iso.sh "${{ inputs.profile }}" selftest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rros-${{ inputs.profile }}-selftest-log
+          path: build/test-${{ inputs.profile }}/serial.log
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: rros-${{ inputs.profile }}-iso

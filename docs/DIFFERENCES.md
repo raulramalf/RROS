@@ -19,7 +19,7 @@ RROS usa el kernel Linux y paquetes de Ubuntu 24.04 como base. Lo que lo disting
 | Identidad | `ID=ubuntu` | `ID=rros`, tema Aurora, banner, prompt y GRUB propios |
 
 ## Igual que Ubuntu (de momento)
-Kernel base, `apt` y los repositorios, systemd, NetworkManager, PipeWire, y el instalador (aún no hay `rros-installer` real). El kernel propio recortado por perfil está definido pero sin compilar.
+Kernel base, `apt` y los repositorios, systemd, NetworkManager, PipeWire, y los programas (navegador, archivos, editor…) que son los de siempre del escritorio Linux. El kernel propio recortado por perfil está definido pero sin compilar.
 
 ## Qué falta para que el cambio se note más
-Interfaz gráfica de ajustes, instalador propio, repositorio de paquetes de RROS, aplicar al sistema el resto de claves (audio, energía, arranque) y paquete de SwayFX para el compositor *full*.
+Instalador gráfico (hoy es de texto), UEFI y hardware real probados, repositorio de paquetes de RROS, aplicar al sistema el resto de claves (audio, energía, arranque) y paquete de SwayFX para el compositor *full*.

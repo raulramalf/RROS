@@ -2,13 +2,16 @@
 """Mantiene encendida una VM de RROS (con consola serie de administrador) para depurar sin reiniciar.
 
   qemu-console.py start            arranca la VM en segundo plano (tarda varios minutos sin KVM)
+  qemu-console.py start --disk F   además conecta el disco virtual F (qcow2; se crea de DISK_GB GB si no existe)
+  qemu-console.py start --boot-disk  arranca del disco F (sistema instalado) en vez de la ISO; requiere --disk
+  (UEFI=1 usa el firmware OVMF; el disco debe instalarse con --uefi y arrancarse con UEFI=1)
   qemu-console.py exec 'orden'     ejecuta una orden como root dentro de la VM y muestra la salida
   qemu-console.py shot ARCHIVO     captura la pantalla gráfica en un PNG
   qemu-console.py stop             apaga la VM
 
-Variables: PROFILE (lite), RAM_MB (2048), OUT (build/vm-<perfil>)
+Variables: PROFILE (lite), RAM_MB (2048), OUT (build/vm-<perfil>), DISK_GB (10), UEFI (0)
 """
-import os, select, signal, socket, subprocess, sys, time
+import os, select, shutil, signal, socket, subprocess, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROFILE = os.environ.get("PROFILE", "lite")
@@ -16,17 +19,34 @@ OUT = os.environ.get("OUT", os.path.join(ROOT, "build", "vm-" + PROFILE))
 SERIAL, MONITOR, PIDFILE = (os.path.join(OUT, n) for n in ("serial.sock", "monitor.sock", "qemu.pid"))
 
 
-def start():
+def start(args):
     os.makedirs(OUT, exist_ok=True)
     for f in (SERIAL, MONITOR):
         if os.path.exists(f):
             os.remove(f)
+    disk = args[args.index("--disk") + 1] if "--disk" in args else None
+    boot_disk = "--boot-disk" in args
+    if boot_disk and not disk:
+        sys.exit("--boot-disk requiere --disk")
+    if disk and not os.path.exists(disk):
+        subprocess.check_call(["qemu-img", "create", "-q", "-f", "qcow2", disk, "%sG" % os.environ.get("DISK_GB", "10")])
     iso_dir = os.path.join(ROOT, "build", "iso-" + PROFILE)
     cmd = ["qemu-system-x86_64", "-m", os.environ.get("RAM_MB", "2048"), "-smp", "2", "-display", "none", "-vga", "std", "-no-reboot",
-           "-serial", "unix:%s,server,nowait" % SERIAL, "-monitor", "unix:%s,server,nowait" % MONITOR,
-           "-kernel", os.path.join(iso_dir, "casper", "vmlinuz"), "-initrd", os.path.join(iso_dir, "casper", "initrd"),
-           "-append", "boot=casper quiet console=tty0 console=ttyS0 rros.serialshell",
-           "-cdrom", os.path.join(ROOT, "build", "rros-%s.iso" % PROFILE)]
+           "-serial", "unix:%s,server,nowait" % SERIAL, "-monitor", "unix:%s,server,nowait" % MONITOR]
+    if os.environ.get("UEFI") == "1":
+        code = "/usr/share/OVMF/OVMF_CODE_4M.fd"
+        vars_ = os.path.join(OUT, "OVMF_VARS.fd")
+        if not os.path.exists(vars_):
+            shutil.copy("/usr/share/OVMF/OVMF_VARS_4M.fd", vars_)
+        cmd += ["-drive", "if=pflash,format=raw,readonly=on,file=" + code, "-drive", "if=pflash,format=raw,file=" + vars_]
+    if disk:
+        cmd += ["-drive", "file=%s,if=virtio,format=qcow2" % disk]
+    if boot_disk:
+        cmd += ["-boot", "c"]
+    else:
+        cmd += ["-kernel", os.path.join(iso_dir, "casper", "vmlinuz"), "-initrd", os.path.join(iso_dir, "casper", "initrd"),
+                "-append", "boot=casper quiet console=tty0 console=ttyS0 rros.serialshell",
+                "-cdrom", os.path.join(ROOT, "build", "rros-%s.iso" % PROFILE)]
     p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
     open(PIDFILE, "w").write(str(p.pid))
     print("VM arrancada (pid %d). Usa `exec` cuando haya pasado un rato." % p.pid)
@@ -74,7 +94,7 @@ def main():
         sys.exit(__doc__)
     c = sys.argv[1]
     if c == "start":
-        start()
+        start(sys.argv[2:])
     elif c == "exec":
         print(run(" ".join(sys.argv[2:])))
     elif c == "shot":

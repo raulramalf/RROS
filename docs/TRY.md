@@ -25,7 +25,7 @@ scripts/try-docker.sh lite     # o standard, pro
 Abre una consola con la identidad de RROS, el prompt, el banner (`rros-fetch`), `rros doctor` y todas las herramientas en C compiladas. No arranca escritorio ni kernel.
 
 ## 3. ISO en una máquina virtual (el sistema completo)
-Estado: los scripts están escritos pero **no se han ejecutado todavía**. El primer arranque probablemente necesite ajustes.
+Estado: la ISO **Lite** se ha construido y arrancado en QEMU (BIOS, sin KVM): pasa el autotest de arranque y llega a un escritorio con panel, terminal, archivos, editor y calculadora. Standard y Pro no se han construido, y UEFI y hardware real no se han probado.
 
 **Sin tocar tu PC:** en GitHub, pestaña *Actions*, workflow **ISO**, *Run workflow*, elige el perfil. Al terminar, descarga el artefacto `rros-<perfil>-iso`.
 
@@ -37,6 +37,17 @@ scripts/run-qemu.sh lite            # BIOS
 scripts/run-qemu.sh lite --uefi     # UEFI (requiere OVMF)
 ```
 En VirtualBox o GNOME Boxes: tipo Linux/Ubuntu 64 bits, la RAM del perfil (Lite 1 GB, Standard 4 GB, Pro 8 GB), activa EFI si quieres y monta la ISO. El sistema live entra solo con el usuario `rros` en tty1 y arranca el escritorio.
+
+## 4. Instalarlo en un disco
+Desde el sistema live (la ISO), `rros-install` instala RROS en un disco: lo particiona según el perfil (`rros-installer plan`), formatea, copia el sistema, crea tu usuario, configura teclado y zona horaria e instala GRUB.
+```
+rros install --disk /dev/vda --dry-run              # solo muestra lo que haría
+rros install                                         # asistente: pregunta disco, usuario y contraseña
+rros install --disk /dev/vda --user ana --hostname mi-pc --keymap es --timezone Europe/Madrid \
+             --password-file /tmp/pw --yes          # sin preguntas (para scripts)
+```
+Borra **todo** el disco elegido y pide escribir su ruta para confirmar (salvo con `--yes`). No ofrece cifrado ni particiones a mano todavía.
+Estado: probado en QEMU con BIOS y un disco virtual de 10 GB (perfil Lite, ext4): el sistema instalado arranca desde el disco, pide usuario y contraseña en tty1 y arranca el escritorio con la red por cable. **UEFI y btrfs (Standard/Pro) están escritos pero no probados.**
 
 ## Qué mirar al arrancar
 - `rros-fetch` y `rros doctor`: identidad, perfil y presupuesto.

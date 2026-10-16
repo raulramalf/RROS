@@ -15,7 +15,8 @@ Escribir un kernel propio supone años de trabajo en drivers (Intel, AMD, NVIDIA
 | **rros-budget** | **C, propio.** Mide disco/RAM frente al presupuesto del perfil (CI) |
 | **rros-theme** | **C, propio.** 7 temas más los del usuario; genera sway, waybar, foot, mako, fuzzel y GTK |
 | **rros-settings** | **C, propio.** Interfaz de ajustes: servidor web local con token (GUI en `gui/`) y TUI |
-| **rros-installer** | **C, propio.** Hoy solo calcula el plan de particiones (no escribe en disco) |
+| **rros-installer** | **C, propio.** Calcula el plan de particiones (no escribe en disco) |
+| **rros-install** | **Shell, propio.** Instalador de texto: usa el plan, formatea, copia el sistema live, crea el usuario e instala GRUB (probado en QEMU con BIOS) |
 
 ## Presupuesto de recursos
 - Disco: imagen base ≤ 6 GB, perfil Pro completo ≤ 20 GB.

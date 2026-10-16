@@ -9,7 +9,9 @@ profile=${2:?uso: $0 RAIZ PERFIL}
 check_profile "$profile"
 version=$(sed -n 's/^#define RROS_VERSION "\(.*\)"/\1/p' "$ROOT_DIR/src/lib/rros_version.h")
 codename=$(sed -n 's/^#define RROS_CODENAME "\(.*\)"/\1/p' "$ROOT_DIR/src/lib/rros_version.h")
-[ -n "$version" ] && [ -n "$codename" ] || die "no se pudo leer la versión"
+if [ -z "$version" ] || [ -z "$codename" ]; then
+	die "no se pudo leer la versión"
+fi
 home=https://github.com/raulramalf/RROS
 
 mkdir -p "${root:?}/etc"

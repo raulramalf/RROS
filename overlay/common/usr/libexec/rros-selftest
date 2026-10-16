@@ -47,6 +47,9 @@ check "cortafuegos: tabla inet rros con política drop" sh -c 'nft list table in
 check "cortafuegos: nftables arranca con el sistema" systemctl is-enabled --quiet nftables
 check "kernel endurecido (kptr_restrict = 2)" test "$(sysctl -n kernel.kptr_restrict 2>/dev/null)" = 2
 check "kernel endurecido (protected_regular = 2)" test "$(sysctl -n fs.protected_regular 2>/dev/null)" = 2
+# el aislamiento que usan Epiphany (WebKit) y Flatpak: crear un espacio de nombres como usuario
+check "aislamiento de aplicaciones (bwrap) como usuario" as_user "bwrap --ro-bind / / --dev /dev --proc /proc true"
+check "perfiles de AppArmor de Epiphany y Flatpak presentes" test -f /etc/apparmor.d/epiphany -a -f /etc/apparmor.d/flatpak
 check "AppArmor activo" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
 check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/common-auth
 # (el archivo que crea casper en el live tiene permisos 0644 y visudo -c lo marca; sudo lo acepta)

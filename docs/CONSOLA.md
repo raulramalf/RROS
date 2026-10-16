@@ -37,6 +37,9 @@ rros config set ui.accent '#22d3ee'
 | `rros hw` | Hardware detectado y perfil recomendado |
 | `rros install plan` | Calcula las particiones (no toca ningún disco) |
 | `rros install` | Instala RROS en un disco desde el sistema live (borra el disco elegido; `--dry-run` solo simula) |
+| `rros seguridad` | Auditoría de seguridad con puntuación; niveles y cortafuegos (`rros-security`) |
+| `rros dispositivos` | Discos, USB, red, radios, sonido, pantallas, batería; montar y expulsar (`rros-devices`) |
+| `rros nuevo` | Crear archivos y proyectos desde plantillas (`rros-new`) |
 
 ---
 
@@ -324,7 +327,45 @@ Así tus comandos conviven con los de RROS y aparecen con el mismo estilo.
 
 ---
 
-## 12. Perfiles y variables de entorno
+## 12. Seguridad, dispositivos y archivos nuevos
+
+### Seguridad
+```sh
+rros seguridad                       # puntuación y qué arreglar (cada punto dice la orden exacta)
+rros seguridad niveles               # basico, estandar (por defecto) y estricto
+sudo rros seguridad nivel estricto   # sin memorias USB ni cámara, sin ping ni SSH...
+sudo rros seguridad abrir 8080/tcp   # deja pasar conexiones a ese puerto
+sudo rros seguridad cerrar 8080/tcp
+```
+Las directivas son claves `security.*` del **sistema**: se guardan en `/etc/rros/rros.toml` con `--system` y las aplica `rros-apply` como root. Más en [SEGURIDAD.md](SEGURIDAD.md).
+```sh
+sudo rros config set --system security.login_attempts 5 && sudo rros apply --services
+```
+
+### Dispositivos
+```sh
+rros dispositivos                    # todo, agrupado
+rros dispositivos lista disco        # solo discos y memorias (también: usb red radio sonido pantalla energia entrada camara tarjeta)
+rros dispositivos montar sdb1        # monta una memoria USB (sin sudo: lo autoriza udisks)
+rros dispositivos expulsar sdb       # desmonta todo y apaga la memoria: ya se puede quitar
+rros dispositivos radio wifi off     # apaga el Wi-Fi (bluetooth, todo; on para encender)
+```
+Los discos del sistema (`/`, `/boot`...) nunca se desmontan desde aquí.
+
+### Crear archivos
+```sh
+rros nuevo                           # asistente: elige plantilla, nombre y carpeta
+rros nuevo lista                     # plantillas de RROS y las tuyas
+rros nuevo bash copia-seguridad      # copia-seguridad.sh, ya ejecutable
+rros nuevo web index --dir ~/web     # ~/web/index.html
+rros nuevo proyecto-c hola           # carpeta hola/ con main.c y Makefile: cd hola && make && ./hola
+rros nuevo lanzador "Mi radio"       # acceso directo en el menú de aplicaciones
+```
+Cualquier archivo que guardes en `~/Plantillas` se convierte en plantilla: aparece en `rros nuevo lista` y en el menú «Crear documento» del gestor de archivos (botón derecho). Nunca se pisa un archivo existente salvo con `--force`.
+
+---
+
+## 13. Perfiles y variables de entorno
 
 Casi todos los comandos aceptan `-p PERFIL` para consultar otro perfil sin cambiar el activo:
 
@@ -342,6 +383,8 @@ Para pruebas y scripts puedes redirigir dónde lee y escribe RROS:
 | `RROS_PROFILE_DIR` | Dónde están los perfiles |
 | `RROS_PROFILE_FILE` | Qué archivo dice cuál es el perfil activo (`/etc/rros/profile`) |
 | `RROS_THEMES_DIR` | Tu carpeta de temas |
+| `RROS_TEMPLATES_DIR` | Plantillas de `rros nuevo` (por defecto `/usr/share/rros/templates`) |
+| `RROS_ROOT` | `rros seguridad` y `rros dispositivos` leen `/sys`, `/proc` y `/etc` bajo esta carpeta (pruebas) |
 | `XDG_CONFIG_HOME` | Dónde se escriben `sway`, `waybar`, `foot`... |
 | `NO_COLOR` | Si existe, `rros info` y `rros doctor` no usan colores |
 
@@ -355,7 +398,7 @@ rros config get ui.gap                                      # tu valor real, int
 
 ---
 
-## 13. Chuleta
+## 14. Chuleta
 
 | Quiero... | Escribo |
 |---|---|
@@ -376,3 +419,11 @@ rros config get ui.gap                                      # tu valor real, int
 | Ajustes con ventana | `rros settings` (o `Mod+,`) |
 | Ajustes en la terminal | `rros settings tui` |
 | Buscar un ajuste | `rros config schema \| grep palabra` |
+| ¿Estoy protegido? | `rros seguridad` |
+| Máxima seguridad | `sudo rros seguridad nivel estricto` |
+| Abrir un puerto | `sudo rros seguridad abrir 8080/tcp` |
+| Ver mis dispositivos | `rros dispositivos` |
+| Quitar una memoria USB | `rros dispositivos expulsar sdb` |
+| Apagar el Wi-Fi | `rros dispositivos radio wifi off` |
+| Crear un script | `rros nuevo bash nombre` |
+| Empezar un proyecto | `rros nuevo proyecto-python nombre` |

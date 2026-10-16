@@ -22,7 +22,8 @@ check "kernel $(uname -r)" test -n "$(uname -r)"
 
 for app in sway waybar foot fuzzel mako epiphany thunar mousepad evince mpv file-roller galculator btop flatpak \
            calamares swaylock swayidle nm-applet blueman-applet udiskie pavucontrol grim slurp cliphist wdisplays \
-           rros rros-config rros-theme rros-apps rros-settings rros-apply; do
+           rros rros-config rros-theme rros-apps rros-settings rros-apply rros-security rros-devices rros-new \
+           nft rfkill unattended-upgrade apparmor_parser udisksctl xdg-user-dir; do
 	check "programa: $app" has "$app"
 done
 for desk in org.gnome.Epiphany thunar org.xfce.mousepad org.gnome.Evince mpv org.gnome.FileRoller galculator imv calamares; do
@@ -41,6 +42,22 @@ for tool in rros-install rros-installer sfdisk mkfs.ext4 mkfs.vfat grub-install 
 	check "instalador: $tool" has "$tool"
 done
 check "red: el cable lo gestiona NetworkManager" sh -c '! nmcli -t dev status | grep -q ":ethernet:unmanaged"'
+# seguridad (la aplica rros-apply al arrancar)
+check "cortafuegos: tabla inet rros con política drop" sh -c 'nft list table inet rros | grep -q "policy drop"'
+check "cortafuegos: nftables arranca con el sistema" systemctl is-enabled --quiet nftables
+check "kernel endurecido (kptr_restrict = 2)" test "$(sysctl -n kernel.kptr_restrict 2>/dev/null)" = 2
+check "kernel endurecido (protected_regular = 2)" test "$(sysctl -n fs.protected_regular 2>/dev/null)" = 2
+check "AppArmor activo" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
+check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/common-auth
+check "sudo: configuración válida" visudo -cq
+check "actualizaciones de seguridad automáticas" grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
+# shellcheck disable=SC2016
+check "rros-security: auditoría" sh -c 'rros-security --json | grep -q "\"score\""'
+# dispositivos y archivos
+# shellcheck disable=SC2016
+check "rros-devices: ve la tarjeta de red" sh -c 'rros-devices lista red --json | grep -q "\"cat\":\"red\""'
+check "rros-new: crea un script ejecutable" as_user "cd /tmp && rm -f rros-selftest.sh && rros-new bash rros-selftest >/dev/null && test -x /tmp/rros-selftest.sh"
+check "primer inicio: carpetas en español y plantillas" as_user "rros-first-login; test -d ~/Documentos && test -f ~/Plantillas/'Script de Bash.sh'"
 check "teclado de la consola: rros-vconsole activo" systemctl is-active --quiet rros-vconsole
 check "blueman-mechanism no arranca en el boot (solo por D-Bus)" sh -c '! systemctl is-enabled --quiet blueman-mechanism'
 check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'

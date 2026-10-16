@@ -51,6 +51,8 @@ chroot "$out" systemctl enable rros-firstboot.service rros-apply.service rros-li
 chroot "$out" systemctl mask casper-md5check.service || true
 # blueman-mechanism se activa por D-Bus cuando hace falta; arrancarlo en el boot solo añade RAM y, en máquinas lentas, un fallo
 chroot "$out" systemctl disable blueman-mechanism.service || true
+# cortafuegos desde el primer arranque (rros-apply genera /etc/nftables.conf)
+chroot "$out" systemctl enable nftables.service || true
 chroot "$out" systemctl mask snapd.service snapd.socket apport.service whoopsie.service motd-news.timer ua-timer.timer 2>/dev/null || true
 
 log "limpieza"

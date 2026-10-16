@@ -11,7 +11,7 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 | RAM del SO en reposo | ≤ 4 GB (Lite < 512 MB, Standard < 2 GB, Pro ≤ 4 GB) |
 | Arquitecturas | x86_64 (Intel/AMD) y ARM64 |
 | Personalización | 96 ajustes por capas, 7 temas (más los tuyos), atajos, reglas por aplicación y programas de inicio propios ([docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)). Escritorio, red, memoria y servicios ya se aplican; el resto se valida |
-| Interfaz de ajustes | Ventana gráfica local (`rros settings`) y versión de terminal para Lite o SSH |
+| Interfaz de ajustes | Ventana gráfica local (`rros settings`) con temas, tienda, seguridad, dispositivos y creación de archivos, y versión de terminal para Lite o SSH |
 | Móvil | Android en modelos concretos; iPhone no viable ([docs/MOBILE.md](docs/MOBILE.md)) |
 
 ## Probarlo
@@ -41,6 +41,9 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 | Overlay de identidad (sin snap, sin telemetría, tty1 directo) | ✅ aplicado y comprobado sobre un directorio |
 | ISO Lite: rootfs Ubuntu 24.04, GRUB, casper live, autotest | ✅ construida y arrancada en QEMU (BIOS, sin KVM): autotest de arranque, escritorio con panel y apps (captura arriba) |
 | Aplicaciones incluidas (navegador, archivos, editor, visores, multimedia, red, Bluetooth, USB, bloqueo, energía) y tienda `rros-apps` | ✅ paquetes verificados contra Ubuntu noble; probadas las que se abrieron en la VM (terminal, calculadora, editor, archivos); el resto, sin abrir aún |
+| Seguridad: cortafuegos, kernel endurecido, bloqueo por intentos, sudo, USB/cámara, actualizaciones; `rros seguridad` (auditoría y niveles) | ✅ probado con pruebas automáticas ([docs/SEGURIDAD.md](docs/SEGURIDAD.md)) |
+| Dispositivos: `rros dispositivos` (discos, USB, red, radios, sonido, pantallas, batería; montar, expulsar, Wi-Fi/Bluetooth) | ✅ probado con un /sys simulado |
+| Creación de archivos: `rros nuevo` (plantillas, proyectos, lanzadores), «Crear documento» en Thunar, carpetas en español | ✅ probado |
 | `rros-install` – instalador de texto a disco (BIOS, Lite/ext4) | ✅ probado en QEMU: instala, arranca desde el disco, login y escritorio |
 | Instalación en UEFI y btrfs (Standard/Pro), instalador gráfico, hardware real, kernel por perfil, SwayFX, repositorio propio, móvil | ⏳ pendiente / sin probar |
 

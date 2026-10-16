@@ -23,5 +23,7 @@ systemctl --root="$out" enable rros-firstboot.service rros-apply.service rros-li
 systemctl --root="$out" mask casper-md5check.service >/dev/null 2>&1 || true
 # blueman-mechanism se activa por D-Bus cuando hace falta; arrancarlo en el boot solo añade RAM y, en máquinas lentas, un fallo
 systemctl --root="$out" disable blueman-mechanism.service >/dev/null 2>&1 || true
+# cortafuegos desde el primer arranque (rros-apply genera /etc/nftables.conf)
+systemctl --root="$out" enable nftables.service >/dev/null 2>&1 || true
 log "rootfs actualizado"
 "$RROS/rros-budget" disk "$out" -p "$profile"

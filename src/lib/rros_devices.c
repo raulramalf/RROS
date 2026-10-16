@@ -223,6 +223,7 @@ static void fs_info(const char *root, const char *devnum, char *fstype, size_t f
 
 static void volume_actions(struct rros_dev *d, const char *fstype, const char *mp)
 {
+	d->actions[0] = '\0';
 	if (mp && !rros_mount_is_system(mp))
 		snprintf(d->actions, sizeof d->actions, "unmount");
 	else if (!mp && *fstype && strcmp(fstype, "swap") && strcmp(fstype, "crypto_LUKS"))
@@ -252,7 +253,7 @@ static void scan_disks(struct rros_devlist *l, const char *root)
 		char rel[400], link[512], vendor[64] = "", model[96] = "", size[24], devnum[24] = "", kind[24];
 		char fstype[32], label[64], path[1100];
 		unsigned long long bytes;
-		int sr = !strncmp(n, "sr", 2), removable, usb = 0, nparts = 0;
+		int sr = !strncmp(n, "sr", 2), removable, usb = 0, nparts = 0, sys_busy = 0;
 		struct rros_dev *disk;
 		ssize_t ll;
 		DIR *pd;
@@ -325,6 +326,7 @@ static void scan_disks(struct rros_devlist *l, const char *root)
 			rros_human_size(rd_ull(root, rel) * 512ULL, psize, sizeof psize);
 			fs_info(root, pdev, fstype, sizeof fstype, label, sizeof label);
 			mp = mounted_at(m, nm, pe->d_name);
+			sys_busy |= mp && rros_mount_is_system(mp);
 			p = add(l, "disco", pe->d_name);
 			if (!p)
 				break;
@@ -336,6 +338,14 @@ static void scan_disks(struct rros_devlist *l, const char *root)
 		}
 		if (pd)
 			closedir(pd);
+		/* un disco con algo del sistema montado (p. ej. la memoria con el sistema live) no se expulsa */
+		if (sys_busy) {
+			for (size_t i = l->n; i-- > 0;)
+				if (!strcmp(l->v[i].id, n)) {
+					l->v[i].actions[0] = '\0';
+					break;
+				}
+		}
 		/* disco sin particiones con sistema de archivos (CD, algunas memorias) */
 		if (!nparts) {
 			struct rros_dev *dd = &l->v[l->n - 1];
@@ -343,12 +353,12 @@ static void scan_disks(struct rros_devlist *l, const char *root)
 
 			fs_info(root, devnum, fstype, sizeof fstype, label, sizeof label);
 			if (*fstype || mp) {
-				char acts[48];
+				int ejectable = dd->actions[0] != '\0';
 
-				snprintf(acts, sizeof acts, "%s", dd->actions);
 				volume_actions(dd, fstype, mp);
-				if (*acts && strlen(dd->actions) + strlen(acts) + 2 < sizeof dd->actions)
-					cat_str(dd->actions, sizeof dd->actions, ",", acts);
+				sys_busy |= mp && rros_mount_is_system(mp);
+				if (ejectable && !sys_busy)
+					cat_str(dd->actions, sizeof dd->actions, ",", "eject");
 				if (*label)
 					cat_str(dd->detail, sizeof dd->detail, " · ", label);
 			} else if (sr) {

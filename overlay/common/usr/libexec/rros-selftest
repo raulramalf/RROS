@@ -49,7 +49,8 @@ check "kernel endurecido (kptr_restrict = 2)" test "$(sysctl -n kernel.kptr_rest
 check "kernel endurecido (protected_regular = 2)" test "$(sysctl -n fs.protected_regular 2>/dev/null)" = 2
 check "AppArmor activo" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
 check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/common-auth
-check "sudo: configuración válida" visudo -cq
+# (el archivo que crea casper en el live tiene permisos 0644 y visudo -c lo marca; sudo lo acepta)
+check "sudo: configuración válida (sudoers y la de RROS)" sh -c 'visudo -cqf /etc/sudoers && visudo -cqf /etc/sudoers.d/rros'
 check "actualizaciones de seguridad automáticas" grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
 # shellcheck disable=SC2016
 check "rros-security: auditoría" sh -c 'rros-security --json | grep -q "\"score\""'

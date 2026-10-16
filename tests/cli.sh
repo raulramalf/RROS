@@ -161,6 +161,13 @@ assert c["ssh"]["status"] == "ok", c["ssh"]
 assert d["level"] == "estandar", d["level"]
 PY
 RROS_ROOT=$F PATH="$T/secbin:$PATH" "$B/rros-security" | gq 'puntuación' || fail "auditoría en texto"
+# AppArmor sin perfiles: aviso en un sistema instalado, solo información en el live
+mkdir -p "$F/sys/kernel/security/apparmor"; : > "$F/sys/kernel/security/apparmor/profiles"
+aa() { RROS_ROOT=$F PATH="$T/secbin:$PATH" "$B/rros-security" --json | python3 -c 'import json,sys; print([c["status"] for c in json.load(sys.stdin)["checks"] if c["id"]=="apparmor"][0])'; }
+[ "$(aa)" = warn ] || fail "AppArmor sin perfiles en un sistema instalado"
+echo "boot=casper quiet" > "$F/proc/cmdline"
+[ "$(aa)" = info ] || fail "AppArmor sin perfiles en el live"
+echo quiet > "$F/proc/cmdline"; rm -r "$F/sys/kernel/security"
 # niveles y puertos se escriben en la capa del sistema
 export RROS_SECURITY_NOROOT=1 RROS_SECURITY_NOAPPLY=1
 "$B/rros-security" nivel estricto >/dev/null || fail "nivel estricto"

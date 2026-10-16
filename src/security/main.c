@@ -264,11 +264,21 @@ static void audit(const struct rros_conf *eff)
 				n++;
 		}
 		free(prof);
-		c = add("apparmor", OK, "AppArmor");
-		if (n >= 0)
-			snprintf(c->detail, sizeof c->detail, "Activo con %d perfiles de confinamiento cargados.", n);
-		else
-			snprintf(c->detail, sizeof c->detail, "Activo en el kernel (el número de perfiles solo lo ve root).");
+		if (n == 0 && live) {
+			/* Ubuntu no carga los perfiles en el sistema live (apparmor.service se lo salta) */
+			c = add("apparmor", INFO, "AppArmor");
+			snprintf(c->detail, sizeof c->detail, "Activo en el kernel; en el sistema live no se cargan perfiles (al instalar, sí).");
+		} else if (n == 0) {
+			c = add("apparmor", WARN, "AppArmor");
+			snprintf(c->detail, sizeof c->detail, "Activo pero sin perfiles cargados: ningún programa está confinado.");
+			snprintf(c->fix, sizeof c->fix, "sudo systemctl enable --now apparmor");
+		} else {
+			c = add("apparmor", OK, "AppArmor");
+			if (n > 0)
+				snprintf(c->detail, sizeof c->detail, "Activo con %d perfiles de confinamiento cargados.", n);
+			else
+				snprintf(c->detail, sizeof c->detail, "Activo en el kernel (el número de perfiles solo lo ve root).");
+		}
 	} else {
 		c = add("apparmor", WARN, "AppArmor");
 		snprintf(c->detail, sizeof c->detail, "No está activo: los programas no están confinados.");

@@ -100,7 +100,20 @@ int main(void)
 	put("/run/udev/data/b8:17", "E:ID_FS_TYPE=vfat\nE:ID_FS_LABEL=FOTOS\n");
 	put("/run/udev/data/b8:18", "E:ID_FS_TYPE=ext4\n");
 	put("/run/udev/data/b259:2", "E:ID_FS_TYPE=ext4\n");
-	put("/proc/self/mounts", "/dev/nvme0n1p2 / ext4 rw 0 0\n/dev/sdb1 /media/ana/FOTOS\\040USB vfat rw 0 0\n");
+	/* el disco del sistema live: un CD sin particiones montado en /cdrom, y una memoria USB con el live */
+	put("/sys/devices/ata/sr1/size", "3000000\n");
+	put("/sys/devices/ata/sr1/removable", "1\n");
+	put("/sys/devices/ata/sr1/dev", "11:1\n");
+	link_to("/sys/block/sr1", "../devices/ata/sr1");
+	put("/run/udev/data/b11:1", "E:ID_FS_TYPE=iso9660\nE:ID_FS_LABEL=RROS_LITE\n");
+	put("/sys/devices/pci0000:00/usb2/2-1/host7/sdc/size", "62521344\n");
+	put("/sys/devices/pci0000:00/usb2/2-1/host7/sdc/removable", "1\n");
+	put("/sys/devices/pci0000:00/usb2/2-1/host7/sdc/sdc1/partition", "1\n");
+	put("/sys/devices/pci0000:00/usb2/2-1/host7/sdc/sdc1/size", "3000000\n");
+	put("/sys/devices/pci0000:00/usb2/2-1/host7/sdc/sdc1/dev", "8:33\n");
+	link_to("/sys/block/sdc", "../devices/pci0000:00/usb2/2-1/host7/sdc");
+	put("/proc/self/mounts", "/dev/nvme0n1p2 / ext4 rw 0 0\n/dev/sdb1 /media/ana/FOTOS\\040USB vfat rw 0 0\n"
+				 "/dev/sr1 /cdrom iso9660 ro 0 0\n/dev/sdc1 /cdrom2 iso9660 ro 0 0\n");
 
 	/* USB: un concentrador (no sale) y un ratón */
 	put("/sys/bus/usb/devices/usb1/idVendor", "1d6b\n");
@@ -183,6 +196,13 @@ int main(void)
 	d = get(&l, "sr0");
 	CHECK(d && strstr(d->detail, "lector óptico") && !strcmp(d->state, "vacío") && !strcmp(d->actions, "eject"));
 	CHECK(get(&l, "loop0") == NULL && get(&l, "zram0") == NULL);
+	/* lo que usa el sistema no se puede expulsar ni desmontar */
+	d = get(&l, "sr1");
+	CHECK(d && !*d->actions && !strncmp(d->state, "sistema:", 8) && strstr(d->detail, "RROS_LITE"));
+	d = get(&l, "sdc");
+	CHECK(d && !*d->actions);
+	d = get(&l, "sdc1");
+	CHECK(d && !*d->actions);
 	/* el disco va justo antes de sus particiones */
 	{
 		size_t i;

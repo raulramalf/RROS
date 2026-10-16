@@ -33,6 +33,21 @@ struct req {
 static int port_g;
 static char token_g[80];
 static int apply_on_set = 1;
+static char start_page_g[32];
+
+/* página con la que se abre la ventana (#seguridad, #dispositivos...): solo letras y ':' */
+int web_set_start_page(const char *p)
+{
+	size_t n = strlen(p);
+
+	if (n == 0 || n >= sizeof start_page_g)
+		return -1;
+	for (size_t i = 0; i < n; i++)
+		if (!((p[i] >= 'a' && p[i] <= 'z') || p[i] == ':'))
+			return -1;
+	snprintf(start_page_g, sizeof start_page_g, "%s", p);
+	return 0;
+}
 
 /* ---- utilidades HTTP ---- */
 
@@ -795,7 +810,7 @@ int run_web(int port, int open_win, const char *token, int idle_seconds)
 		for (size_t i = 0; i < sizeof rnd; i++)
 			snprintf(token_g + i * 2, 3, "%02x", rnd[i]);
 	}
-	snprintf(url, sizeof url, "http://127.0.0.1:%d/?t=%s", port_g, token_g);
+	snprintf(url, sizeof url, "http://127.0.0.1:%d/?t=%s%s%s", port_g, token_g, *start_page_g ? "#" : "", start_page_g);
 	printf("RROS Ajustes en %s\n", url);
 	fflush(stdout);
 	last_ping = last_req = (long)time(NULL);

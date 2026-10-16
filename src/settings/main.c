@@ -9,8 +9,9 @@
 static void usage(FILE *out)
 {
 	fputs("uso: rros-settings [COMANDO]\n"
-	      "  open                abre la interfaz que mejor encaje (por defecto)\n"
-	      "  web [--port N] [--no-open] [--timeout S]   interfaz gráfica en tu navegador\n"
+	      "  open [PÁGINA]       abre la interfaz que mejor encaje (por defecto)\n"
+	      "  web [--port N] [--no-open] [--timeout S] [--page PÁGINA]   interfaz gráfica en tu navegador\n"
+	      "PÁGINA: temas, tienda, archivos, seguridad, dispositivos, copias o una categoría (p. ej. cat:ui)\n"
 	      "  tui [--no-apply]    interfaz de terminal (ideal en Lite o por SSH)\n"
 	      "  state               estado completo en JSON (para scripts)\n"
 	      "\n"
@@ -46,8 +47,13 @@ int main(int argc, char **argv)
 		usage(stdout);
 		return 0;
 	}
-	if (!strcmp(cmd, "open"))
+	if (!strcmp(cmd, "open")) {
+		if (argc > 2 && web_set_start_page(argv[2])) {
+			fprintf(stderr, "rros-settings: página no válida '%s'\n", argv[2]);
+			return 2;
+		}
 		return open_best();
+	}
 	if (!strcmp(cmd, "state")) {
 		struct model m;
 		struct sbuf b = { 0 };
@@ -84,6 +90,8 @@ int main(int argc, char **argv)
 				port = atoi(argv[++i]);
 			else if (!strcmp(argv[i], "--no-open"))
 				open_win = 0;
+			else if (!strcmp(argv[i], "--page") && i + 1 < argc && web_set_start_page(argv[i + 1]) == 0)
+				i++;
 			else if (!strcmp(argv[i], "--timeout") && i + 1 < argc)
 				idle = atoi(argv[++i]);
 			else if (!strcmp(argv[i], "--token") && i + 1 < argc)

@@ -189,6 +189,20 @@ const SHOTS = process.env.SHOTS || '';
   ok(newBad.ok === false, 'un nombre que parece una opción se rechaza');
   await shot(p, 'gui-files', true);
 
+  // abrir directamente en una página (rros-settings open dispositivos)
+  const d2 = await b.newPage({ viewport: { width: 1100, height: 800 } });
+  d2.on('pageerror', e => errs.push('deep-link pageerror: ' + e.message));
+  await d2.route('**/*', local);
+  await d2.goto(URL + '#dispositivos'); await d2.waitForSelector('.dev');
+  ok((await d2.textContent('h1')) === 'Dispositivos', 'la dirección #dispositivos abre esa página');
+  await d2.close();
+  const d3 = await b.newPage({ viewport: { width: 1100, height: 800 } });
+  d3.on('pageerror', e => errs.push('deep-link pageerror: ' + e.message));
+  await d3.route('**/*', local);
+  await d3.goto(URL + '#' + encodeURIComponent('<img src=x onerror=alert(1)>')); await d3.waitForSelector('.themes .tcard');
+  ok((await d3.textContent('h1')).includes('Temas'), 'una página no válida en la dirección se ignora');
+  await d3.close();
+
   // móvil
   const m = await b.newPage({ viewport: { width: 400, height: 860 }, colorScheme: 'light' });
   m.on('pageerror', e => errs.push('mobile pageerror: ' + e.message));

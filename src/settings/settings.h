@@ -41,5 +41,6 @@ int spawn_detached(const char *tool, char *const argv[]);               /* 0 si 
 int run_tui(int auto_apply);
 int web_browser_available(void);
 int run_web(int port, int open_window, const char *token, int idle_seconds);
+int web_set_start_page(const char *page);   /* 0 si el nombre es válido */
 
 #endif

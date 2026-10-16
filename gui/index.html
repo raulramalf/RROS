@@ -247,6 +247,12 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
       return r.json().catch(function () { return { ok: false, error: "respuesta no válida" }; });
     });
   }
+  /* página inicial desde la dirección: #seguridad, #dispositivos, #archivos, #tienda, #cat:ui... */
+  var ALIAS = { seguridad: "security", dispositivos: "devices", archivos: "files", tienda: "apps", temas: "themes", copias: "backup" };
+  (function () {
+    var h0 = decodeURIComponent((location.hash || "").slice(1));
+    if (/^[a-z:]{1,31}$/.test(h0)) page = ALIAS[h0] || h0;
+  })();
   function load() {
     return api("/api/state").then(function (s) {
       if (s && s.ok === false) { toast(s.error || "no se pudo cargar", true); return; }

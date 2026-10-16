@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Dispositivos
+Comment=Discos, memorias USB, red, Wi-Fi, Bluetooth, sonido, pantallas y batería
+Exec=rros-settings open dispositivos
+Icon=drive-removable-media
+Terminal=false
+Categories=Settings;System;HardwareSettings;
+Keywords=dispositivos;usb;memoria;disco;expulsar;wifi;bluetooth;hardware;

@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "rros_profile.h"
+#include "rros_security.h"
 
 static const struct { const char *key, *unit; } services[] = {
 	{ "services.bluetooth", "bluetooth.service" },
@@ -18,7 +19,9 @@ static const struct { const char *key, *unit; } services[] = {
 
 static const char *root = "";
 
-static int write_text(const char *rel, const char *text)
+static int unit_exists(const char *unit);
+
+static int write_text_mode(const char *rel, const char *text, int mode)
 {
 	char path[1100], tmp[1110];
 	FILE *f;
@@ -35,11 +38,129 @@ static int write_text(const char *rel, const char *text)
 		return -1;
 	}
 	fputs(text, f);
-	if (fclose(f) != 0 || rename(tmp, path) != 0) {
+	if (fclose(f) != 0 || (mode && chmod(tmp, (mode_t)mode) != 0) || rename(tmp, path) != 0) {
 		remove(tmp);
 		return -1;
 	}
 	return 0;
+}
+
+static int write_text(const char *rel, const char *text)
+{
+	return write_text_mode(rel, text, 0);
+}
+
+/* Ejecuta una orden sin shell y devuelve su código de salida (-1 si no se pudo ejecutar). */
+static int run_cmd(const char *const argv[])
+{
+	pid_t pid = fork();
+	int st;
+
+	if (pid < 0)
+		return -1;
+	if (pid == 0) {
+		if (!freopen("/dev/null", "w", stdout) || !freopen("/dev/null", "w", stderr))
+			_exit(127);
+		setenv("DEBIAN_FRONTEND", "noninteractive", 1);
+		execvp(argv[0], (char *const *)argv);
+		_exit(127);
+	}
+	if (waitpid(pid, &st, 0) < 0)
+		return -1;
+	return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+typedef void (*renderer)(FILE *, const struct rros_secpol *);
+
+static int write_rendered(const char *rel, renderer fn, const struct rros_secpol *p, int mode)
+{
+	char *text = NULL;
+	size_t len = 0;
+	FILE *m = open_memstream(&text, &len);
+	int rc;
+
+	if (!m)
+		return -1;
+	fn(m, p);
+	fclose(m);
+	rc = write_text_mode(rel, text, mode);
+	free(text);
+	return rc;
+}
+
+/* sudoers: se comprueba con visudo antes de instalarlo; un sudoers roto deja sin sudo a todos. */
+static int write_sudoers(const struct rros_secpol *p)
+{
+	char *text = NULL, path[1100], tmp[1120];
+	size_t len = 0;
+	FILE *m = open_memstream(&text, &len), *f;
+	int rc = -1;
+
+	if (!m)
+		return -1;
+	rros_render_sudoers(m, p);
+	fclose(m);
+	snprintf(path, sizeof path, "%s/etc/sudoers.d/rros", root);
+	snprintf(tmp, sizeof tmp, "%s/etc/sudoers.d/.rros.tmp", root);
+	if (rros_mkdir_parents(path) == 0 && (f = fopen(tmp, "w"))) {
+		const char *check[] = { "visudo", "-cqf", tmp, NULL };
+		int ok;
+
+		fputs(text, f);
+		ok = fclose(f) == 0 && chmod(tmp, 0440) == 0;
+		/* sin visudo (raíz alternativa sin sudo instalado) se instala igual: el contenido es fijo */
+		if (ok && run_cmd(check) > 0) {
+			fprintf(stderr, "rros-apply: visudo rechazó el archivo de sudo; no se instala\n");
+			ok = 0;
+		}
+		if (ok && rename(tmp, path) == 0)
+			rc = 0;
+		else
+			remove(tmp);
+	}
+	free(text);
+	return rc;
+}
+
+static void apply_security(const struct rros_secpol *sp, int live, int *bad)
+{
+	*bad |= write_rendered("/etc/nftables.conf", rros_render_nftables, sp, 0755) != 0;
+	*bad |= write_rendered("/etc/sysctl.d/80-rros-security.conf", rros_render_hardening, sp, 0) != 0;
+	*bad |= write_rendered("/etc/modprobe.d/rros-security.conf", rros_render_modprobe, sp, 0) != 0;
+	*bad |= write_sudoers(sp) != 0;
+	*bad |= write_rendered("/etc/security/faillock.conf", rros_render_faillock, sp, 0) != 0;
+	*bad |= write_rendered("/etc/apt/apt.conf.d/20auto-upgrades", rros_render_autoupdates, sp, 0) != 0;
+	*bad |= write_rendered("/etc/security/limits.d/90-rros-core.conf", rros_render_corelimit, sp, 0) != 0;
+
+	if (!live) {
+		printf("%-22s %s (simulado)\n", "cortafuegos", sp->firewall ? "se activaría" : "se desactivaría");
+		printf("%-22s %s (simulado)\n", "bloqueo por intentos",
+		       sp->login_attempts > 0 ? "se activaría" : "se desactivaría");
+		return;
+	}
+	{
+		const char *en[] = { "systemctl", "enable", "nftables.service", NULL };
+		const char *re[] = { "systemctl", "--no-block", "restart", "nftables.service", NULL };
+		const char *sc[] = { "sysctl", "-q", "-p", "/etc/sysctl.d/80-rros-security.conf", NULL };
+		const char *pam_on[] = { "pam-auth-update", "--enable", "rros-faillock", "rros-faillock-preauth", NULL };
+		const char *pam_off[] = { "pam-auth-update", "--disable", "rros-faillock", "rros-faillock-preauth", NULL };
+		const char *rm_usb[] = { "modprobe", "-r", "uas", "usb_storage", NULL };
+		const char *rm_cam[] = { "modprobe", "-r", "uvcvideo", NULL };
+		int fw = unit_exists("nftables.service") && run_cmd(en) == 0 && run_cmd(re) == 0;
+
+		printf("%-22s %s\n", "cortafuegos", !unit_exists("nftables.service") ? "nftables no instalado" :
+		       !fw ? "falló" : sp->firewall ? "activado" : "desactivado");
+		if (sp->hardening)
+			printf("%-22s %s\n", "kernel endurecido", run_cmd(sc) == 0 ? "aplicado" : "aplicado en parte");
+		printf("%-22s %s\n", "bloqueo por intentos",
+		       run_cmd(sp->login_attempts > 0 ? pam_on : pam_off) == 0 ?
+		       (sp->login_attempts > 0 ? "activado" : "desactivado") : "falló (pam-auth-update)");
+		/* los módulos ya cargados se quitan si nadie los usa; si no, el bloqueo vale al reiniciar */
+		if (!sp->usb_storage)
+			run_cmd(rm_usb);
+		if (!sp->camera)
+			run_cmd(rm_cam);
+	}
 }
 
 static int unit_exists(const char *unit)
@@ -133,6 +254,13 @@ int main(int argc, char **argv)
 		 rros_conf_get_bool(&c, "net.wifi_powersave", 0) ? 3 : 2,
 		 rros_conf_get_bool(&c, "net.mac_randomize", 0) ? "random" : "preserve");
 	bad |= write_text("/etc/NetworkManager/conf.d/90-rros.conf", buf) != 0;
+
+	{
+		struct rros_secpol sp;
+
+		rros_secpol_from_conf(&sp, &c);
+		apply_security(&sp, act_services && !*root, &bad);
+	}
 
 	for (size_t i = 0; i < sizeof services / sizeof *services; i++) {
 		int on = rros_conf_get_bool(&c, services[i].key, 0);

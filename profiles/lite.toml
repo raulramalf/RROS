@@ -31,6 +31,7 @@ layout = "tiling"
 workspaces = 4
 
 [system]
+auto_updates = true
 swap = "zram"
 zram_percent = 50
 zram_algo = "lz4"
@@ -56,3 +57,14 @@ timeout_seconds = 2
 
 [privacy]
 telemetry = false
+
+[security]
+# nivel "estandar" (rros-security level estandar); ver docs/SEGURIDAD.md
+firewall = true
+firewall_ping = true
+kernel_hardening = true
+usb_storage = true
+camera = true
+login_attempts = 10
+sudo_timeout_minutes = 5
+core_dumps = false

@@ -13,10 +13,11 @@ LIB_SRC := $(wildcard src/lib/*.c)
 PLAN_SRC := src/installer/plan.c
 THEME_SRC := src/theme/theme.c src/theme/palettes.c
 BINS := build/rros-hwdetect build/rros-config build/rros-budget build/rros-installer \
-        build/rros-theme build/rros-fetch build/rros build/rros-apply build/rros-settings build/rros-apps
+        build/rros-theme build/rros-fetch build/rros build/rros-apply build/rros-settings build/rros-apps \
+        build/rros-security build/rros-devices build/rros-new
 
 TESTS := $(patsubst tests/%.c,build/tests/%,$(wildcard tests/test_*.c))
-SAN := -fsanitize=address,undefined -fno-omit-frame-pointer -g -O1
+SAN := -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1
 
 all: $(BINS)
 
@@ -29,6 +30,9 @@ build/rros-fetch: src/fetch/main.c $(THEME_SRC) $(LIB_SRC)
 build/rros: src/rros/main.c $(LIB_SRC)
 build/rros-apply: src/apply/main.c $(LIB_SRC)
 build/rros-apps: src/apps/main.c $(LIB_SRC)
+build/rros-security: src/security/main.c $(LIB_SRC)
+build/rros-devices: src/devices/main.c $(LIB_SRC)
+build/rros-new: src/new/main.c $(LIB_SRC)
 SETTINGS_SRC := $(wildcard src/settings/*.c)
 build/rros-settings: $(SETTINGS_SRC) $(THEME_SRC) $(LIB_SRC)
 
@@ -53,6 +57,8 @@ install: $(BINS)
 	install -m 644 apps/catalog.toml $(DESTDIR)$(PREFIX)/share/rros/apps/catalog.toml
 	install -m 644 gui/index.html $(DESTDIR)$(PREFIX)/share/rros/settings/index.html
 	install -m 644 dist/systemd/*.service $(DESTDIR)$(PREFIX)/lib/systemd/system/
+	install -d $(DESTDIR)$(PREFIX)/share/rros/templates
+	cp -R templates/. $(DESTDIR)$(PREFIX)/share/rros/templates/
 
 docs-schema: build/rros-config
 	build/rros-config schema --markdown > docs/CUSTOMIZATION.md

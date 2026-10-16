@@ -146,6 +146,25 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
 .chip:hover { color: var(--text); border-color: var(--muted); }
 .chip:focus-visible { outline: 2px solid var(--accent); }
 .empty { padding: 22px; text-align: center; color: var(--muted); }
+.badge.warn { color: var(--yellow); border-color: var(--yellow); }
+.badge.fail { color: var(--red); border-color: var(--red); }
+.badge.sys { color: var(--accent); border-color: var(--accent); }
+.score { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
+.score .num { font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.score .bar { flex: 1; min-width: 160px; height: 10px; border-radius: 999px; background: var(--surface2); overflow: hidden; }
+.score .bar i { display: block; height: 100%; background: var(--accent); }
+.checks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.check { display: grid; grid-template-columns: 22px 1fr; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.check .ic { font-weight: 700; text-align: center; }
+.check.ok .ic { color: var(--green); } .check.warn .ic { color: var(--yellow); } .check.fail .ic { color: var(--red); } .check.info .ic { color: var(--muted); }
+.check b { display: block; } .check p { margin: 2px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+.check code { display: inline-block; margin-top: 6px; overflow-wrap: anywhere; white-space: normal; }
+.devgroup { margin: 18px 0 8px; font-weight: 600; }
+.dev { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; }
+.dev.part { margin-left: 22px; }
+.dev .dn { flex: 1; min-width: 180px; } .dev .dn b { overflow-wrap: anywhere; } .dev .dn small { display: block; color: var(--muted); overflow-wrap: anywhere; }
+.formgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
+.formgrid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
 #toast { position: fixed; bottom: max(16px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 9px 16px; max-width: min(560px, 92vw); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 20; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
 #toast.show { opacity: 1; }
 #toast.err { border-color: var(--red); color: var(--red); }
@@ -285,11 +304,14 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     item("themes", "Temas y colores");
     nav.appendChild(h("div", { class: "grp", text: "Aplicaciones" }));
     item("apps", "Tienda de aplicaciones");
+    item("files", "Crear archivos");
     nav.appendChild(h("div", { class: "grp", text: "Ajustes" }));
-    S.categories.forEach(function (c) { item("cat:" + c.id, c.label, counts[c.id] || 0); });
+    S.categories.forEach(function (c) { if (c.id !== "security") item("cat:" + c.id, c.label, counts[c.id] || 0); });
     nav.appendChild(h("div", { class: "grp", text: "Personalización" }));
     DYN.forEach(function (d) { item("dyn:" + d[0], d[1], S.dynamic[d[0]].length); });
     nav.appendChild(h("div", { class: "grp", text: "Sistema" }));
+    item("security", "Seguridad");
+    item("devices", "Dispositivos");
     item("backup", "Copias y exportar");
   }
   function go(id) { page = id; query = ""; document.getElementById("search").value = ""; drawNav(); drawPage(); window.scrollTo(0, 0); }
@@ -331,20 +353,30 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     return box;
   }
   function commit(k, v) {
+    if (k.scope === "system") return sysSet(k.key, v, false);
     setKey(k.key, v).then(function (ok) { if (ok) { toast("Guardado: " + k.key + " = " + v); refreshRow(k.key); } });
   }
+  /* ajustes del sistema: los aplica rros-apply como root, así que se guardan con sudo en una terminal */
+  function sysSet(key, v, unset) {
+    return api(unset ? "/api/sys_unset" : "/api/sys_set", unset ? { key: key } : { key: key, value: String(v) }).then(function (r) {
+      if (!r.ok) { toast(r.error, true); return load(); }
+      toast("Se ha abierto una terminal: escribe tu contraseña para aplicar " + key);
+    });
+  }
+  function changed(k) { return k.scope === "system" ? k.source === "system" : k.source === "user"; }
   function refreshRow(key) {
     var row = document.querySelector('[data-key="' + key + '"]'); if (!row) return;
-    var k = keyObj(key), user = k.source === "user";
+    var k = keyObj(key), user = changed(k);
     row.querySelector(".user-dot").style.display = user ? "inline-block" : "none";
     row.querySelector(".reset").hidden = !user;
   }
   function settingRow(k) {
-    var user = k.source === "user";
+    var user = changed(k), sys = k.scope === "system";
     return h("div", { class: "row", "data-key": k.key },
-      h("div", { class: "lbl" }, h("b", null, k.desc, h("span", { class: "user-dot", style: "display:" + (user ? "inline-block" : "none"), title: "Cambiado por ti" })), h("code", { text: k.key })),
+      h("div", { class: "lbl" }, h("b", null, k.desc, h("span", { class: "user-dot", style: "display:" + (user ? "inline-block" : "none"), title: "Cambiado por ti" })),
+        h("code", { text: k.key }), sys ? h("span", { class: "badge sys", title: "Afecta a todo el equipo: pide tu contraseña", text: "sistema · contraseña" }) : null),
       control(k),
-      h("button", { class: "reset", type: "button", title: "Restablecer al valor del perfil", "aria-label": "Restablecer " + k.key, hidden: !user, onclick: function () { unsetKey(k.key); } }, "↺"));
+      h("button", { class: "reset", type: "button", title: "Restablecer al valor del perfil", "aria-label": "Restablecer " + k.key, hidden: !user, onclick: function () { if (sys) sysSet(k.key, "", true); else unsetKey(k.key); } }, "↺"));
   }
 
   /* ---------- páginas ---------- */
@@ -354,6 +386,9 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     if (page === "themes") return drawThemes(root);
     if (page === "backup") return drawBackup(root);
     if (page === "apps") return drawApps(root);
+    if (page === "security") return drawSecurity(root);
+    if (page === "devices") return drawDevices(root);
+    if (page === "files") return drawFiles(root);
     if (page.indexOf("dyn:") === 0) return drawDynamic(root, page.slice(4));
     var cat = page.slice(4), c = S.categories.filter(function (x) { return x.id === cat; })[0] || S.categories[0];
     root.appendChild(h("h1", { text: c.label }));
@@ -414,6 +449,140 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
       });
       if (!shown.length) list.appendChild(h("div", { class: "empty", text: "Ninguna aplicación coincide." }));
     }
+  }
+
+  /* ---------- seguridad ---------- */
+  var SEC = null;
+  var ICON = { ok: "✓", warn: "!", fail: "✗", info: "·" };
+  var LEVELS = [["basico", "Básico", "Como Ubuntu: cortafuegos y poco más"], ["estandar", "Estándar", "Recomendado: kernel endurecido, bloqueo tras 10 intentos, actualizaciones automáticas"], ["estricto", "Estricto", "Sin memorias USB ni cámara, sin ping ni SSH, sudo pide siempre la contraseña"]];
+  function drawSecurity(root) {
+    root.appendChild(h("h1", { text: "Seguridad" }));
+    root.appendChild(h("p", { class: "sub", text: "Estado real del equipo, lo que conviene arreglar y las directivas de seguridad. Los cambios afectan a todo el sistema: se aplican en una terminal con tu contraseña." }));
+    if (SEC === null) {
+      root.appendChild(h("div", { class: "empty", text: "Comprobando la seguridad del equipo…" }));
+      api("/api/security").then(function (r) { SEC = r && r.checks ? r : { score: 0, level: "?", checks: [], error: (r && r.error) || "no disponible" }; if (page === "security") drawPage(); });
+      return;
+    }
+    if (SEC.error) root.appendChild(h("div", { class: "empty", text: SEC.error }));
+    var lvl = LEVELS.filter(function (l) { return l[0] === SEC.level; })[0];
+    root.appendChild(h("div", { class: "score card", style: "padding:16px" },
+      h("div", { class: "num", text: String(SEC.score) }),
+      h("div", { style: "flex:1;min-width:180px" }, h("b", { text: "Puntuación de seguridad" }), h("div", { class: "bar", role: "img", "aria-label": "Puntuación " + SEC.score + " de 100" }, h("i", { style: "width:" + SEC.score + "%" })),
+        h("small", { class: "muted", text: "Nivel: " + (lvl ? lvl[1] : "personalizado") })),
+      h("button", { class: "btn ghost small", type: "button", text: "Volver a comprobar", onclick: function () { SEC = null; drawPage(); } })));
+    var list = h("div", { class: "checks" });
+    SEC.checks.forEach(function (c) {
+      list.appendChild(h("div", { class: "check " + c.status, "data-check": c.id },
+        h("span", { class: "ic", "aria-hidden": "true", text: ICON[c.status] || "·" }),
+        h("div", null, h("b", { text: c.title }), h("p", { text: c.detail }), c.fix ? h("code", { text: c.fix }) : null)));
+    });
+    root.appendChild(list);
+
+    root.appendChild(h("h2", { text: "Nivel de seguridad" }));
+    var lv = h("div", { class: "apps" });
+    LEVELS.forEach(function (l) {
+      lv.appendChild(h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: l[1] }), SEC.level === l[0] ? h("span", { class: "badge ok", text: "en uso" }) : null),
+        h("p", { text: l[2] }),
+        h("div", { class: "ab" }, h("button", { class: "btn small", type: "button", text: "Aplicar " + l[1].toLowerCase(), disabled: SEC.level === l[0], onclick: function () {
+          api("/api/security_level", { level: l[0] }).then(function (r) { if (!r.ok) return toast(r.error, true); toast("Se ha abierto una terminal: escribe tu contraseña para aplicar el nivel " + l[1].toLowerCase()); });
+        } }), h("code", { text: "sudo rros security nivel " + l[0] }))));
+    });
+    root.appendChild(lv);
+
+    root.appendChild(h("h2", { text: "Cortafuegos: abrir un puerto" }));
+    var port = h("input", { type: "text", placeholder: "8080/tcp", "aria-label": "Puerto" });
+    function portAct(action) {
+      api("/api/security_port", { action: action, port: port.value.trim() }).then(function (r) { if (!r.ok) return toast(r.error, true); toast("Se ha abierto una terminal: escribe tu contraseña"); });
+    }
+    root.appendChild(h("div", { class: "card", style: "padding:14px;margin-bottom:16px" },
+      h("p", { class: "sub", style: "margin-top:0", text: "Solo si un programa tuyo necesita recibir conexiones (un servidor, un juego en red). Por defecto no entra nada que no hayas pedido." }),
+      h("div", { class: "wrapline" }, port,
+        h("button", { class: "btn small", type: "button", text: "Abrir", onclick: function () { portAct("abrir"); } }),
+        h("button", { class: "btn ghost small", type: "button", text: "Cerrar", onclick: function () { portAct("cerrar"); } }))));
+
+    root.appendChild(h("h2", { text: "Directivas" }));
+    var rows = h("div", { class: "card rows" });
+    S.keys.filter(function (k) { return k.category === "security" || k.key === "system.auto_updates" || k.key === "privacy.lock_minutes"; }).forEach(function (k) { rows.appendChild(settingRow(k)); });
+    root.appendChild(rows);
+  }
+
+  /* ---------- dispositivos ---------- */
+  var DEV = null;
+  var ACT = { mount: "Montar", unmount: "Desmontar", eject: "Expulsar", block: "Desactivar", unblock: "Activar" };
+  function drawDevices(root) {
+    root.appendChild(h("h1", { text: "Dispositivos" }));
+    root.appendChild(h("p", { class: "sub", text: "Todo lo que el sistema ve: discos y memorias, USB, red, radios, sonido, pantallas, batería y entrada. Monta o expulsa memorias y enciende o apaga el Wi-Fi y el Bluetooth." }));
+    if (DEV === null) {
+      root.appendChild(h("div", { class: "empty", text: "Buscando dispositivos…" }));
+      api("/api/devices").then(function (r) { DEV = r && r.devices ? r : { categories: [], devices: [], error: (r && r.error) || "no disponible" }; if (page === "devices") drawPage(); });
+      return;
+    }
+    root.appendChild(h("div", { class: "wrapline" }, h("button", { class: "btn ghost small", type: "button", text: "Actualizar", onclick: function () { DEV = null; drawPage(); } }),
+      h("code", { text: "rros dispositivos" })));
+    if (DEV.error) root.appendChild(h("div", { class: "empty", text: DEV.error }));
+    DEV.categories.forEach(function (c) {
+      var items = DEV.devices.filter(function (d) { return d.cat === c.id; });
+      if (!items.length) return;
+      root.appendChild(h("div", { class: "devgroup", text: c.label }));
+      items.forEach(function (d) {
+        var acts = d.actions ? d.actions.split(",") : [];
+        var row = h("div", { class: "dev" + (d.parent ? " part" : ""), "data-dev": d.id },
+          h("div", { class: "dn" }, h("b", { text: d.name }), h("small", { text: [d.id, d.detail].filter(Boolean).join(" · ") })),
+          d.state ? h("span", { class: "badge" + (/activo|conectad|montado|cargad|enchufado|disponible/.test(d.state) ? " ok" : ""), text: d.state }) : null);
+        acts.forEach(function (a) {
+          row.appendChild(h("button", { class: "btn small" + (a === "eject" || a === "block" ? " ghost" : ""), type: "button", text: ACT[a] || a, onclick: function () {
+            api("/api/device_action", { action: a, id: d.id }).then(function (r) {
+              if (!r.ok) toast((r.output || r.error || "falló").trim(), true); else toast((r.output || "Hecho").trim());
+              DEV = null; drawPage();
+            });
+          } }));
+        });
+        root.appendChild(row);
+      });
+    });
+  }
+
+  /* ---------- crear archivos ---------- */
+  var TPL = null;
+  function drawFiles(root) {
+    root.appendChild(h("h1", { text: "Crear archivos" }));
+    root.appendChild(h("p", { class: "sub", text: "Documentos, scripts, páginas web y proyectos listos para empezar. Las mismas plantillas están en el menú «Crear documento» del gestor de archivos (botón derecho) y en la terminal con rros nuevo." }));
+    if (TPL === null) {
+      root.appendChild(h("div", { class: "empty", text: "Cargando plantillas…" }));
+      api("/api/templates").then(function (r) { TPL = r && r.templates ? r : { templates: [], default_dir: "", error: (r && r.error) || "no disponible" }; if (page === "files") drawPage(); });
+      return;
+    }
+    if (TPL.error) root.appendChild(h("div", { class: "empty", text: TPL.error }));
+    var sel = h("select", { "aria-label": "Plantilla" });
+    TPL.templates.forEach(function (t) { sel.appendChild(h("option", { value: t.id, text: (t.project ? "Proyecto · " : "") + t.desc + (t.user ? " (tuya)" : "") })); });
+    var name = h("input", { type: "text", value: "sin-titulo", "aria-label": "Nombre del archivo" });
+    var dir = h("input", { type: "text", value: TPL.default_dir, "aria-label": "Carpeta" });
+    var hint = h("small", { class: "muted" });
+    function upd() {
+      var t = TPL.templates.filter(function (x) { return x.id === sel.value; })[0];
+      if (!t) return;
+      if (t.dest) dir.value = t.dest; else if (dir.value.indexOf("~/.local") === 0) dir.value = TPL.default_dir;
+      hint.textContent = t.project ? "Se crea una carpeta con ese nombre." : "Se añade " + (t.ext || "la extensión") + " si no la escribes.";
+    }
+    sel.addEventListener("change", upd);
+    root.appendChild(h("div", { class: "card", style: "padding:16px" },
+      h("div", { class: "formgrid" }, h("label", null, "Plantilla", sel), h("label", null, "Nombre", name), h("label", null, "Carpeta", dir)),
+      h("div", { class: "wrapline", style: "margin-top:12px" },
+        h("button", { class: "btn", type: "button", text: "Crear y abrir", onclick: function () {
+          api("/api/new_file", { template: sel.value, name: name.value.trim(), dir: dir.value.trim() }).then(function (r) {
+            if (!r.ok) return toast((r.output || r.error || "no se pudo crear").trim(), true);
+            toast((r.output || "Creado").trim());
+          });
+        } }), hint)));
+    upd();
+    root.appendChild(h("h2", { text: "Plantillas" }));
+    var grid = h("div", { class: "apps" });
+    TPL.templates.forEach(function (t) {
+      grid.appendChild(h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: t.id }), h("span", { class: "badge", text: t.project ? "proyecto" : t.user ? "tuya" : (t.ext || "archivo") })),
+        h("p", { text: t.desc }), h("div", { class: "ab" }, h("code", { text: "rros nuevo " + t.id + " NOMBRE" }))));
+    });
+    root.appendChild(grid);
+    root.appendChild(h("p", { class: "sub", text: "Añade tus propias plantillas guardando cualquier archivo en " + (TPL.user_dir || "~/Plantillas") + "." }));
   }
 
   function drawSearch(root) {
@@ -602,7 +771,12 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA" && document.activeElement.tagName !== "SELECT") { e.preventDefault(); st.focus(); }
     if (e.key === "Escape" && document.activeElement === st) { st.value = ""; query = ""; st.blur(); drawNav(); drawPage(); }
   });
-  window.addEventListener("focus", function () { if (page === "apps" && APPS !== null) { APPS = null; drawPage(); } });
+  /* al volver de la terminal (instalar, sudo...) se recarga lo que pudo cambiar */
+  window.addEventListener("focus", function () {
+    if (page === "apps" && APPS !== null) { APPS = null; drawPage(); }
+    else if (page === "security") { SEC = null; load(); }
+    else if (page.indexOf("cat:") === 0) load();
+  });
   if (!window.RROS_MOCK) setInterval(function () { api("/api/ping", {}); }, 8000);
   load();
 })();

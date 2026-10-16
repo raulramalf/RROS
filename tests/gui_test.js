@@ -22,7 +22,7 @@ const SHOTS = process.env.SHOTS || '';
   await p.goto(URL);
   await p.waitForSelector('.themes .tcard');
   ok(await p.locator('.tcard').count() === 7, '7 temas incluidos en la galería');
-  ok((await p.locator('#nav button').count()) >= 17, 'navegación con categorías y secciones');
+  ok((await p.locator('#nav button').count()) >= 20, 'navegación con categorías y secciones');
   const userConf = () => fs.existsSync(`${DIR}/u.toml`) ? fs.readFileSync(`${DIR}/u.toml`, 'utf8') : '';
 
   // tema: elegir nord
@@ -120,6 +120,74 @@ const SHOTS = process.env.SHOTS || '';
     return r.json();
   }, process.env.TOKEN || 'tk');
   ok(evil.ok === false, 'un identificador de aplicación con caracteres peligrosos se rechaza');
+
+  // seguridad: auditoría, niveles y puertos (con sudo en una terminal)
+  await p.click('#nav button:has-text("Seguridad")');
+  await p.waitForSelector('.check');
+  ok(await p.locator('.check').count() >= 10, 'la auditoría muestra las comprobaciones');
+  ok(/^\d+$/.test((await p.textContent('.score .num')).trim()), 'puntuación numérica');
+  ok(await p.locator('.check.ok[data-check="firewall"]').count() === 1, 'el cortafuegos se ve activo');
+  if (fs.existsSync(marker)) fs.unlinkSync(marker);
+  await p.click('button:has-text("Aplicar estricto")'); await p.waitForTimeout(700);
+  ok(fs.existsSync(marker) && /sudo rros-security nivel "\$1"/.test(fs.readFileSync(marker, 'utf8')) && /\nestricto\n?$/.test(fs.readFileSync(marker, 'utf8')),
+     'el nivel se aplica con sudo en una terminal, con el nombre como argumento aparte');
+  if (fs.existsSync(marker)) fs.unlinkSync(marker);
+  await p.fill('input[aria-label="Puerto"]', '8080/tcp; reboot');
+  await p.click('.card button:has-text("Abrir")'); await p.waitForTimeout(500);
+  ok(!fs.existsSync(marker), 'un puerto con órdenes no abre ninguna terminal');
+  await p.fill('input[aria-label="Puerto"]', '8080/tcp');
+  await p.click('.card button:has-text("Abrir")'); await p.waitForTimeout(700);
+  ok(fs.existsSync(marker) && /\nabrir\n8080\/tcp\n?$/.test(fs.readFileSync(marker, 'utf8')), 'abrir un puerto');
+  // un ajuste del sistema no se guarda como del usuario: pide la contraseña
+  if (fs.existsSync(marker)) fs.unlinkSync(marker);
+  await p.locator('[data-key="security.usb_storage"] .switch').click(); await p.waitForTimeout(700);
+  ok(fs.existsSync(marker) && /sudo rros-config set --system "\$1" "\$2"/.test(fs.readFileSync(marker, 'utf8')) &&
+     /\nsecurity\.usb_storage\nfalse\n?$/.test(fs.readFileSync(marker, 'utf8')), 'los ajustes del sistema van por sudo');
+  ok(!/usb_storage/.test(userConf()), 'y no se guardan en la configuración del usuario');
+  ok(await p.locator('[data-key="security.usb_storage"] .badge.sys').count() === 1, 'se marca como ajuste del sistema');
+  const sysBad = await p.evaluate(async (tok) => {
+    const r = await fetch('/api/sys_set', { method: 'POST', headers: { 'X-RROS-Token': tok, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'key=ui.gap&value=3' });
+    return r.json();
+  }, process.env.TOKEN || 'tk');
+  ok(sysBad.ok === false, 'sys_set rechaza claves que no son del sistema');
+  await shot(p, 'gui-security', true);
+
+  // dispositivos
+  await p.click('#nav button:has-text("Dispositivos")');
+  await p.waitForSelector('.dev');
+  ok(await p.locator('.dev[data-dev="sdb1"]').count() === 1 && await p.locator('.dev[data-dev="rfkill0"]').count() === 1, 'lista discos y radios');
+  const calls = `${DIR}/dev-calls.txt`;
+  if (fs.existsSync(calls)) fs.unlinkSync(calls);
+  await p.click('.dev[data-dev="sdb1"] button:has-text("Desmontar")'); await p.waitForTimeout(700);
+  await p.waitForSelector('.dev[data-dev="rfkill0"]');
+  await p.click('.dev[data-dev="rfkill0"] button:has-text("Desactivar")'); await p.waitForTimeout(700);
+  const got = fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8') : '';
+  ok(got === 'udisksctl unmount -b /dev/sdb1\nrfkill block 0\n', 'acciones de dispositivos (' + JSON.stringify(got) + ')');
+  const devBad = await p.evaluate(async (tok) => {
+    const r = await fetch('/api/device_action', { method: 'POST', headers: { 'X-RROS-Token': tok, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=mount&id=' + encodeURIComponent('../../x;id') });
+    return r.json();
+  }, process.env.TOKEN || 'tk');
+  ok(devBad.ok === false, 'identificador de dispositivo peligroso rechazado');
+  await shot(p, 'gui-devices', true);
+
+  // crear archivos
+  await p.click('#nav button:has-text("Crear archivos")');
+  await p.waitForSelector('select[aria-label="Plantilla"]');
+  ok(await p.locator('select[aria-label="Plantilla"] option').count() >= 13, 'plantillas en la lista');
+  await p.selectOption('select[aria-label="Plantilla"]', 'bash');
+  await p.fill('input[aria-label="Nombre del archivo"]', 'copia');
+  await p.fill('input[aria-label="Carpeta"]', `${DIR}/home/Documentos`);
+  await p.click('button:has-text("Crear y abrir")'); await p.waitForTimeout(700);
+  const made = `${DIR}/home/Documentos/copia.sh`;
+  ok(fs.existsSync(made) && (fs.statSync(made).mode & 0o100), 'se crea el script, ejecutable');
+  await p.click('button:has-text("Crear y abrir")'); await p.waitForTimeout(600);
+  ok(await p.locator('#toast.err').count() === 1, 'no se pisa un archivo existente');
+  const newBad = await p.evaluate(async (tok) => {
+    const r = await fetch('/api/new_file', { method: 'POST', headers: { 'X-RROS-Token': tok, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'template=texto&name=--force&dir=' });
+    return r.json();
+  }, process.env.TOKEN || 'tk');
+  ok(newBad.ok === false, 'un nombre que parece una opción se rechaza');
+  await shot(p, 'gui-files', true);
 
   // móvil
   const m = await b.newPage({ viewport: { width: 400, height: 860 }, colorScheme: 'light' });

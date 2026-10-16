@@ -1,0 +1,5 @@
+# {{NOMBRE}}
+
+```
+make && ./{{NOMBRE}}
+```

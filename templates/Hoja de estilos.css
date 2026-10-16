@@ -1,0 +1,12 @@
+/* {{NOMBRE}} */
+:root {
+  --fondo: #ffffff;
+  --texto: #1f2937;
+  --acento: #7c5cff;
+}
+
+body {
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: system-ui, sans-serif;
+}

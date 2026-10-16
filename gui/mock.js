@@ -6,6 +6,20 @@
   var S0 = window.RROS_MOCK_STATE, S = JSON.parse(JSON.stringify(S0));
   var snaps = {};
   var APPS = JSON.parse(JSON.stringify(window.RROS_MOCK_APPS || []));
+  var SEC = JSON.parse(JSON.stringify(window.RROS_MOCK_SECURITY || { score: 0, level: "estandar", checks: [] }));
+  var DEVS = JSON.parse(JSON.stringify(window.RROS_MOCK_DEVICES || { categories: [], devices: [] }));
+  var TPLS = JSON.parse(JSON.stringify(window.RROS_MOCK_TEMPLATES || { templates: [] }));
+  var created = {};
+  var SYSPRE = /^(system|services|net|boot|security)\./;
+  /* misma regla que rros_fw_ports_check (src/lib/rros_security.c) */
+  function portsOk(v) {
+    return v.split(/[ ,]+/).filter(Boolean).every(function (t) {
+      var m = /^(\d+)(?:-(\d+))?(?:\/(tcp|udp))?$/.exec(t);
+      if (!m) return false;
+      var lo = +m[1], hi = m[2] ? +m[2] : lo;
+      return lo >= 1 && hi <= 65535 && lo <= hi;
+    });
+  }
   delete S.hw;
   S.user_conf = "~/.config/rros/rros.toml";
 
@@ -123,6 +137,50 @@
         th[b.variant][b.key] = b.value.toLowerCase();
         recompute();
         return { ok: true };
+      }
+      case "/api/sys_set": case "/api/sys_unset": {
+        if (!SYSPRE.test(b.key || "")) return { ok: false, error: "'" + b.key + "' no es un ajuste del sistema" };
+        if (b.key === "security.firewall_allow" && path === "/api/sys_set" && !portsOk(b.value || ""))
+          return { ok: false, error: "security.firewall_allow: formato de puerto no válido: usa PUERTO, PUERTO/tcp, PUERTO/udp o INICIO-FIN/tcp" };
+        /* en el sistema real se abre una terminal con sudo; aquí se aplica directamente */
+        var r = path === "/api/sys_unset" ? unsetKey(b.key) : setKey(b.key, b.value);
+        var ko = key(b.key);
+        if (r.ok && ko && path === "/api/sys_set") ko.source = "system";
+        return r;
+      }
+      case "/api/security": return JSON.parse(JSON.stringify(SEC));
+      case "/api/security_level":
+        if (["basico", "estandar", "estricto"].indexOf(b.level) < 0) return { ok: false, error: "nivel desconocido" };
+        SEC.level = b.level;
+        return { ok: true };
+      case "/api/security_port":
+        if (b.action !== "abrir" && b.action !== "cerrar") return { ok: false, error: "acción desconocida" };
+        if (!b.port || b.port.indexOf(",") >= 0 || !portsOk(b.port)) return { ok: false, error: "formato de puerto no válido: usa PUERTO, PUERTO/tcp, PUERTO/udp o INICIO-FIN/tcp" };
+        return { ok: true };
+      case "/api/devices": return JSON.parse(JSON.stringify(DEVS));
+      case "/api/device_action": {
+        var d = DEVS.devices.filter(function (x) { return x.id === b.id; })[0];
+        if (!d || (d.actions || "").split(",").indexOf(b.action) < 0) return { ok: false, output: "rros-devices: no se puede hacer eso con '" + b.id + "'" };
+        if (b.action === "unmount") { d.state = "sin montar"; d.actions = "mount"; return { ok: true, output: "Desmontado /dev/" + d.id }; }
+        if (b.action === "mount") { d.state = "montado en /media/rros/" + d.name; d.actions = "unmount"; return { ok: true, output: "Montado /dev/" + d.id + " en /media/rros/" + d.name }; }
+        if (b.action === "eject") {
+          DEVS.devices = DEVS.devices.filter(function (x) { return x.id !== d.id && x.parent !== d.id; });
+          return { ok: true, output: "Ya puedes desconectar " + d.name + "." };
+        }
+        var on = b.action === "unblock";
+        d.state = on ? "activo" : "desactivado"; d.actions = on ? "block" : "unblock";
+        return { ok: true, output: d.id + (on ? " activado" : " desactivado") };
+      }
+      case "/api/templates": return JSON.parse(JSON.stringify(TPLS));
+      case "/api/new_file": {
+        var t = TPLS.templates.filter(function (x) { return x.id === b.template; })[0];
+        if (!t) return { ok: false, output: "rros-new: no hay ninguna plantilla '" + b.template + "'" };
+        if (!b.name || b.name[0] === "-" || /[\x00-\x1f]/.test(b.name)) return { ok: false, error: "plantilla, nombre o carpeta no válidos" };
+        var dir = (b.dir || ".").replace(/^~/, "/home/rros"), file = b.name + (!t.project && t.ext && b.name.indexOf(".") < 0 ? t.ext : "");
+        var full = dir.replace(/\/$/, "") + "/" + file;
+        if (created[full]) return { ok: false, output: "rros-new: " + full + ": ya existe (usa --force para reemplazarlo)" };
+        created[full] = 1;
+        return { ok: true, output: "Creado: " + full };
       }
       case "/api/snapshot": {
         if (!/^[a-z0-9_-]{1,32}$/.test(b.name || "")) return { ok: false, error: "nombre de instantánea no válido (a-z, 0-9, _ o -, máx. 32)" };

@@ -12,6 +12,7 @@
 #include "rros_profile.h"
 #include "rros_userconf.h"
 #include "settings.h"
+#include "rros_schema.h"
 #include "theme.h"
 
 enum { K_NONE = 256, K_UP, K_DOWN, K_LEFT, K_RIGHT, K_PGUP, K_PGDN, K_ENTER, K_ESC, K_TAB, K_STAB, K_BS };
@@ -376,14 +377,35 @@ static int affects_desktop(const char *key)
 	       !strncmp(key, "autostart.", 10);
 }
 
+/* Los ajustes del sistema los aplica rros-apply como root: sin root solo se explica cómo hacerlo. */
+static int system_key_blocked(struct ui *u, const char *key)
+{
+	if (!rros_key_system_scope(key) || geteuid() == 0)
+		return 0;
+	set_status(u, 1, "ajuste del sistema: sudo rros-config set --system %s VALOR && sudo rros-apply --services%s", key, "");
+	return 1;
+}
+
+static void apply_system(void)
+{
+	char *args[] = { "rros-apply", "--services", NULL };
+
+	run_tool("rros-apply", args, 1);
+}
+
 static void do_set(struct ui *u, const char *key, const char *val)
 {
 	char err[300];
+	int sys = rros_key_system_scope(key);
 
-	if (rros_user_set(key, val, 0, err, sizeof err)) {
+	if (system_key_blocked(u, key))
+		return;
+	if (rros_user_set(key, val, sys, err, sizeof err)) {
 		set_status(u, 1, "%s%s", err, "");
 		return;
 	}
+	if (sys)
+		apply_system();
 	reload(u);
 	set_status(u, 0, "guardado: %s = %s", key, val);
 	if (u->auto_apply && affects_desktop(key))
@@ -539,8 +561,8 @@ int run_tui(int auto_apply)
 		case 'd': {
 			char err[300];
 
-			if (nrows && rows[u.sel].kind != R_ADD) {
-				if (rros_user_unset(rows[u.sel].key, 0, err, sizeof err)) {
+			if (nrows && rows[u.sel].kind != R_ADD && !system_key_blocked(&u, rows[u.sel].key)) {
+				if (rros_user_unset(rows[u.sel].key, rros_key_system_scope(rows[u.sel].key), err, sizeof err)) {
 					set_status(&u, 1, "%s%s", err, "");
 				} else {
 					reload(&u);

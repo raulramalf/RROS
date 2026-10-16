@@ -1,0 +1,6 @@
+Name: RROS: contar los intentos fallidos de contraseña (security.login_attempts)
+Default: no
+Priority: 0
+Auth-Type: Primary
+Auth:
+	[default=die]	pam_faillock.so authfail

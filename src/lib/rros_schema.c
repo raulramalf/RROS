@@ -1,4 +1,5 @@
 #include "rros_schema.h"
+#include "rros_security.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -119,7 +120,6 @@ const struct rros_key rros_schema[] = {
 	B("services.bluetooth", "Bluetooth"),
 	B("services.printing", "Impresión (CUPS)"),
 	B("services.indexer", "Indexador de archivos"),
-	B("services.firewall", "Cortafuegos"),
 	B("services.ssh", "Servidor SSH"),
 	B("services.sound_server", "Servidor de sonido"),
 	B("services.location", "Servicios de ubicación"),
@@ -147,6 +147,17 @@ const struct rros_key rros_schema[] = {
 	I("privacy.lock_minutes", 0, 1440, "Bloquear pantalla tras N minutos (0 = nunca)"),
 	B("privacy.disk_encryption", "Cifrado de disco (LUKS) en la instalación"),
 
+	/* ---- seguridad (las aplica rros-apply como root; ver docs/SEGURIDAD.md) ---- */
+	B("security.firewall", "Cortafuegos: bloquea las conexiones entrantes no pedidas"),
+	B("security.firewall_ping", "Responder a ping con el cortafuegos activo"),
+	S("security.firewall_allow", "Puertos abiertos, p. ej. 8080/tcp,5000-5010/udp (vacío = ninguno)"),
+	B("security.kernel_hardening", "Endurecer el kernel (punteros, dmesg, BPF, ptrace, redirecciones)"),
+	B("security.usb_storage", "Permitir memorias y discos USB"),
+	B("security.camera", "Permitir cámaras web"),
+	I("security.login_attempts", 0, 20, "Intentos de contraseña antes de bloquear 10 minutos (0 = sin límite)"),
+	I("security.sudo_timeout_minutes", 0, 60, "Minutos que sudo recuerda tu contraseña (0 = la pide siempre)"),
+	B("security.core_dumps", "Guardar volcados de memoria de programas que fallan"),
+
 	/* ---- arranque ---- */
 	I("boot.timeout_seconds", 0, 60, "Tiempo del menú de arranque"),
 	B("boot.splash", "Pantalla de arranque gráfica"),
@@ -161,6 +172,16 @@ const struct rros_key *rros_schema_find(const char *key)
 		if (strcmp(rros_schema[i].key, key) == 0)
 			return &rros_schema[i];
 	return NULL;
+}
+
+int rros_key_system_scope(const char *key)
+{
+	static const char *pre[] = { "system.", "services.", "net.", "boot.", "security." };
+
+	for (size_t i = 0; i < sizeof pre / sizeof *pre; i++)
+		if (!strncmp(key, pre[i], strlen(pre[i])))
+			return 1;
+	return 0;
 }
 
 const char *rros_type_name(enum rros_type t)
@@ -226,6 +247,14 @@ int rros_schema_check(const struct rros_key *k, const char *val, int quoted,
 		}
 		return 0;
 	default:
+		if (!strcmp(k->key, "security.firewall_allow")) {
+			char why[160];
+
+			if (rros_fw_ports_check(val, why, sizeof why)) {
+				snprintf(err, n, "%s: %s", k->key, why);
+				return -1;
+			}
+		}
 		if (strlen(val) > 256) {
 			snprintf(err, n, "%s: valor demasiado largo (máx. 256)", k->key);
 			return -1;

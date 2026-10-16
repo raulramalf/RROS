@@ -76,6 +76,24 @@ int rros_user_set(const char *key, const char *val, int system, char *err, size_
 	return 0;
 }
 
+int rros_user_check(const char *key, const char *val, char *err, size_t en)
+{
+	const struct rros_key *k = rros_schema_find(key);
+	int rc;
+
+	if (k) {
+		if (k->profile_only) {
+			snprintf(err, en, "'%s' solo es válida en archivos de perfil", key);
+			return -1;
+		}
+		return rros_schema_check(k, val, is_quoted_type(k), err, en) ? -1 : 0;
+	}
+	rc = rros_dynamic_check(key, val, err, en);
+	if (rc > 0)
+		snprintf(err, en, "clave '%s' desconocida (ver `rros-config schema`)", key);
+	return rc ? -1 : 0;
+}
+
 int rros_user_unset(const char *key, int system, char *err, size_t en)
 {
 	struct rros_conf c;

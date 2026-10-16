@@ -66,7 +66,7 @@ static const struct { const char *id, *label; } cats[] = {
 	{ "ui", "Interfaz" }, { "panel", "Panel" }, { "term", "Terminal" }, { "display", "Pantalla" },
 	{ "input", "Entrada" }, { "audio", "Sonido" }, { "power", "Energía" }, { "net", "Red" },
 	{ "system", "Sistema" }, { "services", "Servicios" }, { "locale", "Región" },
-	{ "privacy", "Privacidad" }, { "boot", "Arranque" },
+	{ "privacy", "Privacidad" }, { "security", "Seguridad" }, { "boot", "Arranque" },
 };
 
 size_t model_categories(char names[][16], size_t max)
@@ -282,7 +282,8 @@ int model_state_json(const struct model *m, struct sbuf *o)
 		sb_json(o, k->desc);
 		sb_put(o, ",\"value\":");
 		sb_json(o, v ? v : "");
-		sb_printf(o, ",\"source\":\"%s\"}", model_source(m, k->key));
+		sb_printf(o, ",\"source\":\"%s\",\"scope\":\"%s\"}", model_source(m, k->key),
+			  rros_key_system_scope(k->key) ? "system" : "user");
 	}
 	sb_put(o, "]");
 
@@ -471,6 +472,41 @@ int run_capture(const char *tool, char *const argv[], struct sbuf *out)
 			waitpid(pid, &st, 0);
 			return -1;
 		}
+	}
+	close(pfd[0]);
+	if (waitpid(pid, &st, 0) < 0)
+		return -1;
+	return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+int run_capture_all(const char *tool, char *const argv[], struct sbuf *out)
+{
+	int pfd[2], st;
+	pid_t pid;
+	char buf[4096];
+	ssize_t k;
+
+	if (pipe(pfd) != 0)
+		return -1;
+	fflush(stdout);
+	pid = fork();
+	if (pid < 0)
+		return -1;
+	if (pid == 0) {
+		dup2(pfd[1], STDOUT_FILENO);
+		dup2(pfd[1], STDERR_FILENO);
+		close(pfd[0]);
+		close(pfd[1]);
+		if (!freopen("/dev/null", "r", stdin))
+			_exit(127);
+		exec_in_tool_dir(tool, argv);
+		_exit(127);
+	}
+	close(pfd[1]);
+	while ((k = read(pfd[0], buf, sizeof buf - 1)) > 0) {
+		buf[k] = '\0';
+		if (sb_put(out, buf))
+			break;
 	}
 	close(pfd[0]);
 	if (waitpid(pid, &st, 0) < 0)

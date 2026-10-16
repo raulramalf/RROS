@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name={{NOMBRE}}
+Comment=Creado con rros-new
+# La orden que se ejecuta, p. ej.: epiphany https://ejemplo.org  o  foot -e htop
+Exec=
+Icon=application-x-executable
+Terminal=false
+Categories=Utility;

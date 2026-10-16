@@ -1,0 +1,9 @@
+Name: RROS: rechazar el acceso mientras la cuenta está bloqueada por intentos fallidos
+Default: no
+Priority: 1024
+Auth-Type: Primary
+Auth:
+	requisite	pam_faillock.so preauth
+Account-Type: Primary
+Account:
+	required	pam_faillock.so

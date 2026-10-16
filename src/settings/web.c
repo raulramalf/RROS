@@ -17,6 +17,8 @@
 #include "rros_profile.h"
 #include "rros_userconf.h"
 #include "settings.h"
+#include "rros_schema.h"
+#include "rros_security.h"
 #include "theme.h"
 
 #define MAX_HEADERS 16384
@@ -389,23 +391,16 @@ static int id_valid(const char *id)
 	return 1;
 }
 
-/* Abre una terminal con `rros-apps install|remove ID` para ver el progreso y escribir la contraseña. */
-static int run_in_terminal(const char *action, const char *id, char *err, size_t en)
+/* Abre la terminal configurada (apps.terminal) con `sh -c SCRIPT rros ARG...`: así se ve el
+ * progreso y se puede escribir la contraseña de sudo. Los argumentos van separados, nunca
+ * dentro del script. */
+static int terminal_run(const char *script, const char *a1, const char *a2, char *err, size_t en)
 {
 	struct model m;
-	char term[64] = "foot", *words[6], copy[64], *tok, *save = NULL;
+	char term[64] = "foot", *words[6], copy[64], *tok, *save = NULL, full[600];
 	char *argv[16];
 	int n = 0, nw = 0;
-	static const char script[] = "rros-apps \"$1\" \"$2\"; printf '\\nPulsa Enter para cerrar... '; read -r _";
 
-	if (strcmp(action, "install") && strcmp(action, "remove")) {
-		snprintf(err, en, "acción desconocida");
-		return -1;
-	}
-	if (!id_valid(id)) {
-		snprintf(err, en, "identificador de aplicación no válido");
-		return -1;
-	}
 	if (model_load(&m) == 0) {
 		const char *t = rros_conf_get(&m.eff, "apps.terminal");
 
@@ -420,21 +415,108 @@ static int run_in_terminal(const char *action, const char *id, char *err, size_t
 		snprintf(err, en, "no hay terminal configurada (apps.terminal)");
 		return -1;
 	}
+	snprintf(full, sizeof full, "%s; printf '\\nPulsa Enter para cerrar... '; read -r _", script);
 	for (int i = 0; i < nw; i++)
 		argv[n++] = words[i];
 	argv[n++] = "-e";
 	argv[n++] = "sh";
 	argv[n++] = "-c";
-	argv[n++] = (char *)script;
+	argv[n++] = full;
 	argv[n++] = "rros";
-	argv[n++] = (char *)action;
-	argv[n++] = (char *)id;
+	if (a1)
+		argv[n++] = (char *)a1;
+	if (a2)
+		argv[n++] = (char *)a2;
 	argv[n] = NULL;
 	if (spawn_detached(argv[0], argv) != 0) {
 		snprintf(err, en, "no se pudo abrir la terminal");
 		return -1;
 	}
 	return 0;
+}
+
+/* `rros-apps install|remove ID` en una terminal */
+static int run_in_terminal(const char *action, const char *id, char *err, size_t en)
+{
+	if (strcmp(action, "install") && strcmp(action, "remove")) {
+		snprintf(err, en, "acción desconocida");
+		return -1;
+	}
+	if (!id_valid(id)) {
+		snprintf(err, en, "identificador de aplicación no válido");
+		return -1;
+	}
+	return terminal_run("rros-apps \"$1\" \"$2\"", action, id, err, en);
+}
+
+/* Ajustes del sistema (los aplica rros-apply como root): se guardan con sudo en /etc/rros/rros.toml */
+static int sys_set(const char *key, const char *val, int unset, char *err, size_t en)
+{
+	if (!rros_key_system_scope(key)) {
+		snprintf(err, en, "'%.120s' no es un ajuste del sistema", key);
+		return -1;
+	}
+	if (unset) {
+		if (!rros_schema_find(key)) {
+			snprintf(err, en, "clave '%.120s' desconocida", key);
+			return -1;
+		}
+		return terminal_run("sudo rros-config unset --system \"$1\" && sudo rros-apply --services", key, NULL, err, en);
+	}
+	if (rros_user_check(key, val, err, en))
+		return -1;
+	return terminal_run("sudo rros-config set --system \"$1\" \"$2\" && sudo rros-apply --services", key, val, err, en);
+}
+
+static void respond_capture(int fd, const char *tool, char *const argv[], const char *what)
+{
+	struct sbuf b = { 0 };
+	char msg[200];
+
+	if (run_capture(tool, argv, &b) == 0 && b.p) {
+		respond_json(fd, 200, b.p);
+	} else {
+		snprintf(msg, sizeof msg, "{\"ok\":false,\"error\":\"no se pudo leer %s\"}", what);
+		respond_json(fd, 400, msg);
+	}
+	sb_free(&b);
+}
+
+/* ejecuta una herramienta y responde {ok, output} con su salida (y sus errores) */
+static void respond_run(int fd, const char *tool, char *const argv[])
+{
+	struct sbuf b = { 0 }, o = { 0 };
+	int rc = run_capture_all(tool, argv, &b);
+
+	sb_printf(&o, "{\"ok\":%s,\"output\":", rc == 0 ? "true" : "false");
+	sb_json(&o, b.p ? b.p : "");
+	sb_put(&o, "}");
+	respond_json(fd, 200, o.p ? o.p : "{\"ok\":false}");
+	sb_free(&b);
+	sb_free(&o);
+}
+
+static int dev_id_valid(const char *s)
+{
+	size_t n = strlen(s);
+
+	if (n == 0 || n > 40)
+		return 0;
+	for (; *s; s++)
+		if (!((*s >= 'a' && *s <= 'z') || (*s >= '0' && *s <= '9') || *s == '-' || *s == '_' || *s == ':' || *s == '.'))
+			return 0;
+	return 1;
+}
+
+/* nombre o carpeta escritos por el usuario: sin caracteres de control ni guion inicial (no son opciones) */
+static int text_arg_ok(const char *s, size_t max)
+{
+	if (!*s || *s == '-' || strlen(s) > max)
+		return 0;
+	for (; *s; s++)
+		if ((unsigned char)*s < 0x20)
+			return 0;
+	return 1;
 }
 
 static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
@@ -478,6 +560,18 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 		do_export(fd);
 	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/apps")) {
 		do_apps(fd);
+	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/security")) {
+		char *args[] = { "rros-security", "auditoria", "--json", NULL };
+
+		respond_capture(fd, "rros-security", args, "el estado de seguridad");
+	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/devices")) {
+		char *args[] = { "rros-devices", "lista", "--json", NULL };
+
+		respond_capture(fd, "rros-devices", args, "los dispositivos");
+	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/templates")) {
+		char *args[] = { "rros-new", "lista", "--json", NULL };
+
+		respond_capture(fd, "rros-new", args, "las plantillas");
 	} else if (strcmp(r.method, "POST") != 0) {
 		respond(fd, 404, "text/plain", "no", 2, NULL);
 	} else if (!strcmp(r.path, "/api/ping")) {
@@ -508,6 +602,54 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 			respond_ok(fd, 0, err);
 		else
 			respond_ok(fd, 1, "");
+	} else if (!strcmp(r.path, "/api/sys_set") || !strcmp(r.path, "/api/sys_unset")) {
+		form_get(r.body, "key", a, sizeof a);
+		form_get(r.body, "value", b, sizeof b);
+		respond_ok(fd, sys_set(a, b, !strcmp(r.path, "/api/sys_unset"), err, sizeof err) == 0, err);
+	} else if (!strcmp(r.path, "/api/security_level")) {
+		form_get(r.body, "level", a, sizeof a);
+		if (!rros_seclevel_find(a))
+			respond_ok(fd, 0, "nivel desconocido");
+		else
+			respond_ok(fd, terminal_run("sudo rros-security nivel \"$1\"", a, NULL, err, sizeof err) == 0, err);
+	} else if (!strcmp(r.path, "/api/security_port")) {
+		form_get(r.body, "action", a, sizeof a);
+		form_get(r.body, "port", b, sizeof b);
+		if (strcmp(a, "abrir") && strcmp(a, "cerrar"))
+			respond_ok(fd, 0, "acción desconocida");
+		else if (!*b || strchr(b, ',') || rros_fw_ports_check(b, err, sizeof err))
+			respond_ok(fd, 0, *err ? err : "indica un puerto, p. ej. 8080/tcp");
+		else
+			respond_ok(fd, terminal_run("sudo rros-security \"$1\" \"$2\"", a, b, err, sizeof err) == 0, err);
+	} else if (!strcmp(r.path, "/api/device_action")) {
+		form_get(r.body, "action", a, sizeof a);
+		form_get(r.body, "id", b, sizeof b);
+		if (!dev_id_valid(b)) {
+			respond_ok(fd, 0, "dispositivo no válido");
+		} else if (!strcmp(a, "mount") || !strcmp(a, "unmount") || !strcmp(a, "eject")) {
+			char *args[] = { "rros-devices", !strcmp(a, "mount") ? "montar" : !strcmp(a, "unmount") ? "desmontar" : "expulsar", b, NULL };
+
+			respond_run(fd, "rros-devices", args);
+		} else if (!strcmp(a, "block") || !strcmp(a, "unblock")) {
+			char *args[] = { "rros-devices", "radio", b, !strcmp(a, "block") ? "off" : "on", NULL };
+
+			respond_run(fd, "rros-devices", args);
+		} else {
+			respond_ok(fd, 0, "acción desconocida");
+		}
+	} else if (!strcmp(r.path, "/api/new_file")) {
+		char dir[400];
+
+		form_get(r.body, "template", a, sizeof a);
+		form_get(r.body, "name", b, sizeof b);
+		form_get(r.body, "dir", dir, sizeof dir);
+		if (!text_arg_ok(a, 60) || !text_arg_ok(b, 200) || (*dir && !text_arg_ok(dir, 390))) {
+			respond_ok(fd, 0, "plantilla, nombre o carpeta no válidos");
+		} else {
+			char *args[] = { "rros-new", a, b, "--abrir", *dir ? "--dir" : NULL, dir, NULL };
+
+			respond_run(fd, "rros-new", args);
+		}
 	} else if (!strcmp(r.path, "/api/theme_new")) {
 		form_get(r.body, "name", a, sizeof a);
 		form_get(r.body, "base", b, sizeof b);

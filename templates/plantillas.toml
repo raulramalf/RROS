@@ -1,0 +1,59 @@
+# Plantillas de `rros-new` y del menú «Crear documento» de Thunar (~/Plantillas).
+# Marcadores: {{NOMBRE}} (sin extensión), {{ARCHIVO}}, {{FECHA}} (AAAA-MM-DD), {{AÑO}}, {{USUARIO}}.
+# file = archivo de esta carpeta · dir = proyecto (carpeta) · exec = se crea ejecutable
+# destino = carpeta por defecto si no se indica otra
+
+[texto]
+file = "Documento de texto.txt"
+desc = "Documento de texto vacío"
+
+[markdown]
+file = "Documento Markdown.md"
+desc = "Documento con formato Markdown"
+
+[nota]
+file = "Nota.md"
+desc = "Nota con fecha y lista de tareas"
+
+[bash]
+file = "Script de Bash.sh"
+desc = "Script de terminal (Bash), ya ejecutable"
+exec = true
+
+[python]
+file = "Programa en Python.py"
+desc = "Programa en Python, ya ejecutable"
+exec = true
+
+[c]
+file = "Programa en C.c"
+desc = "Programa en C (compila con: cc -o prog archivo.c)"
+
+[web]
+file = "Página web.html"
+desc = "Página web HTML5"
+
+[css]
+file = "Hoja de estilos.css"
+desc = "Hoja de estilos CSS"
+
+[csv]
+file = "Hoja de cálculo.csv"
+desc = "Tabla CSV (se abre con la hoja de cálculo)"
+
+[lanzador]
+file = "Lanzador de aplicación.desktop"
+desc = "Acceso directo que aparece en el menú de aplicaciones"
+destino = "~/.local/share/applications"
+
+[proyecto-web]
+dir = "proyectos/web"
+desc = "Proyecto web: index.html, estilos.css y app.js"
+
+[proyecto-python]
+dir = "proyectos/python"
+desc = "Proyecto Python: main.py, README y .gitignore"
+
+[proyecto-c]
+dir = "proyectos/c"
+desc = "Proyecto en C: main.c y Makefile"

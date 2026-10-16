@@ -82,7 +82,6 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `services.bluetooth` | booleano | true / false | Bluetooth |
 | `services.printing` | booleano | true / false | Impresión (CUPS) |
 | `services.indexer` | booleano | true / false | Indexador de archivos |
-| `services.firewall` | booleano | true / false | Cortafuegos |
 | `services.ssh` | booleano | true / false | Servidor SSH |
 | `services.sound_server` | booleano | true / false | Servidor de sonido |
 | `services.location` | booleano | true / false | Servicios de ubicación |
@@ -101,6 +100,15 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `privacy.crash_reports` | booleano | true / false | Informes de fallos |
 | `privacy.lock_minutes` | entero | 0 – 1440 | Bloquear pantalla tras N minutos (0 = nunca) |
 | `privacy.disk_encryption` | booleano | true / false | Cifrado de disco (LUKS) en la instalación |
+| `security.firewall` | booleano | true / false | Cortafuegos: bloquea las conexiones entrantes no pedidas |
+| `security.firewall_ping` | booleano | true / false | Responder a ping con el cortafuegos activo |
+| `security.firewall_allow` | texto |  | Puertos abiertos, p. ej. 8080/tcp,5000-5010/udp (vacío = ninguno) |
+| `security.kernel_hardening` | booleano | true / false | Endurecer el kernel (punteros, dmesg, BPF, ptrace, redirecciones) |
+| `security.usb_storage` | booleano | true / false | Permitir memorias y discos USB |
+| `security.camera` | booleano | true / false | Permitir cámaras web |
+| `security.login_attempts` | entero | 0 – 20 | Intentos de contraseña antes de bloquear 10 minutos (0 = sin límite) |
+| `security.sudo_timeout_minutes` | entero | 0 – 60 | Minutos que sudo recuerda tu contraseña (0 = la pide siempre) |
+| `security.core_dumps` | booleano | true / false | Guardar volcados de memoria de programas que fallan |
 | `boot.timeout_seconds` | entero | 0 – 60 | Tiempo del menú de arranque |
 | `boot.splash` | booleano | true / false | Pantalla de arranque gráfica |
 | `boot.quiet` | booleano | true / false | Arranque silencioso |

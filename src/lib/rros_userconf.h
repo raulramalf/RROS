@@ -9,6 +9,8 @@
 /* 0 ok; <0 error con mensaje legible en err. `system`: escribe en /etc en vez de ~/.config. */
 int rros_user_set(const char *key, const char *val, int system, char *err, size_t en);
 int rros_user_unset(const char *key, int system, char *err, size_t en);
+/* Solo comprueba que `key = val` se podría guardar (mismas reglas que rros_user_set). */
+int rros_user_check(const char *key, const char *val, char *err, size_t en);
 
 /* Valida todas las claves de una configuración (no de perfil). Devuelve nº de errores;
  * si `out` no es NULL, escribe cada error en una línea. */

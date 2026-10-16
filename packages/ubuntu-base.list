@@ -45,6 +45,12 @@ kbd                     # teclado de la consola (loadkeys; systemd lo usa con /e
 xdg-user-dirs
 xdg-utils
 
+# --- seguridad (rros-security / rros-apply) ---
+nftables                # cortafuegos (security.firewall)
+apparmor                # perfiles de confinamiento de aplicaciones
+unattended-upgrades     # actualizaciones de seguridad automáticas (system.auto_updates)
+rfkill                  # activar/desactivar Wi-Fi y Bluetooth (rros-devices)
+
 # --- discos y USB ---
 udisks2
 gvfs

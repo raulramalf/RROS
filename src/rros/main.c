@@ -105,6 +105,9 @@ static void usage(void)
 	      "  settings  interfaz de ajustes        (rros-settings)\n"
 	      "  apps      tienda de aplicaciones     (rros-apps)\n"
 	      "  apply     aplica el perfil al sistema (rros-apply)\n"
+	      "  security  seguridad: auditoría y niveles (rros-security; también `rros seguridad`)\n"
+	      "  devices   dispositivos: discos, USB, red, radios (rros-devices; también `rros dispositivos`)\n"
+	      "  new       crear archivos y proyectos desde plantillas (rros-new; también `rros nuevo`)\n"
 	      "  budget    presupuesto de RAM/disco   (rros-budget)\n"
 	      "  hw        hardware y perfil          (rros-hwdetect)\n"
 	      "  install   instala RROS en un disco   (rros-install; `install plan` solo calcula)\n"
@@ -120,6 +123,9 @@ int main(int argc, char **argv)
 		{ "info", "rros-fetch" }, { "config", "rros-config" }, { "theme", "rros-theme" },
 		{ "settings", "rros-settings" }, { "apps", "rros-apps" }, { "apply", "rros-apply" },
 		{ "budget", "rros-budget" }, { "hw", "rros-hwdetect" }, { "install", "rros-install" },
+		{ "security", "rros-security" }, { "seguridad", "rros-security" },
+		{ "devices", "rros-devices" }, { "dispositivos", "rros-devices" },
+		{ "new", "rros-new" }, { "nuevo", "rros-new" },
 	};
 	char *slash = strrchr(argv[0], '/');
 

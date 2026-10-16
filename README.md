@@ -31,6 +31,10 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 
 *Captura real: `rros settings open seguridad` en la ISO Lite (QEMU). Auditoría con puntuación, cortafuegos activo y kernel endurecido.*
 
+![RROS Ajustes en la página de Dispositivos, dentro del sistema live](docs/img/rros-dispositivos.png)
+
+*Captura real: `rros settings open dispositivos`. El CD del sistema live no ofrece «Expulsar» porque está en uso.*
+
 ## Estado
 
 | Pieza | Estado |

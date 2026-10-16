@@ -580,19 +580,15 @@ int web_browser_available(void)
 
 static int open_window(const char *url)
 {
-	char arg[600], profile[300], pdir[280];
-	const char *rt = getenv("XDG_RUNTIME_DIR");
+	char arg[600];
 	pid_t pid;
 	char *argv[8];
 	int n = 0;
 
-	snprintf(pdir, sizeof pdir, "%s/rros-gui-%d", rt && *rt ? rt : "/tmp", (int)getuid());
-	snprintf(profile, sizeof profile, "--profile=%s", pdir);
 	if (in_path("epiphany-browser")) {
-		/* Epiphany se niega a abrir en modo aplicación si el directorio del perfil no existe */
-		if (mkdir(pdir, 0700) != 0 && errno != EEXIST)
-			perror("rros-settings: perfil del navegador");
-		argv[n++] = "epiphany-browser"; argv[n++] = "--application-mode"; argv[n++] = profile; argv[n++] = (char *)url;
+		/* el modo aplicación de Epiphany exige un perfil de "web app" con su .desktop; la instancia
+		   privada abre una ventana normal con un perfil temporal y no toca el del usuario */
+		argv[n++] = "epiphany-browser"; argv[n++] = "--private-instance"; argv[n++] = (char *)url;
 	} else if (in_path("chromium") || in_path("chromium-browser") || in_path("google-chrome")) {
 		snprintf(arg, sizeof arg, "--app=%s", url);
 		argv[n++] = in_path("chromium") ? "chromium" : in_path("chromium-browser") ? "chromium-browser" : "google-chrome";

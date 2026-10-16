@@ -92,7 +92,9 @@ echo "# mio" > "$XDG_CONFIG_HOME/foot/foot.ini"
 "$B/rros-fetch" --plain | grep -q 'Perfil' || fail "rros-fetch"
 "$B/rros-fetch" --plain | grep -q 'SO\|Sistema' || fail "rros-fetch sistema"
 "$B/rros" version | grep -q 'Aurora' || fail "rros version"
-"$B/rros" doctor | grep -q 'sin snap' || fail "rros doctor"
+# el resultado de la comprobación de snap depende del equipo (los runners de CI lo tienen)
+"$B/rros" doctor | grep -q 'snap' || fail "rros doctor no informa de snap"
+"$B/rros" doctor | grep -q 'telemetría desactivada' || fail "rros doctor no informa de telemetría"
 "$B/rros" info --plain | grep -q 'Perfil' || fail "rros info"
 if "$B/rros" bogus 2>/dev/null; then fail "rros bogus debía fallar"; fi
 # --- rros-apply: el perfil cambia el sistema ---

@@ -1,4 +1,7 @@
 # ~/.bashrc - RROS
+# ~/.local/bin en el PATH (scripts y extensiones `rros-NOMBRE` propios)
+case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) PATH="$HOME/.local/bin:$PATH" ;; esac
+export PATH
 case $- in *i*) ;; *) return ;; esac
 HISTCONTROL=ignoreboth
 HISTSIZE=5000

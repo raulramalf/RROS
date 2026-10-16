@@ -22,5 +22,14 @@ jobs:
         run: |
           make docs-schema
           git diff --exit-code docs/CUSTOMIZATION.md
+      - name: La demo de la GUI se genera
+        run: |
+          scripts/build-gui-demo.sh
+          test -s build/gui-demo.html
+      - name: JavaScript de la GUI sin errores de sintaxis
+        run: |
+          awk '/^<script>$/{f=1;next} /^<\/script>$/{f=0} f' gui/index.html > /tmp/gui.js
+          node --check /tmp/gui.js
+          node --check gui/mock.js
       - name: ShellCheck
         run: shellcheck -x -P SCRIPTDIR scripts/*.sh tests/cli.sh

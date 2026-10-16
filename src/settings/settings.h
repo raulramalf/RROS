@@ -1,0 +1,42 @@
+/* rros-settings: modelo común de la TUI y de la GUI web. */
+#ifndef RROS_SETTINGS_H
+#define RROS_SETTINGS_H
+
+#include <stddef.h>
+#include "rros_conf.h"
+#include "rros_schema.h"
+
+struct model {
+	struct rros_conf eff, prof, sys, user;
+	char profile[64];
+};
+
+int model_load(struct model *m);          /* 0 ok */
+void model_free(struct model *m);
+/* "profile", "system" o "user": de dónde sale el valor efectivo de la clave. */
+const char *model_source(const struct model *m, const char *key);
+
+/* Categorías (claves estáticas agrupadas por prefijo) en orden estable. */
+size_t model_categories(char names[][16], size_t max);
+const char *model_category_label(const char *cat);
+
+/* Buffer de texto dinámico. */
+struct sbuf { char *p; size_t n, cap; };
+void sb_free(struct sbuf *b);
+int sb_put(struct sbuf *b, const char *s);
+int sb_printf(struct sbuf *b, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+int sb_json(struct sbuf *b, const char *s);
+
+/* Estado completo para la GUI, como JSON. 0 ok. */
+int model_state_json(const struct model *m, struct sbuf *out);
+
+/* Utilidades de proceso. */
+void tool_dir_from_argv0(const char *argv0);
+int run_tool(const char *tool, char *const argv[], int quiet);   /* devuelve código de salida */
+
+/* Modos. */
+int run_tui(int auto_apply);
+int web_browser_available(void);
+int run_web(int port, int open_window, const char *token, int idle_seconds);
+
+#endif

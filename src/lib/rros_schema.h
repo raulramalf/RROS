@@ -24,4 +24,16 @@ const char *rros_type_name(enum rros_type t);
 int rros_schema_check(const struct rros_key *k, const char *val, int quoted,
 		      char *err, size_t n);
 
+
+/* Claves dinámicas: keybind.<id>, rule.<id>, autostart.<id>. */
+enum rros_family { RROS_FAM_NONE, RROS_FAM_KEYBIND, RROS_FAM_RULE, RROS_FAM_AUTOSTART };
+enum rros_family rros_family_of(const char *key);
+const char *rros_family_desc(enum rros_family f);
+/* 1 si `key` no es dinámica; 0 si es válida; <0 con mensaje en err. */
+int rros_dynamic_check(const char *key, const char *val, char *err, size_t n);
+/* Traducción a comandos de sway (misma lógica que valida). 0 ok, -1 inválido. */
+int rros_keybind_to_sway(const char *val, char *out, size_t n);
+int rros_rule_to_sway(const char *val, char *out, size_t n);
+int rros_autostart_to_sway(const char *val, char *out, size_t n);
+
 #endif

@@ -3,10 +3,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "rros_profile.h"
 #include "rros_schema.h"
-
-#define DEFAULT_ACCENT "#7c5cff"
 
 static int valid_hex(const char *s)
 {
@@ -25,16 +25,6 @@ static void rgb_of(const char *h, int *r, int *g, int *b)
 	*r = (int)((v >> 16) & 255);
 	*g = (int)((v >> 8) & 255);
 	*b = (int)(v & 255);
-}
-
-static void mix(const char *a, const char *b, int pct_b, char out[8])
-{
-	int ar, ag, ab, br, bg, bb;
-
-	rgb_of(a, &ar, &ag, &ab);
-	rgb_of(b, &br, &bg, &bb);
-	snprintf(out, 8, "#%02x%02x%02x", (ar * (100 - pct_b) + br * pct_b) / 100,
-		 (ag * (100 - pct_b) + bg * pct_b) / 100, (ab * (100 - pct_b) + bb * pct_b) / 100);
 }
 
 static int safe_chars(const char *s, const char *extra)
@@ -69,8 +59,7 @@ static void cfg_str(const struct rros_conf *c, const char *key, const char *def,
 	snprintf(dst, n, "%s", v);
 }
 
-static void cfg_enum(const struct rros_conf *c, const char *key, const char *def,
-		     char *dst, size_t n)
+static void cfg_enum(const struct rros_conf *c, const char *key, const char *def, char *dst, size_t n)
 {
 	const char *v = rros_conf_get(c, key);
 	const struct rros_key *k = rros_schema_find(key);
@@ -84,16 +73,24 @@ static void cfg_enum(const struct rros_conf *c, const char *key, const char *def
 void rros_theme_from_conf(struct rros_theme *t, const struct rros_conf *c)
 {
 	const char *acc = rros_conf_get(c, "ui.accent");
-	char scheme[8];
+	char scheme[8], comp[8];
 
 	memset(t, 0, sizeof *t);
-	snprintf(t->accent, sizeof t->accent, "%s", (acc && valid_hex(acc)) ? acc : DEFAULT_ACCENT);
-	for (char *p = t->accent; *p; p++)
-		*p = (char)tolower((unsigned char)*p);
+	if (acc && valid_hex(acc)) {
+		snprintf(t->accent, sizeof t->accent, "%s", acc);
+		for (char *p = t->accent; *p; p++)
+			*p = (char)tolower((unsigned char)*p);
+	}
+	cfg_str(c, "ui.theme", "aurora", "_-", t->theme, sizeof t->theme);
+	if (!rros_valid_profile_name(t->theme))
+		snprintf(t->theme, sizeof t->theme, "aurora");
 	cfg_enum(c, "ui.color_scheme", "dark", scheme, sizeof scheme);
 	t->dark = strcmp(scheme, "light") != 0;
 	cfg_str(c, "ui.font", "Inter", " ._-", t->font, sizeof t->font);
 	cfg_str(c, "ui.font_mono", "JetBrains Mono", " ._-", t->font_mono, sizeof t->font_mono);
+	cfg_str(c, "ui.icon_theme", "Adwaita", "._-", t->icon_theme, sizeof t->icon_theme);
+	cfg_str(c, "ui.cursor_theme", "Adwaita", "._-", t->cursor_theme, sizeof t->cursor_theme);
+	t->cursor_size = (int)cfg_int(c, "ui.cursor_size", 24);
 	t->font_size = (int)cfg_int(c, "ui.font_size", 11);
 	t->scale = (int)cfg_int(c, "ui.scale", 100);
 	t->gap = (int)cfg_int(c, "ui.gap", 8);
@@ -103,9 +100,19 @@ void rros_theme_from_conf(struct rros_theme *t, const struct rros_conf *c)
 	t->workspaces = (int)cfg_int(c, "ui.workspaces", 4);
 	t->transparency = (int)cfg_int(c, "ui.transparency", 0);
 	cfg_enum(c, "ui.panel_position", "top", t->panel_pos, sizeof t->panel_pos);
+	cfg_enum(c, "panel.style", "flat", t->panel_style, sizeof t->panel_style);
 	cfg_enum(c, "ui.layout", "hybrid", t->layout, sizeof t->layout);
 	cfg_enum(c, "ui.effects", "basic", t->effects, sizeof t->effects);
+	cfg_enum(c, "ui.wallpaper_mode", "fill", t->wallpaper_mode, sizeof t->wallpaper_mode);
 	cfg_str(c, "input.keymap", "es", "_,", t->keymap, sizeof t->keymap);
+	cfg_str(c, "panel.left", "workspaces,mode", ",_", t->panel_left, sizeof t->panel_left);
+	cfg_str(c, "panel.center", "clock", ",_", t->panel_center, sizeof t->panel_center);
+	cfg_str(c, "panel.right", "profile,memory,cpu,network,audio,battery,tray", ",_", t->panel_right,
+		sizeof t->panel_right);
+	cfg_str(c, "ui.wallpaper", "", "/._-", t->wallpaper, sizeof t->wallpaper);
+	t->term_scrollback = (int)cfg_int(c, "term.scrollback", 5000);
+	t->term_padding = (int)cfg_int(c, "term.padding", 10);
+	cfg_enum(c, "term.cursor", "block", t->term_cursor, sizeof t->term_cursor);
 	t->animations = rros_conf_get_bool(c, "ui.animations", 1);
 	t->blur = rros_conf_get_bool(c, "ui.blur", 0);
 	t->shadows = rros_conf_get_bool(c, "ui.shadows", 0);
@@ -119,52 +126,74 @@ void rros_theme_from_conf(struct rros_theme *t, const struct rros_conf *c)
 	t->repeat_delay = (int)cfg_int(c, "input.repeat_delay_ms", 300);
 	t->repeat_rate = (int)cfg_int(c, "input.repeat_rate", 30);
 	t->battery_low = (int)cfg_int(c, "power.battery_low_percent", 15);
-	{
-		char comp[8];
-
-		cfg_enum(c, "ui.compositor", "minimal", comp, sizeof comp);
-		t->full_compositor = strcmp(comp, "full") == 0;
-	}
+	cfg_enum(c, "ui.compositor", "minimal", comp, sizeof comp);
+	t->full_compositor = strcmp(comp, "full") == 0;
 }
 
-static void set(char *dst, const char *v)
+/* ---- utilidades de generación ---- */
+
+static const char *nh(const char *hex)
 {
-	snprintf(dst, 8, "%s", v);
+	return hex + 1;
 }
 
-void rros_theme_palette(const struct rros_theme *t, struct rros_palette *p)
+static double alpha_of(const struct rros_theme *t, double min)
 {
-	if (t->dark) {
-		set(p->bg, "#0b1020"); set(p->surface, "#141c38"); set(p->text, "#e6ecff");
-		set(p->muted, "#8a96bd"); set(p->border, "#26305a");
-		set(p->red, "#ff6b81"); set(p->green, "#4ade80"); set(p->yellow, "#fbbf24");
-		set(p->blue, "#60a5fa"); set(p->magenta, "#c084fc"); set(p->cyan, "#22d3ee");
-	} else {
-		set(p->bg, "#f5f7ff"); set(p->surface, "#ffffff"); set(p->text, "#141a33");
-		set(p->muted, "#5b6489"); set(p->border, "#d5dbf5");
-		set(p->red, "#d6334f"); set(p->green, "#16a34a"); set(p->yellow, "#b7791f");
-		set(p->blue, "#2563eb"); set(p->magenta, "#9333ea"); set(p->cyan, "#0891b2");
-	}
-	set(p->accent, t->accent);
-	mix(t->accent, p->bg, 55, p->accent_dim);
+	double a = 1.0 - t->transparency / 100.0;
+
+	return a < min ? min : a;
+}
+
+static void hex_alpha(char *out, size_t n, const char *hex, double alpha, int hash)
+{
+	snprintf(out, n, "%s%s%02x", hash ? "#" : "", nh(hex), (unsigned)(alpha * 255.0 + 0.5));
+}
+
+static int by_key(const void *a, const void *b)
+{
+	const struct rros_kv *x = *(const struct rros_kv *const *)a, *y = *(const struct rros_kv *const *)b;
+
+	return strcmp(x->key, y->key);
+}
+
+/* Reúne las claves que empiezan por prefix, ordenadas, para una salida estable. */
+static size_t collect(const struct rros_conf *c, const char *prefix, const struct rros_kv **out, size_t max)
+{
+	size_t n = 0, pl = strlen(prefix);
+
+	for (size_t i = 0; i < c->n && n < max; i++)
+		if (!strncmp(c->items[i].key, prefix, pl))
+			out[n++] = &c->items[i];
+	if (n > 1)
+		qsort(out, n, sizeof *out, by_key);
+	return n;
 }
 
 /* ---- sway ---- */
 
-void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p, FILE *f)
+void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p,
+		      const struct rros_conf *c, FILE *f)
 {
+	const struct rros_kv *items[64];
+	char line[600];
+	size_t n;
+
 	fprintf(f, "# %s. No lo edites: usa `rros-config set ui.<clave> <valor>`.\n", RROS_GENERATED);
 	fputs("set $mod Mod4\nset $term foot\nset $menu fuzzel\n\n", f);
 	fprintf(f, "font pango:%s %d\n", t->font, t->font_size);
 	fprintf(f, "default_border pixel %d\ndefault_floating_border pixel %d\n", t->border, t->border);
 	fprintf(f, "gaps inner %d\ngaps outer %d\nsmart_borders on\n", t->gap, t->gap / 2);
-	fputs("focus_follows_mouse yes\nfloating_modifier $mod normal\n\n", f);
-	fprintf(f, "client.focused          %s %s %s %s %s\n", p->accent, p->accent, p->text, p->accent, p->accent);
+	fputs("focus_follows_mouse yes\nfloating_modifier $mod normal\n", f);
+	fprintf(f, "seat seat0 xcursor_theme %s %d\n\n", t->cursor_theme, t->cursor_size);
+	fprintf(f, "client.focused          %s %s %s %s %s\n", p->accent, p->accent, p->bg, p->accent, p->accent);
 	fprintf(f, "client.focused_inactive %s %s %s %s %s\n", p->border, p->surface, p->muted, p->border, p->border);
 	fprintf(f, "client.unfocused        %s %s %s %s %s\n", p->border, p->surface, p->muted, p->border, p->border);
 	fprintf(f, "client.urgent           %s %s %s %s %s\n", p->red, p->red, p->bg, p->red, p->red);
 	fprintf(f, "client.background       %s\n", p->bg);
-	fprintf(f, "output * bg %s solid_color\n", p->bg);
+	if (t->wallpaper[0] && access(t->wallpaper, R_OK) == 0)
+		fprintf(f, "output * bg %s %s\n", t->wallpaper, t->wallpaper_mode);
+	else
+		fprintf(f, "output * bg %s solid_color\n", p->bg);
 	if (t->scale != 100)
 		fprintf(f, "output * scale %.2f\n", t->scale / 100.0);
 
@@ -186,7 +215,8 @@ void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p, 
 	fputs("bindsym $mod+Return exec $term\nbindsym $mod+space exec $menu\nbindsym $mod+d exec $menu\n", f);
 	fputs("bindsym $mod+q kill\nbindsym $mod+f fullscreen\nbindsym $mod+Shift+space floating toggle\n", f);
 	fputs("bindsym $mod+Shift+r reload\nbindsym $mod+Shift+e exec swaymsg exit\n", f);
-	fputs("bindsym $mod+t exec rros-theme toggle\n", f);
+	fputs("bindsym $mod+t exec rros-theme toggle\nbindsym $mod+Shift+t exec rros-theme cycle\n", f);
+	fputs("bindsym $mod+comma exec rros-settings open\n", f);
 	fputs("bindsym $mod+p exec foot -T RROS -e sh -c 'rros-fetch; rros doctor; read -r _'\n", f);
 	fputs("bindsym $mod+Left focus left\nbindsym $mod+Right focus right\n", f);
 	fputs("bindsym $mod+Up focus up\nbindsym $mod+Down focus down\n", f);
@@ -207,14 +237,42 @@ void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p, 
 	fputs("\nmode \"resize\" {\n    bindsym Left resize shrink width 40px\n    bindsym Right resize grow width 40px\n", f);
 	fputs("    bindsym Up resize shrink height 40px\n    bindsym Down resize grow height 40px\n", f);
 	fputs("    bindsym Escape mode default\n    bindsym Return mode default\n}\nbindsym $mod+r mode \"resize\"\n", f);
+
+	/* personalización del usuario: atajos, reglas por aplicación y programas de inicio */
+	n = collect(c, "keybind.", items, 64);
+	if (n)
+		fputs("\n# Tus atajos (keybind.*)\n", f);
+	for (size_t i = 0; i < n; i++) {
+		if (rros_keybind_to_sway(items[i]->val, line, sizeof line) == 0)
+			fprintf(f, "%s\n", line);
+		else
+			fprintf(f, "# ignorado (no válido): %s\n", items[i]->key);
+	}
+	n = collect(c, "rule.", items, 64);
+	if (n)
+		fputs("\n# Tus reglas de ventana (rule.*)\n", f);
+	for (size_t i = 0; i < n; i++) {
+		if (rros_rule_to_sway(items[i]->val, line, sizeof line) == 0)
+			fprintf(f, "%s\n", line);
+		else
+			fprintf(f, "# ignorada (no válida): %s\n", items[i]->key);
+	}
 	fputs("\nbar {\n    swaybar_command waybar\n}\n\n", f);
 	fputs("include ~/.config/sway/rros-effects.conf\n", f);
 	fputs("exec mako\n", f);
+	n = collect(c, "autostart.", items, 64);
+	for (size_t i = 0; i < n; i++) {
+		if (rros_autostart_to_sway(items[i]->val, line, sizeof line) == 0)
+			fprintf(f, "%s\n", line);
+		else
+			fprintf(f, "# ignorado (no válido): %s\n", items[i]->key);
+	}
 }
 
-void rros_render_effects(const struct rros_theme *t, const struct rros_palette *p, FILE *f)
+void rros_render_effects(const struct rros_theme *t, const struct rros_palette *p,
+			 const struct rros_conf *c, FILE *f)
 {
-	(void)p;
+	(void)p; (void)c;
 	fprintf(f, "# %s (efectos de SwayFX).\n", RROS_GENERATED);
 	if (!t->full_compositor || strcmp(t->effects, "off") == 0)
 		return;
@@ -234,16 +292,51 @@ void rros_render_effects(const struct rros_theme *t, const struct rros_palette *
 
 /* ---- waybar ---- */
 
-void rros_render_waybar(const struct rros_theme *t, const struct rros_palette *p, FILE *f)
+static const struct { const char *name, *module; } modmap[] = {
+	{ "workspaces", "sway/workspaces" }, { "mode", "sway/mode" }, { "window", "sway/window" },
+	{ "language", "sway/language" }, { "clock", "clock" }, { "profile", "custom/profile" },
+	{ "memory", "memory" }, { "cpu", "cpu" }, { "network", "network" }, { "audio", "pulseaudio" },
+	{ "battery", "battery" }, { "tray", "tray" }, { "disk", "disk" }, { "temperature", "temperature" },
+	{ "backlight", "backlight" }, { "idle", "idle_inhibitor" },
+};
+
+static void emit_modules(FILE *f, const char *key, const char *list, int last)
+{
+	char buf[160], *tok, *save = NULL;
+	int first = 1;
+
+	snprintf(buf, sizeof buf, "%s", list);
+	fprintf(f, "  \"%s\": [", key);
+	for (tok = strtok_r(buf, ",", &save); tok; tok = strtok_r(NULL, ",", &save)) {
+		for (size_t i = 0; i < sizeof modmap / sizeof *modmap; i++) {
+			if (strcmp(tok, modmap[i].name))
+				continue;
+			fprintf(f, "%s\"%s\"", first ? "" : ", ", modmap[i].module);
+			first = 0;
+		}
+	}
+	fprintf(f, "]%s\n", last ? "" : ",");
+}
+
+void rros_render_waybar(const struct rros_theme *t, const struct rros_palette *p,
+			const struct rros_conf *c, FILE *f)
 {
 	int vertical = !strcmp(t->panel_pos, "left") || !strcmp(t->panel_pos, "right");
+	int floating = strcmp(t->panel_style, "flat") != 0;
 
-	(void)p;
+	(void)p; (void)c;
 	fprintf(f, "// %s. No lo edites.\n{\n", RROS_GENERATED);
 	fprintf(f, "  \"layer\": \"top\",\n  \"position\": \"%s\",\n  \"%s\": %d,\n  \"spacing\": 4,\n",
 		t->panel_pos, vertical ? "width" : "height", t->panel_size);
-	fputs("  \"modules-left\": [\"sway/workspaces\", \"sway/mode\"],\n  \"modules-center\": [\"clock\"],\n", f);
-	fputs("  \"modules-right\": [\"custom/profile\", \"memory\", \"cpu\", \"network\", \"pulseaudio\", \"battery\"],\n", f);
+	if (floating) {
+		const char *m = !strcmp(t->panel_pos, "top") ? "6 8 0 8" : !strcmp(t->panel_pos, "bottom") ? "0 8 6 8" :
+				!strcmp(t->panel_pos, "left") ? "8 0 8 6" : "8 6 8 0";
+
+		fprintf(f, "  \"margin\": \"%s\",\n", m);
+	}
+	emit_modules(f, "modules-left", t->panel_left, 0);
+	emit_modules(f, "modules-center", t->panel_center, 0);
+	emit_modules(f, "modules-right", t->panel_right, 0);
 	fputs("  \"sway/workspaces\": { \"disable-scroll\": true },\n", f);
 	fprintf(f, "  \"clock\": { \"format\": \"%s\", \"tooltip-format\": \"{:%%A %%d %%B %%Y}\" },\n",
 		t->clock_24h ? "{:%H:%M}" : "{:%I:%M %p}");
@@ -252,32 +345,52 @@ void rros_render_waybar(const struct rros_theme *t, const struct rros_palette *p
 	fputs("  \"cpu\": { \"format\": \"CPU {usage}%\", \"interval\": 5 },\n", f);
 	fputs("  \"network\": { \"format-wifi\": \"{essid}\", \"format-ethernet\": \"LAN\", \"format-disconnected\": \"sin red\" },\n", f);
 	fputs("  \"pulseaudio\": { \"format\": \"VOL {volume}%\", \"format-muted\": \"MUTE\", \"on-click\": \"wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle\" },\n", f);
+	fputs("  \"disk\": { \"format\": \"DISCO {percentage_used}%\", \"interval\": 60 },\n", f);
+	fputs("  \"temperature\": { \"format\": \"{temperatureC}°C\" },\n", f);
+	fputs("  \"backlight\": { \"format\": \"LUZ {percent}%\" },\n", f);
+	fputs("  \"idle_inhibitor\": { \"format\": \"{icon}\", \"format-icons\": { \"activated\": \"CAFE\", \"deactivated\": \"cafe\" } },\n", f);
+	fputs("  \"tray\": { \"spacing\": 8 },\n", f);
 	fprintf(f, "  \"battery\": { \"states\": { \"warning\": %d, \"critical\": 5 }, \"format\": \"%s\", \"interval\": 30 }\n}\n",
 		t->battery_low, t->battery_percent ? "BAT {capacity}%" : "BAT");
 }
 
-void rros_render_waybar_css(const struct rros_theme *t, const struct rros_palette *p, FILE *f)
+void rros_render_waybar_css(const struct rros_theme *t, const struct rros_palette *p,
+			    const struct rros_conf *c, FILE *f)
 {
-	int r, g, b;
-	double alpha = 1.0 - t->transparency / 100.0;
+	int r, g, b, sr, sg, sb;
+	double alpha = alpha_of(t, 0.15);
 	const char *edge = !strcmp(t->panel_pos, "top") ? "bottom" : !strcmp(t->panel_pos, "bottom") ? "top" :
 			   !strcmp(t->panel_pos, "left") ? "right" : "left";
+	int flat = !strcmp(t->panel_style, "flat"), pill = !strcmp(t->panel_style, "pill");
+	static const char *mods = "#clock, #memory, #cpu, #network, #pulseaudio, #battery, #disk, #temperature, "
+				  "#backlight, #tray, #idle_inhibitor, #language, #mode, #window";
 
-	if (alpha < 0.15)
-		alpha = 0.15;
+	(void)c;
 	rgb_of(p->bg, &r, &g, &b);
+	rgb_of(p->surface, &sr, &sg, &sb);
 	fprintf(f, "/* %s. No lo edites. */\n", RROS_GENERATED);
 	fprintf(f, "* { font-family: \"%s\", sans-serif; font-size: %dpx; border: none; border-radius: 0; min-height: 0; }\n",
 		t->font, t->font_size + 2);
-	fprintf(f, "window#waybar { background: rgba(%d, %d, %d, %.2f); color: %s; border-%s: 2px solid %s; }\n",
-		r, g, b, alpha, p->text, edge, p->accent);
+	if (flat) {
+		fprintf(f, "window#waybar { background: rgba(%d, %d, %d, %.2f); color: %s; border-%s: 2px solid %s; }\n",
+			r, g, b, alpha, p->text, edge, p->accent);
+	} else {
+		fprintf(f, "window#waybar { background: transparent; color: %s; }\n", p->text);
+		if (pill)
+			fprintf(f, "%s { background: rgba(%d, %d, %d, %.2f); border-radius: 999px; margin: 4px 2px; }\n",
+				"#workspaces, #clock, #custom-profile, #memory, #cpu, #network, #pulseaudio, #battery, #disk, #temperature, #backlight, #tray, #idle_inhibitor, #language, #mode, #window",
+				sr, sg, sb, alpha);
+		else
+			fprintf(f, ".modules-left, .modules-center, .modules-right { background: rgba(%d, %d, %d, %.2f); border: 1px solid %s; border-radius: %dpx; padding: 0 4px; }\n",
+				r, g, b, alpha, p->border, t->radius);
+	}
 	fprintf(f, "#workspaces button { padding: 0 10px; margin: 3px 2px; color: %s; background: transparent; border-radius: %dpx; }\n",
-		p->muted, t->radius);
+		p->muted, pill ? 999 : t->radius);
 	fprintf(f, "#workspaces button.focused { color: %s; background: %s; }\n", p->bg, p->accent);
 	fprintf(f, "#workspaces button:hover { background: %s; color: %s; }\n", p->accent_dim, p->text);
 	fprintf(f, "#custom-profile { color: %s; background: %s; border-radius: %dpx; padding: 0 12px; margin: 3px 4px; font-weight: bold; }\n",
-		p->bg, p->accent, t->radius);
-	fprintf(f, "#clock, #memory, #cpu, #network, #pulseaudio, #battery { padding: 0 10px; color: %s; }\n", p->text);
+		p->bg, p->accent, pill ? 999 : t->radius);
+	fprintf(f, "%s { padding: 0 10px; color: %s; }\n", mods, p->text);
 	fprintf(f, "#clock { font-weight: bold; }\n#memory { color: %s; }\n#cpu { color: %s; }\n", p->cyan, p->magenta);
 	fprintf(f, "#battery.warning { color: %s; }\n#battery.critical { color: %s; }\n", p->yellow, p->red);
 	if (t->animations)
@@ -286,24 +399,80 @@ void rros_render_waybar_css(const struct rros_theme *t, const struct rros_palett
 
 /* ---- foot ---- */
 
-static const char *nh(const char *hex)
+void rros_render_foot(const struct rros_theme *t, const struct rros_palette *p,
+		      const struct rros_conf *c, FILE *f)
 {
-	return hex + 1;
-}
-
-void rros_render_foot(const struct rros_theme *t, const struct rros_palette *p, FILE *f)
-{
-	double alpha = 1.0 - t->transparency / 100.0;
-
-	if (alpha < 0.3)
-		alpha = 0.3;
+	(void)c;
 	fprintf(f, "# %s. No lo edites.\n", RROS_GENERATED);
-	fprintf(f, "[main]\nfont=%s:size=%d\npad=10x8\n\n", t->font_mono, t->font_size);
-	fprintf(f, "[colors]\nalpha=%.2f\nbackground=%s\nforeground=%s\n", alpha, nh(p->bg), nh(p->text));
+	fprintf(f, "[main]\nfont=%s:size=%d\npad=%dx%d\n\n", t->font_mono, t->font_size, t->term_padding,
+		t->term_padding * 4 / 5);
+	fprintf(f, "[scrollback]\nlines=%d\n\n", t->term_scrollback);
+	fprintf(f, "[colors]\nalpha=%.2f\nbackground=%s\nforeground=%s\n", alpha_of(t, 0.3), nh(p->bg), nh(p->text));
 	fprintf(f, "regular0=%s\nregular1=%s\nregular2=%s\nregular3=%s\n", nh(p->surface), nh(p->red), nh(p->green), nh(p->yellow));
 	fprintf(f, "regular4=%s\nregular5=%s\nregular6=%s\nregular7=%s\n", nh(p->blue), nh(p->magenta), nh(p->cyan), nh(p->text));
 	fprintf(f, "bright0=%s\nbright1=%s\nbright2=%s\nbright3=%s\n", nh(p->muted), nh(p->red), nh(p->green), nh(p->yellow));
 	fprintf(f, "bright4=%s\nbright5=%s\nbright6=%s\nbright7=%s\n", nh(p->blue), nh(p->magenta), nh(p->cyan), nh(p->text));
 	fprintf(f, "selection-foreground=%s\nselection-background=%s\n\n", nh(p->bg), nh(p->accent));
-	fprintf(f, "[cursor]\ncolor=%s %s\n", nh(p->bg), nh(p->accent));
+	fprintf(f, "[cursor]\nstyle=%s\ncolor=%s %s\n", t->term_cursor, nh(p->bg), nh(p->accent));
+}
+
+/* ---- notificaciones, lanzador y GTK ---- */
+
+void rros_render_mako(const struct rros_theme *t, const struct rros_palette *p,
+		      const struct rros_conf *c, FILE *f)
+{
+	char bg[16];
+
+	(void)c;
+	hex_alpha(bg, sizeof bg, p->bg, alpha_of(t, 0.5), 1);
+	fprintf(f, "# %s. No lo edites.\n", RROS_GENERATED);
+	fprintf(f, "font=%s %d\nbackground-color=%s\ntext-color=%s\nborder-color=%s\n", t->font, t->font_size, bg, p->text, p->accent);
+	fprintf(f, "border-size=%d\nborder-radius=%d\nprogress-color=over %s\n", t->border, t->radius, p->surface);
+	fputs("anchor=top-right\nmargin=12\npadding=12\ndefault-timeout=6000\nicons=1\n", f);
+}
+
+void rros_render_fuzzel(const struct rros_theme *t, const struct rros_palette *p,
+			const struct rros_conf *c, FILE *f)
+{
+	char bg[16], acc[16], sur[16], txt[16];
+
+	(void)c;
+	hex_alpha(bg, sizeof bg, p->bg, alpha_of(t, 0.5), 0);
+	hex_alpha(acc, sizeof acc, p->accent, 1.0, 0);
+	hex_alpha(sur, sizeof sur, p->surface, 1.0, 0);
+	hex_alpha(txt, sizeof txt, p->text, 1.0, 0);
+	fprintf(f, "# %s. No lo edites.\n[main]\nfont=%s:size=%d\nterminal=foot\nprompt=\"> \"\n\n", RROS_GENERATED, t->font, t->font_size + 1);
+	fprintf(f, "[colors]\nbackground=%s\ntext=%s\nmatch=%s\nselection=%s\nselection-text=%s\nselection-match=%s\nborder=%s\n\n",
+		bg, txt, acc, sur, txt, acc, acc);
+	fprintf(f, "[border]\nwidth=%d\nradius=%d\n", t->border, t->radius);
+}
+
+void rros_render_gtk_settings(const struct rros_theme *t, const struct rros_palette *p,
+			      const struct rros_conf *c, FILE *f)
+{
+	(void)p; (void)c;
+	fprintf(f, "# %s. No lo edites.\n[Settings]\n", RROS_GENERATED);
+	fprintf(f, "gtk-application-prefer-dark-theme=%d\ngtk-icon-theme-name=%s\ngtk-font-name=%s %d\n",
+		t->dark, t->icon_theme, t->font, t->font_size);
+	fprintf(f, "gtk-cursor-theme-name=%s\ngtk-cursor-theme-size=%d\n", t->cursor_theme, t->cursor_size);
+}
+
+void rros_render_gtk_css(const struct rros_theme *t, const struct rros_palette *p,
+			 const struct rros_conf *c, FILE *f)
+{
+	(void)t; (void)c;
+	fprintf(f, "/* %s. No lo edites. */\n", RROS_GENERATED);
+	/* nombres de libadwaita (GTK4) */
+	fprintf(f, "@define-color accent_bg_color %s;\n@define-color accent_color %s;\n@define-color accent_fg_color %s;\n", p->accent, p->accent, p->bg);
+	fprintf(f, "@define-color window_bg_color %s;\n@define-color window_fg_color %s;\n", p->bg, p->text);
+	fprintf(f, "@define-color view_bg_color %s;\n@define-color view_fg_color %s;\n", p->surface, p->text);
+	fprintf(f, "@define-color headerbar_bg_color %s;\n@define-color headerbar_fg_color %s;\n", p->surface, p->text);
+	fprintf(f, "@define-color card_bg_color %s;\n@define-color card_fg_color %s;\n", p->surface, p->text);
+	fprintf(f, "@define-color popover_bg_color %s;\n@define-color popover_fg_color %s;\n", p->surface, p->text);
+	fprintf(f, "@define-color destructive_bg_color %s;\n@define-color error_color %s;\n", p->red, p->red);
+	fprintf(f, "@define-color success_color %s;\n@define-color warning_color %s;\n", p->green, p->yellow);
+	/* nombres de GTK3 */
+	fprintf(f, "@define-color theme_bg_color %s;\n@define-color theme_fg_color %s;\n", p->bg, p->text);
+	fprintf(f, "@define-color theme_base_color %s;\n@define-color theme_text_color %s;\n", p->surface, p->text);
+	fprintf(f, "@define-color theme_selected_bg_color %s;\n@define-color theme_selected_fg_color %s;\n", p->accent, p->bg);
 }

@@ -10,7 +10,9 @@ RROS usa el kernel Linux y paquetes de Ubuntu 24.04 como base. Lo que lo disting
 | Paquetes | Snap por defecto | Sin snap (apt pinning y servicios enmascarados) |
 | Telemetría | Informes y servicios de Ubuntu Pro | Bloqueados y desactivados |
 | Memoria | Swap en archivo | zram según perfil (`rros-apply`) |
-| Personalización | dconf y ajustes gráficos | TOML por capas con 89 claves validadas |
+| Personalización | dconf y ajustes gráficos | TOML por capas con 96 claves validadas, 7 temas y temas propios, atajos, reglas por aplicación y programas de inicio |
+| Ajustes | GNOME Settings | `rros-settings`: ventana propia que usa el tema que editas, y versión de terminal |
+| Tema | Un tema y el modo oscuro | Un solo tema se aplica a sway, waybar, terminal, notificaciones, lanzador y GTK; se puede crear el propio |
 | Presupuesto | Ninguno | RAM y disco con tope por perfil (`rros-budget`) |
 | Perfiles | Una sola variante | Lite, Standard y Pro que cambian compositor, efectos, servicios y memoria |
 | Herramientas | `apt`, `snap`, `gsettings` | Comando `rros`: `info`, `config`, `theme`, `doctor`, `budget`, `hw`, `install` |

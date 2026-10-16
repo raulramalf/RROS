@@ -11,7 +11,7 @@ kernel = "standard"
 multilib = false
 
 [ui]
-accent = "#7c5cff"
+theme = "aurora"
 color_scheme = "dark"
 font = "Inter"
 font_mono = "JetBrains Mono"

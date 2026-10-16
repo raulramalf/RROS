@@ -6,6 +6,18 @@ Hay tres formas, de la más rápida a la más real.
 La demo interactiva está en [`preview/index.html`](../preview/index.html). Ábrela con doble clic o sírvela con `python3 -m http.server -d preview`.
 Simula el escritorio: perfiles, tema, panel, acento y una terminal con `rros-fetch`, `rros-config`, `rros doctor` y `rros-installer plan`. Los valores de memoria y disco son de ejemplo.
 
+### La ventana de ajustes en el navegador
+`scripts/build-gui-demo.sh` genera `build/gui-demo.html`: la misma interfaz de `rros-settings` con un servidor simulado. Permite elegir temas, crear uno propio y editar sus colores, añadir atajos y reglas, y guardar instantáneas.
+
+### La ventana de ajustes de verdad
+Con las herramientas compiladas (`make`) puedes lanzarla en tu propio equipo, sin instalar RROS:
+```
+export RROS_PROFILE_DIR=$PWD/profiles RROS_GUI_DIR=$PWD/gui
+build/rros-settings web          # imprime una URL con token y abre tu navegador
+build/rros-settings tui          # la versión de terminal
+```
+Sin `RROS_USER_CONF`, escribe en tu `~/.config/rros/rros.toml`. Para probar sin tocarlo: `RROS_USER_CONF=/tmp/prueba.toml`.
+
 ## 2. En un contenedor (identidad y herramientas reales)
 ```
 scripts/try-docker.sh lite     # o standard, pro
@@ -28,5 +40,6 @@ En VirtualBox o GNOME Boxes: tipo Linux/Ubuntu 64 bits, la RAM del perfil (Lite 
 
 ## Qué mirar al arrancar
 - `rros-fetch` y `rros doctor`: identidad, perfil y presupuesto.
-- `Mod+T` alterna tema oscuro/claro; `Mod+P` abre la ficha; `Mod+D` el lanzador.
+- `Mod+T` alterna oscuro/claro, `Mod+Shift+T` cambia de tema, `Mod+,` abre los ajustes, `Mod+P` la ficha y `Mod+D` el lanzador.
+- La guía de comandos está en [CONSOLA.md](CONSOLA.md).
 - `rros config set ui.accent '#22d3ee'` y `rros theme apply` cambian el escritorio.

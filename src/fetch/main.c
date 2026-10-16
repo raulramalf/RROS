@@ -10,6 +10,7 @@
 #include "rros_hw.h"
 #include "rros_profile.h"
 #include "rros_version.h"
+#include "theme.h"
 
 static int use_color;
 static int ar = 124, ag = 92, ab = 255;
@@ -117,6 +118,7 @@ int main(int argc, char **argv)
 	struct utsname u;
 	struct statvfs vfs;
 	const char *acc, *user = getenv("USER");
+	char accbuf[8], themebuf[40];
 	long ram_used, ram_limit, disk_limit_gb;
 	double disk_used_gb = 0;
 
@@ -137,13 +139,20 @@ int main(int argc, char **argv)
 		rros_conf_free(&eff);
 		rros_conf_init(&eff);
 	}
-	acc = rros_conf_get(&eff, "ui.accent");
-	if (acc && strlen(acc) == 7 && acc[0] == '#') {
-		unsigned v = (unsigned)strtoul(acc + 1, NULL, 16);
+	{
+		struct rros_theme th;
+		struct rros_palette pal;
+		unsigned v;
 
+		rros_theme_from_conf(&th, &eff);
+		rros_theme_palette(&th, &pal);
+		snprintf(accbuf, sizeof accbuf, "%s", pal.accent);
+		acc = accbuf;
+		v = (unsigned)strtoul(acc + 1, NULL, 16);
 		ar = (int)((v >> 16) & 255);
 		ag = (int)((v >> 8) & 255);
 		ab = (int)(v & 255);
+		snprintf(themebuf, sizeof themebuf, "%s", th.theme);
 	}
 	ram_limit = rros_conf_get_long(&eff, "profile.max_idle_ram_mb", 0);
 	disk_limit_gb = rros_conf_get_long(&eff, "profile.max_disk_gb", 0);
@@ -173,8 +182,8 @@ int main(int argc, char **argv)
 	row("CPU", "%s (%d)", hw.cpu_model[0] ? hw.cpu_model : "desconocida", hw.cpus);
 	row("GPU", "%s", rros_gpu_name(hw.gpu));
 	row("Escritorio", "%s", getenv("SWAYSOCK") ? "RROS Shell (Wayland)" : "consola");
-	row("Tema", "%s · acento %s", rros_conf_get(&eff, "ui.color_scheme") ?
-	    rros_conf_get(&eff, "ui.color_scheme") : "dark", acc ? acc : "#7c5cff");
+	row("Tema", "%s (%s) · acento %s", themebuf, rros_conf_get(&eff, "ui.color_scheme") ?
+	    rros_conf_get(&eff, "ui.color_scheme") : "dark", acc);
 	if (ram_used >= 0 && ram_limit > 0) {
 		col(ar, ag, ab);
 		printf("  %-11s", "Memoria");

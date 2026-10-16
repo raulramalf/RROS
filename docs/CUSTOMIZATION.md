@@ -42,6 +42,13 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.reduce_motion` | booleano | true / false | Reducir movimiento (accesibilidad) |
 | `ui.night_light` | opción | off|auto|on | Filtro de luz nocturna |
 | `ui.night_light_temp` | entero | 1000 – 6500 | Temperatura del filtro nocturno (K) |
+| `panel.style` | opción | flat|floating|pill | Estilo del panel |
+| `panel.left` | texto |  | Módulos a la izquierda, separados por comas |
+| `panel.center` | texto |  | Módulos en el centro, separados por comas |
+| `panel.right` | texto |  | Módulos a la derecha, separados por comas |
+| `term.scrollback` | entero | 0 – 100000 | Líneas de historial de la terminal |
+| `term.cursor` | opción | block|beam|underline | Forma del cursor de la terminal |
+| `term.padding` | entero | 0 – 40 | Margen interior de la terminal (px) |
 | `display.vrr` | opción | off|auto|on | Frecuencia variable (VRR) |
 | `display.refresh_hz` | entero | 24 – 540 | Frecuencia de refresco preferida (Hz) |
 | `display.rotation` | opción | 0|90|180|270 | Rotación de pantalla |
@@ -93,3 +100,6 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `boot.timeout_seconds` | entero | 0 – 60 | Tiempo del menú de arranque |
 | `boot.splash` | booleano | true / false | Pantalla de arranque gráfica |
 | `boot.quiet` | booleano | true / false | Arranque silencioso |
+| `keybind.<id>` | texto | libre, validado | Atajo: "COMBINACION COMANDO", p. ej. "Mod+Shift+b exec firefox" |
+| `rule.<id>` | texto | libre, validado | Regla de ventana: "app_id=NOMBRE ACCION", p. ej. "app_id=firefox workspace 2" |
+| `autostart.<id>` | texto | libre, validado | Programa que se inicia con el escritorio |

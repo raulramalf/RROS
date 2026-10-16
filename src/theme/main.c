@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "rros_profile.h"
+#include "rros_userconf.h"
 #include "theme.h"
 
 struct target {
@@ -20,15 +21,25 @@ static const struct target targets[] = {
 	{ "waybar/config", rros_render_waybar },
 	{ "waybar/style.css", rros_render_waybar_css },
 	{ "foot/foot.ini", rros_render_foot },
+	{ "mako/config", rros_render_mako },
+	{ "fuzzel/fuzzel.ini", rros_render_fuzzel },
+	{ "gtk-3.0/settings.ini", rros_render_gtk_settings },
+	{ "gtk-3.0/gtk.css", rros_render_gtk_css },
+	{ "gtk-4.0/settings.ini", rros_render_gtk_settings },
+	{ "gtk-4.0/gtk.css", rros_render_gtk_css },
 };
 
 static void usage(void)
 {
 	fputs("uso: rros-theme [-p PERFIL] COMANDO\n"
-	      "  apply [--quiet]        escribe ~/.config/{sway,waybar,foot} y recarga\n"
-	      "  render --out DIR [--swayfx]   escribe en DIR (pruebas)\n"
-	      "  toggle                 alterna oscuro/claro y aplica\n"
-	      "  palette                muestra la paleta calculada\n", stderr);
+	      "  list                   temas disponibles (* = en uso)\n"
+	      "  use NOMBRE             cambia de tema y lo aplica     rros-theme use nord\n"
+	      "  cycle                  pasa al siguiente tema\n"
+	      "  toggle                 alterna oscuro/claro\n"
+	      "  new NOMBRE [--base T]  crea un tema propio para editar\n"
+	      "  apply [--quiet]        escribe ~/.config/{sway,waybar,foot,mako,fuzzel,gtk-*} y recarga\n"
+	      "  palette                muestra la paleta calculada\n"
+	      "  render --out DIR [--swayfx]   escribe en DIR (pruebas)\n", stderr);
 }
 
 static int has_marker(const char *path)
@@ -46,7 +57,7 @@ static int has_marker(const char *path)
 }
 
 static int write_target(const char *base, const struct target *tg, const struct rros_theme *t,
-			const struct rros_palette *p, int effects_enabled)
+			const struct rros_palette *p, const struct rros_conf *conf, int effects_enabled)
 {
 	char path[1100], tmp[1110], bak[1110];
 	struct stat st;
@@ -76,7 +87,7 @@ static int write_target(const char *base, const struct target *tg, const struct 
 	if (tg->fn == rros_render_effects && !effects_enabled)
 		fprintf(f, "# %s (sin SwayFX instalado: sin efectos).\n", RROS_GENERATED);
 	else
-		tg->fn(t, p, f);
+		tg->fn(t, p, conf, f);
 	if (fclose(f) != 0 || rename(tmp, path) != 0) {
 		remove(tmp);
 		return -1;
@@ -84,14 +95,15 @@ static int write_target(const char *base, const struct target *tg, const struct 
 	return 0;
 }
 
-static int render_all(const char *base, const struct rros_theme *t, int swayfx)
+static int render_all(const char *base, const struct rros_theme *t, const struct rros_conf *conf, int swayfx)
 {
 	struct rros_palette p;
 	int bad = 0;
 
-	rros_theme_palette(t, &p);
+	if (rros_theme_palette(t, &p))
+		fprintf(stderr, "rros-theme: el tema '%s' no existe; se usa 'aurora' (rros-theme list)\n", t->theme);
 	for (size_t i = 0; i < sizeof targets / sizeof *targets; i++)
-		bad |= write_target(base, &targets[i], t, &p, swayfx) != 0;
+		bad |= write_target(base, &targets[i], t, &p, conf, swayfx) != 0;
 	return bad ? 1 : 0;
 }
 
@@ -109,71 +121,122 @@ static int config_home(char *buf, size_t n)
 	return (len < 0 || (size_t)len >= n) ? -1 : 0;
 }
 
-static int load_theme(struct rros_theme *t, const char *profile)
+static int load_theme(struct rros_theme *t, struct rros_conf *c, const char *profile)
 {
-	struct rros_conf c;
 	int rc;
 
-	rros_conf_init(&c);
-	rc = rros_load_effective(&c, profile);
+	rros_conf_init(c);
+	rc = rros_load_effective(c, profile);
 	if (rc == -1)
 		fprintf(stderr, "rros-theme: perfil '%s' no encontrado\n", profile);
 	else if (rc)
 		fputs("rros-theme: configuración ilegible (rros-config validate)\n", stderr);
 	else
-		rros_theme_from_conf(t, &c);
-	rros_conf_free(&c);
+		rros_theme_from_conf(t, c);
+	if (rc)
+		rros_conf_free(c);
 	return rc;
 }
 
 static int cmd_apply(const char *profile, int quiet)
 {
 	struct rros_theme t;
+	struct rros_conf c;
+	struct rros_palette p;
 	char base[1024];
 	int rc;
 
-	if (load_theme(&t, profile))
+	if (load_theme(&t, &c, profile))
 		return 1;
 	if (config_home(base, sizeof base)) {
 		fputs("rros-theme: no se pudo determinar ~/.config\n", stderr);
+		rros_conf_free(&c);
 		return 1;
 	}
-	rc = render_all(base, &t, t.full_compositor && access("/usr/bin/swayfx", X_OK) == 0);
+	rc = render_all(base, &t, &c, t.full_compositor && access("/usr/bin/swayfx", X_OK) == 0);
+	rros_theme_palette(&t, &p);
 	if (rc == 0 && getenv("SWAYSOCK"))
-		if (system("swaymsg -q reload >/dev/null 2>&1; pkill -SIGUSR2 waybar >/dev/null 2>&1") != 0 && !quiet)
+		if (system("swaymsg -q reload >/dev/null 2>&1; pkill -SIGUSR2 waybar >/dev/null 2>&1; pkill -SIGUSR2 mako >/dev/null 2>&1") != 0 && !quiet)
 			fputs("rros-theme: aviso: no se pudo recargar el escritorio\n", stderr);
 	if (rc == 0 && !quiet)
-		printf("tema aplicado (%s, acento %s) en %s\n", t.dark ? "oscuro" : "claro", t.accent, base);
+		printf("tema aplicado: %s (%s, acento %s) en %s\n", t.theme, t.dark ? "oscuro" : "claro", p.accent, base);
+	rros_conf_free(&c);
 	return rc;
 }
 
 static int cmd_toggle(const char *profile)
 {
 	struct rros_theme t;
-	struct rros_conf u;
-	char path[1024];
-	int rc, line = 0;
+	struct rros_conf c;
+	char err[300];
 
-	if (load_theme(&t, profile))
+	if (load_theme(&t, &c, profile))
 		return 1;
-	if (rros_user_conf(path, sizeof path)) {
-		fputs("rros-theme: no se pudo determinar el archivo de usuario\n", stderr);
-		return 1;
-	}
-	rros_conf_init(&u);
-	rc = rros_conf_load(&u, path, &line);
-	if (rc && !(rc == -1 && errno == ENOENT)) {
-		fprintf(stderr, "rros-theme: %s ilegible\n", path);
-		rros_conf_free(&u);
+	rros_conf_free(&c);
+	if (rros_user_set("ui.color_scheme", t.dark ? "light" : "dark", 0, err, sizeof err)) {
+		fprintf(stderr, "rros-theme: %s\n", err);
 		return 1;
 	}
-	if (rros_conf_set(&u, "ui.color_scheme", t.dark ? "light" : "dark", 1) ||
-	    rros_mkdir_parents(path) || rros_conf_save(&u, path)) {
-		rros_conf_free(&u);
-		return 1;
-	}
-	rros_conf_free(&u);
 	return cmd_apply(profile, 0);
+}
+
+static int theme_exists(const char *name)
+{
+	struct rros_theme_info list[64];
+	size_t n = rros_theme_list(list, 64);
+
+	for (size_t i = 0; i < n; i++)
+		if (!strcmp(list[i].name, name))
+			return 1;
+	return 0;
+}
+
+static int cmd_use(const char *profile, const char *name)
+{
+	char err[300];
+
+	if (!theme_exists(name)) {
+		fprintf(stderr, "rros-theme: el tema '%s' no existe (mira `rros-theme list`)\n", name);
+		return 1;
+	}
+	if (rros_user_set("ui.theme", name, 0, err, sizeof err)) {
+		fprintf(stderr, "rros-theme: %s\n", err);
+		return 1;
+	}
+	return cmd_apply(profile, 0);
+}
+
+static int cmd_list(const char *profile)
+{
+	struct rros_theme_info list[64];
+	struct rros_theme t;
+	struct rros_conf c;
+	size_t n = rros_theme_list(list, 64);
+	int have = load_theme(&t, &c, profile) == 0;
+
+	for (size_t i = 0; i < n; i++) {
+		printf("%c %-16s %s\n", have && !strcmp(list[i].name, t.theme) ? '*' : ' ', list[i].name,
+		       list[i].builtin ? "incluido" : "propio");
+	}
+	if (have)
+		rros_conf_free(&c);
+	return 0;
+}
+
+static int cmd_cycle(const char *profile)
+{
+	struct rros_theme_info list[64];
+	struct rros_theme t;
+	struct rros_conf c;
+	size_t n = rros_theme_list(list, 64), cur = 0;
+
+	if (load_theme(&t, &c, profile))
+		return 1;
+	rros_conf_free(&c);
+	for (size_t i = 0; i < n; i++)
+		if (!strcmp(list[i].name, t.theme))
+			cur = i;
+	return cmd_use(profile, list[(cur + 1) % n].name);
 }
 
 int main(int argc, char **argv)
@@ -181,6 +244,7 @@ int main(int argc, char **argv)
 	char profile[64] = "";
 	int i = 1;
 	struct rros_theme t;
+	struct rros_conf conf;
 	const char *cmd;
 
 	if (i + 1 < argc && !strcmp(argv[i], "-p")) {
@@ -199,11 +263,42 @@ int main(int argc, char **argv)
 		return cmd_apply(profile, i < argc && !strcmp(argv[i], "--quiet"));
 	if (!strcmp(cmd, "toggle"))
 		return cmd_toggle(profile);
+	if (!strcmp(cmd, "list"))
+		return cmd_list(profile);
+	if (!strcmp(cmd, "cycle"))
+		return cmd_cycle(profile);
+	if (!strcmp(cmd, "use") && i + 1 == argc)
+		return cmd_use(profile, argv[i]);
+	if (!strcmp(cmd, "new") && i < argc) {
+		const char *name = argv[i], *base = "aurora";
+		char err[300];
+
+		for (i++; i < argc; i++) {
+			if (!strcmp(argv[i], "--base") && i + 1 < argc)
+				base = argv[++i];
+			else {
+				usage();
+				return 2;
+			}
+		}
+		if (rros_theme_new(name, base, err, sizeof err)) {
+			fprintf(stderr, "rros-theme: %s\n", err);
+			return 1;
+		}
+		{
+			char dir[900];
+
+			rros_themes_dir(dir, sizeof dir);
+			printf("creado %s/%s.toml\nedítalo y actívalo con: rros-theme use %s\n", dir, name, name);
+		}
+		return 0;
+	}
 	if (!strcmp(cmd, "palette")) {
 		struct rros_palette p;
 
-		if (load_theme(&t, profile))
+		if (load_theme(&t, &conf, profile))
 			return 1;
+		rros_conf_free(&conf);
 		rros_theme_palette(&t, &p);
 		printf("bg=%s\nsurface=%s\ntext=%s\nmuted=%s\nborder=%s\naccent=%s\naccent_dim=%s\n"
 		       "red=%s\ngreen=%s\nyellow=%s\nblue=%s\nmagenta=%s\ncyan=%s\n", p.bg, p.surface,
@@ -229,9 +324,11 @@ int main(int argc, char **argv)
 			usage();
 			return 2;
 		}
-		if (load_theme(&t, profile))
+		if (load_theme(&t, &conf, profile))
 			return 1;
-		return render_all(out, &t, swayfx);
+		i = render_all(out, &t, &conf, swayfx);
+		rros_conf_free(&conf);
+		return i;
 	}
 	usage();
 	return 2;

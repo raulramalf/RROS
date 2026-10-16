@@ -1,0 +1,540 @@
+<title>RROS Ajustes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Sora:wght@600;700&display=swap">
+<style>
+/* Concepto: la propia ventana de ajustes se pinta con la paleta del tema que estás editando. */
+:root {
+  --bg: #0b1020; --surface: #141c38; --surface2: #1b2547; --text: #e6ecff; --muted: #8a96bd;
+  --border: #26305a; --accent: #7c5cff; --accent-fg: #0b1020;
+  --red: #ff6b81; --green: #4ade80; --yellow: #fbbf24;
+  --font-display: "Sora", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f5f7ff; --surface: #ffffff; --surface2: #eef1ff; --text: #141a33; --muted: #5b6489;
+    --border: #d5dbf5; --accent: #5b3df5; --accent-fg: #ffffff; --red: #d6334f; --green: #16a34a; --yellow: #b7791f;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f5f7ff; --surface: #ffffff; --surface2: #eef1ff; --text: #141a33; --muted: #5b6489;
+  --border: #d5dbf5; --accent: #5b3df5; --accent-fg: #ffffff; --red: #d6334f; --green: #16a34a; --yellow: #b7791f;
+  color-scheme: light;
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.5; margin: 0;
+}
+.app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; padding-left: env(safe-area-inset-left, 0px); }
+aside { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border); background: var(--surface); padding: 18px 12px; display: flex; flex-direction: column; gap: 14px; }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; padding: 0 8px; display: flex; flex-direction: column; gap: 2px; }
+.brand small { font-family: var(--font-mono); font-weight: 400; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+nav { display: flex; flex-direction: column; gap: 2px; }
+nav .grp { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding: 10px 8px 4px; }
+nav button { all: unset; cursor: pointer; padding: 7px 10px; border-radius: 8px; color: var(--text); display: flex; justify-content: space-between; gap: 8px; }
+nav button:hover { background: var(--surface2); }
+nav button[aria-current="page"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+nav .count { font-family: var(--font-mono); font-size: 11px; opacity: 0.65; }
+main { min-width: 0; padding-right: max(20px, env(safe-area-inset-right, 0px)); padding-left: 24px; padding-block: 0 48px; }
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 14px 0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.top .search { flex: 1 1 220px; min-width: 0; }
+input[type="text"], input[type="search"], input[type="number"], select, textarea {
+  font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; min-width: 0;
+}
+textarea { width: 100%; font-family: var(--font-mono); font-size: 12px; min-height: 120px; resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { font: inherit; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 8px; padding: 8px 14px; }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+.btn:hover { filter: brightness(1.08); }
+.btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.btn.small { padding: 4px 10px; font-size: 12px; }
+.pill { font-family: var(--font-mono); font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; color: var(--muted); white-space: nowrap; }
+h1 { font-family: var(--font-display); font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
+.sub { color: var(--muted); margin: 0 0 16px; max-width: 70ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.rows { display: flex; flex-direction: column; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 300px) 30px; gap: 8px 16px; align-items: center; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: 0; }
+.row .lbl { min-width: 0; }
+.row .lbl b { font-weight: 500; display: block; }
+.row .lbl code, code { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.row .ctl { display: flex; gap: 8px; align-items: center; justify-content: flex-end; min-width: 0; }
+.row .ctl input[type="text"], .row .ctl select { width: 100%; }
+.row .ctl input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.row .ctl input[type="number"] { width: 72px; }
+.reset { all: unset; cursor: pointer; width: 26px; height: 26px; text-align: center; line-height: 26px; border-radius: 6px; color: var(--muted); }
+.reset:hover { background: var(--surface2); color: var(--text); }
+.reset:focus-visible { outline: 2px solid var(--accent); }
+.reset[hidden] { display: block !important; visibility: hidden; }
+.user-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: 6px; vertical-align: middle; }
+.switch { position: relative; width: 42px; height: 24px; flex: none; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; transition: background 0.15s; pointer-events: none; }
+.switch span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background 0.15s; }
+.switch input:checked + span { background: var(--accent); border-color: var(--accent); }
+.switch input:checked + span::after { transform: translateX(18px); background: var(--accent-fg); }
+.switch input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+.seg button { all: unset; cursor: pointer; padding: 6px 12px; font-size: 13px; border-right: 1px solid var(--border); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; }
+.tcard { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.tcard:hover { border-color: var(--muted); }
+.tcard[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.tcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tprev { height: 84px; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; border: 1px solid rgba(128,128,128,.25); }
+.tprev .bar { height: 10px; border-radius: 3px; }
+.tprev .body { flex: 1; display: flex; gap: 6px; }
+.tprev .win { flex: 1; border-radius: 4px; padding: 4px; display: flex; flex-direction: column; gap: 3px; }
+.tprev .ln { height: 4px; border-radius: 2px; }
+.tcard .tn { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-weight: 500; }
+.tcard .sw { display: flex; gap: 3px; }
+.tcard .sw i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.badge { font-family: var(--font-mono); font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.swatches button.dot { all: unset; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border); border: 2px solid var(--surface); }
+.swatches button.dot[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--text); }
+.swatches button.dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.swatches input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: none; cursor: pointer; }
+.pad { padding: 14px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.wrapline { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.desk { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; height: 230px; display: flex; flex-direction: column; background: var(--p-bg); color: var(--p-text); font-size: 12px; }
+.desk.pos-bottom { flex-direction: column-reverse; }
+.desk .panel { height: 26px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; background: var(--p-bg); border-bottom: 2px solid var(--p-accent); gap: 8px; }
+.desk.pos-bottom .panel { border-bottom: 0; border-top: 2px solid var(--p-accent); }
+.desk .panel .ws { display: flex; gap: 4px; }
+.desk .panel .ws i { font-style: normal; padding: 0 8px; border-radius: 4px; color: var(--p-muted); }
+.desk .panel .ws i.on { background: var(--p-accent); color: var(--p-bg); }
+.desk .panel .pf { background: var(--p-accent); color: var(--p-bg); border-radius: 4px; padding: 0 8px; font-weight: 600; }
+.desk .area { flex: 1; display: flex; gap: var(--gap, 8px); padding: calc(var(--gap, 8px) / 2); min-height: 0; }
+.desk .w { flex: 1; min-width: 0; background: var(--p-surface); border: var(--bw, 2px) solid var(--p-border); border-radius: var(--rad, 0); overflow: hidden; display: flex; flex-direction: column; }
+.desk .w.f { border-color: var(--p-accent); }
+.desk .w .t { background: var(--p-bg); color: var(--p-muted); padding: 2px 8px; font-size: 11px; }
+.desk .w .c { padding: 8px; font-family: var(--font-mono); font-size: 11px; display: flex; flex-direction: column; gap: 3px; }
+.desk .c .a { color: var(--p-accent); } .desk .c .g { color: var(--p-green); } .desk .c .m { color: var(--p-muted); }
+.colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 14px; }
+.colors label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.colors input[type="color"] { width: 30px; height: 26px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; cursor: pointer; }
+.dyn { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.dyn:last-child { border-bottom: 0; }
+.dyn input[type="text"] { width: 100%; font-family: var(--font-mono); font-size: 12px; }
+.dyn .id { font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { all: unset; cursor: pointer; font-family: var(--font-mono); font-size: 11px; padding: 3px 9px; border: 1px dashed var(--border); border-radius: 999px; color: var(--muted); }
+.chip:hover { color: var(--text); border-color: var(--muted); }
+.chip:focus-visible { outline: 2px solid var(--accent); }
+.empty { padding: 22px; text-align: center; color: var(--muted); }
+#toast { position: fixed; bottom: max(16px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 9px 16px; max-width: min(560px, 92vw); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 20; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+#toast.show { opacity: 1; }
+#toast.err { border-color: var(--red); color: var(--red); }
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  aside { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
+  nav { flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 6px; }
+  nav .grp { display: none; }
+  nav button { white-space: nowrap; flex: none; }
+  main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .row { grid-template-columns: minmax(0, 1fr) 30px; }
+  .row .ctl { grid-column: 1; justify-content: flex-start; }
+  .row .reset { grid-column: 2; grid-row: 1; }
+  .dyn { grid-template-columns: minmax(0, 1fr) auto; }
+  .dyn .id { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <aside>
+    <div class="brand">RROS Ajustes<small id="ver"></small></div>
+    <nav id="nav" aria-label="Secciones"></nav>
+  </aside>
+  <main>
+    <div class="top">
+      <input class="search" id="search" type="search" placeholder="Buscar ajuste o clave (tecla /)" aria-label="Buscar ajustes">
+      <span class="pill" id="profile"></span>
+      <button class="btn ghost" id="apply" type="button">Aplicar al escritorio</button>
+    </div>
+    <div id="page"></div>
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+  var TOKEN = new URLSearchParams(location.search).get("t") || "";
+  var S = null;           // estado del servidor
+  var page = "themes";    // sección actual
+  var query = "";
+  var editTheme = "";     // tema propio en edición
+
+  /* ---------- utilidades ---------- */
+  function h(tag, attrs) {
+    var el = document.createElement(tag), i, c;
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k];
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.slice(0, 2) === "on") el.addEventListener(k.slice(2), v);
+      else if (v === true) el.setAttribute(k, "");
+      else if (v !== false && v != null) el.setAttribute(k, v);
+    });
+    for (i = 2; i < arguments.length; i++) {
+      c = arguments[i];
+      if (c == null || c === false) continue;
+      el.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    }
+    return el;
+  }
+  var toastTimer;
+  function toast(msg, err) {
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.className = "show" + (err ? " err" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = ""; }, err ? 5000 : 1800);
+  }
+  function api(path, body) {
+    if (window.RROS_MOCK) return Promise.resolve(window.RROS_MOCK(path, body));
+    var opt = { headers: { "X-RROS-Token": TOKEN } };
+    if (body) {
+      opt.method = "POST";
+      opt.headers["Content-Type"] = "application/x-www-form-urlencoded";
+      opt.body = new URLSearchParams(body).toString();
+    }
+    return fetch(path, opt).then(function (r) {
+      if ((r.headers.get("content-type") || "").indexOf("json") < 0) return r.text();
+      return r.json().catch(function () { return { ok: false, error: "respuesta no válida" }; });
+    });
+  }
+  function load() {
+    return api("/api/state").then(function (s) {
+      if (s && s.ok === false) { toast(s.error || "no se pudo cargar", true); return; }
+      S = s; paintTheme(); drawNav(); drawPage();
+    });
+  }
+  function keyObj(k) { return S.keys.filter(function (x) { return x.key === k; })[0]; }
+  function setKey(key, value) {
+    return api("/api/set", { key: key, value: String(value) }).then(function (r) {
+      if (!r.ok) { toast(r.error, true); return load().then(function () { return false; }); }
+      var ko = keyObj(key); if (ko) { ko.value = String(value); ko.source = "user"; }
+      if (/^ui\.(theme|accent|color_scheme)$/.test(key)) return load().then(function () { return true; });
+      return true;
+    });
+  }
+  function unsetKey(key) {
+    return api("/api/unset", { key: key }).then(function (r) {
+      if (!r.ok) toast(r.error, true); else toast("Restablecido: " + key);
+      return load();
+    });
+  }
+
+  /* ---------- tema de la propia ventana ---------- */
+  function paintTheme() {
+    var p = S.current.palette, r = document.documentElement.style;
+    r.setProperty("--bg", p.bg); r.setProperty("--surface", p.surface);
+    r.setProperty("--surface2", mixHex(p.surface, p.accent, 8));
+    r.setProperty("--text", p.text); r.setProperty("--muted", p.muted); r.setProperty("--border", p.border);
+    r.setProperty("--accent", p.accent); r.setProperty("--accent-fg", contrastOn(p.accent, p.bg, p.text));
+    r.setProperty("--red", p.red); r.setProperty("--green", p.green); r.setProperty("--yellow", p.yellow);
+    document.documentElement.setAttribute("data-theme", S.current.scheme);
+    document.getElementById("ver").textContent = "v" + S.version + " · " + S.codename;
+    document.getElementById("profile").textContent = "perfil " + S.profile;
+  }
+  function rgb(hex) { var v = parseInt(hex.slice(1), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+  function mixHex(a, b, pct) {
+    var x = rgb(a), y = rgb(b), o = "#";
+    for (var i = 0; i < 3; i++) o += ("0" + Math.floor((x[i] * (100 - pct) + y[i] * pct) / 100).toString(16)).slice(-2);
+    return o;
+  }
+  function lum(hex) { var c = rgb(hex).map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+  function contrastOn(bgc, a, b) { var l = lum(bgc), la = lum(a), lb = lum(b); var ca = (Math.max(l, la) + 0.05) / (Math.min(l, la) + 0.05), cb = (Math.max(l, lb) + 0.05) / (Math.min(l, lb) + 0.05); return ca >= cb ? a : b; }
+
+  /* ---------- navegación ---------- */
+  var DYN = [["keybind", "Atajos de teclado"], ["rule", "Reglas de ventana"], ["autostart", "Inicio automático"]];
+  function drawNav() {
+    var nav = document.getElementById("nav"), counts = {};
+    S.keys.forEach(function (k) { counts[k.category] = (counts[k.category] || 0) + 1; });
+    nav.textContent = "";
+    function item(id, label, count) {
+      nav.appendChild(h("button", { type: "button", "aria-current": page === id && !query ? "page" : null, onclick: function () { go(id); } },
+        h("span", { text: label }), count != null ? h("span", { class: "count", text: String(count) }) : null));
+    }
+    nav.appendChild(h("div", { class: "grp", text: "Apariencia" }));
+    item("themes", "Temas y colores");
+    nav.appendChild(h("div", { class: "grp", text: "Ajustes" }));
+    S.categories.forEach(function (c) { item("cat:" + c.id, c.label, counts[c.id] || 0); });
+    nav.appendChild(h("div", { class: "grp", text: "Personalización" }));
+    DYN.forEach(function (d) { item("dyn:" + d[0], d[1], S.dynamic[d[0]].length); });
+    nav.appendChild(h("div", { class: "grp", text: "Sistema" }));
+    item("backup", "Copias y exportar");
+  }
+  function go(id) { page = id; query = ""; document.getElementById("search").value = ""; drawNav(); drawPage(); window.scrollTo(0, 0); }
+
+  /* ---------- filas de ajustes ---------- */
+  function control(k) {
+    var cur = k.value, box = h("div", { class: "ctl" }), id = "c-" + k.key.replace(/\./g, "-");
+    if (k.type === "bool") {
+      var cb = h("input", { type: "checkbox", id: id, "aria-label": k.key });
+      cb.checked = cur === "true";
+      cb.addEventListener("change", function () { commit(k, cb.checked ? "true" : "false"); });
+      box.appendChild(h("label", { class: "switch" }, cb, h("span")));
+    } else if (k.type === "enum") {
+      if (k.choices.length <= 4) {
+        var seg = h("div", { class: "seg", role: "group", "aria-label": k.key });
+        k.choices.forEach(function (c) {
+          seg.appendChild(h("button", { type: "button", text: c, "aria-pressed": String(c === cur), onclick: function () { commit(k, c); } }));
+        });
+        box.appendChild(seg);
+      } else {
+        var sel = h("select", { id: id, "aria-label": k.key });
+        k.choices.forEach(function (c) { var o = h("option", { value: c, text: c }); if (c === cur) o.selected = true; sel.appendChild(o); });
+        sel.addEventListener("change", function () { commit(k, sel.value); });
+        box.appendChild(sel);
+      }
+    } else if (k.type === "int") {
+      var rng = h("input", { type: "range", min: k.min, max: k.max, id: id, "aria-label": k.key });
+      var num = h("input", { type: "number", min: k.min, max: k.max, "aria-label": k.key + " (número)" });
+      rng.value = num.value = cur;
+      rng.addEventListener("input", function () { num.value = rng.value; });
+      rng.addEventListener("change", function () { commit(k, rng.value); });
+      num.addEventListener("change", function () { rng.value = num.value; commit(k, num.value); });
+      box.appendChild(rng); box.appendChild(num);
+    } else {
+      var txt = h("input", { type: "text", id: id, "aria-label": k.key, value: cur });
+      txt.addEventListener("change", function () { commit(k, txt.value); });
+      box.appendChild(txt);
+    }
+    return box;
+  }
+  function commit(k, v) {
+    setKey(k.key, v).then(function (ok) { if (ok) { toast("Guardado: " + k.key + " = " + v); refreshRow(k.key); } });
+  }
+  function refreshRow(key) {
+    var row = document.querySelector('[data-key="' + key + '"]'); if (!row) return;
+    var k = keyObj(key), user = k.source === "user";
+    row.querySelector(".user-dot").style.display = user ? "inline-block" : "none";
+    row.querySelector(".reset").hidden = !user;
+  }
+  function settingRow(k) {
+    var user = k.source === "user";
+    return h("div", { class: "row", "data-key": k.key },
+      h("div", { class: "lbl" }, h("b", null, k.desc, h("span", { class: "user-dot", style: "display:" + (user ? "inline-block" : "none"), title: "Cambiado por ti" })), h("code", { text: k.key })),
+      control(k),
+      h("button", { class: "reset", type: "button", title: "Restablecer al valor del perfil", "aria-label": "Restablecer " + k.key, hidden: !user, onclick: function () { unsetKey(k.key); } }, "↺"));
+  }
+
+  /* ---------- páginas ---------- */
+  function drawPage() {
+    var root = document.getElementById("page"); root.textContent = "";
+    if (query) return drawSearch(root);
+    if (page === "themes") return drawThemes(root);
+    if (page === "backup") return drawBackup(root);
+    if (page.indexOf("dyn:") === 0) return drawDynamic(root, page.slice(4));
+    var cat = page.slice(4), c = S.categories.filter(function (x) { return x.id === cat; })[0] || S.categories[0];
+    root.appendChild(h("h1", { text: c.label }));
+    root.appendChild(h("p", { class: "sub", text: "Los cambios se guardan y se aplican al instante. Un punto junto al nombre indica que lo has cambiado tú; ↺ vuelve al valor del perfil." }));
+    var rows = h("div", { class: "card rows" });
+    S.keys.filter(function (k) { return k.category === c.id; }).forEach(function (k) { rows.appendChild(settingRow(k)); });
+    root.appendChild(rows);
+  }
+  function drawSearch(root) {
+    var q = query.toLowerCase(), found = S.keys.filter(function (k) { return k.key.toLowerCase().indexOf(q) >= 0 || k.desc.toLowerCase().indexOf(q) >= 0; });
+    root.appendChild(h("h1", { text: "Resultados" }));
+    root.appendChild(h("p", { class: "sub", text: found.length + " ajuste(s) para “" + query + "”" }));
+    var rows = h("div", { class: "card rows" });
+    found.forEach(function (k) { rows.appendChild(settingRow(k)); });
+    if (!found.length) rows.appendChild(h("div", { class: "empty", text: "Nada coincide. Prueba con otra palabra o con parte de la clave, por ejemplo “gap”." }));
+    root.appendChild(rows);
+  }
+
+  var ACCENTS = ["#7c5cff", "#22d3ee", "#f472b6", "#4ade80", "#fbbf24", "#fb7185", "#60a5fa", "#f97316"];
+  var COLORKEYS = [["bg", "Fondo"], ["surface", "Superficie"], ["text", "Texto"], ["muted", "Texto suave"], ["border", "Borde"], ["accent", "Acento"], ["red", "Rojo"], ["green", "Verde"], ["yellow", "Amarillo"], ["blue", "Azul"], ["magenta", "Magenta"], ["cyan", "Cian"]];
+
+  function miniTheme(t, scheme, isCur) {
+    var p = t[scheme];
+    var prev = h("div", { class: "tprev", style: "background:" + p.bg },
+      h("div", { class: "bar", style: "background:" + p.surface + ";border-bottom:2px solid " + p.accent }),
+      h("div", { class: "body" },
+        h("div", { class: "win", style: "background:" + p.surface + ";border:1px solid " + p.accent },
+          h("div", { class: "ln", style: "background:" + p.accent + ";width:60%" }), h("div", { class: "ln", style: "background:" + p.text + ";width:85%;opacity:.7" }), h("div", { class: "ln", style: "background:" + p.muted + ";width:50%" })),
+        h("div", { class: "win", style: "background:" + p.surface + ";border:1px solid " + p.border },
+          h("div", { class: "ln", style: "background:" + p.green + ";width:40%" }), h("div", { class: "ln", style: "background:" + p.text + ";width:70%;opacity:.7" }))));
+    var sw = h("div", { class: "sw" });
+    ["accent", "red", "green", "yellow", "blue"].forEach(function (k) { sw.appendChild(h("i", { style: "background:" + p[k] })); });
+    return h("button", { class: "tcard", type: "button", "aria-pressed": String(isCur), onclick: function () { setKey("ui.theme", t.name).then(function (ok) { if (ok) toast("Tema: " + t.name); }); } },
+      prev, h("div", { class: "tn" }, h("span", { text: t.name }), h("span", { class: "badge", text: isCur ? "en uso" : t.builtin ? "incluido" : "propio" })), sw);
+  }
+
+  function drawThemes(root) {
+    var cur = S.current, scheme = cur.scheme;
+    root.appendChild(h("h1", { text: "Temas y colores" }));
+    root.appendChild(h("p", { class: "sub", text: "El tema se aplica a todo el escritorio: ventanas, panel, terminal, notificaciones, lanzador y aplicaciones GTK. Esta ventana también lo usa." }));
+
+    root.appendChild(h("h2", { text: "Esquema y acento" }));
+    var seg = h("div", { class: "seg", role: "group", "aria-label": "Esquema de color" });
+    [["dark", "Oscuro"], ["light", "Claro"]].forEach(function (s) {
+      seg.appendChild(h("button", { type: "button", text: s[1], "aria-pressed": String(scheme === s[0]), onclick: function () { setKey("ui.color_scheme", s[0]); } }));
+    });
+    var sw = h("div", { class: "swatches" });
+    ACCENTS.forEach(function (a) { sw.appendChild(h("button", { class: "dot", type: "button", style: "background:" + a, "aria-label": "Acento " + a, "aria-pressed": String(cur.accent_user && cur.palette.accent.toLowerCase() === a), onclick: function () { setKey("ui.accent", a); } })); });
+    var pick = h("input", { type: "color", value: cur.palette.accent, "aria-label": "Elegir acento personalizado" });
+    pick.addEventListener("change", function () { setKey("ui.accent", pick.value); });
+    sw.appendChild(pick);
+    sw.appendChild(h("button", { class: "btn ghost small", type: "button", text: cur.accent_user ? "Usar el acento del tema" : "Acento del tema en uso", disabled: !cur.accent_user, onclick: function () { unsetKey("ui.accent"); } }));
+    root.appendChild(h("div", { class: "card pad stack" }, h("div", { class: "wrapline" }, seg), sw));
+
+    root.appendChild(h("h2", { text: "Temas" }));
+    var grid = h("div", { class: "themes" });
+    S.themes.forEach(function (t) { grid.appendChild(miniTheme(t, scheme, t.name === cur.theme)); });
+    root.appendChild(grid);
+
+    root.appendChild(h("h2", { text: "Vista previa" }));
+    root.appendChild(preview());
+
+    root.appendChild(h("h2", { text: "Crea tu propio tema" }));
+    var name = h("input", { type: "text", placeholder: "nombre (a-z, 0-9, _ -)", "aria-label": "Nombre del tema nuevo", maxlength: "32" });
+    var base = h("select", { "aria-label": "Tema base" });
+    S.themes.forEach(function (t) { base.appendChild(h("option", { value: t.name, text: "basado en " + t.name })); });
+    var customs = S.themes.filter(function (t) { return !t.builtin; });
+    var box = h("div", { class: "card pad stack" },
+      h("div", { class: "wrapline" }, name, base, h("button", { class: "btn", type: "button", text: "Crear tema", onclick: function () {
+        api("/api/theme_new", { name: name.value.trim(), base: base.value }).then(function (r) {
+          if (!r.ok) return toast(r.error, true);
+          editTheme = name.value.trim(); toast("Tema creado"); load();
+        });
+      } })));
+    if (customs.length) {
+      if (!editTheme || !customs.some(function (t) { return t.name === editTheme; })) editTheme = customs[0].name;
+      var sel = h("select", { "aria-label": "Tema propio a editar" });
+      customs.forEach(function (t) { var o = h("option", { value: t.name, text: t.name }); if (t.name === editTheme) o.selected = true; sel.appendChild(o); });
+      sel.addEventListener("change", function () { editTheme = sel.value; drawPage(); });
+      var th = customs.filter(function (t) { return t.name === editTheme; })[0];
+      box.appendChild(h("div", { class: "wrapline" }, h("b", { text: "Editar" }), sel,
+        h("button", { class: "btn ghost small", type: "button", text: "Usar este tema", onclick: function () { setKey("ui.theme", editTheme); } })));
+      ["dark", "light"].forEach(function (variant) {
+        box.appendChild(h("div", { class: "lbl" }, h("code", { text: "Variante " + (variant === "dark" ? "oscura" : "clara") })));
+        var g = h("div", { class: "colors" });
+        COLORKEYS.forEach(function (ck) {
+          var inp = h("input", { type: "color", value: th[variant][ck[0]], "aria-label": ck[1] + " (" + variant + ")" });
+          inp.addEventListener("change", function () {
+            api("/api/theme_color", { name: editTheme, variant: variant, key: ck[0], value: inp.value }).then(function (r) {
+              if (!r.ok) return toast(r.error, true);
+              toast(ck[1] + " actualizado"); load();
+            });
+          });
+          g.appendChild(h("label", null, inp, h("span", { text: ck[1] })));
+        });
+        box.appendChild(g);
+      });
+    } else {
+      box.appendChild(h("p", { class: "sub", text: "Cuando crees un tema podrás editar sus colores aquí mismo." }));
+    }
+    root.appendChild(box);
+  }
+
+  function val(key, def) { var k = keyObj(key); return k && k.value !== "" ? k.value : def; }
+  function preview() {
+    var p = S.current.palette, full = val("ui.compositor", "minimal") === "full" && val("ui.effects", "off") !== "off";
+    var d = h("div", { class: "desk pos-" + (val("ui.panel_position", "top") === "bottom" ? "bottom" : "top") });
+    d.style.cssText = "--p-bg:" + p.bg + ";--p-surface:" + p.surface + ";--p-text:" + p.text + ";--p-muted:" + p.muted + ";--p-border:" + p.border + ";--p-accent:" + p.accent + ";--p-green:" + p.green +
+      ";--gap:" + val("ui.gap", 8) + "px;--bw:" + val("ui.border_width", 2) + "px;--rad:" + (full ? val("ui.corner_radius", 8) : 0) + "px";
+    var ws = h("div", { class: "ws" }); [1, 2, 3, 4].forEach(function (i) { ws.appendChild(h("i", { class: i === 1 ? "on" : "", text: String(i) })); });
+    d.appendChild(h("div", { class: "panel" }, ws, h("span", { text: "12:30" }), h("span", { class: "pf", text: "RROS " + S.profile })));
+    d.appendChild(h("div", { class: "area" },
+      h("div", { class: "w f" }, h("div", { class: "t", text: "foot — terminal" }), h("div", { class: "c" }, h("span", { class: "a", text: "rros ~ ➜ rros theme list" }), h("span", { class: "g", text: "* " + S.current.theme }), h("span", { class: "m", text: "  nord  dracula  gruvbox…" }))),
+      h("div", { class: "w" }, h("div", { class: "t", text: "ajustes" }), h("div", { class: "c" }, h("span", { text: "ui.gap = " + val("ui.gap", 8) }), h("span", { class: "m", text: "esquinas " + (full ? val("ui.corner_radius", 8) + " px" : "(sin SwayFX)") })))));
+    return d;
+  }
+
+  function drawDynamic(root, fam) {
+    var title = DYN.filter(function (d) { return d[0] === fam; })[0][1];
+    var EXAMPLES = {
+      keybind: [["firefox", "Mod+Shift+b exec firefox"], ["captura", "Mod+Shift+p exec rros-shot region"], ["escritorio-5", "Mod+5 workspace number 5"], ["cerrar", "Mod+Shift+q kill"]],
+      rule: [["ff", "app_id=firefox workspace 2"], ["calc", "title=Calculadora floating"], ["video", "app_id=mpv inhibit_idle"], ["steam", "class=Steam border pixel 0"]],
+      autostart: [["sync", "syncthing -no-browser"], ["nube", "nextcloud --background"]]
+    };
+    root.appendChild(h("h1", { text: title }));
+    root.appendChild(h("p", { class: "sub", text: S.dynamic_help[fam] }));
+    var list = h("div", { class: "card" });
+    var items = S.dynamic[fam];
+    if (!items.length) list.appendChild(h("div", { class: "empty", text: "Todavía no tienes ninguno. Añade el primero abajo." }));
+    items.forEach(function (it) {
+      var inp = h("input", { type: "text", value: it.value, "aria-label": fam + "." + it.id });
+      inp.addEventListener("change", function () { setKey(fam + "." + it.id, inp.value).then(function (ok) { if (ok) toast("Guardado: " + it.id); }); });
+      list.appendChild(h("div", { class: "dyn" }, h("span", { class: "id", text: it.id }), inp,
+        h("button", { class: "btn danger small", type: "button", text: "Quitar", onclick: function () { unsetKey(fam + "." + it.id); } })));
+    });
+    root.appendChild(list);
+    root.appendChild(h("h2", { text: "Añadir" }));
+    var id = h("input", { type: "text", placeholder: "identificador", "aria-label": "Identificador nuevo", maxlength: "32" });
+    var v = h("input", { type: "text", placeholder: "valor", "aria-label": "Valor nuevo" });
+    v.style.flex = "1 1 280px";
+    var add = h("button", { class: "btn", type: "button", text: "Añadir", onclick: function () {
+      setKey(fam + "." + id.value.trim(), v.value).then(function (ok) { if (ok) { toast("Añadido"); load(); } });
+    } });
+    var chips = h("div", { class: "chips" });
+    EXAMPLES[fam].forEach(function (e) { chips.appendChild(h("button", { class: "chip", type: "button", text: e[1], onclick: function () { id.value = e[0]; v.value = e[1]; v.focus(); } })); });
+    root.appendChild(h("div", { class: "card pad stack" }, h("div", { class: "wrapline" }, id, v, add), h("div", { class: "lbl" }, h("code", { text: "Ejemplos (pulsa uno para rellenar):" })), chips));
+  }
+
+  function drawBackup(root) {
+    root.appendChild(h("h1", { text: "Copias y exportar" }));
+    root.appendChild(h("p", { class: "sub", text: "Guarda el estado de tus ajustes antes de probar cambios grandes y vuelve a él cuando quieras." }));
+    var name = h("input", { type: "text", placeholder: "nombre de la instantánea", "aria-label": "Nombre de la instantánea", maxlength: "32" });
+    var list = h("div", { class: "card" });
+    if (!S.snapshots.length) list.appendChild(h("div", { class: "empty", text: "No hay instantáneas guardadas." }));
+    S.snapshots.forEach(function (n) {
+      list.appendChild(h("div", { class: "dyn" }, h("span", { class: "id", text: n }), h("span"),
+        h("span", { class: "wrapline" },
+          h("button", { class: "btn small", type: "button", text: "Restaurar", onclick: function () { snap("restore", n); } }),
+          h("button", { class: "btn danger small", type: "button", text: "Borrar", onclick: function () { snap("delete", n); } }))));
+    });
+    root.appendChild(h("div", { class: "card pad stack" }, h("div", { class: "wrapline" }, name, h("button", { class: "btn", type: "button", text: "Guardar instantánea", onclick: function () { snap("save", name.value.trim()); } }))));
+    root.appendChild(h("h2", { text: "Instantáneas" }));
+    root.appendChild(list);
+    root.appendChild(h("h2", { text: "Exportar mis ajustes" }));
+    var ta = h("textarea", { readonly: true, "aria-label": "Mis ajustes en TOML" });
+    root.appendChild(h("div", { class: "card pad stack" },
+      h("p", { class: "sub", text: "Es el mismo contenido que `rros-config export`. Guárdalo en un archivo para llevarlo a otro equipo con `rros-config import`." }),
+      h("div", { class: "wrapline" }, h("button", { class: "btn ghost", type: "button", text: "Mostrar mis ajustes", onclick: function () {
+        api("/api/export").then(function (r) { ta.value = typeof r === "string" ? r : (r && r.text) || ""; });
+      } }), h("button", { class: "btn ghost", type: "button", text: "Copiar", onclick: function () {
+        try { navigator.clipboard.writeText(ta.value).then(function () { toast("Copiado"); }, function () { ta.select(); }); } catch (e) { ta.select(); }
+      } })), ta));
+    root.appendChild(h("h2", { text: "Este equipo" }));
+    var hw = S.hw ? "RAM " + S.hw.ram_mb + " MB, " + S.hw.cpus + " CPU, GPU " + S.hw.gpu + ". Perfil recomendado: " + S.hw.recommended + (S.hw.recommended !== S.profile ? " (usas " + S.profile + ")" : " (el que usas)") : "";
+    root.appendChild(h("div", { class: "card pad stack" }, h("div", { text: hw }), S.user_conf ? h("code", { text: "Tus ajustes: " + S.user_conf }) : null));
+  }
+  function snap(action, name) {
+    api("/api/snapshot", { action: action, name: name }).then(function (r) {
+      if (!r.ok) return toast(r.error, true);
+      toast(action === "save" ? "Instantánea guardada" : action === "restore" ? "Ajustes restaurados" : "Instantánea borrada");
+      load();
+    });
+  }
+
+  /* ---------- arranque ---------- */
+  var st = document.getElementById("search");
+  st.addEventListener("input", function () { query = st.value.trim(); drawNav(); drawPage(); });
+  document.getElementById("apply").addEventListener("click", function () {
+    api("/api/apply", {}).then(function (r) { toast(r.ok ? "Escritorio actualizado" : "No se pudo aplicar", !r.ok); });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA" && document.activeElement.tagName !== "SELECT") { e.preventDefault(); st.focus(); }
+    if (e.key === "Escape" && document.activeElement === st) { st.value = ""; query = ""; st.blur(); drawNav(); drawPage(); }
+  });
+  if (!window.RROS_MOCK) setInterval(function () { api("/api/ping", {}); }, 8000);
+  load();
+})();
+</script>

@@ -7,18 +7,33 @@
 #include "rros_conf.h"
 #include "rros_profile.h"
 #include "rros_schema.h"
+#include "rros_userconf.h"
 
-static void usage(void)
+static void usage(FILE *out)
 {
 	fputs("uso: rros-config [-p PERFIL] [-f ARCHIVO] COMANDO\n"
-	      "  get CLAVE              valor efectivo\n"
-	      "  list                   todas las claves efectivas y su capa\n"
-	      "  set [--system] CLAVE VALOR\n"
-	      "  unset [--system] CLAVE\n"
+	      "\n"
+	      "Leer\n"
+	      "  get CLAVE                 valor efectivo           rros-config get ui.gap\n"
+	      "  list                      todo, con su capa        rros-config list\n"
+	      "  schema [--markdown]       claves disponibles\n"
+	      "  profile                   perfil activo\n"
+	      "Cambiar\n"
+	      "  set [--system] CLAVE VALOR   rros-config set ui.accent '#22d3ee'\n"
+	      "  unset [--system] CLAVE       vuelve al valor del perfil\n"
+	      "  reset --yes               borra todos tus ajustes (guarda copia .bak)\n"
+	      "Copias\n"
+	      "  export                    imprime tus ajustes      rros-config export > mis-ajustes.toml\n"
+	      "  import ARCHIVO            reemplaza tus ajustes si son válidos\n"
+	      "  snapshot save|restore|delete NOMBRE | list\n"
+	      "Comprobar\n"
 	      "  validate [--profile-file] [ARCHIVO]\n"
-	      "  schema [--markdown]    claves disponibles\n"
-	      "  profile                perfil activo\n"
-	      "  -f ARCHIVO             get/list leen solo ese archivo (para scripts)\n", stderr);
+	      "  -f ARCHIVO                get/list leen solo ese archivo (scripts)\n"
+	      "\n"
+	      "Claves dinámicas (tú eliges el identificador):\n"
+	      "  keybind.<id>    rros-config set keybind.nav 'Mod+Shift+b exec firefox'\n"
+	      "  rule.<id>       rros-config set rule.ff 'app_id=firefox workspace 2'\n"
+	      "  autostart.<id>  rros-config set autostart.sync 'syncthing -no-browser'\n", out);
 }
 
 enum layer { L_PROFILE, L_SYSTEM, L_USER };
@@ -55,9 +70,7 @@ static int load_layers(struct layers *ls, const char *profile, const char *only_
 		rros_conf_init(&ls->l[i]);
 	rros_conf_init(&ls->merged);
 	if (only_file) {
-		int rc = rros_conf_load(&ls->l[L_PROFILE], only_file, &line);
-
-		if (rc) {
+		if (rros_conf_load(&ls->l[L_PROFILE], only_file, &line)) {
 			fprintf(stderr, "rros-config: no se pudo leer %s\n", only_file);
 			return -1;
 		}
@@ -65,8 +78,7 @@ static int load_layers(struct layers *ls, const char *profile, const char *only_
 		int rc = rros_load_profile(&ls->l[L_PROFILE], profile, &line);
 
 		if (rc == -1 || rc == -2) {
-			fprintf(stderr, "rros-config: perfil '%s' no encontrado en %s\n",
-				profile, rros_profile_dir());
+			fprintf(stderr, "rros-config: perfil '%s' no encontrado en %s\n", profile, rros_profile_dir());
 			return -1;
 		}
 		if (rc) {
@@ -75,14 +87,13 @@ static int load_layers(struct layers *ls, const char *profile, const char *only_
 		}
 		if (load_optional(&ls->l[L_SYSTEM], rros_system_conf()))
 			return -1;
-		if (rros_user_conf(user, sizeof user) == 0 &&
-		    load_optional(&ls->l[L_USER], user))
+		if (rros_user_conf(user, sizeof user) == 0 && load_optional(&ls->l[L_USER], user))
 			return -1;
 	}
 	for (int i = 0; i < 3; i++)
 		for (size_t j = 0; j < ls->l[i].n; j++)
-			if (rros_conf_set(&ls->merged, ls->l[i].items[j].key,
-					  ls->l[i].items[j].val, ls->l[i].items[j].quoted))
+			if (rros_conf_set(&ls->merged, ls->l[i].items[j].key, ls->l[i].items[j].val,
+					  ls->l[i].items[j].quoted))
 				return -1;
 	return 0;
 }
@@ -92,30 +103,6 @@ static void free_layers(struct layers *ls)
 	for (int i = 0; i < 3; i++)
 		rros_conf_free(&ls->l[i]);
 	rros_conf_free(&ls->merged);
-}
-
-/* Valida pares clave/valor de una configuración. Devuelve nº de errores. */
-static int validate_conf(const struct rros_conf *c, const char *name, int profile_file)
-{
-	char err[256];
-	int bad = 0;
-
-	for (size_t i = 0; i < c->n; i++) {
-		const struct rros_kv *kv = &c->items[i];
-		const struct rros_key *k = rros_schema_find(kv->key);
-
-		if (!k) {
-			fprintf(stderr, "%s: clave desconocida '%s'\n", name, kv->key);
-			bad++;
-		} else if (k->profile_only && !profile_file) {
-			fprintf(stderr, "%s: '%s' solo es válida en archivos de perfil\n", name, kv->key);
-			bad++;
-		} else if (rros_schema_check(k, kv->val, kv->quoted, err, sizeof err)) {
-			fprintf(stderr, "%s: %s\n", name, err);
-			bad++;
-		}
-	}
-	return bad;
 }
 
 static int cmd_validate(int argc, char **argv)
@@ -133,8 +120,8 @@ static int cmd_validate(int argc, char **argv)
 			return 2;
 	}
 	if (!file) {
-		struct rros_conf c;
 		const char *paths[2] = { rros_system_conf(), user };
+		struct rros_conf c;
 
 		if (rros_user_conf(user, sizeof user) != 0)
 			paths[1] = NULL;
@@ -145,7 +132,7 @@ static int cmd_validate(int argc, char **argv)
 			if (load_optional(&c, paths[i]))
 				bad++;
 			else
-				bad += validate_conf(&c, paths[i], 0);
+				bad += rros_conf_validate(&c, 0, stderr, paths[i]);
 			rros_conf_free(&c);
 		}
 	} else {
@@ -161,7 +148,7 @@ static int cmd_validate(int argc, char **argv)
 			fprintf(stderr, "%s:%d: error de sintaxis\n", file, line);
 			bad++;
 		} else {
-			bad += validate_conf(&c, file, profile_file);
+			bad += rros_conf_validate(&c, profile_file, stderr, file);
 		}
 		rros_conf_free(&c);
 	}
@@ -196,74 +183,83 @@ static int cmd_schema(int markdown)
 			printf("%-28s %-9s %-34s %s%s\n", k->key, rros_type_name(k->type), vals,
 			       k->desc, k->profile_only ? " [solo perfil]" : "");
 	}
+	for (int f = RROS_FAM_KEYBIND; f <= RROS_FAM_AUTOSTART; f++) {
+		static const char *names[] = { "", "keybind.<id>", "rule.<id>", "autostart.<id>" };
+
+		if (markdown)
+			printf("| `%s` | texto | libre, validado | %s |\n", names[f], rros_family_desc((enum rros_family)f));
+		else
+			printf("%-28s %-9s %-34s %s\n", names[f], "texto", "(clave dinámica)", rros_family_desc((enum rros_family)f));
+	}
 	return 0;
 }
 
 static int cmd_set(int argc, char **argv, int unset)
 {
-	int system = 0, need = unset ? 1 : 2, a = 0;
-	const struct rros_key *k;
-	struct rros_conf c;
-	char path[1024], err[256];
-	int rc, line = 0;
-	const char *key, *val = NULL;
+	int system = 0, a = 0, need = unset ? 1 : 2;
+	char err[300];
 
 	if (argc > 0 && !strcmp(argv[0], "--system")) {
 		system = 1;
 		a = 1;
 	}
-	if (argc - a != need)
-		return 2;
-	key = argv[a];
-	if (!unset)
-		val = argv[a + 1];
-	k = rros_schema_find(key);
-	if (!k || k->profile_only) {
-		fprintf(stderr, "rros-config: clave '%s' %s\n", key,
-			k ? "solo es válida en perfiles" : "desconocida (ver `rros-config schema`)");
+	if (argc - a != need) {
+		fprintf(stderr, "uso: rros-config %s [--system] CLAVE%s\n", unset ? "unset" : "set", unset ? "" : " VALOR");
+		fputs("     (¿el valor lleva espacios o #? ponlo entre comillas: 'Mod+b exec firefox', '#22d3ee')\n", stderr);
 		return 1;
 	}
-	if (!unset && rros_schema_check(k, val, k->type == RROS_T_STR || k->type == RROS_T_ENUM,
-					err, sizeof err)) {
+	if (unset ? rros_user_unset(argv[a], system, err, sizeof err) :
+		    rros_user_set(argv[a], argv[a + 1], system, err, sizeof err)) {
 		fprintf(stderr, "rros-config: %s\n", err);
 		return 1;
 	}
-	if (system)
-		snprintf(path, sizeof path, "%s", rros_system_conf());
-	else if (rros_user_conf(path, sizeof path)) {
-		fputs("rros-config: no se pudo determinar el archivo de usuario\n", stderr);
+	return 0;
+}
+
+static int cmd_export(void)
+{
+	char user[1024];
+	FILE *f;
+	int c;
+
+	if (rros_user_conf(user, sizeof user))
+		return 1;
+	f = fopen(user, "r");
+	if (!f)
+		return 0; /* sin ajustes: salida vacía */
+	while ((c = fgetc(f)) != EOF)
+		putchar(c);
+	fclose(f);
+	return 0;
+}
+
+static int cmd_snapshot(int argc, char **argv)
+{
+	char err[300];
+
+	if (argc == 1 && !strcmp(argv[0], "list")) {
+		rros_snapshot_list(stdout);
+		return 0;
+	}
+	if (argc != 2)
+		return 2;
+	if (!strcmp(argv[0], "save") ? rros_snapshot_save(argv[1], err, sizeof err) :
+	    !strcmp(argv[0], "restore") ? rros_snapshot_restore(argv[1], err, sizeof err) :
+	    !strcmp(argv[0], "delete") ? rros_snapshot_delete(argv[1], err, sizeof err) :
+	    (snprintf(err, sizeof err, "subcomando desconocido '%s'", argv[0]), -1)) {
+		fprintf(stderr, "rros-config: %s\n", err);
 		return 1;
 	}
-	rros_conf_init(&c);
-	rc = rros_conf_load(&c, path, &line);
-	if (rc && !(rc == -1 && errno == ENOENT)) {
-		fprintf(stderr, "rros-config: %s: archivo ilegible o con errores\n", path);
-		rros_conf_free(&c);
-		return 1;
-	}
-	if (unset)
-		rros_conf_unset(&c, key);
-	else if (rros_conf_set(&c, key, val, k->type == RROS_T_STR || k->type == RROS_T_ENUM)) {
-		rros_conf_free(&c);
-		return 1;
-	}
-	if (rros_mkdir_parents(path) || rros_conf_save(&c, path)) {
-		fprintf(stderr, "rros-config: no se pudo escribir %s: %s\n", path, strerror(errno));
-		rros_conf_free(&c);
-		return 1;
-	}
-	rros_conf_free(&c);
 	return 0;
 }
 
 int main(int argc, char **argv)
 {
-	char profile[64] = "";
+	char profile[64] = "", err[300];
 	const char *only_file = NULL;
-	int i = 1;
+	int i = 1, rc = 0;
 	struct layers ls;
 	const char *cmd;
-	int rc = 0;
 
 	for (; i < argc && argv[i][0] == '-'; i++) {
 		if (!strcmp(argv[i], "-p") && i + 1 < argc)
@@ -273,9 +269,9 @@ int main(int argc, char **argv)
 		else
 			break;
 	}
-	if (i >= argc) {
-		usage();
-		return 2;
+	if (i >= argc || !strcmp(argv[i], "help") || !strcmp(argv[i], "--help")) {
+		usage(i >= argc ? stderr : stdout);
+		return i >= argc ? 2 : 0;
 	}
 	cmd = argv[i++];
 	if (!*profile)
@@ -289,6 +285,23 @@ int main(int argc, char **argv)
 		rc = cmd_set(argc - i, argv + i, 0);
 	else if (!strcmp(cmd, "unset"))
 		rc = cmd_set(argc - i, argv + i, 1);
+	else if (!strcmp(cmd, "export") && i == argc)
+		rc = cmd_export();
+	else if (!strcmp(cmd, "import") && i + 1 == argc) {
+		if (rros_user_import(argv[i], err, sizeof err)) {
+			fprintf(stderr, "rros-config: %s\n", err);
+			rc = 1;
+		}
+	} else if (!strcmp(cmd, "reset") && i + 1 == argc && !strcmp(argv[i], "--yes")) {
+		if (rros_user_reset(err, sizeof err)) {
+			fprintf(stderr, "rros-config: %s\n", err);
+			rc = 1;
+		}
+	} else if (!strcmp(cmd, "reset")) {
+		fputs("rros-config: reset borra todos tus ajustes (queda una copia .bak). Repite con --yes.\n", stderr);
+		rc = 1;
+	} else if (!strcmp(cmd, "snapshot"))
+		rc = cmd_snapshot(argc - i, argv + i);
 	else if (!strcmp(cmd, "profile"))
 		puts(profile);
 	else if (!strcmp(cmd, "get") && i + 1 == argc) {
@@ -320,10 +333,10 @@ int main(int argc, char **argv)
 		}
 		free_layers(&ls);
 	} else {
-		usage();
+		usage(stderr);
 		return 2;
 	}
 	if (rc == 2)
-		usage();
+		usage(stderr);
 	return rc;
 }

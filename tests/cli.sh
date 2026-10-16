@@ -112,4 +112,67 @@ grep -q 'scheduler}="bfq"' "$T/sysroot/etc/udev/rules.d/60-rros-ioscheduler.rule
 "$B/rros-config" -p pro set system.swap none
 "$B/rros-apply" -p pro --root "$T/sysroot" >/dev/null
 ! grep -q '^\[zram0\]' "$T/sysroot/etc/systemd/zram-generator.conf" || fail "swap none"
+# --- temas, atajos, reglas, instantáneas (consola) ---
+export RROS_THEMES_DIR=$T/themes
+"$B/rros-theme" -p standard list | grep -q '^\* aurora' || fail "tema por defecto"
+"$B/rros-theme" -p standard use nord >/dev/null
+"$B/rros-theme" -p standard list | grep -q '^\* nord' || fail "rros-theme use"
+grep -q 'background=2e3440' "$XDG_CONFIG_HOME/foot/foot.ini" || fail "el tema llega a foot"
+grep -q 'window_bg_color #2e3440' "$XDG_CONFIG_HOME/gtk-4.0/gtk.css" || fail "el tema llega a GTK"
+grep -q 'background-color=#2e3440' "$XDG_CONFIG_HOME/mako/config" || fail "el tema llega a mako"
+if "$B/rros-theme" use no-existe 2>/dev/null; then fail "tema inexistente debía fallar"; fi
+"$B/rros-theme" -p standard cycle >/dev/null
+"$B/rros-theme" -p standard list | grep -q '^\* dracula' || fail "rros-theme cycle"
+"$B/rros-theme" new miotema --base nord | grep -q 'creado' || fail "rros-theme new"
+if "$B/rros-theme" new miotema 2>/dev/null; then fail "new debía negarse a pisar un tema"; fi
+if "$B/rros-theme" new nord 2>/dev/null; then fail "new debía negarse con nombre incluido"; fi
+sed -i 's/^bg = "#2e3440"/bg = "#101820"/' "$RROS_THEMES_DIR/miotema.toml"
+"$B/rros-theme" -p standard use miotema >/dev/null
+grep -q 'background=101820' "$XDG_CONFIG_HOME/foot/foot.ini" || fail "tema propio aplicado"
+"$B/rros-theme" -p standard list | grep -q 'miotema *propio' || fail "tema propio en la lista"
+
+"$B/rros-config" set keybind.nav 'Mod+Shift+b exec firefox'
+"$B/rros-config" set rule.ff 'app_id=firefox workspace 2'
+"$B/rros-config" set autostart.sync 'syncthing -no-browser'
+"$B/rros-theme" -p standard apply --quiet
+# shellcheck disable=SC2016
+grep -q 'bindsym $mod+Shift+b exec firefox' "$XDG_CONFIG_HOME/sway/config" || fail "atajo en sway"
+grep -q 'assign \[app_id="firefox"\] workspace number 2' "$XDG_CONFIG_HOME/sway/config" || fail "regla en sway"
+grep -q 'exec syncthing -no-browser' "$XDG_CONFIG_HOME/sway/config" || fail "autostart en sway"
+for bad in "keybind.x Mod+b rm" "rule.x app_id=a vuela" "keybind.MAL Mod+b exec x" "autostart.x"; do
+	# shellcheck disable=SC2086
+	if "$B/rros-config" set $bad 2>/dev/null; then fail "debía fallar: $bad"; fi
+done
+"$B/rros-config" validate
+
+# exportar, instantáneas, importar, reset
+"$B/rros-config" export > "$T/export.toml"
+grep -q 'ui.theme\|theme = "miotema"' "$T/export.toml" || fail "export"
+"$B/rros-config" snapshot save base
+"$B/rros-config" set ui.gap 30
+"$B/rros-config" snapshot list | grep -qx base || fail "snapshot list"
+"$B/rros-config" snapshot restore base
+eq "$("$B/rros-config" -p standard get ui.gap)" 20  # el valor que había al guardar la instantánea
+if "$B/rros-config" snapshot restore ../x 2>/dev/null; then fail "nombre de snapshot inválido"; fi
+"$B/rros-config" import "$T/export.toml"
+if "$B/rros-config" reset 2>/dev/null; then fail "reset sin --yes debía fallar"; fi
+"$B/rros-config" reset --yes
+eq "$("$B/rros-config" -p standard get ui.theme)" aurora
+printf '[ui]\ngap = 9999\n' > "$T/mal-import.toml"
+if "$B/rros-config" import "$T/mal-import.toml" 2>/dev/null; then fail "import inválido debía fallar"; fi
+"$B/rros-config" help | grep -q 'keybind' || fail "ayuda con ejemplos"
+# --- comando rros: subcomandos y extensiones ---
+"$B/rros" settings help | grep -q 'tui' || fail "rros settings"
+"$B/rros" config help | grep -q 'keybind' || fail "rros config help"
+mkdir -p "$T/bin"
+printf '#!/bin/sh\necho "extension $*"\n' > "$T/bin/rros-saluda"
+chmod +x "$T/bin/rros-saluda"
+eq "$(PATH="$T/bin:$PATH" "$B/rros" saluda hola mundo)" "extension hola mundo"
+if PATH="$T/bin:$PATH" "$B/rros" '../saluda' 2>/dev/null; then fail "rros no debe aceptar rutas como extensión"; fi
+if "$B/rros" noexiste 2>/dev/null; then fail "rros noexiste debía fallar"; fi
+
+# --- interfaces: rros-settings (TUI en un pty y servidor web local) ---
+if command -v python3 >/dev/null 2>&1; then
+	python3 tests/tui_test.py || fail "TUI"
+fi
 echo "  cli OK"

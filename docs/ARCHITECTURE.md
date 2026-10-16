@@ -13,6 +13,8 @@ Escribir un kernel propio supone años de trabajo en drivers (Intel, AMD, NVIDIA
 | **rros-hwdetect** | **C, propio.** Detecta RAM/CPU/GPU/UEFI y elige perfil (CPU y GPU solo pueden bajarlo) |
 | **rros-config** | **C, propio.** Capas perfil < sistema < usuario, validadas con un esquema |
 | **rros-budget** | **C, propio.** Mide disco/RAM frente al presupuesto del perfil (CI) |
+| **rros-theme** | **C, propio.** 7 temas más los del usuario; genera sway, waybar, foot, mako, fuzzel y GTK |
+| **rros-settings** | **C, propio.** Interfaz de ajustes: servidor web local con token (GUI en `gui/`) y TUI |
 | **rros-installer** | **C, propio.** Hoy solo calcula el plan de particiones (no escribe en disco) |
 
 ## Presupuesto de recursos

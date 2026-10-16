@@ -102,17 +102,22 @@ static void usage(void)
 	      "  info      ficha del sistema          (rros-fetch)\n"
 	      "  config    personalización            (rros-config)\n"
 	      "  theme     tema del escritorio        (rros-theme)\n"
+	      "  settings  interfaz de ajustes        (rros-settings)\n"
+	      "  apply     aplica el perfil al sistema (rros-apply)\n"
 	      "  budget    presupuesto de RAM/disco   (rros-budget)\n"
 	      "  hw        hardware y perfil          (rros-hwdetect)\n"
 	      "  install   plan de instalación        (rros-installer)\n"
 	      "  doctor    diagnóstico del sistema\n"
-	      "  version\n", stderr);
+	      "  version\n"
+	      "\n"
+	      "Extensiones: cualquier programa `rros-NOMBRE` en tu PATH funciona como `rros NOMBRE`.\n", stderr);
 }
 
 int main(int argc, char **argv)
 {
 	static const struct { const char *name, *tool; } map[] = {
 		{ "info", "rros-fetch" }, { "config", "rros-config" }, { "theme", "rros-theme" },
+		{ "settings", "rros-settings" }, { "apply", "rros-apply" },
 		{ "budget", "rros-budget" }, { "hw", "rros-hwdetect" }, { "install", "rros-installer" },
 	};
 	char *slash = strrchr(argv[0], '/');
@@ -141,6 +146,21 @@ int main(int argc, char **argv)
 			exec_tool(map[i].tool, argv + 1);
 			perror(map[i].tool);
 			return 127;
+		}
+	}
+	/* extensiones: `rros foo` ejecuta `rros-foo` si existe (solo nombres simples) */
+	{
+		char tool[64];
+		const char *c;
+		int simple = argv[1][0] != '\0' && strlen(argv[1]) < 48;
+
+		for (c = argv[1]; simple && *c; c++)
+			if (!((*c >= 'a' && *c <= 'z') || (*c >= '0' && *c <= '9') || *c == '-' || *c == '_'))
+				simple = 0;
+		if (simple) {
+			snprintf(tool, sizeof tool, "rros-%s", argv[1]);
+			argv[1] = tool;
+			exec_tool(tool, argv + 1);
 		}
 	}
 	usage();

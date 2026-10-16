@@ -10,11 +10,12 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 | Disco | ≤ 20 GB (Lite ≤ 6, Standard ≤ 12, Pro ≤ 20) |
 | RAM del SO en reposo | ≤ 4 GB (Lite < 512 MB, Standard < 2 GB, Pro ≤ 4 GB) |
 | Arquitecturas | x86_64 (Intel/AMD) y ARM64 |
-| Personalización | 89 ajustes declarativos por capas (escritorio, red, memoria y servicios ya se aplican; el resto, validados) (ver [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)) |
+| Personalización | 96 ajustes por capas, 7 temas (más los tuyos), atajos, reglas por aplicación y programas de inicio propios ([docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)). Escritorio, red, memoria y servicios ya se aplican; el resto se valida |
+| Interfaz de ajustes | Ventana gráfica local (`rros settings`) y versión de terminal para Lite o SSH |
 | Móvil | Android en modelos concretos; iPhone no viable ([docs/MOBILE.md](docs/MOBILE.md)) |
 
 ## Probarlo
-- **Navegador:** demo interactiva en [`preview/index.html`](preview/index.html).
+- **Navegador:** demo del escritorio en [`preview/index.html`](preview/index.html) y de la ventana de ajustes (`scripts/build-gui-demo.sh` genera `build/gui-demo.html`).
 - **Contenedor:** `scripts/try-docker.sh lite` (identidad y herramientas).
 - **Máquina virtual:** ISO construida en GitHub Actions (workflow *ISO*). Ver [docs/TRY.md](docs/TRY.md).
 
@@ -23,12 +24,17 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 | Pieza | Estado |
 |---|---|
 | `rros-hwdetect`, `rros-config`, `rros-budget`, `rros-installer plan` | ✅ hechas y probadas |
-| `rros-theme` – genera sway, waybar y foot desde los ajustes | ✅ hecha y probada |
+| `rros-theme` – 7 temas y temas propios; sway, waybar, foot, mako, fuzzel y GTK | ✅ hecha y probada |
+| `rros-settings` – ventana gráfica web local (con token) y TUI | ✅ probadas (TUI en un pty, GUI con navegador) |
+| Atajos, reglas por aplicación y autostart (`keybind.*`, `rule.*`, `autostart.*`) | ✅ validados igual que se generan; probados |
+| Instantáneas, exportar e importar ajustes | ✅ hechas y probadas |
 | `rros-apply` – aplica perfil a zram, swap, disco, red y servicios | ✅ hecha y probada (con raíz alternativa) |
 | `rros-fetch`, `rros` (`doctor`, `info`, …) | ✅ hechas y probadas |
 | Overlay de identidad (sin snap, sin telemetría, tty1 directo) | ✅ aplicado y comprobado sobre un directorio |
 | ISO: rootfs, GRUB, autologin live, QEMU | ⚠️ escrita, **sin ejecutar** |
 | Kernel por perfil, SwayFX, instalador real, repositorio propio, móvil | ⏳ pendiente |
+
+La GUI es una aplicación web local: necesita un navegador (Standard y Pro lo incluyen; Lite usa la TUI). No hay todavía una ventana con toolkit nativo (GTK/Qt).
 
 Las medidas de tamaño y RAM de la ISO aún no existen: los presupuestos son objetivos, no resultados. Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
 
@@ -41,12 +47,16 @@ build/rros-hwdetect  # hardware detectado y perfil recomendado
 build/rros-installer plan --disk-gb 64 --uefi -p standard
 ```
 
-Personalizar (por usuario o `--system`):
+Personalizar (por usuario o `--system`). La guía completa de comandos, explicada paso a paso, está en [docs/CONSOLA.md](docs/CONSOLA.md):
 
 ```
-RROS_PROFILE_DIR=profiles build/rros-config -p pro set ui.accent '#ff8800'
-RROS_PROFILE_DIR=profiles build/rros-config -p pro list
+rros config set ui.accent '#22d3ee'
+rros theme use nord
+rros config set keybind.nav 'Mod+Shift+b exec firefox'
+rros settings              # ventana de ajustes (o `rros settings tui` en la terminal)
 ```
+
+Sin instalar el sistema, desde el repositorio: `build/rros-config ...` con `RROS_PROFILE_DIR=profiles`.
 
 Construir una ISO (en Ubuntu, como root; ver [docs/BUILD.md](docs/BUILD.md)).
 
@@ -58,6 +68,7 @@ src/hwdetect/   rros-hwdetect        src/config/   rros-config
 src/budget/     rros-budget          src/installer/ rros-installer
 src/theme/      rros-theme           src/apply/    rros-apply
 src/fetch/      rros-fetch           src/rros/     rros
+src/settings/   rros-settings (TUI y servidor web)    gui/   interfaz web (index.html, mock.js de la demo)
 overlay/        archivos que dan identidad al sistema (common, ubuntu)
 preview/        demo interactiva en el navegador
 profiles/       lite.toml, standard.toml, pro.toml

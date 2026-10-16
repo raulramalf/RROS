@@ -1,7 +1,7 @@
 CC ?= cc
 CFLAGS ?= -O2
 CFLAGS += -Wall -Wextra -std=c11 -D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700 \
-          -D_DEFAULT_SOURCE -Isrc/lib -Isrc/installer -Isrc/theme
+          -D_DEFAULT_SOURCE -Isrc/lib -Isrc/installer -Isrc/theme -Isrc/settings
 ifdef WERROR
 CFLAGS += -Werror
 endif
@@ -11,9 +11,9 @@ DESTDIR ?=
 
 LIB_SRC := $(wildcard src/lib/*.c)
 PLAN_SRC := src/installer/plan.c
-THEME_SRC := src/theme/theme.c
+THEME_SRC := src/theme/theme.c src/theme/palettes.c
 BINS := build/rros-hwdetect build/rros-config build/rros-budget build/rros-installer \
-        build/rros-theme build/rros-fetch build/rros build/rros-apply
+        build/rros-theme build/rros-fetch build/rros build/rros-apply build/rros-settings
 
 TESTS := $(patsubst tests/%.c,build/tests/%,$(wildcard tests/test_*.c))
 SAN := -fsanitize=address,undefined -fno-omit-frame-pointer -g -O1
@@ -25,9 +25,11 @@ build/rros-config: src/config/main.c $(LIB_SRC)
 build/rros-budget: src/budget/main.c $(LIB_SRC)
 build/rros-installer: src/installer/main.c $(PLAN_SRC) $(LIB_SRC)
 build/rros-theme: src/theme/main.c $(THEME_SRC) $(LIB_SRC)
-build/rros-fetch: src/fetch/main.c $(LIB_SRC)
+build/rros-fetch: src/fetch/main.c $(THEME_SRC) $(LIB_SRC)
 build/rros: src/rros/main.c $(LIB_SRC)
 build/rros-apply: src/apply/main.c $(LIB_SRC)
+SETTINGS_SRC := $(wildcard src/settings/*.c)
+build/rros-settings: $(SETTINGS_SRC) $(THEME_SRC) $(LIB_SRC)
 
 $(BINS):
 	@mkdir -p build
@@ -46,6 +48,8 @@ install: $(BINS)
 	           $(DESTDIR)$(PREFIX)/lib/systemd/system $(DESTDIR)/etc/rros
 	install -m 755 $(BINS) $(DESTDIR)$(PREFIX)/bin/
 	install -m 644 profiles/*.toml $(DESTDIR)$(PREFIX)/share/rros/profiles/
+	install -d $(DESTDIR)$(PREFIX)/share/rros/settings
+	install -m 644 gui/index.html $(DESTDIR)$(PREFIX)/share/rros/settings/index.html
 	install -m 644 dist/systemd/*.service $(DESTDIR)$(PREFIX)/lib/systemd/system/
 
 docs-schema: build/rros-config

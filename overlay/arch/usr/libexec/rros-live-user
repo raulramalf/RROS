@@ -17,4 +17,4 @@ if grep -qw accessibility=on /proc/cmdline; then
 fi
 # entra solo en Plasma (solo en el live: el archivo vive en la capa temporal y el instalador no lo copia)
 mkdir -p /etc/sddm.conf.d
-printf '[Autologin]\nUser=rros\nSession=plasma\nRelogin=false\n' > /etc/sddm.conf.d/20-rros-live.conf
+printf '[Autologin]\nUser=rros\nSession=plasma.desktop\nRelogin=false\n' > /etc/sddm.conf.d/20-rros-live.conf

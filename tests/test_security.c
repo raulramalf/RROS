@@ -133,7 +133,7 @@ int main(void)
 	free(s);
 	p.login_attempts = 0;
 	s = render(rros_render_faillock, &p);
-	CHECK(strstr(s, "deny") == NULL);
+	CHECK(strstr(s, "deny = 0\n") != NULL);
 	free(s);
 	p.auto_updates = 1;
 	s = render(rros_render_autoupdates, &p);

@@ -39,8 +39,12 @@ void rros_render_hardening(FILE *f, const struct rros_secpol *p);  /* /etc/sysct
 void rros_render_modprobe(FILE *f, const struct rros_secpol *p);   /* /etc/modprobe.d/rros-security.conf */
 void rros_render_sudoers(FILE *f, const struct rros_secpol *p);    /* /etc/sudoers.d/rros (0440) */
 void rros_render_faillock(FILE *f, const struct rros_secpol *p);   /* /etc/security/faillock.conf */
-void rros_render_autoupdates(FILE *f, const struct rros_secpol *p);/* /etc/apt/apt.conf.d/20auto-upgrades */
+void rros_render_autoupdates(FILE *f, const struct rros_secpol *p);/* /etc/apt/apt.conf.d/20auto-upgrades (Ubuntu) */
 void rros_render_corelimit(FILE *f, const struct rros_secpol *p);  /* /etc/security/limits.d/90-rros-core.conf */
+
+/* 1 si el sistema bajo root (""= /) es Arch: en Arch faillock va siempre en /etc/pam.d/system-auth, las
+ * actualizaciones se descargan con rros-updates.timer (no hay unattended-upgrades) y ssh es sshd.service. */
+int rros_is_arch(const char *root);
 
 /* Niveles predefinidos: pares clave=valor que `rros-security level` escribe en la capa del sistema. */
 struct rros_seclevel { const char *name, *desc; const char *const *kv; };

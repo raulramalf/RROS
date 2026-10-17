@@ -27,7 +27,7 @@ if [ -f /etc/locale.gen ]; then
 	locale-gen >/dev/null 2>&1 || true
 fi
 # servicios (solo los que estén instalados)
-for s in NetworkManager bluetooth nftables systemd-timesyncd rros-firstboot rros-apply rros-live-user rros-live \
+for s in NetworkManager bluetooth nftables apparmor systemd-timesyncd rros-firstboot rros-apply rros-live-user rros-live \
 	rros-selftest rros-serial-shell; do
 	[ -e "/usr/lib/systemd/system/$s.service" ] && systemctl enable "$s.service" >/dev/null 2>&1
 done

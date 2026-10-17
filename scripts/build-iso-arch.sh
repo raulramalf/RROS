@@ -78,7 +78,7 @@ EOF
 # menú de arranque: nombre de RROS y parámetros
 find "$P/syslinux" "$P/efiboot" "$P/grub" -type f \( -name '*.cfg' -o -name '*.conf' \) 2>/dev/null | while read -r f; do
 	sed -i -e "s/Arch Linux install medium/RROS Aurora ($profile)/g" -e "s/Arch Linux/RROS/g" \
-		-e "s|archisosearchuuid=%ARCHISO_UUID%|& quiet splash ${extra}|g" "$f"
+		-e "s|archisosearchuuid=%ARCHISO_UUID%|& lsm=landlock,lockdown,yama,integrity,apparmor,bpf quiet splash ${extra}|g" "$f"
 done
 
 log "mkarchiso -> $iso"

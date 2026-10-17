@@ -13,12 +13,12 @@ RROS_PROFILE_DIR="$ROOT_DIR/profiles" RROS_PROFILE_FILE="$tmp/profile" RROS_USER
 	RROS_SYSTEM_CONF="$tmp/sys.toml" RROS_THEMES_DIR="$tmp/themes" XDG_CONFIG_HOME="$tmp/xdg" \
 	"$RROS/rros-settings" state > "$tmp/state.json"
 
-# catálogo de aplicaciones: sin nada instalado (dpkg-query y flatpak simulados), perfil standard
+# catálogo de aplicaciones: sin nada instalado (pacman y flatpak simulados), perfil standard
 mkdir -p "$tmp/bin"
-printf '#!/bin/sh\nexit 1\n' > "$tmp/bin/dpkg-query"
+printf '#!/bin/sh\nexit 1\n' > "$tmp/bin/pacman"
 printf '#!/bin/sh\nexit 1\n' > "$tmp/bin/flatpak"
-chmod +x "$tmp/bin/dpkg-query" "$tmp/bin/flatpak"
-PATH="$tmp/bin:$PATH" RROS_PROFILE_DIR="$ROOT_DIR/profiles" RROS_PROFILE_FILE="$tmp/profile" \
+chmod +x "$tmp/bin/pacman" "$tmp/bin/flatpak"
+PATH="$tmp/bin:$PATH" RROS_PKG=pacman RROS_PROFILE_DIR="$ROOT_DIR/profiles" RROS_PROFILE_FILE="$tmp/profile" \
 	RROS_APPS_CATALOG="$ROOT_DIR/apps/catalog.toml" "$RROS/rros-apps" list --json > "$tmp/apps.json"
 
 # seguridad y dispositivos: las herramientas reales sobre un portátil de ejemplo (RROS_ROOT)

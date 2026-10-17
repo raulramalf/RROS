@@ -451,7 +451,8 @@ if [ "$base" = arch ]; then
 		echo "GRUB_TIMEOUT=$([ "$alongside" -eq 1 ] && echo 10 || echo 2)"
 		echo 'GRUB_TIMEOUT_STYLE=menu'
 		echo "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet loglevel=3 ${extra}\""
-		echo 'GRUB_CMDLINE_LINUX=""'
+		# el kernel de Arch trae AppArmor pero no lo activa: hay que nombrarlo en la lista de LSM
+		echo 'GRUB_CMDLINE_LINUX="lsm=landlock,lockdown,yama,integrity,apparmor,bpf"'
 		echo 'GRUB_DISABLE_RECOVERY=true'
 		echo 'GRUB_COLOR_NORMAL="cyan/black"'
 		echo 'GRUB_COLOR_HIGHLIGHT="black/cyan"'

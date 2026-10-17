@@ -11,14 +11,15 @@
 #include "rros_schema.h"
 #include "rros_security.h"
 
-static const struct { const char *key, *unit; } services[] = {
-	{ "services.bluetooth", "bluetooth.service" },
-	{ "services.printing", "cups.service" },
-	{ "services.ssh", "ssh.service" },
-	{ "services.location", "geoclue.service" },
+static const struct { const char *key, *unit, *arch_unit; } services[] = {
+	{ "services.bluetooth", "bluetooth.service", NULL },
+	{ "services.printing", "cups.service", NULL },
+	{ "services.ssh", "ssh.service", "sshd.service" },
+	{ "services.location", "geoclue.service", NULL },
 };
 
 static const char *root = "";
+static int arch;   /* base Arch (si no, Ubuntu) */
 
 static int unit_exists(const char *unit);
 
@@ -130,13 +131,16 @@ static void apply_security(const struct rros_secpol *sp, int live, int *bad)
 	*bad |= write_rendered("/etc/modprobe.d/rros-security.conf", rros_render_modprobe, sp, 0) != 0;
 	*bad |= write_sudoers(sp) != 0;
 	*bad |= write_rendered("/etc/security/faillock.conf", rros_render_faillock, sp, 0) != 0;
-	*bad |= write_rendered("/etc/apt/apt.conf.d/20auto-upgrades", rros_render_autoupdates, sp, 0) != 0;
+	if (!arch)
+		*bad |= write_rendered("/etc/apt/apt.conf.d/20auto-upgrades", rros_render_autoupdates, sp, 0) != 0;
 	*bad |= write_rendered("/etc/security/limits.d/90-rros-core.conf", rros_render_corelimit, sp, 0) != 0;
 
 	if (!live) {
 		printf("%-22s %s (simulado)\n", "cortafuegos", sp->firewall ? "se activaría" : "se desactivaría");
 		printf("%-22s %s (simulado)\n", "bloqueo por intentos",
 		       sp->login_attempts > 0 ? "se activaría" : "se desactivaría");
+		if (arch)
+			printf("%-22s %s (simulado)\n", "actualizaciones", sp->auto_updates ? "se descargarían solas" : "a mano");
 		return;
 	}
 	{
@@ -153,9 +157,17 @@ static void apply_security(const struct rros_secpol *sp, int live, int *bad)
 		       !fw ? "falló" : sp->firewall ? "activado" : "desactivado");
 		if (sp->hardening)
 			printf("%-22s %s\n", "kernel endurecido", run_cmd(sc) == 0 ? "aplicado" : "aplicado en parte");
+		/* Arch: pam_faillock ya está en system-auth y faillock.conf decide; Ubuntu: perfiles de pam-auth-update */
 		printf("%-22s %s\n", "bloqueo por intentos",
-		       run_cmd(sp->login_attempts > 0 ? pam_on : pam_off) == 0 ?
+		       arch || run_cmd(sp->login_attempts > 0 ? pam_on : pam_off) == 0 ?
 		       (sp->login_attempts > 0 ? "activado" : "desactivado") : "falló (pam-auth-update)");
+		if (arch && unit_exists("rros-updates.timer")) {
+			const char *up_on[] = { "systemctl", "enable", "--now", "rros-updates.timer", NULL };
+			const char *up_off[] = { "systemctl", "disable", "--now", "rros-updates.timer", NULL };
+
+			printf("%-22s %s\n", "actualizaciones", run_cmd(sp->auto_updates ? up_on : up_off) != 0 ? "falló" :
+			       sp->auto_updates ? "se descargan solas cada día" : "a mano");
+		}
 		/* los módulos ya cargados se quitan si nadie los usa; si no, el bloqueo vale al reiniciar */
 		if (!sp->usb_storage)
 			run_cmd(rm_usb);
@@ -195,6 +207,54 @@ static int systemctl(const char *verb, const char *unit)
 	return WIFEXITED(st) && WEXITSTATUS(st) == 0 ? 0 : -1;
 }
 
+/* Arch: el idioma tiene que estar generado; se descomenta en /etc/locale.gen (y con live, locale-gen) */
+static int arch_locale_gen(const char *lang, int live)
+{
+	char path[1100], line[256], want[96], *text = NULL;
+	size_t len = 0;
+	FILE *in, *m;
+	int changed = 0, found = 0;
+
+	snprintf(path, sizeof path, "%s/etc/locale.gen", root);
+	snprintf(want, sizeof want, "%s ", lang);   /* «es_ES.UTF-8 UTF-8» */
+	in = fopen(path, "r");
+	if (!in)
+		return 0;   /* sin glibc completo (raíz de pruebas): nada que hacer */
+	m = open_memstream(&text, &len);
+	if (!m) {
+		fclose(in);
+		return -1;
+	}
+	while (fgets(line, sizeof line, in)) {
+		if (!strncmp(line, want, strlen(want)))
+			found = 1;
+		else if (line[0] == '#' && !strncmp(line + 1, want, strlen(want)) && !found) {
+			fputs(line + 1, m);
+			changed = found = 1;
+			continue;
+		}
+		fputs(line, m);
+	}
+	fclose(in);
+	fclose(m);
+	if (!found) {
+		free(text);
+		fprintf(stderr, "rros-apply: %s no está en /etc/locale.gen\n", lang);
+		return -1;
+	}
+	if (changed) {
+		const char *gen[] = { "locale-gen", NULL };
+		int rc = write_text(path + strlen(root), text);
+
+		free(text);
+		if (rc == 0 && live && run_cmd(gen) != 0)
+			fprintf(stderr, "rros-apply: locale-gen falló\n");
+		return rc;
+	}
+	free(text);
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	char profile[64] = "", buf[1024];
@@ -217,6 +277,7 @@ int main(int argc, char **argv)
 	}
 	if (!*profile)
 		rros_read_active_profile(profile, sizeof profile);
+	arch = rros_is_arch(root);
 	rros_conf_init(&c);
 	if (rros_load_effective(&c, profile)) {
 		fprintf(stderr, "rros-apply: no se pudo cargar la configuración del perfil '%s'\n", profile);
@@ -271,7 +332,9 @@ int main(int argc, char **argv)
 					 lang, (int)(strchr(lang, '.') - lang), lang, ll);
 			else
 				snprintf(buf, sizeof buf, "# Generado por rros-apply (locale.language)\nLANG=%s\n", lang);
-			bad |= write_text("/etc/default/locale", buf) != 0;
+			bad |= write_text(arch ? "/etc/locale.conf" : "/etc/default/locale", buf) != 0;
+			if (arch)
+				bad |= arch_locale_gen(lang, act_services && !*root) != 0;
 		}
 		if (tz && rros_timezone_name_ok(tz)) {
 			char zone[300], link[400], target[300];
@@ -292,7 +355,8 @@ int main(int argc, char **argv)
 					bad = 1;
 				}
 				snprintf(buf, sizeof buf, "%s\n", tz);
-				bad |= write_text("/etc/timezone", buf) != 0;
+				if (!arch)   /* /etc/timezone es de Debian */
+					bad |= write_text("/etc/timezone", buf) != 0;
 			}
 		}
 	}
@@ -307,16 +371,17 @@ int main(int argc, char **argv)
 	for (size_t i = 0; i < sizeof services / sizeof *services; i++) {
 		int on = rros_conf_get_bool(&c, services[i].key, 0);
 		const char *verb = on ? "enable" : "disable";
+		const char *unit = arch && services[i].arch_unit ? services[i].arch_unit : services[i].unit;
 
-		if (!unit_exists(services[i].unit)) {
-			printf("%-22s no instalado\n", services[i].unit);
+		if (!unit_exists(unit)) {
+			printf("%-22s no instalado\n", unit);
 			continue;
 		}
 		if (act_services && !*root)
-			printf("%-22s %s%s\n", services[i].unit, on ? "activado" : "desactivado",
-			       systemctl(verb, services[i].unit) == 0 ? "" : " (falló)");
+			printf("%-22s %s%s\n", unit, on ? "activado" : "desactivado",
+			       systemctl(verb, unit) == 0 ? "" : " (falló)");
 		else
-			printf("%-22s %s (simulado)\n", services[i].unit, on ? "se activaría" : "se desactivaría");
+			printf("%-22s %s (simulado)\n", unit, on ? "se activaría" : "se desactivaría");
 	}
 	rros_conf_free(&c);
 	printf("perfil %s aplicado%s\n", profile, *root ? " (raíz alternativa)" : "");

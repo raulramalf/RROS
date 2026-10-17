@@ -1,4 +1,5 @@
-/* rros-apps: tienda de aplicaciones de RROS (apt y Flatpak). Nunca usa una shell. */
+/* rros-apps: tienda de aplicaciones de RROS (pacman o apt, según la base, y Flatpak). Nunca usa una shell.
+ * RROS_PKG=pacman|apt fuerza el gestor de paquetes (pruebas). */
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -11,17 +12,22 @@
 #include "rros_profile.h"
 
 #define MAXAPPS 256
+#define MAXPKGS 8
 #define FLATHUB_URL "https://dl.flathub.org/repo/flathub.flatpakrepo"
 
 struct app {
 	char id[40];
-	const char *name, *category, *desc, *apt, *flatpak, *shipped, *cmd;
+	const char *name, *category, *desc, *apt, *pacman, *flatpak, *shipped, *cmd;
 };
+
+enum { PKG_APT, PKG_PACMAN };
 
 static struct app apps[MAXAPPS];
 static size_t napps;
 static struct rros_conf cat;
 static int dry_run;
+static int backend = PKG_APT;
+static const char *const backend_name[] = { "apt", "pacman" };
 
 /* ---- validación ---- */
 
@@ -111,6 +117,7 @@ static int load_catalog(void)
 		else if (!strcmp(field, "category")) a->category = kv->val;
 		else if (!strcmp(field, "desc")) a->desc = kv->val;
 		else if (!strcmp(field, "apt")) a->apt = all_in(kv->val, ".+-") ? kv->val : NULL;
+		else if (!strcmp(field, "pacman")) a->pacman = all_in(kv->val, ".+-_,") ? kv->val : NULL;
 		else if (!strcmp(field, "flatpak")) a->flatpak = all_in(kv->val, "._-") ? kv->val : NULL;
 		else if (!strcmp(field, "shipped")) a->shipped = kv->val;
 		else if (!strcmp(field, "cmd")) a->cmd = all_in(kv->val, "-_") ? kv->val : NULL;
@@ -217,16 +224,59 @@ static const char *priv(void)
 	return NULL;
 }
 
+/* ---- gestor de paquetes ---- */
+
+static int detect_backend(void)
+{
+	const char *e = getenv("RROS_PKG");
+
+	if (e && !strcmp(e, "pacman"))
+		return PKG_PACMAN;
+	if (e && !strcmp(e, "apt"))
+		return PKG_APT;
+	if (access("/etc/arch-release", F_OK) == 0 || (have_cmd("pacman") && !have_cmd("apt-get")))
+		return PKG_PACMAN;
+	return PKG_APT;
+}
+
+/* los paquetes de la app en este sistema ("a,b,c"), o NULL si no tiene */
+static const char *pkgs_of(const struct app *a)
+{
+	return backend == PKG_PACMAN ? a->pacman : a->apt;
+}
+
+/* parte "a,b,c" en argv[n...]; devuelve el nuevo n */
+static int split_pkgs(const char *list, char *buf, size_t bn, char **argv, int n)
+{
+	char *tok, *save = NULL;
+	int k = 0;
+
+	snprintf(buf, bn, "%s", list);
+	for (tok = strtok_r(buf, ",", &save); tok && k < MAXPKGS; tok = strtok_r(NULL, ",", &save), k++)
+		argv[n++] = tok;
+	return n;
+}
+
 /* ---- estado ---- */
 
-static int apt_installed(const char *pkg)
+/* instalada si lo está el primer paquete de la lista (el programa; los demás son idioma o extras) */
+static int pkg_installed(const char *list)
 {
-	char out[64] = "";
-	char *argv[] = { "dpkg-query", "-W", "-f=${db:Status-Status}", (char *)pkg, NULL };
+	char first[64], out[64] = "";
+	size_t l = strcspn(list, ",");
 
-	if (run(argv, out, sizeof out, 1) != 0)
-		return 0;
-	return !strcmp(out, "installed");
+	snprintf(first, sizeof first, "%.*s", (int)l, list);
+	if (backend == PKG_PACMAN) {
+		char *argv[] = { "pacman", "-Q", "--", first, NULL };
+
+		return run(argv, out, sizeof out, 1) == 0;
+	} else {
+		char *argv[] = { "dpkg-query", "-W", "-f=${db:Status-Status}", first, NULL };
+
+		if (run(argv, out, sizeof out, 1) != 0)
+			return 0;
+		return !strcmp(out, "installed");
+	}
 }
 
 static int flatpak_installed(const char *id)
@@ -239,7 +289,7 @@ static int flatpak_installed(const char *id)
 
 static int is_installed(const struct app *a)
 {
-	return (a->apt && apt_installed(a->apt)) || (a->flatpak && flatpak_installed(a->flatpak));
+	return (pkgs_of(a) && pkg_installed(pkgs_of(a))) || (a->flatpak && flatpak_installed(a->flatpak));
 }
 
 static int shipped_in(const struct app *a, const char *profile)
@@ -322,6 +372,9 @@ static int cmd_list(int argc, char **argv, const char *query)
 			printf(",\"category\":"); json_str(a->category);
 			printf(",\"desc\":"); json_str(a->desc);
 			printf(",\"apt\":"); json_str(a->apt ? a->apt : "");
+			printf(",\"pacman\":"); json_str(a->pacman ? a->pacman : "");
+			printf(",\"pkg\":"); json_str(pkgs_of(a) ? pkgs_of(a) : "");
+			printf(",\"pkg_manager\":\"%s\"", backend_name[backend]);
 			printf(",\"flatpak\":"); json_str(a->flatpak ? a->flatpak : "");
 			printf(",\"shipped\":%s,\"installed\":%s}", shipped_in(a, profile) ? "true" : "false", inst ? "true" : "false");
 		} else {
@@ -361,8 +414,8 @@ static int cmd_info(const struct app *a)
 	rros_read_active_profile(profile, sizeof profile);
 	printf("%s (%s)\n  %s\n", a->name, a->id, a->desc);
 	printf("  categoría: %s\n", a->category);
-	if (a->apt)
-		printf("  apt:       %s\n", a->apt);
+	if (pkgs_of(a))
+		printf("  %-10s %s\n", backend == PKG_PACMAN ? "pacman:" : "apt:", pkgs_of(a));
 	if (a->flatpak)
 		printf("  flatpak:   %s\n", a->flatpak);
 	if (a->cmd)
@@ -376,46 +429,73 @@ static int flathub_setup(void)
 	char *argv[] = { "flatpak", "remote-add", "--user", "--if-not-exists", "flathub", FLATHUB_URL, NULL };
 
 	if (!have_cmd("flatpak") && !dry_run) {
-		fputs("rros-apps: flatpak no está instalado (rros apps install flatpak, o apt install flatpak)\n", stderr);
+		fputs("rros-apps: flatpak no está instalado (instálalo con el gestor de paquetes del sistema)\n", stderr);
 		return 1;
 	}
 	return step(argv) == 0 ? 0 : 1;
 }
 
-static int apt_step(const char *verb, const char *pkg)
+/* verb: install, remove o upgrade (todo el sistema); pkgs: "a,b,c" o NULL.
+ * En Arch se instala siempre con -Syu: actualizar solo una parte del sistema rompe dependencias. */
+static int pkg_step(const char *verb, const char *pkgs)
 {
 	const char *p = priv();
-	char *argv[10];
+	char *argv[8 + MAXPKGS], buf[256];
 	int n = 0;
 
 	if (p)
 		argv[n++] = (char *)p;
-	argv[n++] = "apt-get";
-	argv[n++] = (char *)verb;
-	argv[n++] = "-y";
-	if (pkg)
-		argv[n++] = (char *)pkg;
+	if (backend == PKG_PACMAN) {
+		argv[n++] = "pacman";
+		if (!strcmp(verb, "remove")) {
+			argv[n++] = "-Rns";
+		} else {
+			argv[n++] = "-Syu";
+			if (pkgs)
+				argv[n++] = "--needed";
+		}
+		argv[n++] = "--noconfirm";
+	} else {
+		if (strcmp(verb, "remove")) {   /* install y upgrade: antes, la lista de paquetes */
+			char *upd[4];
+			int u = 0;
+
+			if (p)
+				upd[u++] = (char *)p;
+			upd[u++] = "apt-get";
+			upd[u++] = "update";
+			upd[u] = NULL;
+			if (step(upd) != 0)
+				return 1;
+		}
+		argv[n++] = "apt-get";
+		argv[n++] = (char *)verb;
+		argv[n++] = "-y";
+	}
+	if (pkgs)
+		n = split_pkgs(pkgs, buf, sizeof buf, argv, n);
 	argv[n] = NULL;
 	return step(argv);
 }
 
 static int cmd_install(const struct app *a, int force_flatpak)
 {
-	int use_flatpak = (force_flatpak && a->flatpak) || !a->apt;
+	const char *pkgs = pkgs_of(a);
+	int use_flatpak = (force_flatpak && a->flatpak) || !pkgs;
 
 	if (use_flatpak && !a->flatpak) {
 		fprintf(stderr, "rros-apps: '%s' no tiene origen de instalación\n", a->id);
 		return 1;
 	}
 	if (force_flatpak && !a->flatpak) {
-		fprintf(stderr, "rros-apps: '%s' no está en Flathub; se usará apt\n", a->id);
+		fprintf(stderr, "rros-apps: '%s' no está en Flathub; se usará %s\n", a->id, backend_name[backend]);
 		use_flatpak = 0;
 	}
 	if (!dry_run && is_installed(a)) {
 		printf("%s ya está instalada\n", a->name);
 		return 0;
 	}
-	printf("Instalando %s con %s...\n", a->name, use_flatpak ? "Flatpak (Flathub)" : "apt");
+	printf("Instalando %s con %s...\n", a->name, use_flatpak ? "Flatpak (Flathub)" : backend_name[backend]);
 	if (use_flatpak) {
 		char *inst[] = { "flatpak", "install", "--user", "-y", "--noninteractive", "flathub", (char *)a->flatpak, NULL };
 
@@ -424,7 +504,7 @@ static int cmd_install(const struct app *a, int force_flatpak)
 			return 1;
 		}
 	} else {
-		if (apt_step("update", NULL) != 0 || apt_step("install", a->apt) != 0) {
+		if (pkg_step("install", pkgs) != 0) {
 			fprintf(stderr, "rros-apps: no se pudo instalar %s\n", a->name);
 			return 1;
 		}
@@ -444,8 +524,8 @@ static int cmd_remove(const struct app *a)
 			return 1;
 		done = 1;
 	}
-	if (a->apt && (dry_run || apt_installed(a->apt))) {
-		if (apt_step("remove", a->apt) != 0)
+	if (pkgs_of(a) && (dry_run || pkg_installed(pkgs_of(a)))) {
+		if (pkg_step("remove", pkgs_of(a)) != 0)
 			return 1;
 		done = 1;
 	}
@@ -459,7 +539,7 @@ static int cmd_update(void)
 	char *fp[] = { "flatpak", "update", "--user", "-y", NULL };
 	int rc = 0;
 
-	if (apt_step("update", NULL) != 0 || apt_step("upgrade", NULL) != 0)
+	if (pkg_step("upgrade", NULL) != 0)
 		rc = 1;
 	if ((dry_run || have_cmd("flatpak")) && step(fp) != 0)
 		rc = 1;
@@ -473,7 +553,7 @@ static void usage(FILE *out)
 	      "  categories                                   categorías\n"
 	      "  search TEXTO                                 buscar por nombre o descripción\n"
 	      "  info ID                                      detalles de una app\n"
-	      "  install ID [--flatpak] [--dry-run]           instalar (apt, o Flatpak si no hay otra)\n"
+	      "  install ID [--flatpak] [--dry-run]           instalar (pacman o apt; Flatpak si no hay paquete)\n"
 	      "  remove ID [--dry-run]                        quitar\n"
 	      "  update [--dry-run]                           actualizar sistema y aplicaciones\n"
 	      "  setup [--dry-run]                            añadir Flathub (se hace solo al instalar)\n"
@@ -492,6 +572,7 @@ int main(int argc, char **argv)
 		return argc < 2 ? 2 : 0;
 	}
 	cmd = argv[1];
+	backend = detect_backend();
 	if (load_catalog() != 0)
 		return 1;
 	if (!strcmp(cmd, "list"))

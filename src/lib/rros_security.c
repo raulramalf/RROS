@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 void rros_secpol_from_conf(struct rros_secpol *p, const struct rros_conf *c)
 {
@@ -191,7 +192,8 @@ void rros_render_faillock(FILE *f, const struct rros_secpol *p)
 {
 	fputs("# Generado por rros-apply (security.login_attempts). Lo usa pam_faillock.\n", f);
 	if (p->login_attempts <= 0) {
-		fputs("# Sin límite de intentos: los perfiles PAM de RROS están desactivados.\n", f);
+		/* en Arch pam_faillock va siempre en system-auth (y sin archivo bloquearía a los 3 intentos) */
+		fputs("# Sin límite de intentos.\ndeny = 0\n", f);
 		return;
 	}
 	fprintf(f, "deny = %d\nfail_interval = 900\nunlock_time = 600\n", p->login_attempts);
@@ -202,6 +204,14 @@ void rros_render_autoupdates(FILE *f, const struct rros_secpol *p)
 	fprintf(f, "// Generado por rros-apply (system.auto_updates)\n"
 		"APT::Periodic::Update-Package-Lists \"%d\";\n"
 		"APT::Periodic::Unattended-Upgrade \"%d\";\n", p->auto_updates, p->auto_updates);
+}
+
+int rros_is_arch(const char *root)
+{
+	char path[1024];
+
+	snprintf(path, sizeof path, "%s/etc/arch-release", root ? root : "");
+	return access(path, F_OK) == 0;
 }
 
 void rros_render_corelimit(FILE *f, const struct rros_secpol *p)

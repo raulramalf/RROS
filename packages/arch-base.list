@@ -31,6 +31,8 @@ sudo
 polkit
 polkit-gnome
 nftables
+apparmor                # confinamiento de programas (como Ubuntu); se activa con lsm= en el arranque
+pacman-contrib          # checkupdates: descarga diaria de actualizaciones (rros-updates.timer)
 which
 less
 nano

@@ -141,6 +141,23 @@ if "$B/rros-config" -p standard set security.firewall_allow '22; flush ruleset' 
 "$B/rros-config" -p standard unset security.usb_storage
 "$B/rros-config" -p standard unset security.firewall_allow
 
+# --- en Arch: locale.conf y locale.gen, faillock sin pam-auth-update, sshd; nada de apt ni /etc/timezone ---
+A=$T/archroot
+mkdir -p "$A/etc" "$A/usr/lib/systemd/system"
+: > "$A/etc/arch-release"
+: > "$A/usr/lib/systemd/system/sshd.service"
+printf '#en_US.UTF-8 UTF-8\n#es_ES.UTF-8 UTF-8  \n#es_MX.UTF-8 UTF-8\n' > "$A/etc/locale.gen"
+ARCH_OUT=$("$B/rros-apply" -p standard --root "$A") || fail "rros-apply en Arch"
+grep -q '^LANG=es_ES.UTF-8' "$A/etc/locale.conf" || fail "Arch: locale.conf"
+grep -q '^es_ES.UTF-8 UTF-8' "$A/etc/locale.gen" || fail "Arch: locale.gen"
+grep -q '^#es_MX' "$A/etc/locale.gen" || fail "Arch: locale.gen solo el idioma elegido"
+for f in etc/apt etc/timezone etc/default/locale; do
+	[ ! -e "$A/$f" ] || fail "Arch: no debe existir /$f"
+done
+grep -q 'deny = 10' "$A/etc/security/faillock.conf" || fail "Arch: faillock"
+grep -q '^sshd.service' <<<"$ARCH_OUT" || fail "Arch: ssh es sshd.service"
+grep -q 'actualizaciones .*se descargarían solas' <<<"$ARCH_OUT" || fail "Arch: actualizaciones"
+
 # --- rros-security: auditoría sobre un sistema falso ---
 F=$T/fakeroot
 mkdir -p "$F/proc/sys/kernel" "$F/proc/net" "$F/etc" "$F/sys/module/apparmor/parameters" "$T/secbin"
@@ -176,6 +193,15 @@ aa() { RROS_ROOT=$F PATH="$T/secbin:$PATH" "$B/rros-security" --json | python3 -
 echo "boot=casper quiet" > "$F/proc/cmdline"
 [ "$(aa)" = info ] || fail "AppArmor sin perfiles en el live"
 echo quiet > "$F/proc/cmdline"; rm -r "$F/sys/kernel/security"
+# en Arch: faillock en system-auth y actualizaciones con rros-updates.timer
+mkdir -p "$F/etc/pam.d" "$F/etc/systemd/system/timers.target.wants"
+: > "$F/etc/arch-release"
+echo 'auth required pam_faillock.so preauth' > "$F/etc/pam.d/system-auth"
+st() { RROS_ROOT=$F PATH="$T/secbin:$PATH" "$B/rros-security" --json | python3 -c 'import json,sys; c={x["id"]:x["status"] for x in json.load(sys.stdin)["checks"]}; print(c["updates"], c["faillock"])'; }
+[ "$(st)" = "warn ok" ] || fail "Arch: auditoría sin descarga de actualizaciones ($(st))"
+: > "$F/etc/systemd/system/timers.target.wants/rros-updates.timer"
+[ "$(st)" = "ok ok" ] || fail "Arch: auditoría de actualizaciones y faillock ($(st))"
+rm -r "$F/etc/arch-release" "$F/etc/pam.d" "$F/etc/systemd"
 # niveles y puertos se escriben en la capa del sistema
 export RROS_SECURITY_NOROOT=1 RROS_SECURITY_NOAPPLY=1
 "$B/rros-security" nivel estricto >/dev/null || fail "nivel estricto"
@@ -323,15 +349,18 @@ eq "$(PATH="$T/bin:$PATH" "$B/rros" saluda hola mundo)" "extension hola mundo"
 if PATH="$T/bin:$PATH" "$B/rros" '../saluda' 2>/dev/null; then fail "rros no debe aceptar rutas como extensión"; fi
 if "$B/rros" noexiste 2>/dev/null; then fail "rros noexiste debía fallar"; fi
 
-# --- tienda de aplicaciones: rros-apps (dpkg-query y flatpak simulados) ---
+# --- tienda de aplicaciones: rros-apps (dpkg-query, pacman y flatpak simulados) ---
 mkdir -p "$T/fakebin"
 # shellcheck disable=SC2016
 printf '#!/bin/sh\n[ "$3" = "mpv" ] && { printf installed; exit 0; }\nexit 1\n' > "$T/fakebin/dpkg-query"
 # shellcheck disable=SC2016
 printf '#!/bin/sh\n[ "$2" = "org.signal.Signal" ] && exit 0\nexit 1\n' > "$T/fakebin/flatpak"
-chmod +x "$T/fakebin/dpkg-query" "$T/fakebin/flatpak"
+# shellcheck disable=SC2016
+printf '#!/bin/sh\n[ "$1" = "-Q" ] && [ "$3" = "mpv" ] && { echo "mpv 1-1"; exit 0; }\nexit 1\n' > "$T/fakebin/pacman"
+chmod +x "$T/fakebin/dpkg-query" "$T/fakebin/flatpak" "$T/fakebin/pacman"
 export RROS_APPS_CATALOG=$PWD/apps/catalog.toml
-APPS="env PATH=$T/fakebin:$PATH $B/rros-apps"
+APPS="env PATH=$T/fakebin:$PATH RROS_PKG=apt $B/rros-apps"
+PAPPS="env PATH=$T/fakebin:$PATH RROS_PKG=pacman $B/rros-apps"
 # la salida se captura antes de buscar: con pipefail, `grep -q` cortaría la tubería (SIGPIPE) y daría falso error
 LIST=$($APPS list)
 grep -q 'mpv .*instalada' <<<"$LIST" || fail "apps: mpv debe figurar instalada"
@@ -346,10 +375,20 @@ grep -q 'org.mozilla.firefox' <<<"$($APPS info firefox)" || fail "apps: info"
 FF=$($APPS install firefox --dry-run)
 grep -q 'flatpak install --user -y --noninteractive flathub org.mozilla.firefox' <<<"$FF" || fail "apps: instalar por Flatpak"
 grep -q 'flatpak remote-add --user --if-not-exists flathub' <<<"$FF" || fail "apps: añade Flathub"
-grep -q 'apt-get install -y gimp' <<<"$($APPS install gimp --dry-run)" || fail "apps: instalar por apt"
+GIMP=$($APPS install gimp --dry-run)
+grep -q 'apt-get update' <<<"$GIMP" || fail "apps: apt-get update antes de instalar"
+grep -q 'apt-get install -y gimp' <<<"$GIMP" || fail "apps: instalar por apt"
 grep -q 'com.obsproject.Studio' <<<"$($APPS install obs --flatpak --dry-run)" || fail "apps: --flatpak elige Flatpak"
 grep -q 'apt-get remove -y vlc' <<<"$($APPS remove vlc --dry-run)" || fail "apps: quitar"
 grep -q 'ya está instalada' <<<"$($APPS install mpv)" || fail "apps: no reinstala lo instalado"
+# en Arch: pacman (siempre -Syu, nunca una actualización a medias), con los paquetes de idioma
+grep -q 'mpv .*instalada' <<<"$($PAPPS list)" || fail "apps pacman: mpv debe figurar instalada"
+grep -q 'pacman -Syu --needed --noconfirm firefox firefox-i18n-es-es$' <<<"$($PAPPS install firefox --dry-run)" || fail "apps pacman: instalar"
+grep -q 'pacman -Rns --noconfirm vlc$' <<<"$($PAPPS remove vlc --dry-run)" || fail "apps pacman: quitar"
+grep -q 'pacman -Syu --noconfirm$' <<<"$($PAPPS update --dry-run)" || fail "apps pacman: actualizar"
+grep -q 'com.valvesoftware.Steam' <<<"$($PAPPS install steam --dry-run)" || fail "apps pacman: sin paquete, Flatpak"
+grep -q 'pacman: *libreoffice-fresh,libreoffice-fresh-es' <<<"$($PAPPS info libreoffice)" || fail "apps pacman: info"
+grep -q 'ya está instalada' <<<"$($PAPPS install mpv)" || fail "apps pacman: no reinstala lo instalado"
 for bad in "nada" "x;y" '../etc' 'FIREFOX'; do
 	if $APPS install "$bad" --dry-run 2>/dev/null; then fail "apps: id no válido aceptado: $bad"; fi
 done
@@ -361,7 +400,7 @@ import json,sys
 cats={"internet","office","media","graphics","dev","system","games","utility"}
 for a in json.load(sys.stdin):
     assert a["category"] in cats, a["id"]
-    assert a["apt"] or a["flatpak"], a["id"]
+    assert a["flatpak"] or (a["apt"] and a["pacman"]), a["id"]
 ' <<<"$JSON" || fail "apps: catálogo incoherente"
 
 # --- instalador: la parte que no toca discos (plan y validación de argumentos) ---

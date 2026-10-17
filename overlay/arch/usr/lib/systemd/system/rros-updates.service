@@ -1,0 +1,15 @@
+[Unit]
+Description=RROS: descargar las actualizaciones (se instalan con «rros apps update»)
+Documentation=https://github.com/raulramalf/RROS/blob/main/docs/SEGURIDAD.md
+Wants=network-online.target
+After=network-online.target
+ConditionACPower=true
+
+[Service]
+Type=oneshot
+# checkupdates usa su propia copia de la base de datos: no deja el sistema a medio actualizar
+ExecStart=/usr/bin/checkupdates --download
+# 2 = no hay actualizaciones
+SuccessExitStatus=2
+Nice=19
+IOSchedulingClass=idle

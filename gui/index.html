@@ -458,7 +458,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
   }
   function drawApps(root) {
     root.appendChild(h("h1", { text: "Tienda de aplicaciones" }));
-    root.appendChild(h("p", { class: "sub", text: "Instala programas con un clic. Se usa apt (el repositorio de Ubuntu) y, si no hay otra opción, Flatpak (Flathub). La instalación se hace en una terminal para que veas el progreso y puedas escribir tu contraseña." }));
+    root.appendChild(h("p", { class: "sub", text: "Instala programas con un clic. Se usan los paquetes del sistema (pacman, los repositorios de Arch) y, si no hay otra opción, Flatpak (Flathub). La instalación se hace en una terminal para que veas el progreso y puedas escribir tu contraseña." }));
     if (APPS === null) {
       root.appendChild(h("div", { class: "empty", text: "Cargando el catálogo…" }));
       loadApps().then(function () { if (page === "apps") drawPage(); });
@@ -487,7 +487,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
         return (appCat === "all" || a.category === appCat) && (!q || (a.id + " " + a.name + " " + a.desc).toLowerCase().indexOf(q) >= 0);
       });
       shown.forEach(function (a) {
-        var origin = a.apt ? "apt" : "Flatpak";
+        var origin = a.pkg ? (a.pkg_manager || "paquete") : "Flatpak";
         var state = a.installed ? h("span", { class: "badge ok", text: "instalada" }) : a.shipped ? h("span", { class: "badge", text: "incluida" }) : h("span", { class: "badge", text: origin });
         var btn = a.installed
           ? h("button", { class: "btn danger small", type: "button", text: "Quitar", onclick: function () { appRun("remove", a); } })

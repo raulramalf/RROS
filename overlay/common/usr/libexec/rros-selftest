@@ -85,6 +85,10 @@ if [ "$BASE" = arch ]; then
 	check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/system-auth
 	check "sudo: el grupo wheel administra" sh -c 'visudo -cqf /etc/sudoers.d/10-rros-wheel'
 	check "instalador: cifrado en el initramfs (hook sd-encrypt)" test -e /usr/lib/initcpio/install/sd-encrypt
+	check "AppArmor activo (lsm= en el arranque)" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
+	check "AppArmor: perfiles cargados" sh -c 'systemctl is-active --quiet apparmor && grep -q . /sys/kernel/security/apparmor/profiles'
+	check "actualizaciones: descarga diaria (rros-updates.timer)" sh -c 'command -v checkupdates >/dev/null && systemctl is-enabled --quiet rros-updates.timer'
+	check "faillock: límite de intentos de RROS" grep -q '^deny = ' /etc/security/faillock.conf
 	check "live: el sistema a copiar está montado" sh -c '! grep -q archisobasedir /proc/cmdline || test -d /run/archiso/airootfs/etc'
 else
 	for app in unattended-upgrade apparmor_parser ckbcomp; do

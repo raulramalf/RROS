@@ -94,7 +94,8 @@ static int is_live(void)
 {
 	char cmd[1024] = "";
 
-	return read_file("/proc/cmdline", cmd, sizeof cmd) == 0 && strstr(cmd, "boot=casper") != NULL;
+	return read_file("/proc/cmdline", cmd, sizeof cmd) == 0 &&
+	       (strstr(cmd, "boot=casper") != NULL || strstr(cmd, "archisobasedir=") != NULL);
 }
 
 /* ---- puertos abiertos ---- */
@@ -161,7 +162,7 @@ static void audit(const struct rros_conf *eff)
 	struct rros_secpol sp;
 	struct check *c;
 	char buf[8192];
-	int live = is_live();
+	int live = is_live(), arch = rros_is_arch(root);
 
 	rros_secpol_from_conf(&sp, eff);
 	nchecks = 0;
@@ -282,11 +283,21 @@ static void audit(const struct rros_conf *eff)
 	} else {
 		c = add("apparmor", WARN, "AppArmor");
 		snprintf(c->detail, sizeof c->detail, "No está activo: los programas no están confinados.");
-		snprintf(c->fix, sizeof c->fix, "sudo apt install apparmor && sudo reboot");
+		snprintf(c->fix, sizeof c->fix, arch ? "sudo pacman -S apparmor y añade lsm=landlock,lockdown,yama,integrity,apparmor,bpf al arranque" :
+			 "sudo apt install apparmor && sudo reboot");
 	}
 
-	/* actualizaciones */
-	if (read_file("/etc/apt/apt.conf.d/20auto-upgrades", buf, sizeof buf) == 0 &&
+	/* actualizaciones: Ubuntu instala las de seguridad sola; Arch las descarga cada día (rros-updates.timer)
+	 * y se instalan cuando tú quieras, porque en Arch actualizar sin mirar puede romper el sistema */
+	if (arch && exists("/etc/systemd/system/timers.target.wants/rros-updates.timer")) {
+		c = add("updates", OK, "Actualizaciones");
+		snprintf(c->detail, sizeof c->detail, "Se descargan solas cada día; instálalas con «rros apps update» (o desde Ajustes).");
+	} else if (arch) {
+		c = add("updates", WARN, "Actualizaciones");
+		snprintf(c->detail, sizeof c->detail, sp.auto_updates ? "Activadas en los ajustes, pero falta aplicarlas." :
+			 "Desactivadas: comprueba tú si hay actualizaciones (rros apps update).");
+		snprintf(c->fix, sizeof c->fix, "sudo rros-config set --system system.auto_updates true && sudo rros-apply --services");
+	} else if (read_file("/etc/apt/apt.conf.d/20auto-upgrades", buf, sizeof buf) == 0 &&
 	    strstr(buf, "Unattended-Upgrade \"1\"") && exists("/usr/bin/unattended-upgrade")) {
 		c = add("updates", OK, "Actualizaciones de seguridad");
 		snprintf(c->detail, sizeof c->detail, "Se instalan solas cada día.");
@@ -299,7 +310,8 @@ static void audit(const struct rros_conf *eff)
 
 	/* intentos de contraseña */
 	{
-		int pam = read_file("/etc/pam.d/common-auth", buf, sizeof buf) == 0 && strstr(buf, "pam_faillock.so");
+		int pam = read_file(arch ? "/etc/pam.d/system-auth" : "/etc/pam.d/common-auth", buf, sizeof buf) == 0 &&
+			  strstr(buf, "pam_faillock.so");
 
 		if (sp.login_attempts > 0 && pam) {
 			c = add("faillock", OK, "Bloqueo por contraseñas fallidas");
@@ -384,7 +396,7 @@ static void audit(const struct rros_conf *eff)
 	}
 
 	/* SSH */
-	if (unit_active("ssh.service")) {
+	if (unit_active(arch ? "sshd.service" : "ssh.service")) {
 		c = add("ssh", sp.ssh ? INFO : WARN, "Servidor SSH");
 		snprintf(c->detail, sizeof c->detail, "En marcha: se puede entrar a este equipo por la red (puerto 22).");
 		snprintf(c->fix, sizeof c->fix, "sudo rros-config set --system services.ssh false && sudo rros-apply --services");

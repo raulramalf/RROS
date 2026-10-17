@@ -182,7 +182,7 @@ void rros_render_hyprland(const struct rros_theme *t, const struct rros_palette 
 		fprintf(f, "    animation = workspaces, 1, %d, rros, %s\n}\n", speed(t, base), ws);
 	}
 
-	fputs("\ndwindle {\n    pseudotile = true\n    preserve_split = true\n}\n", f);
+	fputs("\ndwindle {\n    preserve_split = true\n}\n", f);
 	fputs("master {\n    new_status = master\n}\n", f);
 	fputs("misc {\n    force_default_wallpaper = 0\n    disable_hyprland_logo = true\n    disable_splash_rendering = true\n", f);
 	fprintf(f, "    mouse_move_enables_dpms = true\n    key_press_enables_dpms = true\n    vrr = %d\n}\n",
@@ -194,22 +194,20 @@ void rros_render_hyprland(const struct rros_theme *t, const struct rros_palette 
 		fputs("gesture = 3, horizontal, workspace\n", f);                              /* 0.51 y posteriores */
 		fputs("gestures {\n    workspace_swipe = true\n    workspace_swipe_fingers = 3\n}\n", f);  /* anteriores */
 	}
-	if (floating) {
-		fputs("windowrule = float, class:.*\n", f);
-		fputs("windowrulev2 = float, class:.*\n", f);
-	} else if (!strcmp(t->layout, "hybrid")) {
+	fputs("# hyprlang noerror false\n", f);
+	/* reglas de ventana (sintaxis de Hyprland 0.53 y posteriores) */
+	if (floating)
+		fputs("windowrule = float on, match:class .*\n", f);
+	else if (!strcmp(t->layout, "hybrid"))
 		/* pestañas: cada ventana nueva entra en el grupo de la que tiene el foco */
-		fputs("windowrule = group set, class:.*\n", f);
-		fputs("windowrulev2 = group set, class:.*\n", f);
-	}
+		fputs("windowrule = group set, match:class .*\n", f);
 	n = collect(c, "rule.", items, 64);
 	for (size_t i = 0; i < n; i++) {
 		if (rros_rule_to_hypr(items[i]->val, line, sizeof line) == 0)
-			fprintf(f, "windowrule = %s\nwindowrulev2 = %s\n", line, line);
+			fprintf(f, "windowrule = %s\n", line);
 		else
 			fprintf(f, "# ignorada (no válida en Hyprland): %s\n", items[i]->key);
 	}
-	fputs("# hyprlang noerror false\n", f);
 
 	if (strcmp(t->layout, "hybrid") == 0) {
 		fprintf(f, "\ngroup {\n    col.border_active = %s\n", rgba(a, sizeof a, p->accent, 1));
@@ -259,7 +257,7 @@ void rros_render_hyprland(const struct rros_theme *t, const struct rros_palette 
 	bind(f, &u, "bind", "SUPER", "W", "togglegroup,");
 	bind(f, &u, "bind", "SUPER", "Tab", "changegroupactive, f");
 	bind(f, &u, "bind", "ALT", "Tab", "cyclenext,");
-	bind(f, &u, "bind", "SUPER", "G", "togglesplit,");
+	bind(f, &u, "bind", "SUPER", "G", "layoutmsg, togglesplit");
 	bind(f, &u, "bind", "SUPER", "R", "submap, resize");
 	bind(f, &u, "bind", "SUPER", "S", "togglespecialworkspace,");
 	bind(f, &u, "bind", "SUPER SHIFT", "S", "exec, rros-shot region");

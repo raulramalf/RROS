@@ -69,23 +69,30 @@ EOF
 verify "usuario (atajos, reglas, efectos)" "$T/usr/hypr/hyprland.conf"
 
 # qué variante entiende esta versión (informativo): cada línea sin «noerror»
-probe() {   # probe DESCRIPCIÓN LÍNEA...
+probe() {   # probe LÍNEA...
 	local f=$T/probe.conf
 	printf '%s\n' "$@" > "$f"
 	if Hyprland --verify-config -c "$f" > "$T/probe.txt" 2>&1 && ! grep -qiE 'error|invalid' "$T/probe.txt"; then
-		echo "acepta    $1"
+		echo "acepta    $*"
 	else
-		echo "no acepta $1: $(grep -iE 'error|invalid' "$T/probe.txt" | head -1)"
+		echo "no acepta $*: $(grep -iE 'error|invalid' "$T/probe.txt" | tail -1)"
 	fi
 }
 log "variantes de sintaxis de esta versión"
-probe "gesture = 3, horizontal, workspace" "gesture = 3, horizontal, workspace"
-probe "gestures { workspace_swipe }" "gestures {" "    workspace_swipe = true" "}"
-probe "windowrule = float, class:.*" "windowrule = float, class:.*"
-probe "windowrulev2 = float, class:.*" "windowrulev2 = float, class:.*"
-probe "windowrule = match:class .*, float on" "windowrule = match:class .*, float on"
-probe "windowrule = float on, match:class .*" "windowrule = float on, match:class .*"
-probe "decoration:shadow { }" "decoration {" "    shadow {" "        enabled = true" "    }" "}"
+probe "gesture = 3, horizontal, workspace"
+probe "gestures {" "    workspace_swipe = true" "}"
+m="match:class ^(prueba)\$"
+for eff in "float on" "pin on" "fullscreen on" "workspace 3" "opacity 0.8" "idle_inhibit fullscreen" "idleinhibit fullscreen" \
+	"no_border on" "noborder on" "border_size 2" "bordersize 2" "group set" "group set always"; do
+	probe "windowrule = $eff, $m"
+done
+probe "windowrule = float on, match:title ^(Notas)\$"
+for d in "layoutmsg, togglesplit" "togglesplit," "pin," "movetoworkspacesilent, special" "togglespecialworkspace," "cyclenext," \
+	"changegroupactive, f" "togglegroup,"; do
+	probe "bind = SUPER, X, $d"
+done
+probe "dwindle {" "    preserve_split = true" "}"
+probe "group {" "    groupbar {" "        font_size = 12" "    }" "}"
 
 [ "$bad" -eq 0 ] || die "$bad configuraciones de Hyprland no válidas"
 log "configuraciones de Hyprland válidas: $((n + 1))"

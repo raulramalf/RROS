@@ -629,7 +629,8 @@ int rros_keybind_to_hypr(const char *val, char *out, size_t n)
 	} else if (!strcmp(cmd, "layout") && (!strcmp(a1, "tabbed") || !strcmp(a1, "stacking"))) {
 		disp = "togglegroup";
 	} else if ((!strcmp(cmd, "layout") && !strcmp(a1, "toggle")) || !strcmp(cmd, "splith") || !strcmp(cmd, "splitv")) {
-		disp = "togglesplit";
+		disp = "layoutmsg";
+		arg = "togglesplit";
 	} else if (!strcmp(cmd, "reload")) {
 		disp = "exec";
 		arg = "hyprctl reload";
@@ -642,7 +643,8 @@ int rros_keybind_to_hypr(const char *val, char *out, size_t n)
 	return (w < 0 || (size_t)w >= n) ? -1 : 0;
 }
 
-/* "app_id=firefox workspace 2" -> "workspace 2, class:^(firefox)$" (sin la palabra windowrule) */
+/* "app_id=firefox workspace 2" -> "workspace 2, match:class ^(firefox)$" (sin la palabra windowrule;
+ * sintaxis de reglas de Hyprland 0.53 y posteriores) */
 int rros_rule_to_hypr(const char *val, char *out, size_t n)
 {
 	char tmp[512], crit[96], act[32], a1[32], a2[32], match[120];
@@ -654,30 +656,30 @@ int rros_rule_to_hypr(const char *val, char *out, size_t n)
 	rest = next_token(val, crit, sizeof crit);
 	eq = strchr(crit, '=');
 	if (!strncmp(crit, "app_id=", 7) || !strncmp(crit, "class=", 6))
-		snprintf(match, sizeof match, "class:^(%s)$", eq + 1);
+		snprintf(match, sizeof match, "match:class ^(%s)$", eq + 1);
 	else if (!strncmp(crit, "title=", 6))
-		snprintf(match, sizeof match, "title:^(%s)$", eq + 1);
+		snprintf(match, sizeof match, "match:title ^(%s)$", eq + 1);
 	else
 		return -1;   /* window_role: Hyprland no lo tiene */
 	rest = next_token(rest, act, sizeof act);
 	rest = next_token(rest, a1, sizeof a1);
 	next_token(rest, a2, sizeof a2);
 	if (!strcmp(act, "floating"))
-		w = snprintf(out, n, "float, %s", match);
+		w = snprintf(out, n, "float on, %s", match);
 	else if (!strcmp(act, "sticky"))
-		w = snprintf(out, n, "pin, %s", match);
+		w = snprintf(out, n, "pin on, %s", match);
 	else if (!strcmp(act, "fullscreen"))
-		w = snprintf(out, n, "fullscreen, %s", match);
+		w = snprintf(out, n, "fullscreen on, %s", match);
 	else if (!strcmp(act, "inhibit_idle"))
-		w = snprintf(out, n, "idleinhibit fullscreen, %s", match);
+		w = snprintf(out, n, "idle_inhibit fullscreen, %s", match);
 	else if (!strcmp(act, "workspace"))
 		w = snprintf(out, n, "workspace %s, %s", a1, match);
 	else if (!strcmp(act, "opacity"))
 		w = snprintf(out, n, "opacity %s, %s", a1, match);
 	else if (!strcmp(act, "border") && !strcmp(a1, "none"))
-		w = snprintf(out, n, "noborder, %s", match);
+		w = snprintf(out, n, "border_size 0, %s", match);
 	else if (!strcmp(act, "border"))
-		w = snprintf(out, n, "bordersize %s, %s", a2, match);
+		w = snprintf(out, n, "border_size %s, %s", a2, match);
 	else
 		return -1;
 	return (w < 0 || (size_t)w >= n) ? -1 : 0;

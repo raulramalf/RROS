@@ -210,7 +210,7 @@ rros config set panel.style  floating        # flat (por defecto), floating o pi
 rros config set ui.panel_position bottom     # top, bottom, left o right
 ```
 
-Los módulos se escriben separados por comas, sin espacios. Disponibles: `workspaces`, `mode`, `window`, `language`, `clock`, `profile`, `memory`, `cpu`, `network`, `audio`, `battery`, `tray`, `disk`, `temperature`, `backlight`, `idle`. Los que no existan se ignoran.
+Los módulos se escriben separados por comas, sin espacios. Disponibles: `workspaces`, `mode`, `window`, `language`, `clock`, `profile`, `memory`, `cpu`, `network`, `audio`, `battery`, `tray`, `disk`, `temperature`, `backlight`, `idle`, `apps` (botón Inicio), `taskbar` (lista de ventanas), `power` y `updates` (actualizaciones pendientes: solo aparece si hay, y al pulsarlo se instalan). Los que no existan se ignoran.
 
 ---
 

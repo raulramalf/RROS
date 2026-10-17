@@ -42,7 +42,7 @@ dim_inactive = false
 style = "flat"
 left = "apps,taskbar"
 center = "none"
-right = "tray,network,audio,battery,clock,power"
+right = "updates,tray,network,audio,battery,clock,power"
 taskbar = true
 
 [input]

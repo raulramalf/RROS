@@ -1,0 +1,14 @@
+#!/bin/sh
+# rros-updates: cuántas actualizaciones hay pendientes (lo usa el módulo «updates» del panel).
+# No escribe nada si no hay ninguna, para que el panel oculte el módulo.
+# En Arch, checkupdates usa su propia copia de la base de datos: no toca el sistema.
+set -u
+if command -v checkupdates >/dev/null 2>&1; then
+	n=$(checkupdates 2>/dev/null | wc -l)
+elif command -v apt-get >/dev/null 2>&1; then
+	n=$(apt-get -s -o Debug::NoLocking=true upgrade 2>/dev/null | grep -c '^Inst ')
+else
+	exit 0
+fi
+[ "${n:-0}" -gt 0 ] && echo "$n"
+exit 0

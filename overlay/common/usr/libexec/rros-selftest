@@ -32,7 +32,7 @@ echo "base: $BASE"
 for app in sway waybar foot fuzzel mako epiphany thunar mousepad evince mpv file-roller galculator btop flatpak \
            swaylock swayidle swaybg nm-applet blueman-applet udiskie pavucontrol grim slurp cliphist \
            rros rros-config rros-theme rros-apps rros-settings rros-apply rros-security rros-devices rros-new \
-           rros-lock rros-dock rros-informe nft rfkill udisksctl xdg-user-dir; do
+           rros-lock rros-dock rros-updates rros-informe nft rfkill udisksctl xdg-user-dir; do
 	check "programa: $app" has "$app"
 done
 for desk in org.gnome.Epiphany thunar org.xfce.mousepad org.gnome.Evince mpv org.gnome.FileRoller galculator imv; do

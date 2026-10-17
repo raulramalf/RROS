@@ -425,6 +425,7 @@ static const struct { const char *name, *module; } modmap[] = {
 	{ "battery", "battery" }, { "tray", "tray" }, { "disk", "disk" }, { "temperature", "temperature" },
 	{ "backlight", "backlight" }, { "idle", "idle_inhibitor" },
 	{ "apps", "custom/apps" }, { "power", "custom/power" }, { "taskbar", "wlr/taskbar" },
+	{ "updates", "custom/updates" },
 };
 
 static int hypr_bar;   /* el panel se genera para Hyprland (lo fija rros_render_waybar) */
@@ -508,6 +509,10 @@ void rros_render_waybar(const struct rros_theme *t, const struct rros_palette *p
 	fprintf(f, "  \"custom/apps\": { \"format\": \"%s\", \"on-click\": \"fuzzel\", \"tooltip-format\": \"Aplicaciones (Super)\" },\n",
 		!strcmp(t->panel_pos, "bottom") ? "  Inicio" : "Aplicaciones");
 	fputs("  \"custom/power\": { \"format\": \"Apagar\", \"on-click\": \"rros-power\", \"tooltip\": false },\n", f);
+	/* solo aparece si hay actualizaciones; al pulsar, se instalan en una terminal */
+	fputs("  \"custom/updates\": { \"exec\": \"rros-updates\", \"interval\": 3600, \"format\": \"ACT {}\", "
+	      "\"tooltip-format\": \"{} actualizaciones: pulsa para instalarlas\", "
+	      "\"on-click\": \"foot --hold rros-apps update\" },\n", f);
 	fprintf(f, "  \"battery\": { \"states\": { \"warning\": %d, \"critical\": 5 }, \"format\": \"%s\", \"interval\": 30 }\n}\n",
 		t->battery_low, t->battery_percent ? "BAT {capacity}%" : "BAT");
 }
@@ -666,19 +671,19 @@ const struct rros_desktop_preset rros_desktop_presets[] = {
 	  "la bandeja y el reloj. Ventanas libres que se arrastran con el ratón.",
 	  { { "ui.panel_position", "bottom" }, { "panel.style", "flat" }, { "ui.panel_size", "40" },
 	    { "panel.left", "apps,taskbar" }, { "panel.center", "none" },
-	    { "panel.right", "tray,network,audio,battery,clock,power" }, { "panel.taskbar", "true" },
+	    { "panel.right", "updates,tray,network,audio,battery,clock,power" }, { "panel.taskbar", "true" },
 	    { "ui.layout", "floating" }, { "ui.dock", "false" } } },
 	{ "moderno", "Moderno", "Como en macOS: barra fina arriba con el reloj en el centro y un dock abajo con tus "
 	  "aplicaciones. Ventanas libres.",
 	  { { "ui.panel_position", "top" }, { "panel.style", "floating" }, { "ui.panel_size", "30" },
 	    { "panel.left", "apps,workspaces" }, { "panel.center", "clock" },
-	    { "panel.right", "tray,network,audio,battery,power" }, { "panel.taskbar", "false" },
+	    { "panel.right", "updates,tray,network,audio,battery,power" }, { "panel.taskbar", "false" },
 	    { "ui.layout", "floating" }, { "ui.dock", "true" } } },
 	{ "mosaico", "Mosaico", "Al estilo Hyprland: las ventanas se colocan solas sin solaparse, con animaciones; "
 	  "barra arriba con escritorios, ventana activa y el estado del sistema. Rápido con el teclado.",
 	  { { "ui.panel_position", "top" }, { "panel.style", "pill" }, { "ui.panel_size", "32" },
 	    { "panel.left", "apps,workspaces,window" }, { "panel.center", "clock" },
-	    { "panel.right", "memory,cpu,network,audio,battery,tray,power" }, { "panel.taskbar", "false" },
+	    { "panel.right", "updates,memory,cpu,network,audio,battery,tray,power" }, { "panel.taskbar", "false" },
 	    { "ui.layout", "tiling" }, { "ui.dock", "false" } } },
 };
 const size_t rros_desktop_presets_len = sizeof rros_desktop_presets / sizeof rros_desktop_presets[0];

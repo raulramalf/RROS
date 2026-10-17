@@ -257,6 +257,12 @@ int main(void)
 	CHECK(strstr(s, "\"custom/power\"]") != NULL);
 	CHECK(strstr(s, "\"on-click\": \"pavucontrol\"") != NULL);
 	free(s);
+	/* actualizaciones pendientes en el panel (se oculta si no hay) */
+	from_text(&t, "[panel]\nright = \"updates,clock\"\n");
+	s = render(rros_render_waybar, &t);
+	CHECK(strstr(s, "\"modules-right\": [\"custom/updates\", \"clock\"]") != NULL);
+	CHECK(strstr(s, "\"exec\": \"rros-updates\"") != NULL && strstr(s, "foot --hold rros-apps update") != NULL);
+	free(s);
 
 	/* ---- sway rechaza combinaciones repetidas: nunca debe haber dos iguales ---- */
 	{
@@ -470,7 +476,7 @@ int main(void)
 			}
 		from_text(&t, "[ui]\npanel_position = \"bottom\"\npanel_size = 40\nlayout = \"floating\"\ndock = false\n"
 			      "[panel]\nstyle = \"flat\"\nleft = \"apps,taskbar\"\ncenter = \"none\"\n"
-			      "right = \"tray,network,audio,battery,clock,power\"\ntaskbar = true\n");
+			      "right = \"updates,tray,network,audio,battery,clock,power\"\ntaskbar = true\n");
 		CHECK(rros_desktop_current(&cur) == d);
 		from_text(&t, "[ui]\npanel_position = \"top\"\n");
 		CHECK(rros_desktop_current(&cur) == NULL);

@@ -44,7 +44,7 @@ tiling_layout = "dwindle"
 style = "pill"
 left = "apps,workspaces,window"
 center = "clock"
-right = "memory,cpu,network,audio,battery,tray,power"
+right = "updates,memory,cpu,network,audio,battery,tray,power"
 taskbar = false
 
 [input]

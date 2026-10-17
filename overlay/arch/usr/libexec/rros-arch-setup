@@ -1,0 +1,34 @@
+#!/bin/sh
+# Ajustes de RROS sobre Arch que no pueden venir como archivos: identidad (os-release es de «filesystem»),
+# idiomas y servicios. Lo lanza el hook de pacman zz-rros.hook (al construir la ISO y en cada actualización).
+set -u
+# shellcheck disable=SC1091,SC2154  # lo escribe apply-identity.sh al construir
+. /etc/rros/identity 2>/dev/null || { echo "rros-arch-setup: falta /etc/rros/identity" >&2; exit 0; }
+cat > /usr/lib/os-release <<OSR
+NAME="RROS"
+PRETTY_NAME="RROS $RROS_VERSION ($RROS_CODENAME, $RROS_PROFILE)"
+ID=rros
+ID_LIKE=arch
+BUILD_ID=rolling
+VERSION_ID=$RROS_VERSION
+VERSION="$RROS_VERSION ($RROS_CODENAME)"
+VERSION_CODENAME=$RROS_CODENAME_LC
+VARIANT="$RROS_PROFILE"
+VARIANT_ID=$RROS_PROFILE
+HOME_URL="$RROS_HOME"
+SUPPORT_URL="$RROS_HOME/issues"
+BUG_REPORT_URL="$RROS_HOME/issues"
+LOGO=rros
+OSR
+[ -L /etc/os-release ] || ln -sf ../usr/lib/os-release /etc/os-release
+# idiomas: español (por defecto) e inglés
+if [ -f /etc/locale.gen ]; then
+	sed -i -E 's/^#(es_ES\.UTF-8 UTF-8|en_US\.UTF-8 UTF-8)/\1/' /etc/locale.gen
+	locale-gen >/dev/null 2>&1 || true
+fi
+# servicios (solo los que estén instalados)
+for s in NetworkManager bluetooth nftables systemd-timesyncd rros-firstboot rros-apply rros-live-user rros-live \
+	rros-selftest rros-serial-shell; do
+	[ -e "/usr/lib/systemd/system/$s.service" ] && systemctl enable "$s.service" >/dev/null 2>&1
+done
+exit 0

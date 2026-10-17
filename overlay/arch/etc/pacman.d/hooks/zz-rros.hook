@@ -1,0 +1,14 @@
+# Tras instalar o actualizar paquetes, RROS vuelve a poner su identidad (pacman reescribe
+# /usr/lib/os-release con cada actualización de «filesystem») y genera los idiomas.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = filesystem
+Target = glibc
+Target = rros-setup-trigger
+
+[Action]
+Description = RROS: identidad, idiomas y servicios...
+When = PostTransaction
+Exec = /usr/libexec/rros-arch-setup

@@ -1,0 +1,18 @@
+[Unit]
+Description=RROS live: inicio de sesión automático en tty1
+ConditionKernelCommandLine=archisobasedir
+After=systemd-user-sessions.service rros-live-user.service
+Wants=rros-live-user.service
+
+[Service]
+Type=idle
+ExecStart=-/sbin/agetty --autologin rros --noclear tty1 $TERM
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

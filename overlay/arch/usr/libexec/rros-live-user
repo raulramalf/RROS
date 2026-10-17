@@ -1,0 +1,11 @@
+#!/bin/sh
+# Sistema live (archiso): usuario «rros» sin contraseña y con sudo sin contraseña, como en la ISO de Ubuntu.
+id rros >/dev/null 2>&1 && exit 0
+groups=""
+for g in wheel audio video input storage optical lp network rfkill users; do
+	getent group "$g" >/dev/null 2>&1 && groups="$groups,$g"
+done
+useradd -m -s /bin/bash -c "RROS" -G "${groups#,}" rros
+passwd -d rros >/dev/null
+printf 'rros ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/00-rros-live
+chmod 440 /etc/sudoers.d/00-rros-live

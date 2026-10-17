@@ -1,0 +1,2 @@
+# Los administradores (grupo wheel) pueden usar sudo con su contraseña
+%wheel ALL=(ALL:ALL) ALL

@@ -23,7 +23,7 @@ if [ "$base" = ubuntu ]; then
 		rm -f "${root:?}/usr/share/initramfs-tools/scripts/casper-bottom/$hook"
 	done
 fi
-"$ROOT_DIR/scripts/apply-identity.sh" "$root" "$profile"
+"$ROOT_DIR/scripts/apply-identity.sh" "$root" "$profile" "$base"
 mkdir -p "$root/etc/rros"
 echo "$profile" > "$root/etc/rros/profile"
 log "capa RROS aplicada ($base, $profile)"

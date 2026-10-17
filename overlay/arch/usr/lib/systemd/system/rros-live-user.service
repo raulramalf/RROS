@@ -1,0 +1,13 @@
+[Unit]
+Description=RROS live: crea el usuario «rros» (sin contraseña, administrador)
+ConditionKernelCommandLine=archisobasedir
+Before=rros-live.service systemd-user-sessions.service
+After=systemd-sysusers.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/rros-live-user
+
+[Install]
+WantedBy=multi-user.target

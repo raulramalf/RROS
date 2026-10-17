@@ -36,4 +36,4 @@ jobs:
           sudo apt-get update
           scripts/check-packages.sh
       - name: ShellCheck
-        run: shellcheck -x -P SCRIPTDIR scripts/*.sh tests/cli.sh overlay/common/usr/bin/* overlay/common/usr/libexec/*
+        run: shellcheck -x -P SCRIPTDIR scripts/*.sh tests/cli.sh overlay/common/usr/bin/* overlay/common/usr/libexec/* overlay/ubuntu/usr/libexec/* overlay/arch/usr/libexec/*

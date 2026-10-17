@@ -385,7 +385,7 @@ ln -s default/keyboard "$VC/etc/vconsole.conf"
 # shellcheck disable=SC2016  # ckbcomp falso: escribe la distribución que le piden
 printf '#!/bin/sh\necho "keymap $4"\n' > "$VC/bin/ckbcomp"
 chmod +x "$VC/bin/ckbcomp"
-VCON=$PWD/overlay/common/usr/libexec/rros-vconsole
+VCON=$PWD/overlay/ubuntu/usr/libexec/rros-vconsole
 PATH=$VC/bin:$PATH RROS_ETC=$VC/etc RROS_XKB=$VC/xkb "$VCON" --save latam || fail "rros-vconsole --save latam"
 grep -qx 'KEYMAP=latam' "$VC/etc/vconsole.conf" || fail "rros-vconsole: KEYMAP en /etc/vconsole.conf"
 grep -qx 'XKBLAYOUT="latam"' "$VC/etc/default/keyboard" || fail "rros-vconsole: XKBLAYOUT en /etc/default/keyboard"

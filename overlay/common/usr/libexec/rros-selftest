@@ -85,6 +85,9 @@ else
 	check "instalado: la raíz está en /etc/fstab" grep -qE '^[^#[:space:]]+[[:space:]]+/[[:space:]]' /etc/fstab
 	check "instalado: GRUB con la entrada de RROS" sh -c 'grep -q RROS /boot/grub/grub.cfg'
 	check "instalado: zona horaria de la instalación" sh -c 'readlink /etc/localtime | grep -q Europe/Madrid'
+	if [ -d /sys/firmware/efi ]; then
+		check "instalado: arranque UEFI (partición EFI montada, con GRUB)" sh -c 'mountpoint -q /boot/efi && test -e /boot/efi/EFI/BOOT/BOOTX64.EFI'
+	fi
 fi
 # shellcheck disable=SC2016
 check "catálogo de apps (54)" sh -c 'test "$(rros-apps list | wc -l)" -ge 50'
@@ -111,7 +114,7 @@ if [ "$BASE" = arch ]; then
 		check "instalado: sin el llavero temporal del live" sh -c '! test -e /etc/systemd/system/pacman-init.service'
 		check "instalado: llavero de pacman inicializado" sh -c 'pacman-key --list-keys >/dev/null 2>&1'
 		check "instalado: kernel en /boot" test -e /boot/vmlinuz-linux
-		if [ -e /etc/crypttab.initramfs ]; then
+		if grep -qs '^rros-root ' /etc/crypttab; then
 			check "instalado: raíz cifrada con LUKS2 y abierta en el arranque" sh -c 'cryptsetup status rros-root | grep -q "type: *LUKS2"'
 		fi
 	fi

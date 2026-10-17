@@ -12,12 +12,17 @@ Se construye con archiso en un Arch (o en el contenedor `archlinux`), como root:
 pacman -S --needed archiso base-devel
 make
 sudo scripts/build-iso-arch.sh lite           # build/rros-arch-lite.iso
-BASE=arch ISO=build/rros-arch-lite.iso scripts/test-iso.sh lite selftest   # autotest en QEMU
+BASE=arch ISO=build/rros-arch-lite.iso scripts/test-iso.sh lite selftest   # autotest del live en QEMU
+BASE=arch ISO=build/rros-arch-lite.iso scripts/test-iso.sh lite install    # instala en un disco virtual y lo arranca
+CRYPT=1 BASE=arch ISO=build/rros-arch-lite.iso scripts/test-iso.sh lite install   # lo mismo, cifrado
+FIRMWARE=uefi BASE=arch ISO=build/rros-arch-lite.iso scripts/test-iso.sh lite install   # instalación para UEFI (OVMF)
 ```
 Sin un Arch a mano lo hace GitHub Actions: workflow **Arch** (al pulsar *Run workflow*, o con `[iso-arch]` en el
 mensaje de un commit). Antes comprueba que todos los paquetes existen (`scripts/check-packages-arch.sh`, también los
 de la tienda), pasa las pruebas y valida con el Hyprland real las configuraciones que genera `rros-theme`
-(`scripts/check-hyprland.sh`). La ISO y el registro del autotest quedan como artefactos del workflow.
+(`scripts/check-hyprland.sh`). Después arranca la ISO en QEMU con el autotest y la instala en un disco virtual
+(normal, para UEFI y cifrada), arranca cada instalación y pasa el autotest en ella. La ISO y los registros quedan
+como artefactos del workflow.
 
 La ISO de Arch arranca en BIOS y UEFI, **sin Secure Boot**.
 

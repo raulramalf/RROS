@@ -51,7 +51,7 @@ jobs:
       - name: Autotest de arranque en QEMU
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-system-x86 qemu-utils xorriso
+          sudo apt-get install -y qemu-system-x86 qemu-utils xorriso ovmf
           sudo chmod a+rw /dev/kvm || true
           BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" selftest
@@ -65,6 +65,10 @@ jobs:
         run: |
           BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-install-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" install
+      - name: Instalación para UEFI y arranque con OVMF
+        run: |
+          FIRMWARE=uefi BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-uefi-$PROFILE" \
+            scripts/test-iso.sh "$PROFILE" install
       - name: Instalación cifrada (LUKS2) y arranque con la contraseña del disco
         run: |
           CRYPT=1 BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-cifrado-$PROFILE" \
@@ -77,4 +81,5 @@ jobs:
             build/test-arch-${{ env.PROFILE }}/serial.log
             build/test-arch-install-${{ env.PROFILE }}/*.log
             build/test-arch-cifrado-${{ env.PROFILE }}/*.log
+            build/test-arch-uefi-${{ env.PROFILE }}/*.log
           if-no-files-found: ignore

@@ -65,6 +65,6 @@ En RROS Ajustes, estos ajustes llevan la marca «sistema · contraseña»: al ca
 
 ## Qué se ha comprobado
 
-En Arch: las pruebas automáticas cubren lo que `rros-apply` escribe (faillock, `locale.conf`, `sshd.service`, sin archivos de Ubuntu) y lo que comprueba la auditoría (`system-auth`, el timer de actualizaciones); el autotest de la ISO comprueba además AppArmor con perfiles cargados, el timer y faillock en el sistema arrancado.
+En Arch: las pruebas automáticas cubren lo que `rros-apply` escribe (faillock, `locale.conf`, `sshd.service`, sin archivos de Ubuntu) y lo que comprueba la auditoría (`system-auth`, el timer de actualizaciones). En la CI, el autotest comprueba en el live y en el sistema ya instalado (también cifrado) el cortafuegos, el kernel endurecido, AppArmor activo con perfiles cargados, faillock, sudo, el timer de actualizaciones y la auditoría.
 
 En QEMU, sobre la ISO Lite de la base Ubuntu: cortafuegos cargado (`nft list table inet rros`), ajustes del kernel aplicados, `sudoers` válido, actualizaciones automáticas, la auditoría real (100/100 en el live con el nivel estándar) y el bloqueo por intentos: con `security.login_attempts = 3`, tres contraseñas malas con `su` bloquean la cuenta, la buena se rechaza («10 minutes left to unlock») y tras `faillock --reset` vuelve a entrar. También que Epiphany arranca con la restricción de espacios de nombres y el perfil cargado (como en el sistema instalado). Falta probarlo en hardware real y repetir una instalación completa con estas directivas.

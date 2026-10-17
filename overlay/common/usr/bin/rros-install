@@ -367,9 +367,10 @@ echo "$host" > "$target/etc/hostname"
 	[ -z "$esp" ] || echo "UUID=$(blkid -s UUID -o value "$esp") /boot/efi vfat umask=0077 0 2"
 } > "$target/etc/fstab"
 if [ "$root_crypt" -eq 1 ] && [ "$base" = arch ]; then
-	# sd-encrypt abre el disco en el initramfs con /etc/crypttab.initramfs; sd-vconsole pone el teclado
-	echo "rros-root UUID=$(blkid -s UUID -o value "$root") none luks,discard" > "$target/etc/crypttab.initramfs"
-	chmod 600 "$target/etc/crypttab.initramfs"
+	# sd-encrypt abre en el initramfs los discos de /etc/crypttab con x-initrd.attach (mkinitcpio ya no quiere
+	# crypttab.initramfs); sd-vconsole pone el teclado para escribir la contraseña
+	echo "rros-root UUID=$(blkid -s UUID -o value "$root") none luks,discard,x-initrd.attach" > "$target/etc/crypttab"
+	chmod 600 "$target/etc/crypttab"
 	mkdir -p "$target/etc/mkinitcpio.conf.d"
 	echo "HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt filesystems fsck)" \
 		> "$target/etc/mkinitcpio.conf.d/rros-cifrado.conf"

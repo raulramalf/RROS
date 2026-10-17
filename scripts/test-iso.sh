@@ -100,15 +100,26 @@ case "$mode" in
 		;;
 	install)
 		# 1) el live instala en un disco virtual sin preguntas (rros.installtest); 2) se arranca desde el disco
-		#    (BIOS, GRUB del disco) y el sistema instalado pasa el autotest. CRYPT=1: cifrado con LUKS2 (la
-		#    contraseña se escribe en la consola cuando el arranque la pide)
+		#    (GRUB del disco) y el sistema instalado pasa el autotest. CRYPT=1: cifrado con LUKS2 (la contraseña se
+		#    escribe en la consola cuando el arranque la pide). FIRMWARE=uefi: se instala para UEFI y el disco
+		#    arranca con OVMF (el live arranca igual, con el kernel de la ISO)
 		need_cmd qemu-img
 		disk=$out/disco.qcow2
 		rm -f "$disk"
 		qemu-img create -f qcow2 "$disk" "${DISK_GB:-16}G" >/dev/null
 		test_arg=rros.installtest=/dev/vda
 		[ "${CRYPT:-0}" = 1 ] && test_arg+=" rros.installtest.cifrado"
-		log "instalación en un disco virtual de ${DISK_GB:-16} GB (RAM ${ram} MB)$([ "${CRYPT:-0}" = 1 ] && echo ', cifrada')"
+		fwargs=()
+		case ${FIRMWARE:-bios} in
+		bios) ;;
+		uefi)
+			test_arg+=" rros.installtest.uefi"
+			cp /usr/share/OVMF/OVMF_VARS_4M.fd "$out/vars.fd"
+			fwargs=(-drive "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd"
+				-drive "if=pflash,format=raw,file=$out/vars.fd") ;;
+		*) die "FIRMWARE: bios o uefi" ;;
+		esac
+		log "instalación en un disco virtual de ${DISK_GB:-16} GB (RAM ${ram} MB, ${FIRMWARE:-bios})$([ "${CRYPT:-0}" = 1 ] && echo ', cifrada')"
 		live_args "$test_arg"
 		run_serial "$out/install.log" RROS_INSTALL 1 -kernel "$kernel" -initrd "$initrd" -append "$append" -cdrom "$iso" \
 			-drive "file=$disk,if=virtio,format=qcow2"
@@ -116,9 +127,9 @@ case "$mode" in
 		log "arranque desde el disco instalado"
 		if [ "${CRYPT:-0}" = 1 ]; then
 			ASK="passphrase for" ANSWER=prueba-rros run_serial "$out/serial.log" RROS_SELFTEST 0 \
-				-drive "file=$disk,if=virtio,format=qcow2" -boot c
+				"${fwargs[@]}" -drive "file=$disk,if=virtio,format=qcow2" -boot c
 		else
-			run_serial "$out/serial.log" RROS_SELFTEST 0 -drive "file=$disk,if=virtio,format=qcow2" -boot c
+			run_serial "$out/serial.log" RROS_SELFTEST 0 "${fwargs[@]}" -drive "file=$disk,if=virtio,format=qcow2" -boot c
 		fi
 		verdict "$out/serial.log" RROS_SELFTEST "autotest del sistema instalado"
 		;;

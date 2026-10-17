@@ -47,8 +47,8 @@ Sistema operativo ligero y muy personalizable sobre **Arch Linux**, con el escri
 | `rros-theme` – 7 temas y temas propios; Hyprland, hyprlock, sway, waybar, foot, mako, fuzzel y GTK | ✅ hecha y probada |
 | Hyprland: configuración generada (efectos, animaciones, mosaico, gestos, atajos y reglas traducidos) | ✅ validada con el Hyprland real de Arch (`Hyprland --verify-config`, 28 combinaciones de perfil, estilo y modo); sin ver en pantalla: hace falta GPU |
 | Escritorio: estilos clásico/moderno/mosaico, fondos generados con los colores del tema, barra de tareas con Inicio, dock, actualizaciones en el panel | ✅ hecho y probado (fondos PNG validados; página «Escritorio y fondo» en Ajustes) |
-| Base Arch: paquetes, ISO con archiso, live, menú en español con modo seguro y lector de pantalla | ✅ todos los paquetes comprobados en Arch y ISO construida en GitHub Actions; el autotest de arranque en QEMU, en curso |
-| Arch: instalador (mkinitcpio, sd-encrypt, GRUB con os-prober), tienda con pacman, seguridad (faillock, AppArmor, descarga diaria de actualizaciones) | ✅ con pruebas automáticas; instalación en Arch sin probar aún de principio a fin en QEMU |
+| Base Arch: paquetes, ISO con archiso, live, menú en español con modo seguro y lector de pantalla | ✅ todos los paquetes comprobados en Arch; la ISO se construye en GitHub Actions, arranca en QEMU y pasa el autotest (116 comprobaciones) |
+| Arch: instalador (mkinitcpio, sd-encrypt, GRUB con os-prober), tienda con pacman, seguridad (faillock, AppArmor, descarga diaria de actualizaciones) | ✅ probado en la CI de principio a fin: instala en un disco virtual, arranca desde él y pasa el autotest (125 comprobaciones), también **cifrado con LUKS2** escribiendo la contraseña al arrancar |
 | `rros-settings` – ventana gráfica web local (con token) y TUI | ✅ probadas (TUI en un pty, GUI con navegador) |
 | Atajos, reglas por aplicación y autostart (`keybind.*`, `rule.*`, `autostart.*`) | ✅ validados igual que se generan; probados |
 | Instantáneas, exportar e importar ajustes | ✅ hechas y probadas |
@@ -65,7 +65,7 @@ Sistema operativo ligero y muy personalizable sobre **Arch Linux**, con el escri
 
 La GUI es una aplicación web local: necesita un navegador (Standard y Pro lo incluyen; Lite usa la TUI). No hay todavía una ventana con toolkit nativo (GTK/Qt).
 
-Medido en la ISO Lite de Ubuntu: sistema de archivos 2,3 GB (límite 6) y, con el escritorio y cuatro apps abiertas en la VM, ~370 MB de RAM usada (límite 512 MB). La de Arch aún no se ha medido; Standard y Pro tampoco; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
+Medido en la ISO Lite de Arch (QEMU, 2 GB de RAM, en el autotest): ~490 MB de RAM usada en el live, con la sesión automática, y ~400 MB en el sistema instalado, en la pantalla de inicio de sesión (límite 512 MB; falta medirlo con Hyprland en un PC); el sistema instalado ocupa 4,2 GB (límite 6) y la ISO ~2,1 GB. En la de Ubuntu: 2,3 GB y ~370 MB con cuatro apps abiertas. Standard y Pro aún no se han medido; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
 
 ## Uso rápido
 

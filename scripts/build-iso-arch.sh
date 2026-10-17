@@ -58,8 +58,11 @@ done
 make -C "$ROOT_DIR" install DESTDIR="$P/airootfs" PREFIX=/usr >/dev/null
 "$ROOT_DIR/scripts/apply-overlay.sh" "$P/airootfs" "$profile" arch
 
-# nombre, etiqueta y permisos (se añaden al final: sustituyen a los de releng)
-cat >> "$P/profiledef.sh" <<EOF
+# nombre, etiqueta y permisos (se añaden al final: sustituyen a los de releng). mkarchiso copia airootfs sin
+# conservar los permisos (cp --no-preserve=mode): todo lo ejecutable (programas de RROS, scripts) tiene que ir
+# en file_permissions o se queda sin permiso de ejecución
+{
+	cat <<EOF
 
 # --- RROS ---
 iso_name="rros-$profile"
@@ -70,10 +73,11 @@ airootfs_image_type="squashfs"
 airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '${SQUASH_LEVEL:-15}' '-b' '1M')
 file_permissions=(
   ["/etc/sudoers.d/10-rros-wheel"]="0:0:440"
-  ["/usr/libexec/rros-arch-setup"]="0:0:755"
-  ["/usr/libexec/rros-live-user"]="0:0:755"
-)
 EOF
+	(cd "$P/airootfs" && find . -type f -perm -u+x -printf '  ["/%P"]="0:0:755"\n')
+	echo ")"
+} >> "$P/profiledef.sh"
+log "$(grep -c '"0:0:755"' "$P/profiledef.sh") archivos ejecutables en file_permissions"
 
 # menú de arranque, en español: RROS, «modo seguro» (sin el controlador gráfico, para pantallas negras) y
 # lector de pantalla (accessibility=on: rros-live-user activa Orca). Las entradas nuevas copian la primera de

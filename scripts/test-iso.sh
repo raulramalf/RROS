@@ -84,8 +84,9 @@ verdict() {   # verdict LOG MARCA QUÉ
 	if grep -aq "${2}_OK" "$1"; then
 		log "$3: CORRECTO"
 	else
-		echo "--- últimas líneas de la consola serie ---"
-		tail -n 80 "$1" | tr -d '\r'
+		# la consola sin el ruido de systemd al arrancar y apagar: quedan los errores y lo de RROS
+		echo "--- consola serie (sin las líneas de estado de systemd) ---"
+		tr -d '\r' < "$1" | grep -av -E '\[ *(OK|DEPEND) *\]|^ *(Starting|Stopping|Unmounting|Mounting) ' | tail -n 150
 		die "$3: falló o no terminó (mira $1)"
 	fi
 }

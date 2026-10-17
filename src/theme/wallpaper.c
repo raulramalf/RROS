@@ -120,7 +120,7 @@ static void deflate_fixed(struct out *o, const uint8_t *d, size_t n)
 		if (i + 2 < n) {
 			uint32_t h = (((uint32_t)d[i] << 10) ^ ((uint32_t)d[i + 1] << 5) ^ d[i + 2]) & ((1u << HBITS) - 1);
 			int32_t cand = head[h];
-			int chain = 48;
+			int chain = 12;
 
 			while (cand >= 0 && i - (size_t)cand <= WIN && chain--) {
 				size_t max = n - i < 258 ? n - i : 258, l = 0;
@@ -210,7 +210,7 @@ static void filter_rows(const uint8_t *img, int w, int h, uint8_t *dst)
 		long best = -1;
 		int bf = 0;
 
-		for (int ft = 0; ft < 5; ft++) {
+		for (int ft = 1; ft < 5; ft += ft == 2 ? 2 : 1) {   /* Sub, Up y Paeth */
 			long sum = 0;
 
 			for (size_t x = 0; x < stride; x++) {
@@ -351,71 +351,109 @@ static double rnd(uint32_t *s)
 	return (*s >> 8) / 16777216.0;
 }
 
-static struct col pixel(const char *style, const struct rros_palette *p, double u, double v, double aspect)
+/* colores de la paleta y valores que solo dependen de la columna (se calculan una vez) */
+struct ctx {
+	struct col bg, sur, acc, mag, cya, blu, dim;
+	int dark;
+	double aspect;
+	double *col;    /* por columna: 3 bandas de aurora (centro, brillo) o 4 olas */
+};
+
+static void ctx_init(struct ctx *k, const char *style, const struct rros_palette *p, int w, double aspect)
 {
-	struct col bg = hexc(p->bg), sur = hexc(p->surface), acc = hexc(p->accent), mag = hexc(p->magenta);
-	struct col cya = hexc(p->cyan), blu = hexc(p->blue), dim = hexc(p->accent_dim);
-	int dark = lum(bg) < 0.5;
+	k->bg = hexc(p->bg);
+	k->sur = hexc(p->surface);
+	k->acc = hexc(p->accent);
+	k->mag = hexc(p->magenta);
+	k->cya = hexc(p->cyan);
+	k->blu = hexc(p->blue);
+	k->dim = hexc(p->accent_dim);
+	k->dark = lum(k->bg) < 0.5;
+	k->aspect = aspect;
+	k->col = calloc((size_t)w * 6, sizeof(double));
+	if (!k->col)
+		return;
+	for (int x = 0; x < w; x++) {
+		double u = (x + 0.5) / w, *c = k->col + (size_t)x * 6;
+
+		if (!strcmp(style, "aurora")) {
+			static const double prm[3][4] = { { 0.46, 0.07, 0.9, 0.1 }, { 0.55, 0.05, 1.4, 0.55 }, { 0.38, 0.06, 0.7, 0.8 } };
+
+			for (int i = 0; i < 3; i++) {
+				c[i * 2] = prm[i][0] + prm[i][1] * sin(2 * M_PI * (prm[i][2] * u + prm[i][3])) +
+					   0.025 * sin(2 * M_PI * (3.1 * u + i));
+				c[i * 2 + 1] = 0.7 + 0.3 * sin(2 * M_PI * (u * 46 + i * 0.3)) * sin(2 * M_PI * (u * 7.3 + i));
+			}
+		} else if (!strcmp(style, "ondas")) {
+			for (int i = 0; i < 4; i++)
+				c[i] = 0.52 + i * 0.11 + 0.045 * sin(2 * M_PI * (u * (1.1 + i * 0.35) + i * 0.27)) +
+				       0.02 * sin(2 * M_PI * (u * 3.2 + i * 0.6));
+		}
+	}
+}
+
+static struct col pixel(const char *style, const struct ctx *k, int x, double u, double v)
+{
+	const double *cv = k->col + (size_t)x * 6;
 	struct col c;
 
 	if (!strcmp(style, "ondas")) {
-		struct col layers[4] = { dim, blu, acc, mag };
-		double alpha[4] = { 0.55, 0.45, 0.6, 0.5 };
+		struct col layers[4] = { k->dim, k->blu, k->acc, k->mag };
+		static const double alpha[4] = { 0.55, 0.45, 0.6, 0.5 };
 
-		c = mix(bg, sur, v * 0.9);
+		c = mix(k->bg, k->sur, v * 0.9);
 		for (int i = 0; i < 4; i++) {
-			double base = 0.52 + i * 0.11, y = base + 0.045 * sin(2 * M_PI * (u * (1.1 + i * 0.35) + i * 0.27)) +
-							   0.02 * sin(2 * M_PI * (u * 3.2 + i * 0.6));
-			double edge = smooth(y - 0.002, y + 0.002, v);
+			double edge = smooth(cv[i] - 0.002, cv[i] + 0.002, v);
 
-			c = mix(c, mix(layers[i], bg, dark ? 0.25 : 0.1), edge * alpha[i]);
+			if (edge > 0)
+				c = mix(c, mix(layers[i], k->bg, k->dark ? 0.25 : 0.1), edge * alpha[i]);
 		}
 		return c;
 	}
 	if (!strcmp(style, "degradado")) {
-		double dx = (u - 0.82) * aspect, dy = v - 0.18, ex = (u - 0.12) * aspect, ey = v - 0.88;
+		double dx = (u - 0.82) * k->aspect, dy = v - 0.18, ex = (u - 0.12) * k->aspect, ey = v - 0.88;
 
-		c = mix(mix(sur, bg, 0.35), bg, u * 0.55 + v * 0.45);
-		c = screen(c, acc, exp(-(dx * dx + dy * dy) / 0.16) * (dark ? 0.55 : 0.4));
-		c = screen(c, mag, exp(-(ex * ex + ey * ey) / 0.12) * (dark ? 0.4 : 0.3));
+		c = mix(mix(k->sur, k->bg, 0.35), k->bg, u * 0.55 + v * 0.45);
+		c = screen(c, k->acc, exp(-(dx * dx + dy * dy) / 0.16) * (k->dark ? 0.55 : 0.4));
+		c = screen(c, k->mag, exp(-(ex * ex + ey * ey) / 0.12) * (k->dark ? 0.4 : 0.3));
 		return c;
 	}
 	if (!strcmp(style, "circulos")) {
 		static const double cs[7][4] = { { 0.15, 0.25, 0.32, 0 }, { 0.78, 0.2, 0.26, 1 }, { 0.55, 0.78, 0.38, 2 },
 						 { 0.92, 0.85, 0.2, 0 }, { 0.32, 0.62, 0.14, 1 }, { 0.65, 0.45, 0.1, 2 },
 						 { 0.05, 0.9, 0.22, 1 } };
-		struct col pal[3] = { acc, mag, cya };
+		struct col pal[3] = { k->acc, k->mag, k->cya };
 
-		c = mix(bg, sur, v * 0.7);
+		c = mix(k->bg, k->sur, v * 0.7);
 		for (int i = 0; i < 7; i++) {
-			double dx = (u - cs[i][0]) * aspect, dy = v - cs[i][1], d = sqrt(dx * dx + dy * dy);
-			double in = 1 - smooth(cs[i][2] - 0.004, cs[i][2] + 0.004, d);
+			double dx = (u - cs[i][0]) * k->aspect, dy = v - cs[i][1], d = sqrt(dx * dx + dy * dy);
+			double ring = (d - cs[i][2]) / 0.012;
 
-			c = mix(c, pal[(int)cs[i][3]], in * (dark ? 0.16 : 0.12));
-			c = screen(c, pal[(int)cs[i][3]], exp(-pow((d - cs[i][2]) / 0.012, 2)) * 0.25);
+			if (d < cs[i][2] + 0.004)
+				c = mix(c, pal[(int)cs[i][3]], (1 - smooth(cs[i][2] - 0.004, cs[i][2] + 0.004, d)) * (k->dark ? 0.16 : 0.12));
+			if (ring > -4 && ring < 4)
+				c = screen(c, pal[(int)cs[i][3]], exp(-ring * ring) * 0.25);
 		}
 		return c;
 	}
 	/* aurora: cortinas de luz sobre un cielo en degradado */
 	{
-		struct col sky_top = dark ? mix(bg, (struct col){ 0, 0, 0 }, 0.35) : mix(bg, sur, 0.2);
-		struct col bands[3] = { acc, dark ? cya : blu, mag };
-		static const double prm[3][5] = { { 0.46, 0.07, 0.9, 0.1, 0.07 }, { 0.55, 0.05, 1.4, 0.55, 0.05 },
-						  { 0.38, 0.06, 0.7, 0.8, 0.045 } };
+		struct col sky_top = k->dark ? mix(k->bg, (struct col){ 0, 0, 0 }, 0.35) : mix(k->bg, k->sur, 0.2);
+		struct col bands[3] = { k->acc, k->dark ? k->cya : k->blu, k->mag };
+		static const double width[3] = { 0.07, 0.05, 0.045 };
 
-		c = mix(sky_top, sur, smooth(0.0, 1.1, v));
+		c = mix(sky_top, k->sur, smooth(0.0, 1.1, v));
 		for (int i = 0; i < 3; i++) {
-			double yc = prm[i][0] + prm[i][1] * sin(2 * M_PI * (prm[i][2] * u + prm[i][3])) +
-				    0.025 * sin(2 * M_PI * (3.1 * u + i));
-			double d = (v - yc) / prm[i][4];
+			double d = (v - cv[i * 2]) / width[i];
 			/* borde inferior nítido; hacia arriba se difumina, como una cortina */
-			double k = d > 0 ? exp(-d * d * 2.2) : exp(-d * d * 0.18);
-			double streak = 0.7 + 0.3 * sin(2 * M_PI * (u * 46 + i * 0.3)) * sin(2 * M_PI * (u * 7.3 + i));
+			double q = d > 0 ? d * d * 2.2 : d * d * 0.18;
 
-			c = screen(c, bands[i], k * streak * (dark ? 0.62 : 0.45));
+			if (q < 12)
+				c = screen(c, bands[i], exp(-q) * cv[i * 2 + 1] * (k->dark ? 0.62 : 0.45));
 		}
 		/* resplandor en el horizonte */
-		c = screen(c, mix(dim, acc, 0.5), exp(-pow((v - 1.02) / 0.22, 2)) * 0.3);
+		if (v > 0.5)
+			c = screen(c, mix(k->dim, k->acc, 0.5), exp(-pow((v - 1.02) / 0.22, 2)) * 0.3);
 		return c;
 	}
 }
@@ -424,18 +462,22 @@ int rros_wallpaper_render(const char *style, const struct rros_palette *p, int w
 {
 	static const int bayer[4][4] = { { 0, 8, 2, 10 }, { 12, 4, 14, 6 }, { 3, 11, 1, 9 }, { 15, 7, 13, 5 } };
 	uint8_t *img;
-	double aspect = (double)w / h;
 	uint32_t seed = 12345;
+	struct ctx k;
 	int rc;
 
 	if (w < 16 || h < 16 || w > 8192 || h > 8192)
 		return -1;
 	img = malloc((size_t)w * h * 3);
-	if (!img)
+	ctx_init(&k, style, p, w, (double)w / h);
+	if (!img || !k.col) {
+		free(img);
+		free(k.col);
 		return -1;
+	}
 	for (int y = 0; y < h; y++)
 		for (int x = 0; x < w; x++) {
-			struct col c = pixel(style, p, (x + 0.5) / w, (y + 0.5) / h, aspect);
+			struct col c = pixel(style, &k, x, (x + 0.5) / w, (y + 0.5) / h);
 			double dith = (bayer[y & 3][x & 3] + 0.5) / 16.0 - 0.5;
 			double ch[3] = { c.r, c.g, c.b };
 
@@ -446,7 +488,8 @@ int rros_wallpaper_render(const char *style, const struct rros_palette *p, int w
 			}
 		}
 	/* estrellas en el cielo de la aurora (solo en temas oscuros) */
-	if (!strcmp(style, "aurora") && lum(hexc(p->bg)) < 0.5)
+	free(k.col);
+	if (!strcmp(style, "aurora") && k.dark)
 		for (int i = 0; i < w * h / 9000; i++) {
 			int x = (int)(rnd(&seed) * w), y = (int)(rnd(&seed) * h * 0.55);
 			double b = 0.35 + rnd(&seed) * 0.5;

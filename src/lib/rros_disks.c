@@ -60,13 +60,13 @@ static void classify(struct rros_disk *d, struct rros_dpart *p)
 	p->bios_boot = !strcmp(p->ptype, GUID_BIOS_BOOT);
 	p->windows = !strcmp(p->ptype, GUID_MSR) || !strcmp(p->ptype, GUID_WIN_RECOVERY) ||
 		     !strcmp(p->fstype, "ntfs") || !strcmp(p->fstype, "BitLocker");
-	p->linux = in_list(p->fstype, linux_fs) && (in_list(p->ptype, linux_pt) || !*p->ptype);
+	p->linux_os = in_list(p->fstype, linux_fs) && (in_list(p->ptype, linux_pt) || !*p->ptype);
 	if (p->esp && d->esp < 0)
 		d->esp = (int)(p - d->parts);
 	d->bios_boot |= p->bios_boot;
 	d->windows |= p->windows;
 	d->bitlocker |= !strcmp(p->fstype, "BitLocker");
-	d->linux |= p->linux;
+	d->linux_os |= p->linux_os;
 }
 
 static int by_start(const void *a, const void *b)
@@ -118,7 +118,7 @@ void rros_disk_free(struct rros_disk *d)
 void rros_disk_systems(const struct rros_disk *d, char *out, size_t n)
 {
 	snprintf(out, n, "%s%s%s%s", d->windows ? "Windows" : "", d->bitlocker ? " (BitLocker)" : "",
-		 d->windows && d->linux ? ", " : "", d->linux ? "Linux" : "");
+		 d->windows && d->linux_os ? ", " : "", d->linux_os ? "Linux" : "");
 }
 
 /* partición activada como intercambio (el live de Ubuntu activa las que encuentra) */

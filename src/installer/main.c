@@ -124,7 +124,7 @@ static void json_str(const char *s)
 
 static const char *part_role(const struct rros_dpart *p)
 {
-	return p->esp ? "esp" : p->bios_boot ? "bios_boot" : p->windows ? "windows" : p->linux ? "linux" : "";
+	return p->esp ? "esp" : p->bios_boot ? "bios_boot" : p->windows ? "windows" : p->linux_os ? "linux" : "";
 }
 
 static int cmd_disks(int argc, char **argv)

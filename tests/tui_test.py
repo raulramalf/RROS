@@ -56,6 +56,17 @@ def userconf():
         return ""
 
 
+def wait_conf(text, present=True, timeout=6.0):
+    """Espera a que la configuración contenga (o deje de contener) text: aplicar el tema puede tardar
+    la primera vez (genera el fondo de pantalla)."""
+    end = time.time() + timeout
+    while time.time() < end:
+        if (text in userconf()) == present:
+            return True
+        pump(0.1)
+    return False
+
+
 pump(0.6)
 check(b"RROS Ajustes" in screen, "cabecera visible")
 check("Interfaz".encode() in screen, "categoría Interfaz visible")
@@ -66,34 +77,34 @@ send("ui.gap")
 send("\r")
 send("\x1b[C")
 send("\x1b[C")
-check('gap = 10' in userconf(), "flecha derecha sube el entero (8 -> 10)")
+check(wait_conf('gap = 10'), "flecha derecha sube el entero (8 -> 10)")
 send("\x1b[D")
-check('gap = 9' in userconf(), "flecha izquierda lo baja")
+check(wait_conf('gap = 9'), "flecha izquierda lo baja")
 send("-")
-check('gap = 0' in userconf() or 'gap = 1' in userconf(), "- resta 10 con tope en el mínimo")
+check(wait_conf('gap = 0') or wait_conf('gap = 1', timeout=0.5), "- resta 10 con tope en el mínimo")
 
 # un valor que no se puede pasar del máximo
 send("+"); send("+"); send("+"); send("+"); send("+"); send("+"); send("+")
-check('gap = 64' in userconf(), "el entero se detiene en el máximo (64)")
+check(wait_conf('gap = 64'), "el entero se detiene en el máximo (64)")
 
 # bool: alternar con Enter
 send("/"); send("ui.hot_corners"); send("\r")
 send("\r")
-check('hot_corners = true' in userconf(), "Enter alterna un booleano")
+check(wait_conf('hot_corners = true'), "Enter alterna un booleano")
 send("\r")
-check('hot_corners = false' in userconf(), "y lo vuelve a alternar")
+check(wait_conf('hot_corners = false'), "y lo vuelve a alternar")
 
 # enum: ciclar con la flecha derecha
 send("/"); send("ui.panel_position"); send("\r")
 send("\x1b[C")
-check('panel_position = "left"' in userconf(), "flecha derecha cicla un enum (bottom -> left)")
+check(wait_conf('panel_position = "left"'), "flecha derecha cicla un enum (bottom -> left)")
 
 # texto: editar con línea de entrada
 send("/"); send("ui.accent"); send("\r")
 send("\r")
 send("#ff8800")
 send("\r")
-check('accent = "#ff8800"' in userconf(), "edición de texto")
+check(wait_conf('accent = "#ff8800"'), "edición de texto")
 
 # valor inválido: se rechaza y se muestra el error
 send("\r")
@@ -101,11 +112,11 @@ send("\x7f" * 8)   # el campo viene relleno con el valor actual: se borra primer
 send("rojo")
 send("\r")
 pump(0.3)
-check('accent = "rojo"' in userconf(), "ui.accent acepta texto libre (el tema lo ignora si no es #RRGGBB)")
+check(wait_conf('accent = "rojo"'), "ui.accent acepta texto libre (el tema lo ignora si no es #RRGGBB)")
 
 # restablecer con d
 send("d")
-check("accent" not in userconf(), "d restablece al valor del perfil")
+check(wait_conf("accent", present=False), "d restablece al valor del perfil")
 
 # categoría dinámica: atajos
 for _ in range(ncats):
@@ -115,7 +126,7 @@ send("nav")
 send("\r")
 send("Mod+b exec firefox")
 send("\r")
-check('nav = "Mod+b exec firefox"' in userconf(), "añadir un atajo desde la TUI")
+check(wait_conf('nav = "Mod+b exec firefox"'), "añadir un atajo desde la TUI")
 # atajo inválido
 send("\x1b[B")      # baja a "+ añadir" (ahora hay 1 atajo)
 send("\r"); send("mal"); send("\r"); send("Mod+x borra todo"); send("\r")

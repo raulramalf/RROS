@@ -137,7 +137,7 @@ int main(void)
 		CHECK_STR(d->kind, "NVMe");
 		CHECK_STR(d->pttype, "gpt");
 		CHECK(d->nparts == 4);
-		CHECK(d->windows && !d->linux && !d->bitlocker);
+		CHECK(d->windows && !d->linux_os && !d->bitlocker);
 		CHECK(d->esp >= 0 && !strcmp(d->parts[d->esp].name, "nvme0n1p1"));
 		CHECK(d->parts[d->esp].start == RROS_MIB && d->parts[d->esp].size == 100 * RROS_MIB);
 		CHECK_STR(d->in_use, "");
@@ -168,7 +168,7 @@ int main(void)
 	d = find(v, n, "sdc");
 	CHECK(d != NULL);
 	if (d) {
-		CHECK(d->linux && !d->windows);
+		CHECK(d->linux_os && !d->windows);
 		CHECK(strstr(d->in_use, "intercambio") != NULL);
 		CHECK(d->free_size == 478 * RROS_MIB);   /* 18000 + 2000 MiB de 20480, menos el MiB del final */
 		rros_disk_systems(d, sys, sizeof sys);

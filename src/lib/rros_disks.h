@@ -13,7 +13,7 @@ struct rros_dpart {
 	char fstype[24], label[64];
 	char ptype[40];                    /* tipo de partición: GUID (GPT) o 0x83 (MBR), en minúsculas */
 	char mount[96];                    /* dónde está montada, o "" */
-	int esp, bios_boot, windows, linux;
+	int esp, bios_boot, windows, linux_os;
 };
 
 struct rros_disk {
@@ -27,7 +27,7 @@ struct rros_disk {
 	unsigned long long free_start, free_size;   /* mayor hueco libre, alineado a 1 MiB */
 	int esp;                           /* índice de la ESP en parts, o -1 */
 	int bios_boot;                     /* hay partición BIOS boot */
-	int windows, bitlocker, linux;     /* sistemas encontrados */
+	int windows, bitlocker, linux_os;     /* sistemas encontrados */
 };
 
 /* Rellena v con los discos internos y externos (sin lectores ópticos ni discos virtuales en RAM). */

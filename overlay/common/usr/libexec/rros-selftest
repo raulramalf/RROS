@@ -93,12 +93,15 @@ if [ "$BASE" = arch ]; then
 		check "sesión de Plasma arrancada (plasmashell, ${i} s)" pgrep -u rros -x plasmashell
 		check "KWin en marcha (compositor Wayland)" pgrep -u rros -x kwin_wayland
 		if ! pgrep -u rros -x plasmashell >/dev/null 2>&1; then   # para saber por qué: sesión y registro de SDDM
-			echo "--- sesiones ---"; loginctl list-sessions --no-legend 2>&1 | head -5
-			for sid in $(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}'); do
-				loginctl show-session "$sid" -p Type -p Desktop -p Service 2>&1 | tr '\n' ' '; echo
-			done
-			echo "--- sddm ---"; journalctl -b -u sddm --no-pager 2>&1 | tail -n 25
-			echo "--- plasma (usuario) ---"; journalctl -b _UID="$(id -u rros)" --no-pager 2>&1 | grep -iE 'plasma|kwin|error|fail' | tail -n 25
+			{
+				echo "--- sesiones ---"; loginctl list-sessions --no-legend 2>&1 | head -5
+				for sid in $(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}'); do
+					loginctl show-session "$sid" -p Type -p Desktop -p Service 2>&1 | tr '\n' ' '; echo
+				done
+				echo "--- sddm ---"; journalctl -b -u sddm --no-pager 2>&1 | tail -n 25
+				echo "--- plasma (usuario) ---"
+				journalctl -b _UID="$(id -u rros)" --no-pager 2>&1 | grep -iE 'plasma|kwin|error|fail' | tail -n 30
+			} | sed 's/^/diag: /'   # test-iso.sh muestra estas líneas
 		fi
 		i=0
 		while ! grep -qs icontasks ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done

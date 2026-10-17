@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RROS Escritorio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* La página es un monitor: arriba los mandos (los mismos que Ajustes → Escritorio y fondo), debajo la pantalla 16:9.
+   Los colores de la pantalla salen de las paletas reales de rros-theme; los fondos son los PNG que genera. */
+:root {
+  --page: #0a0d18; --ink: #e6ecff; --dim: #8a96bd; --line: #26305a; --chip: #141c38;
+  --ui: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--page); color: var(--ink); font: 15px/1.5 var(--ui);
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)) }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px }
+h1 { margin: 0; font-size: 1.5rem; letter-spacing: -.01em }
+header p { margin: 0; color: var(--dim); max-width: 62ch }
+header a { color: var(--ink) }
+.controls { display: flex; flex-wrap: wrap; gap: 14px 24px }
+.group { display: grid; gap: 6px }
+.group > span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim) }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 3px }
+.seg button { font: 500 .88rem var(--ui); color: var(--dim); background: none; border: 0; border-radius: 7px; padding: 6px 12px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--page) }
+.seg button:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px }
+.note { color: var(--dim); font-size: .85rem; margin: 0 }
+.note code { font-family: var(--mono); color: var(--ink) }
+
+/* ---- la pantalla ---- */
+.monitor { border: 1px solid var(--line); border-radius: 14px; padding: 10px; background: #05070d }
+.screen { position: relative; aspect-ratio: 16 / 9; max-width: 100%; overflow: hidden; border-radius: 6px;
+  container-type: inline-size; font-family: var(--ui); color: var(--t-text);
+  background: var(--t-bg) center / cover no-repeat; transition: background-image .4s }
+.screen * { box-sizing: border-box }
+/* barra (waybar) */
+.bar { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 1.2cqw;
+  height: 3.1cqw; padding: 0 1cqw; font-size: 1.05cqw; z-index: 5;
+  background: color-mix(in srgb, var(--t-surface) 88%, transparent) }
+.bar.top { top: 0 } .bar.bottom { bottom: 0; height: 3.6cqw }
+.bar.floating { left: .8cqw; right: .8cqw; top: .6cqw; border-radius: .9cqw; border: 1px solid var(--t-border) }
+.bar.pill { left: 0; right: 0; top: .5cqw; background: none }
+.bar.pill .mod { background: color-mix(in srgb, var(--t-surface) 92%, transparent); border: 1px solid var(--t-border); border-radius: 2cqw; padding: .35cqw .9cqw }
+.bar .grow { flex: 1 }
+.mod { display: flex; align-items: center; gap: .6cqw; white-space: nowrap }
+.btn-start { font-weight: 600; background: var(--t-accent); color: var(--t-bg); border: 0; border-radius: .6cqw; padding: .4cqw .9cqw; font: 600 1.05cqw var(--ui); cursor: pointer }
+.ws { display: flex; gap: .35cqw }
+.ws i { width: 1.6cqw; height: 1.6cqw; border-radius: .4cqw; display: grid; place-items: center; font: normal .85cqw var(--ui); color: var(--t-muted); background: var(--t-bg) }
+.ws i.on { background: var(--t-accent); color: var(--t-bg); width: 2.6cqw }
+.task { display: flex; gap: .4cqw; overflow: hidden }
+.task button { font: .95cqw var(--ui); color: var(--t-text); background: color-mix(in srgb, var(--t-text) 8%, transparent); border: 0; border-bottom: .2cqw solid transparent; border-radius: .4cqw; padding: .35cqw .8cqw; cursor: pointer; max-width: 13cqw; overflow: hidden; text-overflow: ellipsis }
+.task button.on { border-bottom-color: var(--t-accent); background: color-mix(in srgb, var(--t-accent) 22%, transparent) }
+.updates { color: var(--t-yellow); font-weight: 600 }
+.muted { color: var(--t-muted) }
+/* ventanas */
+.win { position: absolute; display: flex; flex-direction: column; border-radius: var(--rad); overflow: hidden;
+  background: color-mix(in srgb, var(--t-surface) 94%, transparent); box-shadow: 0 1.2cqw 3cqw rgba(0,0,0,.45);
+  border: .18cqw solid var(--t-border); transition: left .35s cubic-bezier(.2,.9,.3,1.15), top .35s cubic-bezier(.2,.9,.3,1.15), width .35s, height .35s, opacity .3s; cursor: default }
+.win.focus { border-color: transparent; background-clip: padding-box;
+  outline: .18cqw solid transparent; box-shadow: 0 0 0 .18cqw var(--t-accent), 0 0 0 .18cqw var(--t-magenta), 0 1.4cqw 3.4cqw rgba(0,0,0,.55);
+  background-image: none }
+.win.focus::before { content: ""; position: absolute; inset: -.18cqw; border-radius: inherit; padding: .18cqw; z-index: -1;
+  background: linear-gradient(45deg, var(--t-accent), var(--t-magenta)) }
+.win.dim { opacity: .82 }
+.title { height: 2.3cqw; display: flex; align-items: center; gap: .6cqw; padding: 0 .9cqw; font-size: .95cqw; color: var(--t-muted); border-bottom: 1px solid var(--t-border) }
+.title b { color: var(--t-text); font-weight: 600 }
+.body { flex: 1; overflow: hidden; padding: .9cqw 1.1cqw; font-size: 1cqw; min-height: 0 }
+.term { font-family: var(--mono); background: color-mix(in srgb, var(--t-bg) 92%, transparent); line-height: 1.45; white-space: pre; font-size: .92cqw }
+.c-acc { color: var(--t-accent) } .c-cy { color: var(--t-cyan) } .c-gr { color: var(--t-green) } .c-ye { color: var(--t-yellow) } .c-mu { color: var(--t-muted) }
+.files { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8cqw; align-content: start }
+.files div { display: grid; justify-items: center; gap: .3cqw; font-size: .9cqw; text-align: center }
+.files div::before { content: ""; width: 3.4cqw; height: 2.6cqw; border-radius: .35cqw; background: var(--t-blue); opacity: .85 }
+.files div.doc::before { width: 2.4cqw; height: 3cqw; background: var(--t-text); opacity: .7 }
+.side { display: grid; grid-template-columns: 9cqw 1fr; gap: 1cqw; height: 100% }
+.side nav { display: grid; gap: .3cqw; align-content: start; font-size: .9cqw }
+.side nav span { padding: .3cqw .6cqw; border-radius: .4cqw; color: var(--t-muted) }
+.side nav span.on { background: color-mix(in srgb, var(--t-accent) 22%, transparent); color: var(--t-text) }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7cqw }
+.card { border: 1px solid var(--t-border); border-radius: .6cqw; padding: .6cqw; font-size: .82cqw; display: grid; gap: .4cqw }
+.mock { height: 4cqw; border-radius: .4cqw; background: center / cover; position: relative; overflow: hidden }
+.mock::after { content: ""; position: absolute; left: 0; right: 0; height: .5cqw; background: var(--t-surface) }
+.mock.b::after { bottom: 0 } .mock.t::after { top: 0 }
+.card.on { border-color: var(--t-accent) }
+/* dock */
+.dock { position: absolute; bottom: .9cqw; left: 50%; transform: translateX(-50%); display: flex; gap: .7cqw; padding: .6cqw .9cqw;
+  border-radius: 1.4cqw; background: color-mix(in srgb, var(--t-surface) 80%, transparent); border: 1px solid var(--t-border); z-index: 5 }
+.dock i { width: 3.2cqw; height: 3.2cqw; border-radius: .9cqw; display: grid; place-items: center; font: normal 600 1.1cqw var(--ui); color: var(--t-bg) }
+/* menú de inicio (fuzzel) */
+.launcher { position: absolute; z-index: 9; width: 26cqw; border-radius: .9cqw; padding: .8cqw; display: grid; gap: .3cqw;
+  background: var(--t-surface); border: .15cqw solid var(--t-accent); font-size: 1cqw; box-shadow: 0 1.5cqw 4cqw rgba(0,0,0,.5) }
+.launcher .q { border: 1px solid var(--t-border); border-radius: .5cqw; padding: .45cqw .7cqw; color: var(--t-muted); margin-bottom: .3cqw }
+.launcher div { padding: .35cqw .7cqw; border-radius: .4cqw }
+.launcher div.on { background: var(--t-accent); color: var(--t-bg) }
+@media (prefers-reduced-motion: reduce) { .win, .screen { transition: none } }
+footer { color: var(--dim); font-size: .85rem }
+footer a { color: var(--ink) }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>RROS Escritorio</h1>
+    <p>Simulación del escritorio Hyprland de RROS. Los fondos son los que genera <code>rros-theme</code> con cada tema; ventanas, barra y dock siguen la configuración que escribe. Pulsa las ventanas, «Inicio» o los botones de la barra. <a href="ajustes.html">Abrir RROS Ajustes</a></p>
+  </header>
+
+  <div class="controls" role="group" aria-label="Opciones del escritorio">
+    <div class="group"><span>Estilo de escritorio</span><div class="seg" id="seg-desk"></div></div>
+    <div class="group"><span>Fondo</span><div class="seg" id="seg-wp"></div></div>
+    <div class="group"><span>Tema</span><div class="seg" id="seg-theme"></div></div>
+  </div>
+  <p class="note" id="cmd"></p>
+
+  <div class="monitor"><div class="screen" id="screen" aria-label="Escritorio simulado"></div></div>
+
+  <footer>Esto es una simulación en el navegador: el sistema de verdad se prueba con la ISO (máquina virtual o PC). Código: <a href="https://github.com/raulramalf/RROS">github.com/raulramalf/RROS</a></footer>
+</div>
+<script>
+// paletas reales de rros-theme (variante oscura)
+var THEMES = {
+  aurora:  { bg:"#0b1020", surface:"#141c38", text:"#e6ecff", muted:"#8a96bd", border:"#26305a", green:"#4ade80", yellow:"#fbbf24", blue:"#60a5fa", magenta:"#c084fc", cyan:"#22d3ee", accent:"#7c5cff" },
+  nord:    { bg:"#2e3440", surface:"#3b4252", text:"#eceff4", muted:"#8f9bb3", border:"#4c566a", green:"#a3be8c", yellow:"#ebcb8b", blue:"#81a1c1", magenta:"#b48ead", cyan:"#88c0d0", accent:"#88c0d0" },
+  dracula: { bg:"#282a36", surface:"#343746", text:"#f8f8f2", muted:"#8a93c5", border:"#44475a", green:"#50fa7b", yellow:"#f1fa8c", blue:"#8be9fd", magenta:"#ff79c6", cyan:"#8be9fd", accent:"#bd93f9" },
+  gruvbox: { bg:"#282828", surface:"#3c3836", text:"#ebdbb2", muted:"#928374", border:"#504945", green:"#b8bb26", yellow:"#fabd2f", blue:"#83a598", magenta:"#d3869b", cyan:"#8ec07c", accent:"#fabd2f" }
+};
+// los tres estilos de rros-theme escritorio (claves reales)
+var DESKS = {
+  clasico: { label:"Clásico", pos:"bottom", style:"flat", layout:"floating", dock:false, rad:".5cqw",
+             keys:"panel_position=bottom · taskbar=true · layout=floating" },
+  moderno: { label:"Moderno", pos:"top", style:"floating", layout:"floating", dock:true, rad:"1cqw",
+             keys:"panel_position=top · panel.style=floating · dock=true" },
+  mosaico: { label:"Mosaico", pos:"top", style:"pill", layout:"tiling", dock:false, rad:".7cqw",
+             keys:"layout=tiling · tiling_layout=dwindle · panel.style=pill" }
+};
+var WPS = { aurora:"Aurora", ondas:"Ondas", degradado:"Degradado", circulos:"Círculos" };
+var WINDOWS = [
+  { id:"term", name:"foot", title:"Terminal" },
+  { id:"files", name:"Thunar", title:"Archivos · ~/Documentos" },
+  { id:"set", name:"RROS Ajustes", title:"RROS Ajustes · Escritorio y fondo" }
+];
+var st = { desk:"clasico", wp:"aurora", theme:"aurora", focus:"set", menu:false };
+try { var saved = JSON.parse(localStorage.getItem("rros-escritorio") || "null"); if (saved) for (var k in saved) if (k in st && k !== "menu") st[k] = saved[k]; } catch (e) {}
+
+var scr = document.getElementById("screen");
+function h(tag, attrs, html) { var e = document.createElement(tag); for (var k in (attrs || {})) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
+
+function seg(id, map, key) {
+  var box = document.getElementById(id); box.textContent = "";
+  Object.keys(map).forEach(function (k) {
+    var b = h("button", { type:"button", "aria-pressed": String(st[key] === k) }, typeof map[k] === "string" ? map[k] : map[k].label || k[0].toUpperCase() + k.slice(1));
+    b.onclick = function () { st[key] = k; st.menu = false; render(); };
+    box.appendChild(b);
+  });
+}
+
+function clock() { var d = new Date(); return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
+function date() { var d = new Date(); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear(); }
+
+function bodyOf(id, t) {
+  if (id === "term") return '<div class="body term">' +
+    '<span class="c-gr">rros@rros-lite</span>:<span class="c-acc">~</span>$ rros-fetch\n' +
+    '<span class="c-acc">   ▄▄▄▄▄▄   </span>  <b>rros</b>@rros-lite\n' +
+    '<span class="c-acc">  ██▀▀▀▀██  </span>  <span class="c-cy">SO</span>       RROS 0.2.0 (Aurora, lite)\n' +
+    '<span class="c-acc">  ██▄▄▄▄█▀  </span>  <span class="c-cy">Base</span>     Arch Linux · kernel 7.2\n' +
+    '<span class="c-acc">  ██  ▀██▄  </span>  <span class="c-cy">Escritorio</span> Hyprland · ' + st.desk + '\n' +
+    '<span class="c-acc">  ▀▀    ▀▀  </span>  <span class="c-cy">Tema</span>     ' + st.theme + ' · fondo ' + st.wp + '\n' +
+    '              <span class="c-cy">RAM</span>      394 MB de 512 MB\n\n' +
+    '<span class="c-gr">rros@rros-lite</span>:<span class="c-acc">~</span>$ rros theme escritorio ' + st.desk + '\n' +
+    '<span class="c-mu">escritorio «' + DESKS[st.desk].label.toLowerCase() + '» aplicado</span>\n' +
+    '<span class="c-gr">rros@rros-lite</span>:<span class="c-acc">~</span>$ <span class="c-ye">▍</span></div>';
+  if (id === "files") return '<div class="body files">' +
+    ['Documentos','Descargas','Imágenes','Música','Vídeos','Plantillas'].map(function (n) { return '<div>' + n + '</div>'; }).join('') +
+    '<div class="doc">notas.txt</div><div class="doc">factura.pdf</div></div>';
+  var cards = Object.keys(DESKS).map(function (k) {
+    var d = DESKS[k];
+    return '<div class="card' + (k === st.desk ? ' on' : '') + '"><div class="mock ' + (d.pos === "bottom" ? "b" : "t") +
+      '" style="background-image:url(fondos/' + st.theme + '-' + st.wp + '.jpg)"></div><b>' + d.label + '</b></div>';
+  }).join('');
+  return '<div class="body"><div class="side"><nav><span>Inicio</span><span>Apariencia</span><span class="on">Escritorio y fondo</span><span>Tienda</span><span>Seguridad</span><span>Accesibilidad</span><span>Instalar RROS</span></nav>' +
+    '<div style="display:grid;gap:.8cqw;align-content:start"><b style="font-size:1.2cqw">Elige tu escritorio</b><div class="cards">' + cards + '</div>' +
+    '<span class="muted" style="font-size:.85cqw">Efectos: animaciones suaves · desenfoque 6 · borde con degradado · gestos con tres dedos</span></div></div></div>';
+}
+
+// geometría: libres (solapadas) o mosaico dwindle (sin solapar, con huecos)
+function layout(d) {
+  var top = d.pos === "top" ? 4.4 : 1.6, bottom = d.pos === "bottom" ? 4.6 : (d.dock ? 6.4 : 1.6);
+  var H = 56.25, g = 0.9; // alto de la pantalla en cqw (16:9)
+  if (d.layout === "tiling") {
+    var avail = H - top - bottom, half = (100 - 3 * g) / 2;
+    return { term:[g, top, half, avail], files:[2*g+half, top, half, (avail-g)/2], set:[2*g+half, top+(avail+g)/2, half, (avail-g)/2] };
+  }
+  return { set:[30, top + 3, 52, 34], term:[5, top + 1.5, 42, 27], files:[56, top + 15, 36, 26] };
+}
+
+function render() {
+  try { localStorage.setItem("rros-escritorio", JSON.stringify({ desk: st.desk, wp: st.wp, theme: st.theme })); } catch (e) {}
+  seg("seg-desk", DESKS, "desk"); seg("seg-wp", WPS, "wp");
+  seg("seg-theme", { aurora:"Aurora", nord:"Nord", dracula:"Dracula", gruvbox:"Gruvbox" }, "theme");
+  var t = THEMES[st.theme], d = DESKS[st.desk];
+  for (var k in t) scr.style.setProperty("--t-" + k, t[k]);
+  scr.style.setProperty("--rad", d.rad);
+  scr.style.backgroundImage = "url(fondos/" + st.theme + "-" + st.wp + ".jpg)";
+  document.getElementById("cmd").innerHTML = "En RROS: <code>rros theme escritorio " + st.desk + "</code> · <code>rros config set ui.wallpaper_style " + st.wp +
+    "</code> · <code>rros theme use " + st.theme + "</code> <span>(" + d.keys + ")</span>";
+  scr.textContent = "";
+
+  var geo = layout(d), order = WINDOWS.slice().sort(function (a, b) { return (a.id === st.focus) - (b.id === st.focus); });
+  order.forEach(function (w) {
+    var g = geo[w.id], el = h("div", { class: "win" + (w.id === st.focus ? " focus" : " dim"), tabindex: "0", role: "button", "aria-label": "Ventana " + w.name },
+      '<div class="title"><b>' + w.name + '</b><span>' + w.title + '</span></div>' + bodyOf(w.id, t));
+    el.style.left = g[0] + "cqw"; el.style.top = g[1] + "cqw"; el.style.width = g[2] + "cqw"; el.style.height = g[3] + "cqw";
+    el.onclick = el.onkeydown = function (e) { if (e.type === "keydown" && e.key !== "Enter") return; st.focus = w.id; st.menu = false; render(); };
+    scr.appendChild(el);
+  });
+
+  // barra
+  var bar = h("div", { class: "bar " + (d.pos === "bottom" ? "bottom" : "top") + (d.style !== "flat" ? " " + d.style : "") });
+  var start = h("button", { class: "btn-start", type: "button" }, d.pos === "bottom" ? "◆ Inicio" : "Aplicaciones");
+  start.onclick = function () { st.menu = !st.menu; render(); };
+  var left = h("div", { class: "mod" }); left.appendChild(start);
+  if (d.pos !== "bottom") left.appendChild(h("div", { class: "ws" }, '<i class="on">1</i><i>2</i><i>3</i><i>4</i>'));
+  bar.appendChild(left);
+  if (d.pos === "bottom") {
+    var task = h("div", { class: "task" });
+    WINDOWS.forEach(function (w) {
+      var b = h("button", { type: "button", class: w.id === st.focus ? "on" : "" }, w.name);
+      b.onclick = function () { st.focus = w.id; st.menu = false; render(); };
+      task.appendChild(b);
+    });
+    bar.appendChild(task);
+  } else if (st.desk === "mosaico") {
+    bar.appendChild(h("div", { class: "mod muted" }, WINDOWS.filter(function (w) { return w.id === st.focus; })[0].title));
+  }
+  bar.appendChild(h("div", { class: "grow" }));
+  if (d.pos !== "bottom") { bar.appendChild(h("div", { class: "mod" }, "<b>" + clock() + "</b>")); bar.appendChild(h("div", { class: "grow" })); }
+  if (st.desk === "mosaico") { bar.appendChild(h("div", { class: "mod muted" }, "RAM 0.4G")); bar.appendChild(h("div", { class: "mod muted" }, "CPU 3%")); }
+  bar.appendChild(h("div", { class: "mod updates", title: "Actualizaciones pendientes" }, "ACT 3"));
+  bar.appendChild(h("div", { class: "mod" }, "LAN"));
+  bar.appendChild(h("div", { class: "mod" }, "VOL 60%"));
+  bar.appendChild(h("div", { class: "mod" }, "BAT 87%"));
+  if (d.pos === "bottom") bar.appendChild(h("div", { class: "mod" }, "<b>" + clock() + "</b>&nbsp;&nbsp;" + date()));
+  bar.appendChild(h("div", { class: "mod muted" }, "Apagar"));
+  scr.appendChild(bar);
+
+  if (d.dock) {
+    var dock = h("div", { class: "dock" });
+    [["W", t.blue], ["A", t.yellow], ["T", t.green], ["E", t.magenta], ["R", t.accent]].forEach(function (x) {
+      var i = h("i", { title: x[0] }, x[0]); i.style.background = x[1]; dock.appendChild(i);
+    });
+    scr.appendChild(dock);
+  }
+  if (st.menu) {
+    var m = h("div", { class: "launcher" }, '<div class="q">Buscar aplicación…</div><div class="on">Web (Epiphany)</div><div>Archivos</div><div>Terminal</div><div>Editor de texto</div><div>RROS Ajustes</div><div>Tienda de aplicaciones</div>');
+    if (d.pos === "bottom") { m.style.left = "1cqw"; m.style.bottom = "4.6cqw"; } else { m.style.left = "1cqw"; m.style.top = "4.4cqw"; }
+    scr.appendChild(m);
+  }
+}
+render();
+setInterval(function () { if (!st.menu) render(); }, 60000);
+</script>
+</body>
+</html>

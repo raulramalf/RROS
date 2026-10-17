@@ -1,0 +1,1438 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>RROS Ajustes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Sora:wght@600;700&display=swap">
+<style>
+/* Concepto: la propia ventana de ajustes se pinta con la paleta del tema que estás editando. */
+:root {
+  --bg: #0b1020; --surface: #141c38; --surface2: #1b2547; --text: #e6ecff; --muted: #8a96bd;
+  --border: #26305a; --accent: #7c5cff; --accent-fg: #0b1020;
+  --red: #ff6b81; --green: #4ade80; --yellow: #fbbf24;
+  --font-display: "Sora", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f5f7ff; --surface: #ffffff; --surface2: #eef1ff; --text: #141a33; --muted: #5b6489;
+    --border: #d5dbf5; --accent: #5b3df5; --accent-fg: #ffffff; --red: #d6334f; --green: #16a34a; --yellow: #b7791f;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f5f7ff; --surface: #ffffff; --surface2: #eef1ff; --text: #141a33; --muted: #5b6489;
+  --border: #d5dbf5; --accent: #5b3df5; --accent-fg: #ffffff; --red: #d6334f; --green: #16a34a; --yellow: #b7791f;
+  color-scheme: light;
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.5; margin: 0;
+}
+.app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; padding-left: env(safe-area-inset-left, 0px); }
+aside { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border); background: var(--surface); padding: 18px 12px; display: flex; flex-direction: column; gap: 14px; }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; padding: 0 8px; display: flex; flex-direction: column; gap: 2px; }
+.brand small { font-family: var(--font-mono); font-weight: 400; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+nav { display: flex; flex-direction: column; gap: 2px; }
+nav .grp { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding: 10px 8px 4px; }
+nav button { all: unset; cursor: pointer; padding: 7px 10px; border-radius: 8px; color: var(--text); display: flex; justify-content: space-between; gap: 8px; }
+nav button:hover { background: var(--surface2); }
+nav button[aria-current="page"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+nav .count { font-family: var(--font-mono); font-size: 11px; opacity: 0.65; }
+main { min-width: 0; padding-right: max(20px, env(safe-area-inset-right, 0px)); padding-left: 24px; padding-block: 0 48px; }
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 14px 0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.top .search { flex: 1 1 220px; min-width: 0; }
+input[type="text"], input[type="search"], input[type="number"], select, textarea {
+  font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; min-width: 0;
+}
+textarea { width: 100%; font-family: var(--font-mono); font-size: 12px; min-height: 120px; resize: vertical; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn { font: inherit; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 8px; padding: 8px 14px; }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn.danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+.btn:hover { filter: brightness(1.08); }
+.btn:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.btn.small { padding: 4px 10px; font-size: 12px; }
+.pill { font-family: var(--font-mono); font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; color: var(--muted); white-space: nowrap; }
+h1 { font-family: var(--font-display); font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
+.sub { color: var(--muted); margin: 0 0 16px; max-width: 70ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.rows { display: flex; flex-direction: column; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 300px) 30px; gap: 8px 16px; align-items: center; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: 0; }
+.row .lbl { min-width: 0; }
+.row .lbl b { font-weight: 500; display: block; }
+.row .lbl code, code { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.row .ctl { display: flex; gap: 8px; align-items: center; justify-content: flex-end; min-width: 0; }
+.row .ctl input[type="text"], .row .ctl select { width: 100%; }
+.row .ctl input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.row .ctl input[type="number"] { width: 72px; }
+.reset { all: unset; cursor: pointer; width: 26px; height: 26px; text-align: center; line-height: 26px; border-radius: 6px; color: var(--muted); }
+.reset:hover { background: var(--surface2); color: var(--text); }
+.reset:focus-visible { outline: 2px solid var(--accent); }
+.reset[hidden] { display: block !important; visibility: hidden; }
+.user-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: 6px; vertical-align: middle; }
+.switch { position: relative; width: 42px; height: 24px; flex: none; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; transition: background 0.15s; pointer-events: none; }
+.switch span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background 0.15s; }
+.switch input:checked + span { background: var(--accent); border-color: var(--accent); }
+.switch input:checked + span::after { transform: translateX(18px); background: var(--accent-fg); }
+.switch input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+.seg button { all: unset; cursor: pointer; padding: 6px 12px; font-size: 13px; border-right: 1px solid var(--border); }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; }
+.tcard { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.tcard:hover { border-color: var(--muted); }
+.tcard[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.tcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tprev { height: 84px; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; border: 1px solid rgba(128,128,128,.25); }
+.tprev .bar { height: 10px; border-radius: 3px; }
+.tprev .body { flex: 1; display: flex; gap: 6px; }
+.tprev .win { flex: 1; border-radius: 4px; padding: 4px; display: flex; flex-direction: column; gap: 3px; }
+.tprev .ln { height: 4px; border-radius: 2px; }
+.tcard .tn { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-weight: 500; }
+.tcard .sw { display: flex; gap: 3px; }
+.tcard .sw i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.badge { font-family: var(--font-mono); font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.swatches button.dot { all: unset; cursor: pointer; width: 28px; height: 28px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border); border: 2px solid var(--surface); }
+.swatches button.dot[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--text); }
+.swatches button.dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.swatches input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: none; cursor: pointer; }
+.apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.acard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.acard .an { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.acard .an b { font-weight: 600; overflow-wrap: anywhere; }
+.acard p { margin: 0; color: var(--muted); flex: 1; }
+.acard .ab { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.badge.ok { color: var(--green); border-color: var(--green); }
+.cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.cats button { all: unset; cursor: pointer; padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 13px; }
+.cats button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+.cats button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pad { padding: 14px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.wrapline { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.desk { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; height: 230px; display: flex; flex-direction: column; background: var(--p-bg); color: var(--p-text); font-size: 12px; }
+.desk.pos-bottom { flex-direction: column-reverse; }
+.desk .panel { height: 26px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; background: var(--p-bg); border-bottom: 2px solid var(--p-accent); gap: 8px; }
+.desk.pos-bottom .panel { border-bottom: 0; border-top: 2px solid var(--p-accent); }
+.desk .panel .ws { display: flex; gap: 4px; }
+.desk .panel .ws i { font-style: normal; padding: 0 8px; border-radius: 4px; color: var(--p-muted); }
+.desk .panel .ws i.on { background: var(--p-accent); color: var(--p-bg); }
+.desk .panel .pf { background: var(--p-accent); color: var(--p-bg); border-radius: 4px; padding: 0 8px; font-weight: 600; }
+.desk .area { flex: 1; display: flex; gap: var(--gap, 8px); padding: calc(var(--gap, 8px) / 2); min-height: 0; }
+.desk .w { flex: 1; min-width: 0; background: var(--p-surface); border: var(--bw, 2px) solid var(--p-border); border-radius: var(--rad, 0); overflow: hidden; display: flex; flex-direction: column; }
+.desk .w.f { border-color: var(--p-accent); }
+.desk .w .t { background: var(--p-bg); color: var(--p-muted); padding: 2px 8px; font-size: 11px; }
+.desk .w .c { padding: 8px; font-family: var(--font-mono); font-size: 11px; display: flex; flex-direction: column; gap: 3px; }
+.desk .c .a { color: var(--p-accent); } .desk .c .g { color: var(--p-green); } .desk .c .m { color: var(--p-muted); }
+.colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 14px; }
+.colors label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.colors input[type="color"] { width: 30px; height: 26px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; cursor: pointer; }
+.dyn { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.dyn:last-child { border-bottom: 0; }
+.dyn input[type="text"] { width: 100%; font-family: var(--font-mono); font-size: 12px; }
+.dyn .id { font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { all: unset; cursor: pointer; font-family: var(--font-mono); font-size: 11px; padding: 3px 9px; border: 1px dashed var(--border); border-radius: 999px; color: var(--muted); }
+.chip:hover { color: var(--text); border-color: var(--muted); }
+.chip:focus-visible { outline: 2px solid var(--accent); }
+.empty { padding: 22px; text-align: center; color: var(--muted); }
+.badge.warn { color: var(--yellow); border-color: var(--yellow); }
+.badge.fail { color: var(--red); border-color: var(--red); }
+.badge.sys { color: var(--accent); border-color: var(--accent); }
+.score { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
+.score .num { font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.score .bar { flex: 1; min-width: 160px; height: 10px; border-radius: 999px; background: var(--surface2); overflow: hidden; }
+.score .bar i { display: block; height: 100%; background: var(--accent); }
+.checks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.check { display: grid; grid-template-columns: 22px 1fr; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.check .ic { font-weight: 700; text-align: center; }
+.check.ok .ic { color: var(--green); } .check.warn .ic { color: var(--yellow); } .check.fail .ic { color: var(--red); } .check.info .ic { color: var(--muted); }
+.check b { display: block; } .check p { margin: 2px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+.check code { display: inline-block; margin-top: 6px; overflow-wrap: anywhere; white-space: normal; }
+.devgroup { margin: 18px 0 8px; font-weight: 600; }
+.dev { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; }
+.dev.part { margin-left: 22px; }
+.dev .dn { flex: 1; min-width: 180px; } .dev .dn b { overflow-wrap: anywhere; } .dev .dn small { display: block; color: var(--muted); overflow-wrap: anywhere; }
+.formgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
+.formgrid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.formgrid label input, .formgrid label select { color: var(--text); }
+.dmock { position: relative; height: 96px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);
+  background: radial-gradient(circle at 80% 20%, var(--m-acc), transparent 55%), linear-gradient(160deg, var(--m-bg), var(--m-sur)); }
+.dmock i { position: absolute; display: flex; gap: 3px; align-items: center; }
+.dmock .win { background: var(--m-sur); border: 1px solid var(--m-txt); border-radius: 4px; opacity: .92; }
+.dmock .win.f { border-color: var(--m-acc); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+.dmock .bar { left: 0; right: 0; height: 12px; padding: 0 4px; background: rgba(0,0,0,.45); }
+.dmock .bar.bot { bottom: 0; } .dmock .bar.top { top: 0; } .dmock .bar.thin { height: 8px; }
+.dmock .bar.pill { left: 4px; right: 4px; top: 3px; border-radius: 999px; }
+.dmock .bar b { display: block; height: 6px; border-radius: 2px; background: var(--m-txt); }
+.dmock .start { width: 14px; background: var(--m-acc) !important; } .dmock .task { width: 22px; opacity: .6; } .dmock .task.on { opacity: 1; background: var(--m-acc) !important; }
+.dmock .clock { width: 18px; margin-left: auto; } .dmock .clock.mid { margin: 0 auto; }
+.dmock .ws { width: 8px; } .dmock .ws.on { background: var(--m-acc) !important; }
+.dmock .dock { bottom: 4px; left: 30%; right: 30%; height: 14px; justify-content: center; border-radius: 6px; background: rgba(255,255,255,.18); }
+.dmock .dock b { display: block; width: 8px; height: 8px; border-radius: 2px; background: var(--m-acc); }
+.wpgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 8px; }
+.wpcard { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.wpcard[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.wpcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wpcard span { font-size: 13px; font-weight: 500; padding: 0 2px; }
+.wpthumb { aspect-ratio: 16 / 9; border-radius: 6px; border: 1px solid rgba(128,128,128,.25); }
+.muted { color: var(--muted); }
+ol.steps { display: flex; gap: 6px; flex-wrap: wrap; list-style: none; padding: 0; margin: 0 0 16px; }
+ol.steps li { font-size: 12.5px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+ol.steps li.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+ol.steps li.done { color: var(--text); }
+.card .an { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; margin-top: 6px; cursor: pointer; }
+label.opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+label.opt.off { opacity: 0.6; cursor: not-allowed; }
+label.opt input { margin-top: 3px; accent-color: var(--accent); }
+label.opt small { display: block; color: var(--muted); }
+pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; }
+#toast { position: fixed; bottom: max(16px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 9px 16px; max-width: min(560px, 92vw); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 20; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+#toast.show { opacity: 1; }
+#toast.err { border-color: var(--red); color: var(--red); }
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  aside { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); }
+  nav { flex-direction: row; overflow-x: auto; gap: 4px; padding-bottom: 6px; }
+  nav .grp { display: none; }
+  nav button { white-space: nowrap; flex: none; }
+  main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .row { grid-template-columns: minmax(0, 1fr) 30px; }
+  .row .ctl { grid-column: 1; justify-content: flex-start; }
+  .row .reset { grid-column: 2; grid-row: 1; }
+  .dyn { grid-template-columns: minmax(0, 1fr) auto; }
+  .dyn .id { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <aside>
+    <div class="brand">RROS Ajustes<small id="ver"></small></div>
+    <nav id="nav" aria-label="Secciones"></nav>
+  </aside>
+  <main>
+    <div class="top">
+      <input class="search" id="search" type="search" placeholder="Buscar ajuste o clave (tecla /)" aria-label="Buscar ajustes">
+      <span class="pill" id="profile"></span>
+      <button class="btn ghost" id="apply" type="button">Aplicar al escritorio</button>
+    </div>
+    <div id="page"></div>
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+window.RROS_MOCK_STATE =
+{"live":false,"version":"0.2.0","codename":"Aurora","profile":"standard","desktops":[{"id":"clasico","label":"Clásico","desc":"Como en Windows: barra de tareas abajo con el botón de aplicaciones, las ventanas abiertas, la bandeja y el reloj. Ventanas libres que se arrastran con el ratón.","keys":{"ui.panel_position":"bottom","panel.style":"flat","ui.panel_size":"40","panel.left":"apps,taskbar","panel.center":"none","panel.right":"updates,tray,network,audio,battery,clock,power","panel.taskbar":"true","ui.layout":"floating","ui.dock":"false"}},{"id":"moderno","label":"Moderno","desc":"Como en macOS: barra fina arriba con el reloj en el centro y un dock abajo con tus aplicaciones. Ventanas libres.","keys":{"ui.panel_position":"top","panel.style":"floating","ui.panel_size":"30","panel.left":"apps,workspaces","panel.center":"clock","panel.right":"updates,tray,network,audio,battery,power","panel.taskbar":"false","ui.layout":"floating","ui.dock":"true"}},{"id":"mosaico","label":"Mosaico","desc":"Al estilo Hyprland: las ventanas se colocan solas sin solaparse, con animaciones; barra arriba con escritorios, ventana activa y el estado del sistema. Rápido con el teclado.","keys":{"ui.panel_position":"top","panel.style":"pill","ui.panel_size":"32","panel.left":"apps,workspaces,window","panel.center":"clock","panel.right":"updates,memory,cpu,network,audio,battery,tray,power","panel.taskbar":"false","ui.layout":"tiling","ui.dock":"false"}}],"desktop_current":"clasico","categories":[{"id":"ui","label":"Interfaz"},{"id":"panel","label":"Panel"},{"id":"term","label":"Terminal"},{"id":"display","label":"Pantalla"},{"id":"input","label":"Entrada"},{"id":"audio","label":"Sonido"},{"id":"power","label":"Energía"},{"id":"net","label":"Red"},{"id":"system","label":"Sistema"},{"id":"services","label":"Servicios"},{"id":"locale","label":"Región"},{"id":"privacy","label":"Privacidad"},{"id":"access","label":"Accesibilidad"},{"id":"security","label":"Seguridad"},{"id":"boot","label":"Arranque"}],"keys":[{"key":"ui.theme","category":"ui","type":"str","desc":"Tema visual (nombre de tema instalado)","value":"aurora","source":"profile","scope":"user"},{"key":"ui.icon_theme","category":"ui","type":"str","desc":"Tema de iconos","value":"","source":"profile","scope":"user"},{"key":"ui.cursor_theme","category":"ui","type":"str","desc":"Tema de cursor","value":"","source":"profile","scope":"user"},{"key":"ui.cursor_size","category":"ui","type":"int","min":12,"max":128,"desc":"Tamaño del cursor (px)","value":"","source":"profile","scope":"user"},{"key":"ui.accent","category":"ui","type":"str","desc":"Color de acento, formato #RRGGBB","value":"","source":"profile","scope":"user"},{"key":"ui.color_scheme","category":"ui","type":"enum","choices":["light","dark","auto"],"desc":"Esquema de color","value":"dark","source":"profile","scope":"user"},{"key":"ui.scale","category":"ui","type":"int","min":50,"max":400,"desc":"Escala de interfaz (%)","value":"100","source":"profile","scope":"user"},{"key":"ui.fractional_scale_step","category":"ui","type":"int","min":5,"max":50,"desc":"Paso del escalado fraccional (%)","value":"","source":"profile","scope":"user"},{"key":"ui.font","category":"ui","type":"str","desc":"Fuente de interfaz","value":"Inter","source":"profile","scope":"user"},{"key":"ui.font_mono","category":"ui","type":"str","desc":"Fuente monoespaciada","value":"JetBrains Mono","source":"profile","scope":"user"},{"key":"ui.font_size","category":"ui","type":"int","min":6,"max":32,"desc":"Tamaño de fuente (pt)","value":"11","source":"profile","scope":"user"},{"key":"ui.font_hinting","category":"ui","type":"enum","choices":["none","slight","medium","full"],"desc":"Hinting de fuentes","value":"","source":"profile","scope":"user"},{"key":"ui.font_antialias","category":"ui","type":"enum","choices":["none","grayscale","rgba"],"desc":"Suavizado de fuentes","value":"","source":"profile","scope":"user"},{"key":"ui.wallpaper","category":"ui","type":"str","desc":"Ruta del fondo de pantalla","value":"","source":"profile","scope":"user"},{"key":"ui.wallpaper_mode","category":"ui","type":"enum","choices":["fill","fit","stretch","center","tile"],"desc":"Ajuste del fondo","value":"","source":"profile","scope":"user"},{"key":"ui.wallpaper_style","category":"ui","type":"enum","choices":["aurora","ondas","degradado","circulos","liso"],"desc":"Fondo generado con los colores del tema (si no eliges una imagen)","value":"aurora","source":"profile","scope":"user"},{"key":"ui.compositor","category":"ui","type":"enum","choices":["hyprland","sway"],"desc":"Compositor Wayland: Hyprland (animaciones y efectos) o sway (más ligero)","value":"hyprland","source":"profile","scope":"user"},{"key":"ui.effects","category":"ui","type":"enum","choices":["off","basic","advanced"],"desc":"Nivel de efectos visuales","value":"basic","source":"profile","scope":"user"},{"key":"ui.animations","category":"ui","type":"bool","desc":"Animaciones de ventanas y menús","value":"true","source":"profile","scope":"user"},{"key":"ui.animation_speed","category":"ui","type":"int","min":25,"max":400,"desc":"Velocidad de animación (%)","value":"100","source":"profile","scope":"user"},{"key":"ui.animation_style","category":"ui","type":"enum","choices":["suave","rapida","rebote","deslizar"],"desc":"Estilo de las animaciones de ventanas y escritorios","value":"suave","source":"profile","scope":"user"},{"key":"ui.transparency","category":"ui","type":"int","min":0,"max":100,"desc":"Transparencia de paneles y ventanas (%)","value":"10","source":"profile","scope":"user"},{"key":"ui.blur","category":"ui","type":"bool","desc":"Desenfoque de fondo","value":"true","source":"profile","scope":"user"},{"key":"ui.blur_strength","category":"ui","type":"int","min":1,"max":20,"desc":"Intensidad del desenfoque","value":"6","source":"profile","scope":"user"},{"key":"ui.shadows","category":"ui","type":"bool","desc":"Sombras de ventanas","value":"true","source":"profile","scope":"user"},{"key":"ui.dim_inactive","category":"ui","type":"bool","desc":"Oscurecer un poco las ventanas sin foco","value":"false","source":"profile","scope":"user"},{"key":"ui.border_gradient","category":"ui","type":"bool","desc":"Borde de la ventana activa en degradado (acento → magenta)","value":"true","source":"profile","scope":"user"},{"key":"ui.corner_radius","category":"ui","type":"int","min":0,"max":32,"desc":"Radio de esquinas (px)","value":"8","source":"profile","scope":"user"},{"key":"ui.gap","category":"ui","type":"int","min":0,"max":64,"desc":"Separación entre ventanas (px)","value":"8","source":"profile","scope":"user"},{"key":"ui.border_width","category":"ui","type":"int","min":0,"max":16,"desc":"Grosor de borde de ventana (px)","value":"2","source":"profile","scope":"user"},{"key":"ui.layout","category":"ui","type":"enum","choices":["floating","tiling","hybrid"],"desc":"Modo de gestión de ventanas","value":"floating","source":"profile","scope":"user"},{"key":"ui.tiling_layout","category":"ui","type":"enum","choices":["dwindle","master"],"desc":"Reparto del mosaico: en espiral (dwindle) o una ventana principal (master)","value":"dwindle","source":"profile","scope":"user"},{"key":"ui.dock","category":"ui","type":"bool","desc":"Dock de aplicaciones abajo, como en macOS","value":"false","source":"profile","scope":"user"},{"key":"ui.panel_position","category":"ui","type":"enum","choices":["top","bottom","left","right"],"desc":"Posición del panel","value":"bottom","source":"profile","scope":"user"},{"key":"ui.panel_size","category":"ui","type":"int","min":16,"max":128,"desc":"Tamaño del panel (px)","value":"40","source":"profile","scope":"user"},{"key":"ui.panel_autohide","category":"ui","type":"bool","desc":"Ocultar panel automáticamente","value":"","source":"profile","scope":"user"},{"key":"ui.clock_24h","category":"ui","type":"bool","desc":"Reloj de 24 horas","value":"","source":"profile","scope":"user"},{"key":"ui.show_battery_percent","category":"ui","type":"bool","desc":"Mostrar porcentaje de batería","value":"","source":"profile","scope":"user"},{"key":"ui.workspaces","category":"ui","type":"int","min":1,"max":32,"desc":"Número de escritorios virtuales","value":"4","source":"profile","scope":"user"},{"key":"ui.hot_corners","category":"ui","type":"bool","desc":"Esquinas activas","value":"","source":"profile","scope":"user"},{"key":"ui.touch_mode","category":"ui","type":"bool","desc":"Interfaz optimizada para pantalla táctil","value":"","source":"profile","scope":"user"},{"key":"ui.high_contrast","category":"ui","type":"bool","desc":"Alto contraste","value":"","source":"profile","scope":"user"},{"key":"ui.reduce_motion","category":"ui","type":"bool","desc":"Reducir movimiento (accesibilidad)","value":"","source":"profile","scope":"user"},{"key":"ui.night_light","category":"ui","type":"enum","choices":["off","auto","on"],"desc":"Filtro de luz nocturna","value":"","source":"profile","scope":"user"},{"key":"ui.night_light_temp","category":"ui","type":"int","min":1000,"max":6500,"desc":"Temperatura del filtro nocturno (K)","value":"","source":"profile","scope":"user"},{"key":"apps.terminal","category":"apps","type":"str","desc":"Terminal (comando)","value":"foot","source":"profile","scope":"user"},{"key":"apps.browser","category":"apps","type":"str","desc":"Navegador (comando)","value":"epiphany","source":"profile","scope":"user"},{"key":"apps.files","category":"apps","type":"str","desc":"Gestor de archivos (comando)","value":"thunar","source":"profile","scope":"user"},{"key":"apps.editor","category":"apps","type":"str","desc":"Editor de texto (comando)","value":"mousepad","source":"profile","scope":"user"},{"key":"panel.style","category":"panel","type":"enum","choices":["flat","floating","pill"],"desc":"Estilo del panel","value":"flat","source":"profile","scope":"user"},{"key":"panel.left","category":"panel","type":"str","desc":"Módulos a la izquierda, separados por comas","value":"apps,taskbar","source":"profile","scope":"user"},{"key":"panel.center","category":"panel","type":"str","desc":"Módulos en el centro, separados por comas","value":"none","source":"profile","scope":"user"},{"key":"panel.right","category":"panel","type":"str","desc":"Módulos a la derecha, separados por comas","value":"updates,tray,network,audio,battery,clock,power","source":"profile","scope":"user"},{"key":"panel.taskbar","category":"panel","type":"bool","desc":"Mostrar las ventanas abiertas en el panel (clic: ir a ella; clic central: cerrarla)","value":"true","source":"profile","scope":"user"},{"key":"term.scrollback","category":"term","type":"int","min":0,"max":100000,"desc":"Líneas de historial de la terminal","value":"","source":"profile","scope":"user"},{"key":"term.cursor","category":"term","type":"enum","choices":["block","beam","underline"],"desc":"Forma del cursor de la terminal","value":"","source":"profile","scope":"user"},{"key":"term.padding","category":"term","type":"int","min":0,"max":40,"desc":"Margen interior de la terminal (px)","value":"","source":"profile","scope":"user"},{"key":"display.vrr","category":"display","type":"enum","choices":["off","auto","on"],"desc":"Frecuencia variable (VRR)","value":"","source":"profile","scope":"user"},{"key":"display.refresh_hz","category":"display","type":"int","min":24,"max":540,"desc":"Frecuencia de refresco preferida (Hz)","value":"","source":"profile","scope":"user"},{"key":"display.rotation","category":"display","type":"enum","choices":["0","90","180","270"],"desc":"Rotación de pantalla","value":"","source":"profile","scope":"user"},{"key":"display.brightness","category":"display","type":"int","min":1,"max":100,"desc":"Brillo inicial (%)","value":"","source":"profile","scope":"user"},{"key":"input.keymap","category":"input","type":"str","desc":"Distribución de teclado (p. ej. es, us, latam)","value":"","source":"profile","scope":"user"},{"key":"input.repeat_delay_ms","category":"input","type":"int","min":100,"max":2000,"desc":"Retardo de repetición de tecla (ms)","value":"","source":"profile","scope":"user"},{"key":"input.repeat_rate","category":"input","type":"int","min":1,"max":100,"desc":"Repeticiones por segundo","value":"","source":"profile","scope":"user"},{"key":"input.natural_scroll","category":"input","type":"bool","desc":"Desplazamiento natural","value":"","source":"profile","scope":"user"},{"key":"input.tap_to_click","category":"input","type":"bool","desc":"Pulsar para hacer clic","value":"","source":"profile","scope":"user"},{"key":"input.disable_while_typing","category":"input","type":"bool","desc":"Desactivar touchpad al escribir","value":"","source":"profile","scope":"user"},{"key":"input.pointer_speed","category":"input","type":"int","min":-100,"max":100,"desc":"Velocidad del puntero","value":"","source":"profile","scope":"user"},{"key":"input.numlock_on_boot","category":"input","type":"bool","desc":"Bloq Num al iniciar","value":"","source":"profile","scope":"user"},{"key":"input.gestures","category":"input","type":"bool","desc":"Gestos del touchpad: deslizar con tres dedos cambia de escritorio","value":"true","source":"profile","scope":"user"},{"key":"power.mode","category":"power","type":"enum","choices":["saver","balanced","performance"],"desc":"Modo de energía","value":"","source":"profile","scope":"user"},{"key":"power.screen_off_minutes","category":"power","type":"int","min":0,"max":1440,"desc":"Apagar pantalla tras N minutos (0 = nunca)","value":"","source":"profile","scope":"user"},{"key":"power.suspend_minutes","category":"power","type":"int","min":0,"max":1440,"desc":"Suspender tras N minutos (0 = nunca)","value":"","source":"profile","scope":"user"},{"key":"power.lid_action","category":"power","type":"enum","choices":["ignore","suspend","hibernate","poweroff"],"desc":"Acción al cerrar la tapa","value":"","source":"profile","scope":"user"},{"key":"power.cpu_boost","category":"power","type":"bool","desc":"Permitir turbo de CPU","value":"","source":"profile","scope":"user"},{"key":"power.battery_low_percent","category":"power","type":"int","min":3,"max":50,"desc":"Aviso de batería baja (%)","value":"","source":"profile","scope":"user"},{"key":"system.swap","category":"system","type":"enum","choices":["none","zram","file"],"desc":"Estrategia de swap","value":"zram","source":"profile","scope":"system"},{"key":"system.zram_percent","category":"system","type":"int","min":10,"max":100,"desc":"Tamaño de zram (% de la RAM)","value":"50","source":"profile","scope":"system"},{"key":"system.zram_algo","category":"system","type":"enum","choices":["lzo","lz4","zstd"],"desc":"Algoritmo de compresión de zram","value":"zstd","source":"profile","scope":"system"},{"key":"system.swappiness","category":"system","type":"int","min":0,"max":200,"desc":"vm.swappiness","value":"100","source":"profile","scope":"system"},{"key":"system.io_scheduler","category":"system","type":"enum","choices":["auto","none","mq-deadline","bfq","kyber"],"desc":"Planificador de E/S","value":"","source":"profile","scope":"system"},{"key":"system.auto_updates","category":"system","type":"bool","desc":"Actualizaciones automáticas","value":"true","source":"profile","scope":"system"},{"key":"system.update_channel","category":"system","type":"enum","choices":["stable","testing","rolling"],"desc":"Canal de actualizaciones","value":"","source":"profile","scope":"system"},{"key":"system.trim","category":"system","type":"bool","desc":"TRIM periódico en SSD","value":"","source":"profile","scope":"system"},{"key":"services.bluetooth","category":"services","type":"bool","desc":"Bluetooth","value":"true","source":"profile","scope":"system"},{"key":"services.printing","category":"services","type":"bool","desc":"Impresión (CUPS)","value":"false","source":"profile","scope":"system"},{"key":"services.indexer","category":"services","type":"bool","desc":"Indexador de archivos","value":"false","source":"profile","scope":"system"},{"key":"services.ssh","category":"services","type":"bool","desc":"Servidor SSH","value":"","source":"profile","scope":"system"},{"key":"services.sound_server","category":"services","type":"bool","desc":"Servidor de sonido","value":"","source":"profile","scope":"system"},{"key":"services.location","category":"services","type":"bool","desc":"Servicios de ubicación","value":"false","source":"profile","scope":"system"},{"key":"services.flatpak","category":"services","type":"bool","desc":"Soporte Flatpak","value":"true","source":"profile","scope":"system"},{"key":"net.hostname","category":"net","type":"str","desc":"Nombre del equipo","value":"","source":"profile","scope":"system"},{"key":"net.dns","category":"net","type":"str","desc":"Servidores DNS separados por comas (vacío = automático)","value":"","source":"profile","scope":"system"},{"key":"net.wifi_powersave","category":"net","type":"bool","desc":"Ahorro de energía Wi-Fi","value":"","source":"profile","scope":"system"},{"key":"net.mac_randomize","category":"net","type":"bool","desc":"Aleatorizar dirección MAC","value":"","source":"profile","scope":"system"},{"key":"locale.language","category":"locale","type":"str","desc":"Idioma (p. ej. es_ES.UTF-8)","value":"es_ES.UTF-8","source":"profile","scope":"system"},{"key":"locale.timezone","category":"locale","type":"str","desc":"Zona horaria (p. ej. Europe/Madrid)","value":"","source":"profile","scope":"system"},{"key":"locale.units","category":"locale","type":"enum","choices":["metric","imperial"],"desc":"Sistema de unidades","value":"","source":"profile","scope":"system"},{"key":"audio.volume","category":"audio","type":"int","min":0,"max":150,"desc":"Volumen inicial (%)","value":"","source":"profile","scope":"user"},{"key":"audio.startup_sound","category":"audio","type":"bool","desc":"Sonido de inicio","value":"","source":"profile","scope":"user"},{"key":"audio.event_sounds","category":"audio","type":"bool","desc":"Sonidos de eventos","value":"","source":"profile","scope":"user"},{"key":"privacy.telemetry","category":"privacy","type":"bool","desc":"Telemetría (desactivada por defecto)","value":"false","source":"profile","scope":"user"},{"key":"privacy.crash_reports","category":"privacy","type":"bool","desc":"Informes de fallos","value":"","source":"profile","scope":"user"},{"key":"privacy.lock_minutes","category":"privacy","type":"int","min":0,"max":1440,"desc":"Bloquear pantalla tras N minutos (0 = nunca)","value":"","source":"profile","scope":"user"},{"key":"privacy.disk_encryption","category":"privacy","type":"bool","desc":"Cifrado de disco (LUKS) en la instalación","value":"","source":"profile","scope":"user"},{"key":"access.screen_reader","category":"access","type":"bool","desc":"Lector de pantalla (Orca) al iniciar sesión; Super+Alt+S lo activa o desactiva","value":"","source":"profile","scope":"user"},{"key":"access.onscreen_keyboard","category":"access","type":"bool","desc":"Teclado en pantalla al iniciar sesión; Super+Alt+K lo muestra u oculta","value":"","source":"profile","scope":"user"},{"key":"security.firewall","category":"security","type":"bool","desc":"Cortafuegos: bloquea las conexiones entrantes no pedidas","value":"true","source":"profile","scope":"system"},{"key":"security.firewall_ping","category":"security","type":"bool","desc":"Responder a ping con el cortafuegos activo","value":"true","source":"profile","scope":"system"},{"key":"security.firewall_allow","category":"security","type":"str","desc":"Puertos abiertos, p. ej. 8080/tcp,5000-5010/udp (vacío = ninguno)","value":"","source":"profile","scope":"system"},{"key":"security.kernel_hardening","category":"security","type":"bool","desc":"Endurecer el kernel (punteros, dmesg, BPF, ptrace, redirecciones)","value":"true","source":"profile","scope":"system"},{"key":"security.usb_storage","category":"security","type":"bool","desc":"Permitir memorias y discos USB","value":"true","source":"profile","scope":"system"},{"key":"security.camera","category":"security","type":"bool","desc":"Permitir cámaras web","value":"true","source":"profile","scope":"system"},{"key":"security.login_attempts","category":"security","type":"int","min":0,"max":20,"desc":"Intentos de contraseña antes de bloquear 10 minutos (0 = sin límite)","value":"10","source":"profile","scope":"system"},{"key":"security.sudo_timeout_minutes","category":"security","type":"int","min":0,"max":60,"desc":"Minutos que sudo recuerda tu contraseña (0 = la pide siempre)","value":"5","source":"profile","scope":"system"},{"key":"security.core_dumps","category":"security","type":"bool","desc":"Guardar volcados de memoria de programas que fallan","value":"false","source":"profile","scope":"system"},{"key":"boot.timeout_seconds","category":"boot","type":"int","min":0,"max":60,"desc":"Tiempo del menú de arranque","value":"3","source":"profile","scope":"system"},{"key":"boot.splash","category":"boot","type":"bool","desc":"Pantalla de arranque gráfica","value":"true","source":"profile","scope":"system"},{"key":"boot.quiet","category":"boot","type":"bool","desc":"Arranque silencioso","value":"true","source":"profile","scope":"system"}],"dynamic":{"keybind":[],"rule":[],"autostart":[]},"dynamic_help":{"keybind":"Atajo: \"COMBINACION COMANDO\", p. ej. \"Mod+Shift+b exec firefox\"","rule":"Regla de ventana: \"app_id=NOMBRE ACCION\", p. ej. \"app_id=firefox workspace 2\"","autostart":"Programa que se inicia con el escritorio"},"themes":[{"name":"aurora","builtin":true,"dark":{"bg":"#0b1020","surface":"#141c38","text":"#e6ecff","muted":"#8a96bd","border":"#26305a","red":"#ff6b81","green":"#4ade80","yellow":"#fbbf24","blue":"#60a5fa","magenta":"#c084fc","cyan":"#22d3ee","accent":"#7c5cff"},"light":{"bg":"#f5f7ff","surface":"#ffffff","text":"#141a33","muted":"#5b6489","border":"#d5dbf5","red":"#d6334f","green":"#16a34a","yellow":"#b7791f","blue":"#2563eb","magenta":"#9333ea","cyan":"#0891b2","accent":"#5b3df5"}},{"name":"nord","builtin":true,"dark":{"bg":"#2e3440","surface":"#3b4252","text":"#eceff4","muted":"#8f9bb3","border":"#4c566a","red":"#bf616a","green":"#a3be8c","yellow":"#ebcb8b","blue":"#81a1c1","magenta":"#b48ead","cyan":"#88c0d0","accent":"#88c0d0"},"light":{"bg":"#eceff4","surface":"#e5e9f0","text":"#2e3440","muted":"#4c566a","border":"#d8dee9","red":"#bf616a","green":"#6f8f55","yellow":"#a67c00","blue":"#5e81ac","magenta":"#8f6a9a","cyan":"#4a8da3","accent":"#5e81ac"}},{"name":"dracula","builtin":true,"dark":{"bg":"#282a36","surface":"#343746","text":"#f8f8f2","muted":"#8a93c5","border":"#44475a","red":"#ff5555","green":"#50fa7b","yellow":"#f1fa8c","blue":"#8be9fd","magenta":"#ff79c6","cyan":"#8be9fd","accent":"#bd93f9"},"light":{"bg":"#fffbeb","surface":"#f5f0dc","text":"#1f1f1f","muted":"#6c664b","border":"#e0d9bd","red":"#cb3a2a","green":"#14710a","yellow":"#846e15","blue":"#036a96","magenta":"#a3144d","cyan":"#036a96","accent":"#644ac9"}},{"name":"gruvbox","builtin":true,"dark":{"bg":"#282828","surface":"#3c3836","text":"#ebdbb2","muted":"#928374","border":"#504945","red":"#fb4934","green":"#b8bb26","yellow":"#fabd2f","blue":"#83a598","magenta":"#d3869b","cyan":"#8ec07c","accent":"#fabd2f"},"light":{"bg":"#fbf1c7","surface":"#ebdbb2","text":"#3c3836","muted":"#7c6f64","border":"#d5c4a1","red":"#cc241d","green":"#98971a","yellow":"#d79921","blue":"#458588","magenta":"#b16286","cyan":"#689d6a","accent":"#d79921"}},{"name":"solarized","builtin":true,"dark":{"bg":"#002b36","surface":"#073642","text":"#93a1a1","muted":"#657b83","border":"#586e75","red":"#dc322f","green":"#859900","yellow":"#b58900","blue":"#268bd2","magenta":"#d33682","cyan":"#2aa198","accent":"#268bd2"},"light":{"bg":"#fdf6e3","surface":"#eee8d5","text":"#586e75","muted":"#93a1a1","border":"#d9d2bd","red":"#dc322f","green":"#859900","yellow":"#b58900","blue":"#268bd2","magenta":"#d33682","cyan":"#2aa198","accent":"#268bd2"}},{"name":"mono","builtin":true,"dark":{"bg":"#111111","surface":"#1a1a1a","text":"#eeeeee","muted":"#8a8a8a","border":"#333333","red":"#e06c75","green":"#98c379","yellow":"#e5c07b","blue":"#61afef","magenta":"#c678dd","cyan":"#56b6c2","accent":"#ffffff"},"light":{"bg":"#fafafa","surface":"#ffffff","text":"#111111","muted":"#6b6b6b","border":"#dddddd","red":"#c0392b","green":"#2e7d32","yellow":"#9a6700","blue":"#1565c0","magenta":"#7b1fa2","cyan":"#00796b","accent":"#111111"}},{"name":"contrast","builtin":true,"dark":{"bg":"#000000","surface":"#0a0a0a","text":"#ffffff","muted":"#d0d0d0","border":"#ffffff","red":"#ff6666","green":"#66ff66","yellow":"#ffff66","blue":"#66b3ff","magenta":"#ff66ff","cyan":"#66ffff","accent":"#ffff00"},"light":{"bg":"#ffffff","surface":"#f2f2f2","text":"#000000","muted":"#333333","border":"#000000","red":"#b00020","green":"#006400","yellow":"#7a5200","blue":"#0033cc","magenta":"#800080","cyan":"#006666","accent":"#0000cc"}}],"current":{"theme":"aurora","scheme":"dark","accent_user":false,"palette":{"bg":"#0b1020","surface":"#141c38","text":"#e6ecff","muted":"#8a96bd","border":"#26305a","red":"#ff6b81","green":"#4ade80","yellow":"#fbbf24","blue":"#60a5fa","magenta":"#c084fc","cyan":"#22d3ee","accent":"#7c5cff"}},"snapshots":[],"profiles":["lite","standard","pro"],"hw":{"ram_mb":16093,"cpus":4,"gpu":"none","recommended":"standard"},"user_conf":"/tmp/tmp.RqnxtGnRPB/user.toml"}
+;
+</script>
+<script>
+window.RROS_MOCK_APPS =
+[{"id":"epiphany","name":"Web (Epiphany)","category":"internet","desc":"Navegador ligero de GNOME. Es el navegador por defecto.","apt":"epiphany-browser","pacman":"epiphany","pkg":"epiphany","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"firefox","name":"Firefox","category":"internet","desc":"El navegador de Mozilla, con sus extensiones.","apt":"","pacman":"firefox,firefox-i18n-es-es","pkg":"firefox,firefox-i18n-es-es","pkg_manager":"pacman","flatpak":"org.mozilla.firefox","shipped":false,"installed":false},{"id":"chromium","name":"Chromium","category":"internet","desc":"Navegador de código abierto basado en Chromium.","apt":"","pacman":"chromium","pkg":"chromium","pkg_manager":"pacman","flatpak":"org.chromium.Chromium","shipped":false,"installed":false},{"id":"brave","name":"Brave","category":"internet","desc":"Navegador con bloqueo de anuncios integrado.","apt":"","pacman":"","pkg":"","pkg_manager":"pacman","flatpak":"com.brave.Browser","shipped":false,"installed":false},{"id":"thunderbird","name":"Thunderbird","category":"internet","desc":"Correo, calendario y contactos de Mozilla.","apt":"","pacman":"thunderbird,thunderbird-i18n-es-es","pkg":"thunderbird,thunderbird-i18n-es-es","pkg_manager":"pacman","flatpak":"org.mozilla.Thunderbird","shipped":false,"installed":false},{"id":"geary","name":"Geary","category":"internet","desc":"Cliente de correo sencillo.","apt":"geary","pacman":"geary","pkg":"geary","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"transmission","name":"Transmission","category":"internet","desc":"Cliente BitTorrent ligero.","apt":"transmission-gtk","pacman":"transmission-gtk","pkg":"transmission-gtk","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"qbittorrent","name":"qBittorrent","category":"internet","desc":"Cliente BitTorrent completo.","apt":"qbittorrent","pacman":"qbittorrent","pkg":"qbittorrent","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"filezilla","name":"FileZilla","category":"internet","desc":"Cliente FTP y SFTP.","apt":"filezilla","pacman":"filezilla","pkg":"filezilla","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"telegram","name":"Telegram","category":"internet","desc":"Mensajería.","apt":"","pacman":"telegram-desktop","pkg":"telegram-desktop","pkg_manager":"pacman","flatpak":"org.telegram.desktop","shipped":false,"installed":false},{"id":"signal","name":"Signal","category":"internet","desc":"Mensajería cifrada.","apt":"","pacman":"signal-desktop","pkg":"signal-desktop","pkg_manager":"pacman","flatpak":"org.signal.Signal","shipped":false,"installed":false},{"id":"discord","name":"Discord","category":"internet","desc":"Chat de voz y texto.","apt":"","pacman":"discord","pkg":"discord","pkg_manager":"pacman","flatpak":"com.discordapp.Discord","shipped":false,"installed":false},{"id":"libreoffice","name":"LibreOffice","category":"office","desc":"Suite ofimática completa: Writer, Calc, Impress.","apt":"libreoffice","pacman":"libreoffice-fresh,libreoffice-fresh-es","pkg":"libreoffice-fresh,libreoffice-fresh-es","pkg_manager":"pacman","flatpak":"org.libreoffice.LibreOffice","shipped":false,"installed":false},{"id":"abiword","name":"AbiWord","category":"office","desc":"Procesador de textos ligero.","apt":"abiword","pacman":"abiword","pkg":"abiword","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"gnumeric","name":"Gnumeric","category":"office","desc":"Hoja de cálculo ligera.","apt":"gnumeric","pacman":"gnumeric","pkg":"gnumeric","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"evince","name":"Documentos (Evince)","category":"office","desc":"Visor de PDF y documentos.","apt":"evince","pacman":"evince","pkg":"evince","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"calibre","name":"calibre","category":"office","desc":"Biblioteca y lector de libros electrónicos.","apt":"calibre","pacman":"calibre","pkg":"calibre","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"obsidian","name":"Obsidian","category":"office","desc":"Notas enlazadas en Markdown.","apt":"","pacman":"obsidian","pkg":"obsidian","pkg_manager":"pacman","flatpak":"md.obsidian.Obsidian","shipped":false,"installed":false},{"id":"mpv","name":"mpv","category":"media","desc":"Reproductor de vídeo y música.","apt":"mpv","pacman":"mpv","pkg":"mpv","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"vlc","name":"VLC","category":"media","desc":"Reproduce casi cualquier formato.","apt":"vlc","pacman":"vlc","pkg":"vlc","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"audacious","name":"Audacious","category":"media","desc":"Reproductor de música.","apt":"audacious","pacman":"audacious","pkg":"audacious","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"audacity","name":"Audacity","category":"media","desc":"Editor de audio.","apt":"audacity","pacman":"audacity","pkg":"audacity","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"obs","name":"OBS Studio","category":"media","desc":"Grabación y retransmisión de pantalla.","apt":"obs-studio","pacman":"obs-studio","pkg":"obs-studio","pkg_manager":"pacman","flatpak":"com.obsproject.Studio","shipped":false,"installed":false},{"id":"kdenlive","name":"Kdenlive","category":"media","desc":"Editor de vídeo.","apt":"kdenlive","pacman":"kdenlive","pkg":"kdenlive","pkg_manager":"pacman","flatpak":"org.kde.kdenlive","shipped":false,"installed":false},{"id":"handbrake","name":"HandBrake","category":"media","desc":"Convierte vídeo entre formatos.","apt":"handbrake","pacman":"handbrake","pkg":"handbrake","pkg_manager":"pacman","flatpak":"fr.handbrake.ghb","shipped":false,"installed":false},{"id":"spotify","name":"Spotify","category":"media","desc":"Música en streaming.","apt":"","pacman":"","pkg":"","pkg_manager":"pacman","flatpak":"com.spotify.Client","shipped":false,"installed":false},{"id":"imv","name":"imv","category":"graphics","desc":"Visor de imágenes rápido.","apt":"imv","pacman":"imv","pkg":"imv","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"gimp","name":"GIMP","category":"graphics","desc":"Edición de imágenes.","apt":"gimp","pacman":"gimp","pkg":"gimp","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"inkscape","name":"Inkscape","category":"graphics","desc":"Dibujo vectorial.","apt":"inkscape","pacman":"inkscape","pkg":"inkscape","pkg_manager":"pacman","flatpak":"org.inkscape.Inkscape","shipped":false,"installed":false},{"id":"krita","name":"Krita","category":"graphics","desc":"Pintura digital.","apt":"krita","pacman":"krita","pkg":"krita","pkg_manager":"pacman","flatpak":"org.kde.krita","shipped":false,"installed":false},{"id":"blender","name":"Blender","category":"graphics","desc":"Modelado y animación 3D.","apt":"blender","pacman":"blender","pkg":"blender","pkg_manager":"pacman","flatpak":"org.blender.Blender","shipped":false,"installed":false},{"id":"darktable","name":"darktable","category":"graphics","desc":"Revelado de fotografías RAW.","apt":"darktable","pacman":"darktable","pkg":"darktable","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"vscode","name":"Visual Studio Code","category":"dev","desc":"Editor de código.","apt":"","pacman":"code","pkg":"code","pkg_manager":"pacman","flatpak":"com.visualstudio.code","shipped":false,"installed":false},{"id":"geany","name":"Geany","category":"dev","desc":"Editor de código ligero.","apt":"geany","pacman":"geany","pkg":"geany","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"neovim","name":"Neovim","category":"dev","desc":"Editor modal para la terminal.","apt":"neovim","pacman":"neovim","pkg":"neovim","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"git","name":"Git","category":"dev","desc":"Control de versiones.","apt":"git","pacman":"git","pkg":"git","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"python","name":"Python 3 y pip","category":"dev","desc":"Python con el gestor de paquetes pip.","apt":"python3-pip","pacman":"python-pip","pkg":"python-pip","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"nodejs","name":"Node.js","category":"dev","desc":"JavaScript fuera del navegador.","apt":"nodejs","pacman":"nodejs,npm","pkg":"nodejs,npm","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"docker","name":"Docker","category":"dev","desc":"Contenedores.","apt":"docker.io","pacman":"docker,docker-compose","pkg":"docker,docker-compose","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"thunar","name":"Archivos (Thunar)","category":"system","desc":"Gestor de archivos.","apt":"thunar","pacman":"thunar","pkg":"thunar","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"gparted","name":"GParted","category":"system","desc":"Particiones de disco.","apt":"gparted","pacman":"gparted","pkg":"gparted","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"disks","name":"Discos","category":"system","desc":"Estado de los discos, formateo y comprobaciones.","apt":"gnome-disk-utility","pacman":"gnome-disk-utility","pkg":"gnome-disk-utility","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"sysmon","name":"Monitor del sistema","category":"system","desc":"Procesos, memoria y red con gráficas.","apt":"gnome-system-monitor","pacman":"gnome-system-monitor","pkg":"gnome-system-monitor","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"btop","name":"btop","category":"system","desc":"Monitor del sistema en la terminal.","apt":"btop","pacman":"btop","pkg":"btop","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"timeshift","name":"Timeshift","category":"system","desc":"Copias de seguridad del sistema para volver atrás.","apt":"timeshift","pacman":"timeshift","pkg":"timeshift","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"bleachbit","name":"BleachBit","category":"system","desc":"Limpia archivos temporales y libera espacio.","apt":"bleachbit","pacman":"bleachbit","pkg":"bleachbit","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"virtmanager","name":"Máquinas virtuales","category":"system","desc":"Crea y ejecuta máquinas virtuales.","apt":"virt-manager","pacman":"virt-manager,qemu-desktop,libvirt,dnsmasq","pkg":"virt-manager,qemu-desktop,libvirt,dnsmasq","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"steam","name":"Steam","category":"games","desc":"Tienda y biblioteca de juegos.","apt":"","pacman":"","pkg":"","pkg_manager":"pacman","flatpak":"com.valvesoftware.Steam","shipped":false,"installed":false},{"id":"lutris","name":"Lutris","category":"games","desc":"Juegos de otras plataformas en un solo sitio.","apt":"lutris","pacman":"lutris","pkg":"lutris","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"supertuxkart","name":"SuperTuxKart","category":"games","desc":"Carreras de karts.","apt":"supertuxkart","pacman":"supertuxkart","pkg":"supertuxkart","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"keepassxc","name":"KeePassXC","category":"utility","desc":"Gestor de contraseñas.","apt":"keepassxc","pacman":"keepassxc","pkg":"keepassxc","pkg_manager":"pacman","flatpak":"","shipped":false,"installed":false},{"id":"bitwarden","name":"Bitwarden","category":"utility","desc":"Gestor de contraseñas en la nube.","apt":"","pacman":"bitwarden","pkg":"bitwarden","pkg_manager":"pacman","flatpak":"com.bitwarden.desktop","shipped":false,"installed":false},{"id":"galculator","name":"Calculadora","category":"utility","desc":"Calculadora científica.","apt":"galculator","pacman":"galculator","pkg":"galculator","pkg_manager":"pacman","flatpak":"","shipped":true,"installed":false},{"id":"flatseal","name":"Flatseal","category":"utility","desc":"Controla los permisos de las aplicaciones Flatpak.","apt":"","pacman":"","pkg":"","pkg_manager":"pacman","flatpak":"com.github.tchx84.Flatseal","shipped":false,"installed":false}]
+;
+window.RROS_MOCK_SECURITY =
+{"score":82,"level":"estandar","checks":[{"id":"firewall","status":"ok","title":"Cortafuegos","detail":"Activo: se bloquean las conexiones entrantes no pedidas.","fix":""},{"id":"ports","status":"ok","title":"Programas escuchando en la red","detail":"Ninguno: nada acepta conexiones desde fuera del equipo.","fix":""},{"id":"kernel","status":"ok","title":"Kernel endurecido","detail":"9 ajustes aplicados (punteros, dmesg, BPF, ptrace, redirecciones).","fix":""},{"id":"apparmor","status":"ok","title":"AppArmor","detail":"Activo en el kernel (el número de perfiles solo lo ve root).","fix":""},{"id":"updates","status":"ok","title":"Actualizaciones de seguridad","detail":"Se instalan solas cada día.","fix":""},{"id":"faillock","status":"warn","title":"Bloqueo por contraseñas fallidas","detail":"Configurado (10 intentos) pero aún no aplicado.","fix":"sudo rros-apply --services"},{"id":"sudo","status":"ok","title":"sudo","detail":"Recuerda la contraseña 5 minuto(s).","fix":""},{"id":"lock","status":"ok","title":"Bloqueo de pantalla","detail":"Se bloquea tras 10 minuto(s) sin uso.","fix":""},{"id":"accounts","status":"info","title":"Cuentas","detail":"Solo root tiene UID 0 (las contraseñas vacías solo las ve root: usa sudo).","fix":""},{"id":"ssh","status":"ok","title":"Servidor SSH","detail":"No hay servidor SSH en marcha.","fix":""},{"id":"encryption","status":"warn","title":"Cifrado del disco","detail":"El disco no está cifrado: quien se lleve el equipo puede leer tus archivos.","fix":"el instalador de RROS aún no cifra; cifra tu carpeta o usa LUKS al instalar"},{"id":"secureboot","status":"info","title":"Arranque seguro (Secure Boot)","detail":"El equipo arranca en modo BIOS: no hay Secure Boot.","fix":""},{"id":"devices","status":"info","title":"Memorias USB y cámara","detail":"Memorias USB permitidas, cámara permitida.","fix":""},{"id":"coredumps","status":"ok","title":"Volcados de memoria","detail":"Los programas con privilegios no dejan volcados.","fix":""}]}
+;
+window.RROS_MOCK_DEVICES =
+{"categories":[{"id":"disco","label":"Discos y memorias"},{"id":"usb","label":"USB"},{"id":"red","label":"Red"},{"id":"radio","label":"Radios (Wi-Fi y Bluetooth)"},{"id":"sonido","label":"Sonido"},{"id":"pantalla","label":"Pantallas"},{"id":"energia","label":"Energía"},{"id":"entrada","label":"Teclado, ratón y mandos"},{"id":"camara","label":"Cámaras"},{"id":"tarjeta","label":"Tarjetas internas (PCI)"}],"devices":[{"cat":"disco","id":"nvme0n1","parent":"","name":"Samsung SSD 980","detail":"512.1 GB · NVMe","state":"","actions":""},{"cat":"disco","id":"nvme0n1p1","parent":"nvme0n1","name":"nvme0n1p1","detail":"537 MB · vfat","state":"sistema: /boot/efi","actions":""},{"cat":"disco","id":"nvme0n1p2","parent":"nvme0n1","name":"nvme0n1p2","detail":"511.5 GB · ext4","state":"sistema: /","actions":""},{"cat":"disco","id":"sdb","parent":"","name":"Kingston DataTraveler 3.0","detail":"32.0 GB · USB","state":"","actions":"eject"},{"cat":"disco","id":"sdb1","parent":"sdb","name":"FOTOS","detail":"32.0 GB · vfat","state":"montado en /media/rros/FOTOS","actions":"unmount"},{"cat":"usb","id":"1-1","parent":"","name":"Logitech USB Receiver","detail":"046d:c52b · 12 Mb/s","state":"conectado","actions":""},{"cat":"red","id":"wlp2s0","parent":"","name":"Wi-Fi (wlp2s0)","detail":"3c:a9:f4:12:34:56","state":"conectado","actions":""},{"cat":"radio","id":"rfkill0","parent":"","name":"Wi-Fi","detail":"phy0","state":"activo","actions":"block"},{"cat":"radio","id":"rfkill1","parent":"","name":"Bluetooth","detail":"hci0","state":"desactivado","actions":"unblock"},{"cat":"sonido","id":"card0","parent":"","name":"HDA Intel PCH","detail":"","state":"disponible","actions":""},{"cat":"pantalla","id":"card0-eDP-1","parent":"","name":"eDP-1","detail":"máxima 1920x1080","state":"conectada","actions":""},{"cat":"energia","id":"AC","parent":"","name":"Cargador","detail":"","state":"sin enchufar","actions":""},{"cat":"energia","id":"BAT0","parent":"","name":"Batería","detail":"87% · salud 90%","state":"descargando","actions":""},{"cat":"entrada","id":"input0","parent":"","name":"Teclado","detail":"AT Translated Set 2 keyboard","state":"conectado","actions":""},{"cat":"entrada","id":"input1","parent":"","name":"Touchpad","detail":"SYNA2B46:00 Touchpad","state":"conectado","actions":""},{"cat":"camara","id":"video0","parent":"","name":"Integrated Camera","detail":"","state":"disponible","actions":""},{"cat":"tarjeta","id":"0000:00:02.0","parent":"","name":"Gráfica","detail":"Intel Corporation · TigerLake-LP GT2 [Iris Xe Graphics]","state":"con controlador","actions":""}]}
+;
+window.RROS_MOCK_TEMPLATES =
+{"default_dir":"/home/rros/Documentos","user_dir":"/home/rros/Plantillas","templates":[{"id":"texto","desc":"Documento de texto vacío","project":false,"user":false,"ext":".txt","dest":""},{"id":"markdown","desc":"Documento con formato Markdown","project":false,"user":false,"ext":".md","dest":""},{"id":"nota","desc":"Nota con fecha y lista de tareas","project":false,"user":false,"ext":".md","dest":""},{"id":"bash","desc":"Script de terminal (Bash), ya ejecutable","project":false,"user":false,"ext":".sh","dest":""},{"id":"python","desc":"Programa en Python, ya ejecutable","project":false,"user":false,"ext":".py","dest":""},{"id":"c","desc":"Programa en C (compila con: cc -o prog archivo.c)","project":false,"user":false,"ext":".c","dest":""},{"id":"web","desc":"Página web HTML5","project":false,"user":false,"ext":".html","dest":""},{"id":"css","desc":"Hoja de estilos CSS","project":false,"user":false,"ext":".css","dest":""},{"id":"csv","desc":"Tabla CSV (se abre con la hoja de cálculo)","project":false,"user":false,"ext":".csv","dest":""},{"id":"lanzador","desc":"Acceso directo que aparece en el menú de aplicaciones","project":false,"user":false,"ext":".desktop","dest":"~/.local/share/applications"},{"id":"proyecto-web","desc":"Proyecto web: index.html, estilos.css y app.js","project":true,"user":false,"ext":"","dest":""},{"id":"proyecto-python","desc":"Proyecto Python: main.py, README y .gitignore","project":true,"user":false,"ext":"","dest":""},{"id":"proyecto-c","desc":"Proyecto en C: main.c y Makefile","project":true,"user":false,"ext":"","dest":""}]}
+;
+</script>
+<script>
+/* Servidor simulado para la versión de demostración de la GUI (sin rros-settings).
+ * Reproduce las reglas de validación de src/lib (tipos, rangos, claves dinámicas); el estado inicial
+ * (claves, temas, paletas) sale de `rros-settings state`, no está duplicado aquí. */
+(function () {
+  "use strict";
+  var S0 = window.RROS_MOCK_STATE, S = JSON.parse(JSON.stringify(S0));
+  var snaps = {};
+  var APPS = JSON.parse(JSON.stringify(window.RROS_MOCK_APPS || []));
+  var SEC = JSON.parse(JSON.stringify(window.RROS_MOCK_SECURITY || { score: 0, level: "estandar", checks: [] }));
+  var DEVS = JSON.parse(JSON.stringify(window.RROS_MOCK_DEVICES || { categories: [], devices: [] }));
+  var TPLS = JSON.parse(JSON.stringify(window.RROS_MOCK_TEMPLATES || { templates: [] }));
+  var created = {};
+  var SYSPRE = /^(system|services|net|boot|security)\./;
+  /* misma regla que rros_fw_ports_check (src/lib/rros_security.c) */
+  function portsOk(v) {
+    return v.split(/[ ,]+/).filter(Boolean).every(function (t) {
+      var m = /^(\d+)(?:-(\d+))?(?:\/(tcp|udp))?$/.exec(t);
+      if (!m) return false;
+      var lo = +m[1], hi = m[2] ? +m[2] : lo;
+      return lo >= 1 && hi <= 65535 && lo <= hi;
+    });
+  }
+  delete S.hw;
+  S.user_conf = "~/.config/rros/rros.toml";
+
+  function key(k) { return S.keys.filter(function (x) { return x.key === k; })[0]; }
+  function def(k) { return S0.keys.filter(function (x) { return x.key === k; })[0].value; }
+  function userVal(k) { var o = key(k); return o && o.source === "user" ? o.value : null; }
+
+  function recompute() {
+    var name = (key("ui.theme") || {}).value, scheme = (key("ui.color_scheme") || {}).value === "light" ? "light" : "dark";
+    var th = S.themes.filter(function (t) { return t.name === name; })[0] || S.themes[0];
+    var pal = Object.assign({}, th[scheme]), acc = (key("ui.accent") || {}).value, user = userVal("ui.accent");
+    S.current.accent_user = !!(user && /^#[0-9a-fA-F]{6}$/.test(user));
+    if (S.current.accent_user) pal.accent = user.toLowerCase();
+    S.current.theme = th.name; S.current.scheme = scheme; S.current.palette = pal;
+    void acc;
+  }
+
+  var KB = /^[A-Za-z0-9_]+(\+[A-Za-z0-9_]+)* (exec|workspace|move|focus|kill|fullscreen|floating|layout|splith|splitv|reload|resize|scratchpad|sticky|mode)( .*)?$/;
+  var RULE = /^(app_id|title|class|window_role)=[A-Za-z0-9._-]+ (floating|sticky|fullscreen|inhibit_idle|workspace ([1-9]|[12][0-9]|3[0-2])|opacity (0(\.[0-9]+)?|1(\.0+)?)|border (none|pixel ([0-9]|1[0-6])))$/;
+  var FAMDESC = S.dynamic_help;
+
+  function checkStatic(k, v) {
+    if (k.type === "int") {
+      if (!/^-?\d+$/.test(v)) return k.key + ": '" + v + "' no es un entero";
+      var n = parseInt(v, 10);
+      if (n < k.min || n > k.max) return k.key + ": " + n + " fuera de rango [" + k.min + ", " + k.max + "]";
+    } else if (k.type === "bool") {
+      if (v !== "true" && v !== "false") return k.key + ": se esperaba true o false";
+    } else if (k.type === "enum") {
+      if (k.choices.indexOf(v) < 0) return k.key + ": '" + v + "' no válido (opciones: " + k.choices.join("|") + ")";
+    } else if (v.length > 256) return k.key + ": valor demasiado largo (máx. 256)";
+    return null;
+  }
+  function checkDynamic(fam, id, v) {
+    var k = fam + "." + id;
+    if (!/^[a-z0-9_-]{1,32}$/.test(id)) return k + ": el identificador debe ser a-z, 0-9, _ o - (máx. 32)";
+    var ok = v.length > 0 && v.length <= 200 && !/[{}\n]/.test(v) &&
+      (fam === "keybind" ? KB.test(v) : fam === "rule" ? RULE.test(v) : true);
+    return ok ? null : k + ": valor no válido. " + FAMDESC[fam];
+  }
+
+  function setKey(k, v) {
+    var m = /^(keybind|rule|autostart)\.(.*)$/.exec(k), o = key(k);
+    if (o) {
+      var e = checkStatic(o, v); if (e) return { ok: false, error: e };
+      o.value = v; o.source = "user";
+    } else if (m) {
+      var e2 = checkDynamic(m[1], m[2], v); if (e2) return { ok: false, error: e2 };
+      var list = S.dynamic[m[1]], hit = list.filter(function (x) { return x.id === m[2]; })[0];
+      if (hit) hit.value = v; else list.push({ id: m[2], value: v, source: "user" });
+      list.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+    } else return { ok: false, error: "clave '" + k + "' desconocida (ver `rros-config schema`)" };
+    recompute();
+    return { ok: true };
+  }
+  function unsetKey(k) {
+    var m = /^(keybind|rule|autostart)\.(.*)$/.exec(k), o = key(k);
+    if (o) { o.value = def(k); o.source = "profile"; }
+    else if (m) S.dynamic[m[1]] = S.dynamic[m[1]].filter(function (x) { return x.id !== m[2]; });
+    else return { ok: false, error: "clave '" + k + "' desconocida (ver `rros-config schema`)" };
+    recompute();
+    return { ok: true };
+  }
+  function userState() {
+    var st = { keys: {}, dyn: JSON.parse(JSON.stringify(S.dynamic)) };
+    S.keys.forEach(function (k) { if (k.source === "user") st.keys[k.key] = k.value; });
+    return st;
+  }
+  function restore(st) {
+    S.keys.forEach(function (k) { if (st.keys[k.key] != null) { k.value = st.keys[k.key]; k.source = "user"; } else { k.value = def(k.key); k.source = "profile"; } });
+    S.dynamic = JSON.parse(JSON.stringify(st.dyn));
+    recompute();
+  }
+  function exportToml() {
+    var by = {}, out = "";
+    S.keys.forEach(function (k) {
+      if (k.source !== "user") return;
+      (by[k.category] = by[k.category] || []).push(k.key.split(".").slice(1).join(".") + " = " + (k.type === "int" || k.type === "bool" ? k.value : '"' + k.value.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"'));
+    });
+    ["keybind", "rule", "autostart"].forEach(function (f) {
+      S.dynamic[f].forEach(function (d) { (by[f] = by[f] || []).push(d.id + ' = "' + d.value.replace(/"/g, '\\"') + '"'); });
+    });
+    Object.keys(by).sort().forEach(function (c) { out += (out ? "\n" : "") + "[" + c + "]\n" + by[c].join("\n") + "\n"; });
+    return out;
+  }
+  var HEX = /^#[0-9a-fA-F]{6}$/;
+
+  window.RROS_MOCK = function (path, b) {
+    b = b || {};
+    switch (path) {
+      case "/api/state": return JSON.parse(JSON.stringify(S));
+      case "/api/export": return exportToml();
+      case "/api/apps": return JSON.parse(JSON.stringify(APPS));
+      case "/api/app_run": {
+        var app = APPS.filter(function (a) { return a.id === b.id; })[0];
+        if (!app) return { ok: false, error: "identificador de aplicación no válido" };
+        if (b.action !== "install" && b.action !== "remove") return { ok: false, error: "acción desconocida" };
+        app.installed = b.action === "install"; /* en la demo se instala al instante */
+        return { ok: true };
+      }
+      case "/api/ping": case "/api/apply": case "/api/quit": return { ok: true };
+      case "/api/set": return setKey(b.key, b.value);
+      case "/api/unset": return unsetKey(b.key);
+      case "/api/theme_new": {
+        if (!/^[a-z0-9_-]{1,32}$/.test(b.name || "")) return { ok: false, error: "nombre no válido (a-z, 0-9, _ o -, máx. 32)" };
+        if (S.themes.some(function (t) { return t.name === b.name; })) return { ok: false, error: "'" + b.name + "' ya existe; elige otro nombre" };
+        var base = S.themes.filter(function (t) { return t.name === b.base; })[0] || S.themes[0];
+        S.themes.push({ name: b.name, builtin: false, dark: Object.assign({}, base.dark), light: Object.assign({}, base.light) });
+        return { ok: true };
+      }
+      case "/api/theme_color": {
+        var th = S.themes.filter(function (t) { return t.name === b.name; })[0];
+        if (!th || th.builtin) return { ok: false, error: "solo se pueden editar los temas propios" };
+        if (!HEX.test(b.value || "")) return { ok: false, error: "el color debe ser #RRGGBB" };
+        th[b.variant][b.key] = b.value.toLowerCase();
+        recompute();
+        return { ok: true };
+      }
+      case "/api/sys_set": case "/api/sys_unset": {
+        if (!SYSPRE.test(b.key || "")) return { ok: false, error: "'" + b.key + "' no es un ajuste del sistema" };
+        if (b.key === "security.firewall_allow" && path === "/api/sys_set" && !portsOk(b.value || ""))
+          return { ok: false, error: "security.firewall_allow: formato de puerto no válido: usa PUERTO, PUERTO/tcp, PUERTO/udp o INICIO-FIN/tcp" };
+        /* en el sistema real se abre una terminal con sudo; aquí se aplica directamente */
+        var r = path === "/api/sys_unset" ? unsetKey(b.key) : setKey(b.key, b.value);
+        var ko = key(b.key);
+        if (r.ok && ko && path === "/api/sys_set") ko.source = "system";
+        return r;
+      }
+      case "/api/security": return JSON.parse(JSON.stringify(SEC));
+      case "/api/security_level":
+        if (["basico", "estandar", "estricto"].indexOf(b.level) < 0) return { ok: false, error: "nivel desconocido" };
+        SEC.level = b.level;
+        return { ok: true };
+      case "/api/security_port":
+        if (b.action !== "abrir" && b.action !== "cerrar") return { ok: false, error: "acción desconocida" };
+        if (!b.port || b.port.indexOf(",") >= 0 || !portsOk(b.port)) return { ok: false, error: "formato de puerto no válido: usa PUERTO, PUERTO/tcp, PUERTO/udp o INICIO-FIN/tcp" };
+        return { ok: true };
+      case "/api/devices": return JSON.parse(JSON.stringify(DEVS));
+      case "/api/device_action": {
+        var d = DEVS.devices.filter(function (x) { return x.id === b.id; })[0];
+        if (!d || (d.actions || "").split(",").indexOf(b.action) < 0) return { ok: false, output: "rros-devices: no se puede hacer eso con '" + b.id + "'" };
+        if (b.action === "unmount") { d.state = "sin montar"; d.actions = "mount"; return { ok: true, output: "Desmontado /dev/" + d.id }; }
+        if (b.action === "mount") { d.state = "montado en /media/rros/" + d.name; d.actions = "unmount"; return { ok: true, output: "Montado /dev/" + d.id + " en /media/rros/" + d.name }; }
+        if (b.action === "eject") {
+          DEVS.devices = DEVS.devices.filter(function (x) { return x.id !== d.id && x.parent !== d.id; });
+          return { ok: true, output: "Ya puedes desconectar " + d.name + "." };
+        }
+        var on = b.action === "unblock";
+        d.state = on ? "activo" : "desactivado"; d.actions = on ? "block" : "unblock";
+        return { ok: true, output: d.id + (on ? " activado" : " desactivado") };
+      }
+      case "/api/desktop": {
+        var dk = (S.desktops || []).filter(function (x) { return x.id === b.name; })[0];
+        if (!dk) return { ok: false, error: "estilo de escritorio desconocido" };
+        Object.keys(dk.keys).forEach(function (k) { setKey(k, dk.keys[k]); });
+        S.desktop_current = dk.id;
+        return { ok: true, output: "escritorio: " + dk.label };
+      }
+      case "/api/templates": return JSON.parse(JSON.stringify(TPLS));
+      case "/api/new_file": {
+        var t = TPLS.templates.filter(function (x) { return x.id === b.template; })[0];
+        if (!t) return { ok: false, output: "rros-new: no hay ninguna plantilla '" + b.template + "'" };
+        if (!b.name || b.name[0] === "-" || /[\x00-\x1f]/.test(b.name)) return { ok: false, error: "plantilla, nombre o carpeta no válidos" };
+        var dir = (b.dir || ".").replace(/^~/, "/home/rros"), file = b.name + (!t.project && t.ext && b.name.indexOf(".") < 0 ? t.ext : "");
+        var full = dir.replace(/\/$/, "") + "/" + file;
+        if (created[full]) return { ok: false, output: "rros-new: " + full + ": ya existe (usa --force para reemplazarlo)" };
+        created[full] = 1;
+        return { ok: true, output: "Creado: " + full };
+      }
+      case "/api/snapshot": {
+        if (!/^[a-z0-9_-]{1,32}$/.test(b.name || "")) return { ok: false, error: "nombre de instantánea no válido (a-z, 0-9, _ o -, máx. 32)" };
+        if (b.action === "save") { snaps[b.name] = userState(); if (S.snapshots.indexOf(b.name) < 0) S.snapshots.push(b.name); }
+        else if (!snaps[b.name]) return { ok: false, error: "no existe la instantánea '" + b.name + "'" };
+        else if (b.action === "restore") restore(snaps[b.name]);
+        else if (b.action === "delete") { delete snaps[b.name]; S.snapshots = S.snapshots.filter(function (n) { return n !== b.name; }); }
+        return { ok: true };
+      }
+    }
+    return { ok: false, error: "no disponible en la demostración" };
+  };
+  recompute();
+})();
+</script>
+<script>
+(function () {
+  "use strict";
+  var TOKEN = new URLSearchParams(location.search).get("t") || "";
+  var S = null;           // estado del servidor
+  var page = "themes";    // sección actual
+  var query = "";
+  var editTheme = "";     // tema propio en edición
+
+  /* ---------- utilidades ---------- */
+  function h(tag, attrs) {
+    var el = document.createElement(tag), i, c;
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k];
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.slice(0, 2) === "on") el.addEventListener(k.slice(2), v);
+      else if (v === true) el.setAttribute(k, "");
+      else if (v !== false && v != null) el.setAttribute(k, v);
+    });
+    for (i = 2; i < arguments.length; i++) {
+      c = arguments[i];
+      if (c == null || c === false) continue;
+      el.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    }
+    return el;
+  }
+  var toastTimer;
+  function toast(msg, err) {
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.className = "show" + (err ? " err" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = ""; }, err ? 5000 : 1800);
+  }
+  function api(path, body) {
+    if (window.RROS_MOCK) return Promise.resolve(window.RROS_MOCK(path, body));
+    var opt = { headers: { "X-RROS-Token": TOKEN } };
+    if (body) {
+      opt.method = "POST";
+      opt.headers["Content-Type"] = "application/x-www-form-urlencoded";
+      opt.body = new URLSearchParams(body).toString();
+    }
+    return fetch(path, opt).then(function (r) {
+      if ((r.headers.get("content-type") || "").indexOf("json") < 0) return r.text();
+      return r.json().catch(function () { return { ok: false, error: "respuesta no válida" }; });
+    });
+  }
+  /* página inicial desde la dirección: #seguridad, #dispositivos, #archivos, #tienda, #cat:ui... */
+  var ALIAS = { seguridad: "security", dispositivos: "devices", archivos: "files", tienda: "apps", temas: "themes", copias: "backup", accesibilidad: "access", bienvenida: "welcome", instalar: "install", escritorio: "desktop", fondo: "desktop" };
+  (function () {
+    var h0 = decodeURIComponent((location.hash || "").slice(1));
+    if (/^[a-z:]{1,31}$/.test(h0)) page = ALIAS[h0] || h0;
+  })();
+  function load() {
+    return api("/api/state").then(function (s) {
+      if (s && s.ok === false) { toast(s.error || "no se pudo cargar", true); return; }
+      S = s; paintTheme(); drawNav(); drawPage();
+    });
+  }
+  function keyObj(k) { return S.keys.filter(function (x) { return x.key === k; })[0]; }
+  function setKey(key, value) {
+    return api("/api/set", { key: key, value: String(value) }).then(function (r) {
+      if (!r.ok) { toast(r.error, true); return load().then(function () { return false; }); }
+      var ko = keyObj(key); if (ko) { ko.value = String(value); ko.source = "user"; }
+      if (/^ui\.(theme|accent|color_scheme|high_contrast)$/.test(key)) return load().then(function () { return true; });
+      return true;
+    });
+  }
+  function unsetKey(key) {
+    return api("/api/unset", { key: key }).then(function (r) {
+      if (!r.ok) toast(r.error, true); else toast("Restablecido: " + key);
+      return load();
+    });
+  }
+
+  /* ---------- tema de la propia ventana ---------- */
+  function paintTheme() {
+    var p = S.current.palette, r = document.documentElement.style;
+    r.setProperty("--bg", p.bg); r.setProperty("--surface", p.surface);
+    r.setProperty("--surface2", mixHex(p.surface, p.accent, 8));
+    r.setProperty("--text", p.text); r.setProperty("--muted", p.muted); r.setProperty("--border", p.border);
+    r.setProperty("--accent", p.accent); r.setProperty("--accent-fg", contrastOn(p.accent, p.bg, p.text));
+    r.setProperty("--red", p.red); r.setProperty("--green", p.green); r.setProperty("--yellow", p.yellow);
+    document.documentElement.setAttribute("data-theme", S.current.scheme);
+    document.getElementById("ver").textContent = "v" + S.version + " · " + S.codename;
+    document.getElementById("profile").textContent = "perfil " + S.profile;
+  }
+  function rgb(hex) { var v = parseInt(hex.slice(1), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+  function mixHex(a, b, pct) {
+    var x = rgb(a), y = rgb(b), o = "#";
+    for (var i = 0; i < 3; i++) o += ("0" + Math.floor((x[i] * (100 - pct) + y[i] * pct) / 100).toString(16)).slice(-2);
+    return o;
+  }
+  function lum(hex) { var c = rgb(hex).map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }
+  function contrastOn(bgc, a, b) { var l = lum(bgc), la = lum(a), lb = lum(b); var ca = (Math.max(l, la) + 0.05) / (Math.min(l, la) + 0.05), cb = (Math.max(l, lb) + 0.05) / (Math.min(l, lb) + 0.05); return ca >= cb ? a : b; }
+
+  /* ---------- navegación ---------- */
+  var DYN = [["keybind", "Atajos de teclado"], ["rule", "Reglas de ventana"], ["autostart", "Inicio automático"]];
+  function drawNav() {
+    var nav = document.getElementById("nav"), counts = {};
+    S.keys.forEach(function (k) { counts[k.category] = (counts[k.category] || 0) + 1; });
+    nav.textContent = "";
+    function item(id, label, count) {
+      nav.appendChild(h("button", { type: "button", "aria-current": page === id && !query ? "page" : null, onclick: function () { go(id); } },
+        h("span", { text: label }), count != null ? h("span", { class: "count", text: String(count) }) : null));
+    }
+    nav.appendChild(h("div", { class: "grp", text: "Empezar" }));
+    item("welcome", "Bienvenida");
+    if (S.live) item("install", "Instalar RROS");
+    nav.appendChild(h("div", { class: "grp", text: "Apariencia" }));
+    item("desktop", "Escritorio y fondo");
+    item("themes", "Temas y colores");
+    item("access", "Accesibilidad");
+    nav.appendChild(h("div", { class: "grp", text: "Aplicaciones" }));
+    item("apps", "Tienda de aplicaciones");
+    item("files", "Crear archivos");
+    nav.appendChild(h("div", { class: "grp", text: "Ajustes" }));
+    S.categories.forEach(function (c) { if (c.id !== "security" && c.id !== "access") item("cat:" + c.id, c.label, counts[c.id] || 0); });
+    nav.appendChild(h("div", { class: "grp", text: "Personalización" }));
+    DYN.forEach(function (d) { item("dyn:" + d[0], d[1], S.dynamic[d[0]].length); });
+    nav.appendChild(h("div", { class: "grp", text: "Sistema" }));
+    item("security", "Seguridad");
+    item("devices", "Dispositivos");
+    item("backup", "Copias y exportar");
+  }
+  function go(id) { page = id; query = ""; document.getElementById("search").value = ""; drawNav(); drawPage(); window.scrollTo(0, 0); }
+
+  /* ---------- filas de ajustes ---------- */
+  function control(k) {
+    var cur = k.value, box = h("div", { class: "ctl" }), id = "c-" + k.key.replace(/\./g, "-");
+    if (k.type === "bool") {
+      var cb = h("input", { type: "checkbox", id: id, "aria-label": k.key });
+      cb.checked = cur === "true";
+      cb.addEventListener("change", function () { commit(k, cb.checked ? "true" : "false"); });
+      box.appendChild(h("label", { class: "switch" }, cb, h("span")));
+    } else if (k.type === "enum") {
+      if (k.choices.length <= 4) {
+        var seg = h("div", { class: "seg", role: "group", "aria-label": k.key });
+        k.choices.forEach(function (c) {
+          seg.appendChild(h("button", { type: "button", text: c, "aria-pressed": String(c === cur), onclick: function () { commit(k, c); } }));
+        });
+        box.appendChild(seg);
+      } else {
+        var sel = h("select", { id: id, "aria-label": k.key });
+        k.choices.forEach(function (c) { var o = h("option", { value: c, text: c }); if (c === cur) o.selected = true; sel.appendChild(o); });
+        sel.addEventListener("change", function () { commit(k, sel.value); });
+        box.appendChild(sel);
+      }
+    } else if (k.type === "int") {
+      var rng = h("input", { type: "range", min: k.min, max: k.max, id: id, "aria-label": k.key });
+      var num = h("input", { type: "number", min: k.min, max: k.max, "aria-label": k.key + " (número)" });
+      rng.value = num.value = cur;
+      rng.addEventListener("input", function () { num.value = rng.value; });
+      rng.addEventListener("change", function () { commit(k, rng.value); });
+      num.addEventListener("change", function () { rng.value = num.value; commit(k, num.value); });
+      box.appendChild(rng); box.appendChild(num);
+    } else {
+      var txt = h("input", { type: "text", id: id, "aria-label": k.key, value: cur });
+      txt.addEventListener("change", function () { commit(k, txt.value); });
+      box.appendChild(txt);
+    }
+    return box;
+  }
+  function commit(k, v) {
+    if (k.scope === "system") return sysSet(k.key, v, false);
+    setKey(k.key, v).then(function (ok) { if (ok) { toast("Guardado: " + k.key + " = " + v); refreshRow(k.key); } });
+  }
+  /* ajustes del sistema: los aplica rros-apply como root, así que se guardan con sudo en una terminal */
+  function sysSet(key, v, unset) {
+    return api(unset ? "/api/sys_unset" : "/api/sys_set", unset ? { key: key } : { key: key, value: String(v) }).then(function (r) {
+      if (!r.ok) { toast(r.error, true); return load(); }
+      toast("Se ha abierto una terminal: escribe tu contraseña para aplicar " + key);
+    });
+  }
+  function changed(k) { return k.scope === "system" ? k.source === "system" : k.source === "user"; }
+  function refreshRow(key) {
+    var row = document.querySelector('[data-key="' + key + '"]'); if (!row) return;
+    var k = keyObj(key), user = changed(k);
+    row.querySelector(".user-dot").style.display = user ? "inline-block" : "none";
+    row.querySelector(".reset").hidden = !user;
+  }
+  function settingRow(k) {
+    var user = changed(k), sys = k.scope === "system";
+    return h("div", { class: "row", "data-key": k.key },
+      h("div", { class: "lbl" }, h("b", null, k.desc, h("span", { class: "user-dot", style: "display:" + (user ? "inline-block" : "none"), title: "Cambiado por ti" })),
+        h("code", { text: k.key }), sys ? h("span", { class: "badge sys", title: "Afecta a todo el equipo: pide tu contraseña", text: "sistema · contraseña" }) : null),
+      control(k),
+      h("button", { class: "reset", type: "button", title: "Restablecer al valor del perfil", "aria-label": "Restablecer " + k.key, hidden: !user, onclick: function () { if (sys) sysSet(k.key, "", true); else unsetKey(k.key); } }, "↺"));
+  }
+
+  /* ---------- páginas ---------- */
+  function drawPage() {
+    var root = document.getElementById("page"); root.textContent = "";
+    if (query) return drawSearch(root);
+    if (page === "themes") return drawThemes(root);
+    if (page === "desktop") return drawDesktop(root);
+    if (page === "backup") return drawBackup(root);
+    if (page === "apps") return drawApps(root);
+    if (page === "security") return drawSecurity(root);
+    if (page === "devices") return drawDevices(root);
+    if (page === "files") return drawFiles(root);
+    if (page === "access") return drawAccess(root);
+    if (page === "welcome") return drawWelcome(root);
+    if (page === "install") return drawInstall(root);
+    if (page.indexOf("dyn:") === 0) return drawDynamic(root, page.slice(4));
+    var cat = page.slice(4), c = S.categories.filter(function (x) { return x.id === cat; })[0] || S.categories[0];
+    root.appendChild(h("h1", { text: c.label }));
+    root.appendChild(h("p", { class: "sub", text: "Los cambios se guardan y se aplican al instante. Un punto junto al nombre indica que lo has cambiado tú; ↺ vuelve al valor del perfil." }));
+    var rows = h("div", { class: "card rows" });
+    S.keys.filter(function (k) { return k.category === c.id; }).forEach(function (k) { rows.appendChild(settingRow(k)); });
+    root.appendChild(rows);
+  }
+  var APPS = null, appCat = "all", appQuery = "";
+  var CATLABEL = { internet: "Internet", office: "Oficina", media: "Multimedia", graphics: "Gráficos", dev: "Desarrollo", system: "Sistema", games: "Juegos", utility: "Utilidades" };
+  function loadApps() {
+    return api("/api/apps").then(function (a) { APPS = Array.isArray(a) ? a : []; });
+  }
+  function appRun(action, a) {
+    api("/api/app_run", { action: action, id: a.id }).then(function (r) {
+      if (!r.ok) return toast(r.error, true);
+      toast((action === "install" ? "Instalando " : "Quitando ") + a.name + ": mira la terminal que se ha abierto");
+    });
+  }
+  function drawApps(root) {
+    root.appendChild(h("h1", { text: "Tienda de aplicaciones" }));
+    root.appendChild(h("p", { class: "sub", text: "Instala programas con un clic. Se usan los paquetes del sistema (pacman, los repositorios de Arch) y, si no hay otra opción, Flatpak (Flathub). La instalación se hace en una terminal para que veas el progreso y puedas escribir tu contraseña." }));
+    if (APPS === null) {
+      root.appendChild(h("div", { class: "empty", text: "Cargando el catálogo…" }));
+      loadApps().then(function () { if (page === "apps") drawPage(); });
+      return;
+    }
+    var search = h("input", { type: "search", placeholder: "Buscar aplicación", "aria-label": "Buscar aplicación", value: appQuery });
+    search.addEventListener("input", function () { appQuery = search.value; drawList(); });
+    var top = h("div", { class: "wrapline" }, search,
+      h("button", { class: "btn ghost small", type: "button", text: "Actualizar estado", onclick: function () { APPS = null; drawPage(); } }));
+    top.style.marginBottom = "12px";
+    root.appendChild(top);
+    var cats = h("div", { class: "cats", role: "group", "aria-label": "Categorías" });
+    var ids = ["all"].concat(Object.keys(CATLABEL));
+    ids.forEach(function (c) {
+      cats.appendChild(h("button", { type: "button", text: c === "all" ? "Todas" : CATLABEL[c], "aria-pressed": String(appCat === c), onclick: function () { appCat = c; drawApps2(); } }));
+    });
+    root.appendChild(cats);
+    var list = h("div", { class: "apps", id: "app-list" });
+    root.appendChild(list);
+    drawList();
+    function drawApps2() { var r = document.getElementById("page"); r.textContent = ""; drawApps(r); }
+    function drawList() {
+      list.textContent = "";
+      var q = appQuery.trim().toLowerCase();
+      var shown = APPS.filter(function (a) {
+        return (appCat === "all" || a.category === appCat) && (!q || (a.id + " " + a.name + " " + a.desc).toLowerCase().indexOf(q) >= 0);
+      });
+      shown.forEach(function (a) {
+        var origin = a.pkg ? (a.pkg_manager || "paquete") : "Flatpak";
+        var state = a.installed ? h("span", { class: "badge ok", text: "instalada" }) : a.shipped ? h("span", { class: "badge", text: "incluida" }) : h("span", { class: "badge", text: origin });
+        var btn = a.installed
+          ? h("button", { class: "btn danger small", type: "button", text: "Quitar", onclick: function () { appRun("remove", a); } })
+          : h("button", { class: "btn small", type: "button", text: "Instalar", onclick: function () { appRun("install", a); } });
+        list.appendChild(h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: a.name }), state), h("p", { text: a.desc }),
+          h("div", { class: "ab" }, btn, h("code", { text: "rros apps install " + a.id }))));
+      });
+      if (!shown.length) list.appendChild(h("div", { class: "empty", text: "Ninguna aplicación coincide." }));
+    }
+  }
+
+  /* ---------- bienvenida ---------- */
+  var KEYS_HELP = [["Super + D", "Menú de aplicaciones (también el botón «Aplicaciones»)"], ["Super + Intro", "Terminal"],
+    ["Super + B", "Navegador"], ["Super + E", "Archivos"], ["Super + Q", "Cerrar la ventana"], ["Super + F", "Pantalla completa"],
+    ["Super + flechas", "Pasar a otra ventana"], ["Super + 1, 2, 3...", "Cambiar de escritorio"],
+    ["Super + Mayús + número", "Llevar la ventana a otro escritorio"], ["Super + V", "Historial del portapapeles"],
+    ["Super + ,", "Ajustes"], ["Super + Esc", "Bloquear"], ["Super + Mayús + E", "Apagar, reiniciar, cerrar sesión"],
+    ["Super + Alt + S", "Lector de pantalla"], ["Super + F1", "Esta ayuda"]];
+  var LAYOUTS = [["floating", "Ventanas libres", "Como en Windows o macOS: arrástralas por la barra de título y haz clic para elegir."],
+    ["tiling", "Mosaico", "Las ventanas se reparten la pantalla solas; rápido con el teclado y sin solaparse."],
+    ["hybrid", "Pestañas", "Cada ventana ocupa todo el escritorio y cambias entre ellas como en un navegador."]];
+  function drawWelcome(root) {
+    root.appendChild(h("h1", { text: "Bienvenido a RROS" }));
+    root.appendChild(h("p", { class: "sub", text: "Tres cosas para empezar: cómo quieres las ventanas, los atajos básicos y dónde está cada cosa. Vuelve aquí cuando quieras con Super + F1 (Super es la tecla de Windows)." }));
+    if (S.live) {
+      root.appendChild(h("div", { class: "card", style: "padding:16px;margin-bottom:16px" },
+        h("b", { text: "Estás probando RROS sin instalar" }),
+        h("p", { class: "sub", style: "margin:4px 0 10px", text: "Nada se guarda al apagar. Cuando quieras, instálalo en el disco (puede convivir con Windows)." }),
+        h("button", { class: "btn", type: "button", text: "Instalar RROS", onclick: function () { go("install"); } })));
+    }
+    root.appendChild(h("h2", { text: "Elige tu escritorio" }));
+    drawDesktopStyles(root);
+    root.appendChild(h("h2", { text: "¿Cómo quieres las ventanas?" }));
+    var cur = (keyObj("ui.layout") || {}).value, lay = h("div", { class: "apps", role: "group", "aria-label": "Modo de ventanas" });
+    LAYOUTS.forEach(function (l) {
+      lay.appendChild(h("div", { class: "acard", "data-layout": l[0] }, h("div", { class: "an" }, h("b", { text: l[1] }), cur === l[0] ? h("span", { class: "badge ok", text: "en uso" }) : null),
+        h("p", { text: l[2] }),
+        h("div", { class: "ab" }, h("button", { class: "btn small" + (cur === l[0] ? " ghost" : ""), type: "button", text: cur === l[0] ? "Elegido" : "Elegir", disabled: cur === l[0], onclick: function () {
+          setKey("ui.layout", l[0]).then(function (ok) { if (ok) { toast("Ventanas: " + l[1].toLowerCase()); drawPage(); } });
+        } }))));
+    });
+    root.appendChild(lay);
+    root.appendChild(h("h2", { text: "Lo básico" }));
+    var tbl = h("div", { class: "card rows" });
+    KEYS_HELP.forEach(function (k) { tbl.appendChild(h("div", { class: "row" }, h("div", { class: "lbl" }, h("b", { text: k[1] })), h("code", { text: k[0] }))); });
+    root.appendChild(tbl);
+    root.appendChild(h("p", { class: "sub", text: "Con el ratón: el botón «Aplicaciones» del panel abre el menú; las ventanas abiertas aparecen en el panel (clic para ir a una, clic central para cerrarla); Super + arrastrar mueve una ventana y Super + clic derecho la cambia de tamaño." }));
+    root.appendChild(h("h2", { text: "¿Qué quieres hacer?" }));
+    var links = h("div", { class: "wrapline" });
+    [["themes", "Cambiar el aspecto"], ["apps", "Instalar programas"], ["files", "Crear un archivo"], ["access", "Accesibilidad"], ["security", "Seguridad"], ["devices", "Dispositivos"]].forEach(function (l) {
+      links.appendChild(h("button", { class: "btn ghost", type: "button", text: l[1], onclick: function () { go(l[0]); } }));
+    });
+    root.appendChild(links);
+  }
+  /* ---------- instalar (solo en el sistema live) ---------- */
+  var LANGS = [["es_ES.UTF-8", "Español (España)", "es", "Europe/Madrid"], ["es_MX.UTF-8", "Español (México)", "latam", "America/Mexico_City"],
+    ["es_AR.UTF-8", "Español (Argentina)", "latam", "America/Argentina/Buenos_Aires"], ["es_CO.UTF-8", "Español (Colombia)", "latam", "America/Bogota"],
+    ["es_CL.UTF-8", "Español (Chile)", "latam", "America/Santiago"], ["es_PE.UTF-8", "Español (Perú)", "latam", "America/Lima"],
+    ["es_US.UTF-8", "Español (Estados Unidos)", "latam", "America/New_York"], ["en_US.UTF-8", "English (US)", "us", "America/New_York"]];
+  var KEYMAPS = [["es", "Español (España)"], ["latam", "Español (Latinoamérica)"], ["us", "Inglés (EE. UU.)"], ["gb", "Inglés (Reino Unido)"],
+    ["fr", "Francés"], ["de", "Alemán"], ["it", "Italiano"], ["pt", "Portugués"], ["br", "Portugués (Brasil)"]];
+  var ZONES = ["Europe/Madrid", "Atlantic/Canary", "Europe/Lisbon", "Europe/London", "America/Mexico_City", "America/Bogota", "America/Lima",
+    "America/Caracas", "America/Santiago", "America/Argentina/Buenos_Aires", "America/Montevideo", "America/New_York", "America/Los_Angeles", "Etc/UTC"];
+  var INS = { step: 0, disks: null, status: null, userEdited: false, hostEdited: false,
+    f: { locale: "es_ES.UTF-8", keymap: "es", timezone: "Europe/Madrid", disk: "", mode: "", encrypt: false, passphrase: "", passphrase2: "",
+         fullname: "", user: "", password: "", password2: "", hostname: "rros", confirm: false } };
+  var INS_STEPS = ["Idioma y teclado", "Disco", "Tu cuenta", "Resumen"];
+  function insField(label, el, hint) {
+    return h("label", null, label, el, hint ? h("small", { class: "muted", text: hint }) : null);
+  }
+  function insInput(name, attrs, after) {
+    var el = h("input", Object.assign({ type: "text", value: INS.f[name] }, attrs || {}));
+    el.addEventListener("input", function () { INS.f[name] = el.value; if (after) after(el.value); });
+    return el;
+  }
+  function insSelect(name, opts, after) {
+    var el = h("select", null);
+    opts.forEach(function (o) { el.appendChild(h("option", { value: o[0], selected: INS.f[name] === o[0], text: o[1] })); });
+    el.addEventListener("change", function () { INS.f[name] = el.value; if (after) after(el.value); });
+    return el;
+  }
+  function insDisk() { return (INS.disks && INS.disks.disks || []).filter(function (d) { return d.path === INS.f.disk; })[0]; }
+  function slug(s) {
+    return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/\s+/)[0].replace(/[^a-z0-9_-]/g, "").replace(/^[^a-z]+/, "").slice(0, 31);
+  }
+  /* comprueba el paso actual; devuelve el error o "" */
+  function insCheck(step) {
+    var f = INS.f, d = insDisk();
+    if (step === 0) return /^[A-Za-z0-9_+\/-]{1,40}$/.test(f.timezone) && f.timezone.indexOf("..") < 0 ? "" : "zona horaria no válida (p. ej. Europe/Madrid)";
+    if (step === 1) {
+      if (!d || !f.mode) return "elige un disco y cómo instalar";
+      if (f.mode === "alongside" && f.encrypt && d.alongside_crypt) return "cifrado: " + d.alongside_crypt;
+      if (f.encrypt && f.passphrase.length < 8) return "la contraseña del cifrado debe tener al menos 8 caracteres";
+      if (f.encrypt && f.passphrase !== f.passphrase2) return "las contraseñas del cifrado no coinciden";
+      return "";
+    }
+    if (step === 2) {
+      if (/[:,=]/.test(f.fullname)) return "el nombre no puede llevar : , ni =";
+      if (!/^[a-z][a-z0-9_-]{0,30}$/.test(f.user)) return "usuario: minúsculas, cifras, - y _, empezando por una letra";
+      if (!f.password) return "escribe una contraseña";
+      if (f.password !== f.password2) return "las contraseñas no coinciden";
+      if (!/^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/.test(f.hostname)) return "nombre del equipo: letras, cifras y - (sin espacios)";
+      return "";
+    }
+    if (step === 3 && f.mode === "wipe" && !f.confirm) return "marca la casilla para confirmar que se borrará el disco";
+    return "";
+  }
+  function insNav(root, nextLabel, onNext) {
+    var bar = h("div", { class: "wrapline", style: "margin-top:18px" });
+    if (INS.step > 0) bar.appendChild(h("button", { class: "btn ghost", type: "button", text: "Atrás", onclick: function () { INS.step--; drawPage(); } }));
+    bar.appendChild(h("button", { class: "btn", type: "button", id: "ins-next", text: nextLabel, onclick: function () {
+      var e = insCheck(INS.step);
+      if (e) return toast(e, true);
+      if (onNext) return onNext();
+      INS.step++; drawPage(); window.scrollTo(0, 0);
+    } }));
+    root.appendChild(bar);
+  }
+  function drawInstall(root) {
+    root.appendChild(h("h1", { text: "Instalar RROS" }));
+    if (!S.live) {
+      root.appendChild(h("p", { class: "sub", text: "RROS ya está instalado en este equipo. El instalador solo está en el sistema live (la ISO o la memoria USB)." }));
+      return;
+    }
+    if (INS.status === null) {
+      root.appendChild(h("div", { class: "empty", text: "Cargando el instalador…" }));
+      api("/api/install_status").then(function (st) { INS.status = st || {}; if (st && st.started) INS.step = "progress"; if (page === "install") drawPage(); });
+      return;
+    }
+    if (INS.step === "progress") return drawInstallProgress(root);
+    root.appendChild(h("p", { class: "sub", text: "Cuatro pasos y RROS queda en el disco. Puede ir junto a Windows (en el espacio libre) y cifrado. Mientras instalas puedes seguir usando el sistema." }));
+    var ol = h("ol", { class: "steps", "aria-label": "Pasos" });
+    INS_STEPS.forEach(function (n, i) { ol.appendChild(h("li", { class: i === INS.step ? "on" : i < INS.step ? "done" : "", "aria-current": i === INS.step ? "step" : null, text: (i + 1) + ". " + n })); });
+    root.appendChild(ol);
+    [drawInsLang, drawInsDisk, drawInsUser, drawInsSummary][INS.step](root);
+  }
+  function drawInsLang(root) {
+    var f = INS.f, tz = insInput("timezone", { list: "ins-zones", "aria-label": "Zona horaria" });
+    var dl = h("datalist", { id: "ins-zones" });
+    ZONES.forEach(function (z) { dl.appendChild(h("option", { value: z })); });
+    var km = insSelect("keymap", KEYMAPS, function (v) { setKey("input.keymap", v).then(function (ok) { if (ok) toast("Teclado de esta sesión: " + v); }); });
+    var lang = insSelect("locale", LANGS, function (v) {
+      var l = LANGS.filter(function (x) { return x[0] === v; })[0];
+      f.keymap = l[2]; f.timezone = l[3]; km.value = l[2]; tz.value = l[3];
+    });
+    root.appendChild(h("div", { class: "card pad formgrid" },
+      insField("Idioma del sistema", lang, "Menús y mensajes de las aplicaciones"),
+      insField("Teclado", km, "También el de la pantalla de la contraseña del disco"),
+      insField("Zona horaria", tz), dl,
+      insField("Prueba el teclado", h("input", { type: "text", placeholder: "ñ ç ¿? @ € …", "aria-label": "Prueba el teclado" }))));
+    insNav(root, "Siguiente");
+  }
+  function drawInsDisk(root) {
+    var f = INS.f;
+    if (INS.disks === null) {
+      root.appendChild(h("div", { class: "empty", text: "Buscando discos…" }));
+      api("/api/install_disks").then(function (r) { INS.disks = r && r.disks ? r : { disks: [], error: (r && r.error) || "no se pudieron leer los discos" }; if (page === "install") drawPage(); });
+      return;
+    }
+    var D = INS.disks;
+    root.appendChild(h("div", { class: "wrapline", style: "margin-bottom:12px" },
+      h("span", { class: "pill", text: "Arranque: " + (D.firmware === "uefi" ? "UEFI" : "BIOS (antiguo)") }),
+      h("span", { class: "pill", text: "RROS " + D.profile + " necesita " + (D.min_mb / 1024).toFixed(0) + " GB" }),
+      h("button", { class: "btn ghost small", type: "button", text: "Volver a buscar", onclick: function () { INS.disks = null; drawPage(); } })));
+    if (D.error) root.appendChild(h("div", { class: "empty", text: D.error }));
+    if (!D.disks.length && !D.error) root.appendChild(h("div", { class: "empty", text: "No hay ningún disco donde instalar." }));
+    D.disks.forEach(function (d) {
+      var card = h("div", { class: "card pad diskcard", "data-disk": d.path, style: "margin-bottom:10px" });
+      card.appendChild(h("div", { class: "an" }, h("b", { text: d.model + " · " + d.size_h }),
+        h("span", { class: "badge", text: d.path.slice(5) + " · " + d.kind + (d.pttype ? " · " + d.pttype.toUpperCase() : "") })));
+      var parts = d.parts.map(function (p) {
+        var what = p.role === "esp" ? "EFI" : p.role === "windows" ? (p.label || (p.fstype ? "Windows" : "reservada de Windows")) : p.role === "linux" ? "Linux" : (p.label || p.fstype || "sin formato");
+        return what + " " + p.size_h;
+      });
+      card.appendChild(h("p", { class: "sub", style: "margin:4px 0 8px", text: (d.systems ? "Tiene " + d.systems + ". " : "") + (parts.length ? "Particiones: " + parts.join(", ") + "." : "Vacío.") + (d.free_h ? " Libre: " + d.free_h + "." : "") }));
+      if (d.in_use) { card.appendChild(h("p", { class: "muted", text: "No disponible: " + d.in_use })); root.appendChild(card); return; }
+      function opt(mode, label, why) {
+        var id = "opt-" + d.name + "-" + mode, on = f.disk === d.path && f.mode === mode;
+        var r = h("input", { type: "radio", name: "ins-disk", id: id, checked: on, disabled: !!why, onchange: function () { f.disk = d.path; f.mode = mode; f.confirm = false; drawPage(); } });
+        return h("label", { class: "opt" + (why ? " off" : ""), for: id }, r, h("span", null, h("b", { text: label }), why ? h("small", { text: why }) : null));
+      }
+      card.appendChild(opt("alongside", d.systems ? "Instalar junto a " + d.systems + " (en el espacio libre, sin borrar nada)" : "Instalar en el espacio libre (sin borrar nada)", d.alongside));
+      card.appendChild(opt("wipe", "Borrar todo el disco e instalar RROS", d.wipe));
+      if (d.windows && d.alongside && /espacio libre/.test(d.alongside))
+        card.appendChild(h("p", { class: "sub", style: "margin:8px 0 0", text: "Para instalar junto a Windows, libera antes espacio desde Windows: Administración de discos → clic derecho en (C:) → Reducir volumen. Deja al menos " + (D.min_mb / 1024).toFixed(0) + " GB sin asignar, reinicia con esta memoria y vuelve aquí." }));
+      if (d.bitlocker) card.appendChild(h("p", { class: "sub", style: "margin:8px 0 0", text: "Windows usa BitLocker: ten a mano su clave de recuperación (cuenta Microsoft → Dispositivos); puede pedirla la primera vez que arranques Windows." }));
+      root.appendChild(card);
+    });
+    var d = insDisk(), cryptWhy = d && f.mode === "alongside" ? d.alongside_crypt : "";
+    var sw = h("input", { type: "checkbox", role: "switch", checked: f.encrypt && !cryptWhy, disabled: !!cryptWhy, "aria-label": "Cifrar el disco", onchange: function () { f.encrypt = sw.checked; drawPage(); } });
+    var box = h("div", { class: "card pad", style: "margin-top:16px" },
+      h("div", { class: "an" }, h("b", { text: "Cifrar el disco" }), h("label", { class: "switch" }, sw, h("span"))),
+      h("p", { class: "sub", style: "margin:4px 0 0", text: cryptWhy ? "No disponible: " + cryptWhy : "Protege tus archivos si pierdes el equipo o te lo roban: al encenderlo se pide una contraseña antes de arrancar (LUKS2, como Ubuntu)." }));
+    if (f.encrypt && !cryptWhy) {
+      box.appendChild(h("div", { class: "formgrid", style: "margin-top:10px" },
+        insField("Contraseña del cifrado", insInput("passphrase", { type: "password", autocomplete: "new-password" }), "Mínimo 8 caracteres"),
+        insField("Repítela", insInput("passphrase2", { type: "password", autocomplete: "new-password" }))));
+      box.appendChild(h("p", { class: "sub", style: "margin:8px 0 0;color:var(--yellow)", text: "Si la olvidas no hay forma de recuperar los datos. Apúntala en un lugar seguro." }));
+    }
+    root.appendChild(box);
+    insNav(root, "Siguiente");
+  }
+  function drawInsUser(root) {
+    var f = INS.f, user, host;
+    function sync() {
+      if (!INS.userEdited) { f.user = slug(f.fullname); user.value = f.user; }
+      if (!INS.hostEdited) { f.hostname = (f.user ? f.user + "-" : "") + "rros"; host.value = f.hostname; }
+    }
+    user = insInput("user", { autocomplete: "username", autocapitalize: "none", spellcheck: "false" }, function () { INS.userEdited = true; sync(); });
+    host = insInput("hostname", { autocapitalize: "none", spellcheck: "false" }, function () { INS.hostEdited = true; });
+    root.appendChild(h("div", { class: "card pad formgrid" },
+      insField("Tu nombre", insInput("fullname", { autocomplete: "name" }, sync), "Como quieres que aparezca"),
+      insField("Nombre de usuario", user, "Minúsculas, sin espacios"),
+      insField("Contraseña", insInput("password", { type: "password", autocomplete: "new-password" }), "Para entrar y para tareas de administración (sudo)"),
+      insField("Repite la contraseña", insInput("password2", { type: "password", autocomplete: "new-password" })),
+      insField("Nombre del equipo", host, "Cómo se ve en la red")));
+    insNav(root, "Siguiente");
+  }
+  function drawInsSummary(root) {
+    var f = INS.f, d = insDisk() || {}, lang = LANGS.filter(function (l) { return l[0] === f.locale; })[0], km = KEYMAPS.filter(function (k) { return k[0] === f.keymap; })[0];
+    var rows = h("div", { class: "card rows" });
+    [["Disco", d.model + " (" + d.path + ", " + d.size_h + ")"],
+     ["Cómo", f.mode === "alongside" ? "En el espacio libre (" + d.free_h + ")" + (d.systems ? ", junto a " + d.systems + ": al encender podrás elegir" : "") : "Borrando todo el disco"],
+     ["Cifrado", f.encrypt ? "Sí: se pedirá la contraseña al encender" : "No"],
+     ["Usuario", (f.fullname ? f.fullname + " · " : "") + f.user + " · equipo " + f.hostname],
+     ["Idioma y teclado", (lang ? lang[1] : f.locale) + " · " + (km ? km[1] : f.keymap) + " · " + f.timezone],
+     ["Perfil", INS.disks.profile]].forEach(function (r) { rows.appendChild(h("div", { class: "row" }, h("div", { class: "lbl" }, h("b", { text: r[0] })), h("div", { text: r[1] }))); });
+    root.appendChild(rows);
+    if (f.mode === "wipe") {
+      var cb = h("input", { type: "checkbox", id: "ins-confirm", checked: f.confirm, onchange: function () { f.confirm = cb.checked; } });
+      root.appendChild(h("div", { class: "card pad", style: "margin-top:14px;border-color:var(--red)" },
+        h("b", { style: "color:var(--red)", text: "Se borrará todo lo que hay en " + d.path + (d.systems ? " (incluido " + d.systems + ")" : "") }),
+        h("label", { class: "opt", for: "ins-confirm", style: "margin-top:8px" }, cb, h("span", { text: "Entiendo que se perderán los datos de este disco" }))));
+    } else {
+      root.appendChild(h("p", { class: "sub", style: "margin-top:14px", text: "Lo que ya hay en el disco no se toca: se crean particiones nuevas en el espacio libre. Aun así, haz antes una copia de seguridad de lo importante." }));
+    }
+    insNav(root, "Instalar ahora", function () {
+      var b = { disk: f.disk, mode: f.mode, encrypt: f.encrypt ? "1" : "0", passphrase: f.encrypt ? f.passphrase : "", user: f.user, fullname: f.fullname,
+                password: f.password, hostname: f.hostname, keymap: f.keymap, locale: f.locale, timezone: f.timezone };
+      document.getElementById("ins-next").disabled = true;
+      api("/api/install", b).then(function (r) {
+        if (!r.ok) { document.getElementById("ins-next").disabled = false; return toast(r.error, true); }
+        f.password = f.password2 = f.passphrase = f.passphrase2 = "";
+        INS.status = { started: true, running: true }; INS.step = "progress"; drawPage(); window.scrollTo(0, 0);
+      });
+    });
+  }
+  var insTimer = null;
+  function drawInstallProgress(root) {
+    var st = INS.status || {}, m = /\((\d+) %\)/.exec(st.text || ""), pct = st.steps ? Math.round(((st.step - 1) + (m ? +m[1] / 100 : 0)) * 100 / st.steps) : 0;
+    if (st.done && st.ok) pct = 100;
+    var box = h("div", { class: "card pad", id: "ins-progress" });
+    if (st.done && st.ok) {
+      box.appendChild(h("b", { text: "RROS está instalado" }));
+      box.appendChild(h("p", { class: "sub", style: "margin:4px 0 10px", text: "Reinicia y quita la memoria USB (o la ISO) cuando se apague la pantalla." + (INS.f.encrypt ? " Al encender te pedirá la contraseña del cifrado." : "") }));
+      box.appendChild(h("button", { class: "btn", type: "button", text: "Reiniciar ahora", onclick: function () { api("/api/reboot", {}).then(function (r) { if (!r.ok) toast(r.error, true); }); } }));
+    } else if (st.done) {
+      box.appendChild(h("b", { style: "color:var(--red)", text: "La instalación no se ha completado" }));
+      box.appendChild(h("p", { class: "sub", style: "margin:4px 0 10px", text: st.error || "Mira el registro de abajo." }));
+      box.appendChild(h("button", { class: "btn ghost", type: "button", text: "Volver al resumen", onclick: function () { INS.step = 3; INS.status = { started: false }; drawPage(); } }));
+    } else {
+      box.appendChild(h("b", { text: st.text || "Empezando…" }));
+      box.appendChild(h("small", { class: "muted", style: "display:block", text: st.steps ? "Paso " + st.step + " de " + st.steps : "" }));
+    }
+    box.appendChild(h("div", { class: "score", style: "margin:12px 0 0" }, h("div", { class: "bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Progreso de la instalación" }, h("i", { style: "width:" + pct + "%" }))));
+    root.appendChild(box);
+    if (st.log) root.appendChild(h("details", { style: "margin-top:12px", open: st.done && !st.ok }, h("summary", { text: "Registro" }), h("pre", { class: "log", text: st.log })));
+    clearTimeout(insTimer);
+    if (!st.done) insTimer = setTimeout(function () {
+      api("/api/install_status").then(function (n) { if (n && n.started) INS.status = n; if (page === "install" && INS.step === "progress") drawPage(); });
+    }, 1500);
+  }
+
+  /* ---------- escritorio: estilos, fondo y efectos ---------- */
+  var WP_STYLES = [["aurora", "Aurora", "Cortinas de luz con los colores del tema"], ["ondas", "Ondas", "Capas de olas, como dunas"],
+    ["degradado", "Degradado", "Fundido suave con dos focos de color"], ["circulos", "Círculos", "Burbujas translúcidas"], ["liso", "Liso", "Solo el color de fondo"]];
+  var WP_THUMB = {}, wpKey = "";
+  /* mini maqueta de cada estilo de escritorio */
+  function deskMock(id) {
+    var p = S.current.palette, d = h("div", { class: "dmock dm-" + id });
+    d.style.cssText = "--m-bg:" + p.bg + ";--m-sur:" + p.surface + ";--m-acc:" + p.accent + ";--m-mag:" + p.magenta + ";--m-txt:" + p.muted;
+    if (id === "clasico") {
+      d.appendChild(h("i", { class: "win", style: "left:12%;top:14%;width:50%;height:46%" }));
+      d.appendChild(h("i", { class: "win f", style: "left:40%;top:28%;width:48%;height:44%" }));
+      d.appendChild(h("i", { class: "bar bot" }, h("b", { class: "start" }), h("b", { class: "task on" }), h("b", { class: "task" }), h("b", { class: "clock" })));
+    } else if (id === "moderno") {
+      d.appendChild(h("i", { class: "bar top thin" }, h("b", { class: "clock mid" })));
+      d.appendChild(h("i", { class: "win f", style: "left:16%;top:20%;width:56%;height:50%" }));
+      d.appendChild(h("i", { class: "dock" }, h("b"), h("b"), h("b"), h("b")));
+    } else {
+      d.appendChild(h("i", { class: "bar top pill" }, h("b", { class: "ws on" }), h("b", { class: "ws" }), h("b", { class: "clock mid" })));
+      d.appendChild(h("i", { class: "win f", style: "left:4%;top:20%;width:45%;height:74%" }));
+      d.appendChild(h("i", { class: "win", style: "left:51%;top:20%;width:45%;height:35%" }));
+      d.appendChild(h("i", { class: "win", style: "left:51%;top:59%;width:45%;height:35%" }));
+    }
+    return d;
+  }
+  function drawDesktopStyles(root) {
+    var grid = h("div", { class: "apps", role: "group", "aria-label": "Estilo de escritorio" });
+    (S.desktops || []).forEach(function (d) {
+      var on = S.desktop_current === d.id;
+      grid.appendChild(h("div", { class: "acard", "data-desktop": d.id }, deskMock(d.id),
+        h("div", { class: "an" }, h("b", { text: d.label }), on ? h("span", { class: "badge ok", text: "en uso" }) : null),
+        h("p", { text: d.desc }),
+        h("div", { class: "ab" }, h("button", { class: "btn small" + (on ? " ghost" : ""), type: "button", text: on ? "En uso" : "Usar este estilo", disabled: on, onclick: function () {
+          api("/api/desktop", { name: d.id }).then(function (r) {
+            if (!r.ok) return toast(r.error || r.output || "no se pudo aplicar", true);
+            toast("Escritorio: " + d.label.toLowerCase()); load();
+          });
+        } }), h("code", { text: "rros theme escritorio " + d.id }))));
+    });
+    if (!S.desktop_current) grid.appendChild(h("p", { class: "sub", text: "Ahora tienes un escritorio personalizado: elegir un estilo cambia el panel, el modo de ventanas y el dock." }));
+    root.appendChild(grid);
+  }
+  /* miniatura real (la genera rros-theme con los colores del tema); en la demo, un degradado */
+  function wpThumb(style) {
+    var p = S.current.palette, box = h("div", { class: "wpthumb", "data-style": style });
+    box.style.background = style === "liso" ? p.bg : "linear-gradient(160deg," + p.bg + "," + p.surface + " 60%," + p.accent + ")";
+    if (style === "liso" || window.RROS_MOCK) return box;
+    var key = p.bg + p.accent + p.magenta + p.cyan;
+    if (key !== wpKey) { WP_THUMB = {}; wpKey = key; }
+    function show(url) { box.style.background = "center/cover no-repeat url(" + url + ")"; }
+    if (WP_THUMB[style]) show(WP_THUMB[style]);
+    else fetch("/api/wallpaper_preview?style=" + style, { headers: { "X-RROS-Token": TOKEN } }).then(function (r) { return r.ok ? r.blob() : null; })
+      .then(function (b) { if (b) { WP_THUMB[style] = URL.createObjectURL(b); show(WP_THUMB[style]); } }).catch(function () {});
+    return box;
+  }
+  var DESK_KEYS = ["ui.compositor", "ui.effects", "ui.animations", "ui.animation_style", "ui.animation_speed", "ui.corner_radius", "ui.gap",
+    "ui.border_width", "ui.border_gradient", "ui.transparency", "ui.blur", "ui.blur_strength", "ui.shadows", "ui.dim_inactive",
+    "ui.layout", "ui.tiling_layout", "ui.workspaces", "ui.dock", "input.gestures", "ui.panel_position", "panel.style", "ui.panel_size", "panel.taskbar"];
+  function drawDesktop(root) {
+    root.appendChild(h("h1", { text: "Escritorio y fondo" }));
+    root.appendChild(h("p", { class: "sub", text: "El escritorio de RROS es Hyprland: animaciones, esquinas redondeadas, desenfoque y sombras, con barra de tareas y fondo. Si el equipo no tiene aceleración gráfica (máquinas virtuales), se usa sway, más sencillo, con los mismos ajustes." }));
+    root.appendChild(h("h2", { text: "Estilo" }));
+    drawDesktopStyles(root);
+    root.appendChild(h("h2", { text: "Fondo de pantalla" }));
+    var cur = (keyObj("ui.wallpaper_style") || {}).value || "aurora", own = (keyObj("ui.wallpaper") || {}).value;
+    var gal = h("div", { class: "wpgrid", role: "group", "aria-label": "Fondo de pantalla" });
+    WP_STYLES.forEach(function (w) {
+      var on = !own && cur === w[0];
+      gal.appendChild(h("button", { class: "wpcard", type: "button", "aria-pressed": String(on), title: w[2], onclick: function () {
+        setKey("ui.wallpaper_style", w[0]).then(function (ok) {
+          if (!ok) return;
+          (own ? unsetKey("ui.wallpaper") : load()).then(function () { toast("Fondo: " + w[1].toLowerCase()); });
+        });
+      } }, wpThumb(w[0]), h("span", { text: w[1] })));
+    });
+    root.appendChild(gal);
+    root.appendChild(h("p", { class: "sub", text: "Los fondos se dibujan con los colores del tema y cambian solos al cambiar de tema o de acento. Super + Alt + W pasa al siguiente. También puedes poner tu propia imagen:" }));
+    var rows = h("div", { class: "card rows" });
+    ["ui.wallpaper", "ui.wallpaper_mode"].forEach(function (k) { var o = keyObj(k); if (o) rows.appendChild(settingRow(o)); });
+    root.appendChild(rows);
+    root.appendChild(h("h2", { text: "Ventanas, efectos y panel" }));
+    var rows2 = h("div", { class: "card rows" });
+    DESK_KEYS.forEach(function (k) { var o = keyObj(k); if (o) rows2.appendChild(settingRow(o)); });
+    root.appendChild(rows2);
+    root.appendChild(h("p", { class: "sub", text: "¿Algo que no esté aquí? Tus propias líneas de Hyprland van en ~/.config/hypr/personal.conf (RROS no lo toca)." }));
+  }
+
+  /* ---------- accesibilidad ---------- */
+  var A11Y_KEYS = ["access.screen_reader", "access.onscreen_keyboard", "ui.high_contrast", "ui.reduce_motion", "ui.font_size", "ui.scale", "ui.cursor_size"];
+  function drawAccess(root) {
+    root.appendChild(h("h1", { text: "Accesibilidad" }));
+    root.appendChild(h("p", { class: "sub", text: "Lector de pantalla con voz en español, teclado en pantalla, alto contraste y tamaños. Los cambios se aplican al instante." }));
+    function a11y(what, label) {
+      return h("button", { class: "btn", type: "button", text: label, onclick: function () {
+        api("/api/a11y", { what: what }).then(function (r) { if (!r.ok) return toast(r.error, true); toast(label + ": hecho"); });
+      } });
+    }
+    root.appendChild(h("div", { class: "apps" },
+      h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: "Lector de pantalla" }), h("span", { class: "badge", text: "Super+Alt+S" })),
+        h("p", { text: "Orca lee en voz alta lo que hay en las aplicaciones. Funciona con las apps GTK (archivos, editor, navegador, ajustes); los atajos propios de Orca dependen del compositor." }),
+        h("div", { class: "ab" }, a11y("lector", "Activar o desactivar ahora"))),
+      h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: "Teclado en pantalla" }), h("span", { class: "badge", text: "Super+Alt+K" })),
+        h("p", { text: "Un teclado táctil en la parte de abajo, para pantallas táctiles o si no puedes usar el teclado físico." }),
+        h("div", { class: "ab" }, a11y("teclado", "Mostrar u ocultar ahora")))));
+    root.appendChild(h("h2", { text: "Ajustes" }));
+    var rows = h("div", { class: "card rows" });
+    A11Y_KEYS.forEach(function (key) { var k = keyObj(key); if (k) rows.appendChild(settingRow(k)); });
+    root.appendChild(rows);
+    root.appendChild(h("p", { class: "sub", text: "Más atajos: Super+F1 abre la ayuda de bienvenida, Super+Intro una terminal y Super+D el menú de aplicaciones." }));
+  }
+
+  /* ---------- seguridad ---------- */
+  var SEC = null;
+  var ICON = { ok: "✓", warn: "!", fail: "✗", info: "·" };
+  var LEVELS = [["basico", "Básico", "Como Ubuntu: cortafuegos y poco más"], ["estandar", "Estándar", "Recomendado: kernel endurecido, bloqueo tras 10 intentos, actualizaciones descargadas cada día"], ["estricto", "Estricto", "Sin memorias USB ni cámara, sin ping ni SSH, sudo pide siempre la contraseña"]];
+  function drawSecurity(root) {
+    root.appendChild(h("h1", { text: "Seguridad" }));
+    root.appendChild(h("p", { class: "sub", text: "Estado real del equipo, lo que conviene arreglar y las directivas de seguridad. Los cambios afectan a todo el sistema: se aplican en una terminal con tu contraseña." }));
+    if (SEC === null) {
+      root.appendChild(h("div", { class: "empty", text: "Comprobando la seguridad del equipo…" }));
+      api("/api/security").then(function (r) { SEC = r && r.checks ? r : { score: 0, level: "?", checks: [], error: (r && r.error) || "no disponible" }; if (page === "security") drawPage(); });
+      return;
+    }
+    if (SEC.error) root.appendChild(h("div", { class: "empty", text: SEC.error }));
+    var lvl = LEVELS.filter(function (l) { return l[0] === SEC.level; })[0];
+    root.appendChild(h("div", { class: "score card", style: "padding:16px" },
+      h("div", { class: "num", text: String(SEC.score) }),
+      h("div", { style: "flex:1;min-width:180px" }, h("b", { text: "Puntuación de seguridad" }), h("div", { class: "bar", role: "img", "aria-label": "Puntuación " + SEC.score + " de 100" }, h("i", { style: "width:" + SEC.score + "%" })),
+        h("small", { class: "muted", text: "Nivel: " + (lvl ? lvl[1] : "personalizado") })),
+      h("button", { class: "btn ghost small", type: "button", text: "Volver a comprobar", onclick: function () { SEC = null; drawPage(); } })));
+    var list = h("div", { class: "checks" });
+    SEC.checks.forEach(function (c) {
+      list.appendChild(h("div", { class: "check " + c.status, "data-check": c.id },
+        h("span", { class: "ic", "aria-hidden": "true", text: ICON[c.status] || "·" }),
+        h("div", null, h("b", { text: c.title }), h("p", { text: c.detail }), c.fix ? h("code", { text: c.fix }) : null)));
+    });
+    root.appendChild(list);
+
+    root.appendChild(h("h2", { text: "Nivel de seguridad" }));
+    var lv = h("div", { class: "apps" });
+    LEVELS.forEach(function (l) {
+      lv.appendChild(h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: l[1] }), SEC.level === l[0] ? h("span", { class: "badge ok", text: "en uso" }) : null),
+        h("p", { text: l[2] }),
+        h("div", { class: "ab" }, h("button", { class: "btn small", type: "button", text: "Aplicar " + l[1].toLowerCase(), disabled: SEC.level === l[0], onclick: function () {
+          api("/api/security_level", { level: l[0] }).then(function (r) { if (!r.ok) return toast(r.error, true); toast("Se ha abierto una terminal: escribe tu contraseña para aplicar el nivel " + l[1].toLowerCase()); });
+        } }), h("code", { text: "sudo rros security nivel " + l[0] }))));
+    });
+    root.appendChild(lv);
+
+    root.appendChild(h("h2", { text: "Cortafuegos: abrir un puerto" }));
+    var port = h("input", { type: "text", placeholder: "8080/tcp", "aria-label": "Puerto" });
+    function portAct(action) {
+      api("/api/security_port", { action: action, port: port.value.trim() }).then(function (r) { if (!r.ok) return toast(r.error, true); toast("Se ha abierto una terminal: escribe tu contraseña"); });
+    }
+    root.appendChild(h("div", { class: "card", style: "padding:14px;margin-bottom:16px" },
+      h("p", { class: "sub", style: "margin-top:0", text: "Solo si un programa tuyo necesita recibir conexiones (un servidor, un juego en red). Por defecto no entra nada que no hayas pedido." }),
+      h("div", { class: "wrapline" }, port,
+        h("button", { class: "btn small", type: "button", text: "Abrir", onclick: function () { portAct("abrir"); } }),
+        h("button", { class: "btn ghost small", type: "button", text: "Cerrar", onclick: function () { portAct("cerrar"); } }))));
+
+    root.appendChild(h("h2", { text: "Directivas" }));
+    var rows = h("div", { class: "card rows" });
+    S.keys.filter(function (k) { return k.category === "security" || k.key === "system.auto_updates" || k.key === "privacy.lock_minutes"; }).forEach(function (k) { rows.appendChild(settingRow(k)); });
+    root.appendChild(rows);
+  }
+
+  /* ---------- dispositivos ---------- */
+  var DEV = null;
+  var ACT = { mount: "Montar", unmount: "Desmontar", eject: "Expulsar", block: "Desactivar", unblock: "Activar" };
+  function drawDevices(root) {
+    root.appendChild(h("h1", { text: "Dispositivos" }));
+    root.appendChild(h("p", { class: "sub", text: "Todo lo que el sistema ve: discos y memorias, USB, red, radios, sonido, pantallas, batería y entrada. Monta o expulsa memorias y enciende o apaga el Wi-Fi y el Bluetooth." }));
+    if (DEV === null) {
+      root.appendChild(h("div", { class: "empty", text: "Buscando dispositivos…" }));
+      api("/api/devices").then(function (r) { DEV = r && r.devices ? r : { categories: [], devices: [], error: (r && r.error) || "no disponible" }; if (page === "devices") drawPage(); });
+      return;
+    }
+    root.appendChild(h("div", { class: "wrapline" }, h("button", { class: "btn ghost small", type: "button", text: "Actualizar", onclick: function () { DEV = null; drawPage(); } }),
+      h("code", { text: "rros dispositivos" })));
+    if (DEV.error) root.appendChild(h("div", { class: "empty", text: DEV.error }));
+    DEV.categories.forEach(function (c) {
+      var items = DEV.devices.filter(function (d) { return d.cat === c.id; });
+      if (!items.length) return;
+      root.appendChild(h("div", { class: "devgroup", text: c.label }));
+      items.forEach(function (d) {
+        var acts = d.actions ? d.actions.split(",") : [];
+        var row = h("div", { class: "dev" + (d.parent ? " part" : ""), "data-dev": d.id },
+          h("div", { class: "dn" }, h("b", { text: d.name }), h("small", { text: [d.id, d.detail].filter(Boolean).join(" · ") })),
+          d.state ? h("span", { class: "badge" + (/activo|conectad|montado|cargad|enchufado|disponible/.test(d.state) ? " ok" : ""), text: d.state }) : null);
+        acts.forEach(function (a) {
+          row.appendChild(h("button", { class: "btn small" + (a === "eject" || a === "block" ? " ghost" : ""), type: "button", text: ACT[a] || a, onclick: function () {
+            api("/api/device_action", { action: a, id: d.id }).then(function (r) {
+              if (!r.ok) toast((r.output || r.error || "falló").trim(), true); else toast((r.output || "Hecho").trim());
+              DEV = null; drawPage();
+            });
+          } }));
+        });
+        root.appendChild(row);
+      });
+    });
+  }
+
+  /* ---------- crear archivos ---------- */
+  var TPL = null;
+  function drawFiles(root) {
+    root.appendChild(h("h1", { text: "Crear archivos" }));
+    root.appendChild(h("p", { class: "sub", text: "Documentos, scripts, páginas web y proyectos listos para empezar. Las mismas plantillas están en el menú «Crear documento» del gestor de archivos (botón derecho) y en la terminal con rros nuevo." }));
+    if (TPL === null) {
+      root.appendChild(h("div", { class: "empty", text: "Cargando plantillas…" }));
+      api("/api/templates").then(function (r) { TPL = r && r.templates ? r : { templates: [], default_dir: "", error: (r && r.error) || "no disponible" }; if (page === "files") drawPage(); });
+      return;
+    }
+    if (TPL.error) root.appendChild(h("div", { class: "empty", text: TPL.error }));
+    var sel = h("select", { "aria-label": "Plantilla" });
+    TPL.templates.forEach(function (t) { sel.appendChild(h("option", { value: t.id, text: (t.project ? "Proyecto · " : "") + t.desc + (t.user ? " (tuya)" : "") })); });
+    var name = h("input", { type: "text", value: "sin-titulo", "aria-label": "Nombre del archivo" });
+    var dir = h("input", { type: "text", value: TPL.default_dir, "aria-label": "Carpeta" });
+    var hint = h("small", { class: "muted" });
+    function upd() {
+      var t = TPL.templates.filter(function (x) { return x.id === sel.value; })[0];
+      if (!t) return;
+      if (t.dest) dir.value = t.dest; else if (dir.value.indexOf("~/.local") === 0) dir.value = TPL.default_dir;
+      hint.textContent = t.project ? "Se crea una carpeta con ese nombre." : "Se añade " + (t.ext || "la extensión") + " si no la escribes.";
+    }
+    sel.addEventListener("change", upd);
+    root.appendChild(h("div", { class: "card", style: "padding:16px" },
+      h("div", { class: "formgrid" }, h("label", null, "Plantilla", sel), h("label", null, "Nombre", name), h("label", null, "Carpeta", dir)),
+      h("div", { class: "wrapline", style: "margin-top:12px" },
+        h("button", { class: "btn", type: "button", text: "Crear y abrir", onclick: function () {
+          api("/api/new_file", { template: sel.value, name: name.value.trim(), dir: dir.value.trim() }).then(function (r) {
+            if (!r.ok) return toast((r.output || r.error || "no se pudo crear").trim(), true);
+            toast((r.output || "Creado").trim());
+          });
+        } }), hint)));
+    upd();
+    root.appendChild(h("h2", { text: "Plantillas" }));
+    var grid = h("div", { class: "apps" });
+    TPL.templates.forEach(function (t) {
+      grid.appendChild(h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: t.id }), h("span", { class: "badge", text: t.project ? "proyecto" : t.user ? "tuya" : (t.ext || "archivo") })),
+        h("p", { text: t.desc }), h("div", { class: "ab" }, h("code", { text: "rros nuevo " + t.id + " NOMBRE" }))));
+    });
+    root.appendChild(grid);
+    root.appendChild(h("p", { class: "sub", text: "Añade tus propias plantillas guardando cualquier archivo en " + (TPL.user_dir || "~/Plantillas") + "." }));
+  }
+
+  function drawSearch(root) {
+    var q = query.toLowerCase(), found = S.keys.filter(function (k) { return k.key.toLowerCase().indexOf(q) >= 0 || k.desc.toLowerCase().indexOf(q) >= 0; });
+    root.appendChild(h("h1", { text: "Resultados" }));
+    root.appendChild(h("p", { class: "sub", text: found.length + " ajuste(s) para “" + query + "”" }));
+    var rows = h("div", { class: "card rows" });
+    found.forEach(function (k) { rows.appendChild(settingRow(k)); });
+    if (!found.length) rows.appendChild(h("div", { class: "empty", text: "Nada coincide. Prueba con otra palabra o con parte de la clave, por ejemplo “gap”." }));
+    root.appendChild(rows);
+  }
+
+  var ACCENTS = ["#7c5cff", "#22d3ee", "#f472b6", "#4ade80", "#fbbf24", "#fb7185", "#60a5fa", "#f97316"];
+  var COLORKEYS = [["bg", "Fondo"], ["surface", "Superficie"], ["text", "Texto"], ["muted", "Texto suave"], ["border", "Borde"], ["accent", "Acento"], ["red", "Rojo"], ["green", "Verde"], ["yellow", "Amarillo"], ["blue", "Azul"], ["magenta", "Magenta"], ["cyan", "Cian"]];
+
+  function miniTheme(t, scheme, isCur) {
+    var p = t[scheme];
+    var prev = h("div", { class: "tprev", style: "background:" + p.bg },
+      h("div", { class: "bar", style: "background:" + p.surface + ";border-bottom:2px solid " + p.accent }),
+      h("div", { class: "body" },
+        h("div", { class: "win", style: "background:" + p.surface + ";border:1px solid " + p.accent },
+          h("div", { class: "ln", style: "background:" + p.accent + ";width:60%" }), h("div", { class: "ln", style: "background:" + p.text + ";width:85%;opacity:.7" }), h("div", { class: "ln", style: "background:" + p.muted + ";width:50%" })),
+        h("div", { class: "win", style: "background:" + p.surface + ";border:1px solid " + p.border },
+          h("div", { class: "ln", style: "background:" + p.green + ";width:40%" }), h("div", { class: "ln", style: "background:" + p.text + ";width:70%;opacity:.7" }))));
+    var sw = h("div", { class: "sw" });
+    ["accent", "red", "green", "yellow", "blue"].forEach(function (k) { sw.appendChild(h("i", { style: "background:" + p[k] })); });
+    return h("button", { class: "tcard", type: "button", "aria-pressed": String(isCur), onclick: function () { setKey("ui.theme", t.name).then(function (ok) { if (ok) toast("Tema: " + t.name); }); } },
+      prev, h("div", { class: "tn" }, h("span", { text: t.name }), h("span", { class: "badge", text: isCur ? "en uso" : t.builtin ? "incluido" : "propio" })), sw);
+  }
+
+  function drawThemes(root) {
+    var cur = S.current, scheme = cur.scheme;
+    root.appendChild(h("h1", { text: "Temas y colores" }));
+    root.appendChild(h("p", { class: "sub", text: "El tema se aplica a todo el escritorio: ventanas, panel, terminal, notificaciones, lanzador y aplicaciones GTK. Esta ventana también lo usa." }));
+
+    root.appendChild(h("h2", { text: "Esquema y acento" }));
+    var seg = h("div", { class: "seg", role: "group", "aria-label": "Esquema de color" });
+    [["dark", "Oscuro"], ["light", "Claro"]].forEach(function (s) {
+      seg.appendChild(h("button", { type: "button", text: s[1], "aria-pressed": String(scheme === s[0]), onclick: function () { setKey("ui.color_scheme", s[0]); } }));
+    });
+    var sw = h("div", { class: "swatches" });
+    ACCENTS.forEach(function (a) { sw.appendChild(h("button", { class: "dot", type: "button", style: "background:" + a, "aria-label": "Acento " + a, "aria-pressed": String(cur.accent_user && cur.palette.accent.toLowerCase() === a), onclick: function () { setKey("ui.accent", a); } })); });
+    var pick = h("input", { type: "color", value: cur.palette.accent, "aria-label": "Elegir acento personalizado" });
+    pick.addEventListener("change", function () { setKey("ui.accent", pick.value); });
+    sw.appendChild(pick);
+    sw.appendChild(h("button", { class: "btn ghost small", type: "button", text: cur.accent_user ? "Usar el acento del tema" : "Acento del tema en uso", disabled: !cur.accent_user, onclick: function () { unsetKey("ui.accent"); } }));
+    root.appendChild(h("div", { class: "card pad stack" }, h("div", { class: "wrapline" }, seg), sw));
+
+    root.appendChild(h("h2", { text: "Temas" }));
+    var grid = h("div", { class: "themes" });
+    S.themes.forEach(function (t) { grid.appendChild(miniTheme(t, scheme, t.name === cur.theme)); });
+    root.appendChild(grid);
+
+    root.appendChild(h("h2", { text: "Vista previa" }));
+    root.appendChild(preview());
+
+    root.appendChild(h("h2", { text: "Crea tu propio tema" }));
+    var name = h("input", { type: "text", placeholder: "nombre (a-z, 0-9, _ -)", "aria-label": "Nombre del tema nuevo", maxlength: "32" });
+    var base = h("select", { "aria-label": "Tema base" });
+    S.themes.forEach(function (t) { base.appendChild(h("option", { value: t.name, text: "basado en " + t.name })); });
+    var customs = S.themes.filter(function (t) { return !t.builtin; });
+    var box = h("div", { class: "card pad stack" },
+      h("div", { class: "wrapline" }, name, base, h("button", { class: "btn", type: "button", text: "Crear tema", onclick: function () {
+        api("/api/theme_new", { name: name.value.trim(), base: base.value }).then(function (r) {
+          if (!r.ok) return toast(r.error, true);
+          editTheme = name.value.trim(); toast("Tema creado"); load();
+        });
+      } })));
+    if (customs.length) {
+      if (!editTheme || !customs.some(function (t) { return t.name === editTheme; })) editTheme = customs[0].name;
+      var sel = h("select", { "aria-label": "Tema propio a editar" });
+      customs.forEach(function (t) { var o = h("option", { value: t.name, text: t.name }); if (t.name === editTheme) o.selected = true; sel.appendChild(o); });
+      sel.addEventListener("change", function () { editTheme = sel.value; drawPage(); });
+      var th = customs.filter(function (t) { return t.name === editTheme; })[0];
+      box.appendChild(h("div", { class: "wrapline" }, h("b", { text: "Editar" }), sel,
+        h("button", { class: "btn ghost small", type: "button", text: "Usar este tema", onclick: function () { setKey("ui.theme", editTheme); } })));
+      ["dark", "light"].forEach(function (variant) {
+        box.appendChild(h("div", { class: "lbl" }, h("code", { text: "Variante " + (variant === "dark" ? "oscura" : "clara") })));
+        var g = h("div", { class: "colors" });
+        COLORKEYS.forEach(function (ck) {
+          var inp = h("input", { type: "color", value: th[variant][ck[0]], "aria-label": ck[1] + " (" + variant + ")" });
+          inp.addEventListener("change", function () {
+            api("/api/theme_color", { name: editTheme, variant: variant, key: ck[0], value: inp.value }).then(function (r) {
+              if (!r.ok) return toast(r.error, true);
+              toast(ck[1] + " actualizado"); load();
+            });
+          });
+          g.appendChild(h("label", null, inp, h("span", { text: ck[1] })));
+        });
+        box.appendChild(g);
+      });
+    } else {
+      box.appendChild(h("p", { class: "sub", text: "Cuando crees un tema podrás editar sus colores aquí mismo." }));
+    }
+    root.appendChild(box);
+  }
+
+  function val(key, def) { var k = keyObj(key); return k && k.value !== "" ? k.value : def; }
+  function preview() {
+    var p = S.current.palette, full = val("ui.compositor", "hyprland") === "hyprland" || val("ui.effects", "off") !== "off";
+    var d = h("div", { class: "desk pos-" + (val("ui.panel_position", "top") === "bottom" ? "bottom" : "top") });
+    d.style.cssText = "--p-bg:" + p.bg + ";--p-surface:" + p.surface + ";--p-text:" + p.text + ";--p-muted:" + p.muted + ";--p-border:" + p.border + ";--p-accent:" + p.accent + ";--p-green:" + p.green +
+      ";--gap:" + val("ui.gap", 8) + "px;--bw:" + val("ui.border_width", 2) + "px;--rad:" + (full ? val("ui.corner_radius", 8) : 0) + "px";
+    var ws = h("div", { class: "ws" }); [1, 2, 3, 4].forEach(function (i) { ws.appendChild(h("i", { class: i === 1 ? "on" : "", text: String(i) })); });
+    d.appendChild(h("div", { class: "panel" }, ws, h("span", { text: "12:30" }), h("span", { class: "pf", text: "RROS " + S.profile })));
+    d.appendChild(h("div", { class: "area" },
+      h("div", { class: "w f" }, h("div", { class: "t", text: "foot — terminal" }), h("div", { class: "c" }, h("span", { class: "a", text: "rros ~ ➜ rros theme list" }), h("span", { class: "g", text: "* " + S.current.theme }), h("span", { class: "m", text: "  nord  dracula  gruvbox…" }))),
+      h("div", { class: "w" }, h("div", { class: "t", text: "ajustes" }), h("div", { class: "c" }, h("span", { text: "ui.gap = " + val("ui.gap", 8) }), h("span", { class: "m", text: "esquinas " + (full ? val("ui.corner_radius", 8) + " px" : "rectas (sway)") })))));
+    return d;
+  }
+
+  function drawDynamic(root, fam) {
+    var title = DYN.filter(function (d) { return d[0] === fam; })[0][1];
+    var EXAMPLES = {
+      keybind: [["firefox", "Mod+Shift+b exec firefox"], ["captura", "Mod+Shift+p exec rros-shot region"], ["escritorio-5", "Mod+5 workspace number 5"], ["cerrar", "Mod+Shift+q kill"]],
+      rule: [["ff", "app_id=firefox workspace 2"], ["calc", "title=Calculadora floating"], ["video", "app_id=mpv inhibit_idle"], ["steam", "class=Steam border pixel 0"]],
+      autostart: [["sync", "syncthing -no-browser"], ["nube", "nextcloud --background"]]
+    };
+    root.appendChild(h("h1", { text: title }));
+    root.appendChild(h("p", { class: "sub", text: S.dynamic_help[fam] }));
+    var list = h("div", { class: "card" });
+    var items = S.dynamic[fam];
+    if (!items.length) list.appendChild(h("div", { class: "empty", text: "Todavía no tienes ninguno. Añade el primero abajo." }));
+    items.forEach(function (it) {
+      var inp = h("input", { type: "text", value: it.value, "aria-label": fam + "." + it.id });
+      inp.addEventListener("change", function () { setKey(fam + "." + it.id, inp.value).then(function (ok) { if (ok) toast("Guardado: " + it.id); }); });
+      list.appendChild(h("div", { class: "dyn" }, h("span", { class: "id", text: it.id }), inp,
+        h("button", { class: "btn danger small", type: "button", text: "Quitar", onclick: function () { unsetKey(fam + "." + it.id); } })));
+    });
+    root.appendChild(list);
+    root.appendChild(h("h2", { text: "Añadir" }));
+    var id = h("input", { type: "text", placeholder: "identificador", "aria-label": "Identificador nuevo", maxlength: "32" });
+    var v = h("input", { type: "text", placeholder: "valor", "aria-label": "Valor nuevo" });
+    v.style.flex = "1 1 280px";
+    var add = h("button", { class: "btn", type: "button", text: "Añadir", onclick: function () {
+      setKey(fam + "." + id.value.trim(), v.value).then(function (ok) { if (ok) { toast("Añadido"); load(); } });
+    } });
+    var chips = h("div", { class: "chips" });
+    EXAMPLES[fam].forEach(function (e) { chips.appendChild(h("button", { class: "chip", type: "button", text: e[1], onclick: function () { id.value = e[0]; v.value = e[1]; v.focus(); } })); });
+    root.appendChild(h("div", { class: "card pad stack" }, h("div", { class: "wrapline" }, id, v, add), h("div", { class: "lbl" }, h("code", { text: "Ejemplos (pulsa uno para rellenar):" })), chips));
+  }
+
+  function drawBackup(root) {
+    root.appendChild(h("h1", { text: "Copias y exportar" }));
+    root.appendChild(h("p", { class: "sub", text: "Guarda el estado de tus ajustes antes de probar cambios grandes y vuelve a él cuando quieras." }));
+    var name = h("input", { type: "text", placeholder: "nombre de la instantánea", "aria-label": "Nombre de la instantánea", maxlength: "32" });
+    var list = h("div", { class: "card" });
+    if (!S.snapshots.length) list.appendChild(h("div", { class: "empty", text: "No hay instantáneas guardadas." }));
+    S.snapshots.forEach(function (n) {
+      list.appendChild(h("div", { class: "dyn" }, h("span", { class: "id", text: n }), h("span"),
+        h("span", { class: "wrapline" },
+          h("button", { class: "btn small", type: "button", text: "Restaurar", onclick: function () { snap("restore", n); } }),
+          h("button", { class: "btn danger small", type: "button", text: "Borrar", onclick: function () { snap("delete", n); } }))));
+    });
+    root.appendChild(h("div", { class: "card pad stack" }, h("div", { class: "wrapline" }, name, h("button", { class: "btn", type: "button", text: "Guardar instantánea", onclick: function () { snap("save", name.value.trim()); } }))));
+    root.appendChild(h("h2", { text: "Instantáneas" }));
+    root.appendChild(list);
+    root.appendChild(h("h2", { text: "Exportar mis ajustes" }));
+    var ta = h("textarea", { readonly: true, "aria-label": "Mis ajustes en TOML" });
+    root.appendChild(h("div", { class: "card pad stack" },
+      h("p", { class: "sub", text: "Es el mismo contenido que `rros-config export`. Guárdalo en un archivo para llevarlo a otro equipo con `rros-config import`." }),
+      h("div", { class: "wrapline" }, h("button", { class: "btn ghost", type: "button", text: "Mostrar mis ajustes", onclick: function () {
+        api("/api/export").then(function (r) { ta.value = typeof r === "string" ? r : (r && r.text) || ""; });
+      } }), h("button", { class: "btn ghost", type: "button", text: "Copiar", onclick: function () {
+        try { navigator.clipboard.writeText(ta.value).then(function () { toast("Copiado"); }, function () { ta.select(); }); } catch (e) { ta.select(); }
+      } })), ta));
+    root.appendChild(h("h2", { text: "Este equipo" }));
+    var hw = S.hw ? "RAM " + S.hw.ram_mb + " MB, " + S.hw.cpus + " CPU, GPU " + S.hw.gpu + ". Perfil recomendado: " + S.hw.recommended + (S.hw.recommended !== S.profile ? " (usas " + S.profile + ")" : " (el que usas)") : "";
+    root.appendChild(h("div", { class: "card pad stack" }, h("div", { text: hw }), S.user_conf ? h("code", { text: "Tus ajustes: " + S.user_conf }) : null));
+  }
+  function snap(action, name) {
+    api("/api/snapshot", { action: action, name: name }).then(function (r) {
+      if (!r.ok) return toast(r.error, true);
+      toast(action === "save" ? "Instantánea guardada" : action === "restore" ? "Ajustes restaurados" : "Instantánea borrada");
+      load();
+    });
+  }
+
+  /* ---------- arranque ---------- */
+  var st = document.getElementById("search");
+  st.addEventListener("input", function () { query = st.value.trim(); drawNav(); drawPage(); });
+  document.getElementById("apply").addEventListener("click", function () {
+    api("/api/apply", {}).then(function (r) { toast(r.ok ? "Escritorio actualizado" : "No se pudo aplicar", !r.ok); });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA" && document.activeElement.tagName !== "SELECT") { e.preventDefault(); st.focus(); }
+    if (e.key === "Escape" && document.activeElement === st) { st.value = ""; query = ""; st.blur(); drawNav(); drawPage(); }
+  });
+  /* al volver de la terminal (instalar, sudo...) se recarga lo que pudo cambiar */
+  window.addEventListener("focus", function () {
+    if (page === "apps" && APPS !== null) { APPS = null; drawPage(); }
+    else if (page === "security") { SEC = null; load(); }
+    else if (page.indexOf("cat:") === 0) load();
+  });
+  if (!window.RROS_MOCK) setInterval(function () { api("/api/ping", {}); }, 8000);
+  load();
+})();
+</script>
+
+</body>
+</html>

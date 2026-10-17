@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RROS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+<style>
+:root { --page: #0a0d18; --ink: #e6ecff; --dim: #8a96bd; --line: #26305a; --accent: #7c5cff; color-scheme: dark }
+* { box-sizing: border-box }
+body { margin: 0; background: var(--page) url(fondos/aurora-aurora.jpg) center top / 100% auto no-repeat; color: var(--ink);
+  font: 16px/1.55 "Inter", system-ui, sans-serif; padding: 12vw max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px)) }
+main { max-width: 760px; margin: 0 auto; display: grid; gap: 28px }
+h1 { margin: 0; font-size: clamp(2.4rem, 7vw, 3.6rem); letter-spacing: -.02em; line-height: 1 }
+.lead { margin: 0; font-size: 1.15rem; max-width: 60ch }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px }
+.cards a { display: grid; gap: 6px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: rgba(20, 28, 56, .85);
+  color: var(--ink); text-decoration: none }
+.cards a:hover, .cards a:focus-visible { border-color: var(--accent); outline: none }
+.cards b { font-size: 1.1rem }
+.cards span { color: var(--dim); font-size: .95rem }
+.facts { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; color: var(--dim) }
+.facts b { color: var(--ink); font-weight: 600 }
+footer { color: var(--dim); font-size: .9rem }
+footer a { color: var(--ink) }
+</style>
+</head>
+<body>
+<main>
+  <h1>RROS</h1>
+  <p class="lead">Sistema operativo ligero y muy personalizable sobre Arch Linux, con el escritorio Hyprland y todo en español.</p>
+  <div class="cards">
+    <a href="escritorio.html"><b>Ver el escritorio</b><span>Estilos clásico, moderno y mosaico, fondos generados con los colores del tema, barra de tareas y dock.</span></a>
+    <a href="ajustes.html"><b>Abrir RROS Ajustes</b><span>La ventana de ajustes real: temas, escritorio y fondo, tienda, seguridad, accesibilidad e instalador.</span></a>
+  </div>
+  <ul class="facts">
+    <li><b>Perfiles</b> Lite, Standard y Pro según el equipo (Lite: menos de 512 MB de RAM en reposo)</li>
+    <li><b>Instalador</b> gráfico, con cifrado LUKS2 y junto a Windows; probado en BIOS y UEFI</li>
+    <li><b>Seguridad</b> cortafuegos, AppArmor y kernel endurecido desde el primer arranque</li>
+  </ul>
+  <footer>Estas páginas son demostraciones en el navegador. El sistema completo se prueba con la ISO, en una máquina virtual o en un PC: <a href="https://github.com/raulramalf/RROS">github.com/raulramalf/RROS</a></footer>
+</main>
+</body>
+</html>

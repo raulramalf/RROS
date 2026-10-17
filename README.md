@@ -15,10 +15,29 @@ Sistema operativo ligero y muy personalizable sobre **Arch Linux**, con el escri
 | Móvil | Android en modelos concretos; iPhone no viable ([docs/MOBILE.md](docs/MOBILE.md)) |
 
 ## Probarlo
-- **Navegador:** demo del escritorio en [`preview/index.html`](preview/index.html) y de la ventana de ajustes (`scripts/build-gui-demo.sh` genera `build/gui-demo.html`).
-- **Contenedor:** `scripts/try-docker.sh lite` (identidad y herramientas).
-- **Máquina virtual o PC:** la ISO de Arch la construye GitHub Actions (workflow **Arch**: *Run workflow*, o `[iso-arch]` en el commit) y queda como artefacto; se puede construir también en un Arch con `scripts/build-iso-arch.sh lite`. En un PC hay que desactivar Secure Boot. Ver [docs/TRY.md](docs/TRY.md) y [docs/PROBAR-EN-PC.md](docs/PROBAR-EN-PC.md).
 
+### En el navegador (sin instalar nada)
+La carpeta [`site/`](site/) es una web estática de demostración:
+
+- **`escritorio.html`**: el escritorio de RROS simulado, con los tres estilos (clásico, moderno y mosaico), los fondos reales que genera `rros-theme` para cada tema, la barra de tareas con «Inicio», el dock y las ventanas.
+- **`ajustes.html`**: la ventana real de RROS Ajustes (temas, escritorio y fondo, tienda, seguridad, accesibilidad, instalador) con un servidor simulado.
+
+En tu equipo: `python3 -m http.server -d site` y abre <http://localhost:8000>. Para regenerarla después de cambiar el código: `make && scripts/build-site.sh`.
+
+**Publicarla en Vercel:** importa el repositorio en [vercel.com/new](https://vercel.com/new) y despliega; `vercel.json` ya indica que se sirve la carpeta `site/` tal cual, sin compilar nada. También vale Netlify o GitHub Pages apuntando a `site/`.
+
+Lo que **no** se puede ver en Vercel (ni en ningún navegador): el sistema operativo de verdad. El kernel, Hyprland, el instalador o las aplicaciones necesitan arrancar la ISO en una máquina virtual o en un PC.
+
+![Demo del escritorio en el navegador: estilo clásico con el fondo aurora, terminal, archivos y RROS Ajustes](docs/img/rros-escritorio-demo.png)
+
+*Demo del navegador (`site/escritorio.html`), no una captura del sistema: los fondos sí son los que genera `rros-theme`.*
+
+### En una máquina virtual o en un PC (el sistema completo)
+La ISO de Arch la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → *Run workflow* (o `[iso-arch]` en el mensaje de un commit). Al terminar, descarga el artefacto `rros-arch-lite-iso`. Arranca en QEMU, VirtualBox o GNOME Boxes, o grábala en una memoria USB para un PC (hay que desactivar Secure Boot). También se construye en un Arch con `scripts/build-iso-arch.sh lite`. Más en [docs/TRY.md](docs/TRY.md) y [docs/PROBAR-EN-PC.md](docs/PROBAR-EN-PC.md).
+
+**Contenedor:** `scripts/try-docker.sh lite` abre una consola con la identidad y las herramientas de RROS (sin escritorio).
+
+### Capturas reales del sistema
 ![RROS Lite arrancado en QEMU: panel, terminal, calculadora, editor y archivos](docs/img/rros-lite-escritorio.png)
 
 *Captura real de la ISO Lite de la base Ubuntu arrancada en QEMU (sin KVM), tema Aurora. Es el escritorio de respaldo (sway), el que se usa sin aceleración gráfica; Hyprland, el de Arch en un PC real, todavía no tiene captura porque una máquina virtual sin GPU no lo puede mostrar.*
@@ -99,7 +118,8 @@ src/theme/      rros-theme           src/apply/    rros-apply
 src/fetch/      rros-fetch           src/rros/     rros
 src/settings/   rros-settings (TUI y servidor web)    gui/   interfaz web (index.html, mock.js de la demo)
 overlay/        archivos que dan identidad al sistema (common, arch, ubuntu)
-preview/        demo interactiva en el navegador
+site/           web de demostración para el navegador (Vercel): escritorio y RROS Ajustes
+preview/        demo antigua del escritorio (sway)
 profiles/       lite.toml, standard.toml, pro.toml
 kernel/         fragmentos de configuración del kernel por perfil
 packages/       listas de paquetes (Arch y Ubuntu) por perfil

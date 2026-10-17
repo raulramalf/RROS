@@ -25,18 +25,21 @@ scripts/try-docker.sh lite     # o standard, pro
 Abre una consola con la identidad de RROS, el prompt, el banner (`rros-fetch`), `rros doctor` y todas las herramientas en C compiladas. No arranca escritorio ni kernel.
 
 ## 3. ISO en una máquina virtual (el sistema completo)
-Estado: la ISO **Lite** se ha construido y arrancado en QEMU (BIOS, sin KVM): pasa el autotest de arranque y llega a un escritorio con panel, terminal, archivos, editor y calculadora. Standard y Pro no se han construido, y UEFI y hardware real no se han probado.
+**Sin tocar tu PC:** en GitHub, pestaña *Actions*, workflow **Arch**, *Run workflow*, elige el perfil. Al terminar,
+descarga el artefacto `rros-arch-<perfil>-iso` (y el registro del autotest de arranque).
 
-**Sin tocar tu PC:** en GitHub, pestaña *Actions*, workflow **ISO**, *Run workflow*, elige el perfil. Al terminar, descarga el artefacto `rros-<perfil>-iso`.
+**En un Arch:** `sudo scripts/build-iso-arch.sh lite` (ver [BUILD.md](BUILD.md)). La ISO de la base Ubuntu se
+construye en Ubuntu con `scripts/make-iso.sh`.
 
-**En tu PC (Ubuntu):** ver [BUILD.md](BUILD.md).
+En una máquina virtual sin aceleración gráfica el escritorio es sway (el de respaldo); Hyprland, con sus
+animaciones y desenfoque, necesita una GPU: en QEMU con `-device virtio-vga-gl -display gtk,gl=on`, o en un PC.
 
 Arranque en QEMU:
 ```
 scripts/run-qemu.sh lite            # BIOS
 scripts/run-qemu.sh lite --uefi     # UEFI (requiere OVMF)
 ```
-En VirtualBox o GNOME Boxes: tipo Linux/Ubuntu 64 bits, la RAM del perfil (Lite 1 GB, Standard 4 GB, Pro 8 GB), activa EFI si quieres y monta la ISO. El sistema live entra solo con el usuario `rros` en tty1 y arranca el escritorio.
+En VirtualBox o GNOME Boxes: tipo Linux/Arch Linux 64 bits, la RAM del perfil (Lite 1 GB, Standard 4 GB, Pro 8 GB), activa EFI si quieres y monta la ISO. El sistema live entra solo con el usuario `rros` en tty1 y arranca el escritorio.
 
 ## 4. Instalarlo en un disco
 Desde el sistema live (la ISO), `rros-install` instala RROS en un disco: lo particiona según el perfil (`rros-installer plan`), formatea, copia el sistema, crea tu usuario, configura teclado y zona horaria e instala GRUB.
@@ -46,11 +49,11 @@ rros install                                         # asistente: pregunta disco
 rros install --disk /dev/vda --user ana --hostname mi-pc --keymap es --timezone Europe/Madrid \
              --password-file /tmp/pw --yes          # sin preguntas (para scripts)
 ```
-Borra **todo** el disco elegido y pide escribir su ruta para confirmar (salvo con `--yes`). No ofrece cifrado ni particiones a mano todavía.
-Estado: probado en QEMU con BIOS y un disco virtual de 10 GB (perfil Lite, ext4): el sistema instalado arranca desde el disco, pide usuario y contraseña en tty1 y arranca el escritorio con la red por cable. **UEFI y btrfs (Standard/Pro) están escritos pero no probados.**
+Borra **todo** el disco elegido y pide escribir su ruta para confirmar (salvo con `--yes`); `--alongside` instala en el espacio libre junto a otro sistema y `--encrypt` cifra con LUKS2. También hay asistente gráfico en RROS Ajustes → *Instalar RROS*.
+Estado: con la base Ubuntu, probado en QEMU (BIOS y UEFI, también cifrado y junto a un Windows simulado): el sistema instalado arranca desde el disco. Con la base Arch (mkinitcpio, sd-encrypt, GRUB) está escrito y con pruebas automáticas, pero **aún no se ha instalado de principio a fin en QEMU**.
 
 ## Qué mirar al arrancar
 - `rros-fetch` y `rros doctor`: identidad, perfil y presupuesto.
-- `Mod+T` alterna oscuro/claro, `Mod+Shift+T` cambia de tema, `Mod+,` abre los ajustes, `Mod+P` la ficha y `Mod+D` el lanzador.
+- `Mod+T` alterna oscuro/claro, `Mod+Shift+T` cambia de tema, `Mod+Alt+W` cambia el fondo, `Mod+,` abre los ajustes, `Mod+P` la ficha y `Mod+D` el lanzador. `Mod+F1` muestra todos los atajos.
 - La guía de comandos está en [CONSOLA.md](CONSOLA.md).
 - `rros config set ui.accent '#22d3ee'` y `rros theme apply` cambian el escritorio.

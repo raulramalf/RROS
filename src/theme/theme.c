@@ -301,6 +301,7 @@ void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p,
 		BIND("$mod+Shift+w", "exec nm-connection-editor");
 		BIND("$mod+t", "exec rros-theme toggle");
 		BIND("$mod+Shift+t", "exec rros-theme cycle");
+		BIND("$mod+Alt+w", "exec rros-theme wallpaper --next");
 		BIND("$mod+comma", "exec rros-settings open");
 		BIND("$mod+p", "exec foot -T RROS -e sh -c 'rros-fetch; rros doctor; read -r _'");
 		/* accesibilidad: los mismos atajos que en GNOME para el lector de pantalla */

@@ -1,6 +1,6 @@
 # RROS
 
-Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una base mínima de **Ubuntu** o **Arch Linux**; los componentes propios de RROS están escritos en **C**.
+Sistema operativo ligero y muy personalizable sobre **Arch Linux**, con el escritorio **Hyprland**: fondo generado con los colores de tu tema, barra de tareas con botón Inicio, dock, animaciones y desenfoque, y tres estilos de escritorio que se cambian con un clic. Los componentes propios de RROS están escritos en **C**. (La primera base fue Ubuntu 24.04 y sigue disponible como base secundaria.)
 
 ## Objetivos
 
@@ -10,18 +10,18 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 | Disco | ≤ 20 GB (Lite ≤ 6, Standard ≤ 12, Pro ≤ 20) |
 | RAM del SO en reposo | ≤ 4 GB (Lite < 512 MB, Standard < 2 GB, Pro ≤ 4 GB) |
 | Arquitecturas | x86_64 (Intel/AMD) y ARM64 |
-| Personalización | 96 ajustes por capas, 7 temas (más los tuyos), atajos, reglas por aplicación y programas de inicio propios ([docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)). Escritorio, red, memoria y servicios ya se aplican; el resto se valida |
+| Personalización | 129 ajustes por capas, 7 temas (más los tuyos), estilos de escritorio (clásico, moderno, mosaico), fondos generados, efectos de Hyprland, atajos, reglas por aplicación y programas de inicio propios ([docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)). Escritorio, red, memoria, seguridad y servicios ya se aplican; el resto se valida |
 | Interfaz de ajustes | Ventana gráfica local (`rros settings`) con temas, tienda, seguridad, dispositivos y creación de archivos, y versión de terminal para Lite o SSH |
 | Móvil | Android en modelos concretos; iPhone no viable ([docs/MOBILE.md](docs/MOBILE.md)) |
 
 ## Probarlo
 - **Navegador:** demo del escritorio en [`preview/index.html`](preview/index.html) y de la ventana de ajustes (`scripts/build-gui-demo.sh` genera `build/gui-demo.html`).
 - **Contenedor:** `scripts/try-docker.sh lite` (identidad y herramientas).
-- **Máquina virtual:** ISO Lite real (`scripts/make-iso.sh lite`, ~1,4 GB) que arranca en QEMU con escritorio y aplicaciones; también se puede construir en GitHub Actions (workflow *ISO*, aún sin ejecutar allí). Ver [docs/TRY.md](docs/TRY.md).
+- **Máquina virtual o PC:** la ISO de Arch la construye GitHub Actions (workflow **Arch**: *Run workflow*, o `[iso-arch]` en el commit) y queda como artefacto; se puede construir también en un Arch con `scripts/build-iso-arch.sh lite`. En un PC hay que desactivar Secure Boot. Ver [docs/TRY.md](docs/TRY.md) y [docs/PROBAR-EN-PC.md](docs/PROBAR-EN-PC.md).
 
 ![RROS Lite arrancado en QEMU: panel, terminal, calculadora, editor y archivos](docs/img/rros-lite-escritorio.png)
 
-*Captura real de la ISO Lite arrancada en QEMU (sin KVM), tema Aurora.*
+*Captura real de la ISO Lite de la base Ubuntu arrancada en QEMU (sin KVM), tema Aurora. Es el escritorio de respaldo (sway), el que se usa sin aceleración gráfica; Hyprland, el de Arch en un PC real, todavía no tiene captura porque una máquina virtual sin GPU no lo puede mostrar.*
 
 ![RROS instalado en disco: terminal y RROS Ajustes en Epiphany](docs/img/rros-lite-instalado-ajustes.png)
 
@@ -44,24 +44,28 @@ Sistema operativo ligero y muy personalizable. Usa el **kernel Linux** con una b
 | Pieza | Estado |
 |---|---|
 | `rros-hwdetect`, `rros-config`, `rros-budget`, `rros-installer plan` | ✅ hechas y probadas |
-| `rros-theme` – 7 temas y temas propios; sway, waybar, foot, mako, fuzzel y GTK | ✅ hecha y probada |
+| `rros-theme` – 7 temas y temas propios; Hyprland, hyprlock, sway, waybar, foot, mako, fuzzel y GTK | ✅ hecha y probada |
+| Hyprland: configuración generada (efectos, animaciones, mosaico, gestos, atajos y reglas traducidos) | ✅ validada con el Hyprland real de Arch (`Hyprland --verify-config`, 28 combinaciones de perfil, estilo y modo); sin ver en pantalla: hace falta GPU |
+| Escritorio: estilos clásico/moderno/mosaico, fondos generados con los colores del tema, barra de tareas con Inicio, dock, actualizaciones en el panel | ✅ hecho y probado (fondos PNG validados; página «Escritorio y fondo» en Ajustes) |
+| Base Arch: paquetes, ISO con archiso, live, menú en español con modo seguro y lector de pantalla | ✅ todos los paquetes comprobados en Arch y ISO construida en GitHub Actions; el autotest de arranque en QEMU, en curso |
+| Arch: instalador (mkinitcpio, sd-encrypt, GRUB con os-prober), tienda con pacman, seguridad (faillock, AppArmor, descarga diaria de actualizaciones) | ✅ con pruebas automáticas; instalación en Arch sin probar aún de principio a fin en QEMU |
 | `rros-settings` – ventana gráfica web local (con token) y TUI | ✅ probadas (TUI en un pty, GUI con navegador) |
 | Atajos, reglas por aplicación y autostart (`keybind.*`, `rule.*`, `autostart.*`) | ✅ validados igual que se generan; probados |
 | Instantáneas, exportar e importar ajustes | ✅ hechas y probadas |
 | `rros-apply` – aplica perfil a zram, swap, disco, red y servicios | ✅ hecha y probada (con raíz alternativa) |
 | `rros-fetch`, `rros` (`doctor`, `info`, …) | ✅ hechas y probadas |
 | Overlay de identidad (sin snap, sin telemetría, tty1 directo) | ✅ aplicado y comprobado sobre un directorio |
-| ISO Lite: rootfs Ubuntu 24.04, GRUB, casper live, autotest | ✅ construida y arrancada en QEMU (BIOS, sin KVM): autotest de arranque, escritorio con panel y apps (captura arriba) |
-| Aplicaciones incluidas (navegador, archivos, editor, visores, multimedia, red, Bluetooth, USB, bloqueo, energía) y tienda `rros-apps` | ✅ paquetes verificados contra Ubuntu noble; probadas las que se abrieron en la VM (terminal, calculadora, editor, archivos); el resto, sin abrir aún |
+| ISO Lite de la base Ubuntu 24.04: GRUB, casper live, Secure Boot, autotest | ✅ construida y arrancada en QEMU (BIOS, UEFI y Secure Boot): autotest de arranque, escritorio con panel y apps (captura arriba) |
+| Aplicaciones incluidas (navegador, archivos, editor, visores, multimedia, red, Bluetooth, USB, bloqueo, energía) y tienda `rros-apps` | ✅ paquetes verificados en Arch (y en Ubuntu noble); probadas las que se abrieron en la VM (terminal, calculadora, editor, archivos); el resto, sin abrir aún |
 | Seguridad: cortafuegos, kernel endurecido, bloqueo por intentos, sudo, USB/cámara, actualizaciones; `rros seguridad` (auditoría y niveles) | ✅ probado con pruebas automáticas y en QEMU, incluido el bloqueo tras contraseñas fallidas ([docs/SEGURIDAD.md](docs/SEGURIDAD.md)) |
 | Dispositivos: `rros dispositivos` (discos, USB, red, radios, sonido, pantallas, batería; montar, expulsar, Wi-Fi/Bluetooth) | ✅ probado con un /sys simulado y en QEMU (inventario real de la VM) |
 | Creación de archivos: `rros nuevo` (plantillas, proyectos, lanzadores), «Crear documento» en Thunar, carpetas en español | ✅ probado |
 | `rros-install` – instalador de texto a disco (BIOS, Lite/ext4) | ✅ probado en QEMU: instala, arranca desde el disco, login y escritorio |
-| Instalación en UEFI y btrfs (Standard/Pro), instalador gráfico, hardware real, kernel por perfil, SwayFX, repositorio propio, móvil | ⏳ pendiente / sin probar |
+| Hardware real, Hyprland en pantalla, Secure Boot en la base Arch, kernel por perfil, repositorio propio, móvil | ⏳ pendiente / sin probar |
 
 La GUI es una aplicación web local: necesita un navegador (Standard y Pro lo incluyen; Lite usa la TUI). No hay todavía una ventana con toolkit nativo (GTK/Qt).
 
-Medido en la ISO Lite: sistema de archivos 2,3 GB (límite 6) y, con el escritorio y cuatro apps abiertas en la VM, ~370 MB de RAM usada (límite 512 MB). Standard y Pro aún no se han construido ni medido; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
+Medido en la ISO Lite de Ubuntu: sistema de archivos 2,3 GB (límite 6) y, con el escritorio y cuatro apps abiertas en la VM, ~370 MB de RAM usada (límite 512 MB). La de Arch aún no se ha medido; Standard y Pro tampoco; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
 
 ## Uso rápido
 
@@ -83,7 +87,7 @@ rros settings              # ventana de ajustes (o `rros settings tui` en la ter
 
 Sin instalar el sistema, desde el repositorio: `build/rros-config ...` con `RROS_PROFILE_DIR=profiles`.
 
-Construir una ISO (en Ubuntu, como root; ver [docs/BUILD.md](docs/BUILD.md)).
+Construir una ISO: la de Arch en un Arch o en GitHub Actions; la de Ubuntu, en Ubuntu (ver [docs/BUILD.md](docs/BUILD.md)).
 
 ## Estructura
 
@@ -94,11 +98,12 @@ src/budget/     rros-budget          src/installer/ rros-installer
 src/theme/      rros-theme           src/apply/    rros-apply
 src/fetch/      rros-fetch           src/rros/     rros
 src/settings/   rros-settings (TUI y servidor web)    gui/   interfaz web (index.html, mock.js de la demo)
-overlay/        archivos que dan identidad al sistema (common, ubuntu)
+overlay/        archivos que dan identidad al sistema (common, arch, ubuntu)
 preview/        demo interactiva en el navegador
 profiles/       lite.toml, standard.toml, pro.toml
 kernel/         fragmentos de configuración del kernel por perfil
-packages/       listas de paquetes (Ubuntu y Arch) por perfil
+packages/       listas de paquetes (Arch y Ubuntu) por perfil
+apps/           catálogo de la tienda (pacman, apt y Flatpak)
 scripts/        rootfs, kernel, ISO, QEMU
 dist/systemd/   rros-firstboot.service (elige el perfil en el primer arranque)
 tests/          unitarios en C + integración (cli.sh)

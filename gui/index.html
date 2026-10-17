@@ -874,7 +874,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
   /* ---------- seguridad ---------- */
   var SEC = null;
   var ICON = { ok: "✓", warn: "!", fail: "✗", info: "·" };
-  var LEVELS = [["basico", "Básico", "Como Ubuntu: cortafuegos y poco más"], ["estandar", "Estándar", "Recomendado: kernel endurecido, bloqueo tras 10 intentos, actualizaciones automáticas"], ["estricto", "Estricto", "Sin memorias USB ni cámara, sin ping ni SSH, sudo pide siempre la contraseña"]];
+  var LEVELS = [["basico", "Básico", "Como Ubuntu: cortafuegos y poco más"], ["estandar", "Estándar", "Recomendado: kernel endurecido, bloqueo tras 10 intentos, actualizaciones descargadas cada día"], ["estricto", "Estricto", "Sin memorias USB ni cámara, sin ping ni SSH, sudo pide siempre la contraseña"]];
   function drawSecurity(root) {
     root.appendChild(h("h1", { text: "Seguridad" }));
     root.appendChild(h("p", { class: "sub", text: "Estado real del equipo, lo que conviene arreglar y las directivas de seguridad. Los cambios afectan a todo el sistema: se aplican en una terminal con tu contraseña." }));

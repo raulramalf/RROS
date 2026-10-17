@@ -85,6 +85,7 @@ if [ "$BASE" = arch ]; then
 	check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/system-auth
 	check "sudo: el grupo wheel administra" sh -c 'visudo -cqf /etc/sudoers.d/10-rros-wheel'
 	check "instalador: cifrado en el initramfs (hook sd-encrypt)" test -e /usr/lib/initcpio/install/sd-encrypt
+	check "zona horaria configurada (sin preguntas de systemd-firstboot)" sh -c 'test -e /etc/localtime && systemctl is-enabled systemd-firstboot.service 2>/dev/null | grep -q masked'
 	check "AppArmor activo (lsm= en el arranque)" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
 	check "AppArmor: perfiles cargados" sh -c 'systemctl is-active --quiet apparmor && grep -q . /sys/kernel/security/apparmor/profiles'
 	check "actualizaciones: descarga diaria (rros-updates.timer)" sh -c 'command -v checkupdates >/dev/null && systemctl is-enabled --quiet rros-updates.timer'

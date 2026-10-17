@@ -10,13 +10,13 @@ RROS trae directivas de seguridad activadas desde el primer arranque y una herra
 | Ping | `security.firewall_ping` | Responder a ping (limitado a 10 por segundo) | — |
 | Puertos abiertos | `security.firewall_allow` | Lista de puertos que sí dejan entrar, p. ej. `8080/tcp,5000-5010/udp` | — |
 | Kernel endurecido | `security.kernel_hardening` | Oculta direcciones del kernel, restringe `dmesg`, BPF y `ptrace`, ignora redirecciones ICMP, protege enlaces y archivos en carpetas compartidas | `/etc/sysctl.d/80-rros-security.conf` |
-| Intentos de contraseña | `security.login_attempts` | Tras N fallos (10 por defecto) la cuenta se bloquea 10 minutos (no afecta a root) | `/etc/security/faillock.conf` y perfiles PAM `rros-faillock*` |
+| Intentos de contraseña | `security.login_attempts` | Tras N fallos (10 por defecto) la cuenta se bloquea 10 minutos (no afecta a root) | `/etc/security/faillock.conf` (en Arch, `pam_faillock` ya va en `system-auth`; en Ubuntu se activan los perfiles PAM `rros-faillock*`) |
 | sudo | `security.sudo_timeout_minutes` | Minutos que `sudo` recuerda tu contraseña (5; 0 = la pide siempre) | `/etc/sudoers.d/rros` (comprobado con `visudo` antes de instalarlo) |
 | Volcados de memoria | `security.core_dumps` | Sin volcados (pueden contener contraseñas) | `/etc/security/limits.d/90-rros-core.conf` |
 | Memorias USB | `security.usb_storage` | Permitidas | `/etc/modprobe.d/rros-security.conf` |
 | Cámara | `security.camera` | Permitida | `/etc/modprobe.d/rros-security.conf` |
-| Actualizaciones | `system.auto_updates` | Las de seguridad se instalan solas cada día | `/etc/apt/apt.conf.d/20auto-upgrades` |
-| AppArmor | — | Confinamiento de programas (perfiles de Ubuntu) | — |
+| Actualizaciones | `system.auto_updates` | Arch: se **descargan** solas cada día (`checkupdates --download`, sin tocar la base de datos del sistema) y se instalan cuando quieras con `rros apps update` o el botón «ACT» del panel. Ubuntu: las de seguridad se instalan solas | Arch: `rros-updates.timer`. Ubuntu: `/etc/apt/apt.conf.d/20auto-upgrades` |
+| AppArmor | — | Confinamiento de programas. En Arch se activa con `lsm=…,apparmor,…` en el arranque (ISO e instalado) y carga los perfiles del paquete `apparmor`; en Ubuntu, los suyos | — |
 
 Los servicios que activas abren su puerto solos: `services.ssh` abre el 22/tcp y `services.printing` el mDNS para encontrar impresoras.
 
@@ -60,9 +60,11 @@ En RROS Ajustes, estos ajustes llevan la marca «sistema · contraseña»: al ca
 
 - Bloquear memorias USB o la cámara no expulsa lo que ya está conectado si está en uso: vale para lo que se conecte después o tras reiniciar.
 - Desactivar el endurecimiento del kernel no deshace los valores ya aplicados hasta reiniciar.
-- El instalador aún no cifra el disco (LUKS): la auditoría lo avisa.
-- En el sistema live Ubuntu no carga los perfiles de AppArmor; como la restricción de espacios de nombres de Ubuntu dejaría sin arrancar el navegador y las apps Flatpak, RROS la desactiva **solo en el live** (`rros-live-userns.service`). En el sistema instalado la restricción sigue activa y los perfiles `epiphany` y `flatpak` dan el permiso.
+- En Arch las actualizaciones no se instalan solas: es una decisión, porque en una distribución rolling una actualización puede pedir que mires algo antes. El panel avisa cuando hay.
+- (Base Ubuntu) En el sistema live Ubuntu no carga los perfiles de AppArmor; como la restricción de espacios de nombres de Ubuntu dejaría sin arrancar el navegador y las apps Flatpak, RROS la desactiva **solo en el live** (`rros-live-userns.service`). En el sistema instalado la restricción sigue activa y los perfiles `epiphany` y `flatpak` dan el permiso.
 
 ## Qué se ha comprobado
 
-En QEMU, sobre la ISO Lite: cortafuegos cargado (`nft list table inet rros`), ajustes del kernel aplicados, `sudoers` válido, actualizaciones automáticas, la auditoría real (100/100 en el live con el nivel estándar) y el bloqueo por intentos: con `security.login_attempts = 3`, tres contraseñas malas con `su` bloquean la cuenta, la buena se rechaza («10 minutes left to unlock») y tras `faillock --reset` vuelve a entrar. También que Epiphany arranca con la restricción de espacios de nombres y el perfil cargado (como en el sistema instalado). Falta probarlo en hardware real y repetir una instalación completa con estas directivas.
+En Arch: las pruebas automáticas cubren lo que `rros-apply` escribe (faillock, `locale.conf`, `sshd.service`, sin archivos de Ubuntu) y lo que comprueba la auditoría (`system-auth`, el timer de actualizaciones); el autotest de la ISO comprueba además AppArmor con perfiles cargados, el timer y faillock en el sistema arrancado.
+
+En QEMU, sobre la ISO Lite de la base Ubuntu: cortafuegos cargado (`nft list table inet rros`), ajustes del kernel aplicados, `sudoers` válido, actualizaciones automáticas, la auditoría real (100/100 en el live con el nivel estándar) y el bloqueo por intentos: con `security.login_attempts = 3`, tres contraseñas malas con `su` bloquean la cuenta, la buena se rechaza («10 minutes left to unlock») y tras `faillock --reset` vuelve a entrar. También que Epiphany arranca con la restricción de espacios de nombres y el perfil cargado (como en el sistema instalado). Falta probarlo en hardware real y repetir una instalación completa con estas directivas.

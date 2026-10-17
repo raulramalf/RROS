@@ -26,6 +26,9 @@ if [ -f /etc/locale.gen ]; then
 	sed -i -E 's/^#(es_ES\.UTF-8 UTF-8|en_US\.UTF-8 UTF-8)/\1/' /etc/locale.gen
 	locale-gen >/dev/null 2>&1 || true
 fi
+# systemd-firstboot pregunta en la consola lo que falte (zona horaria, teclado...) y deja el arranque
+# esperando: el live trae todo puesto y el instalador y Ajustes se encargan del resto
+systemctl mask systemd-firstboot.service >/dev/null 2>&1
 # servicios (solo los que estén instalados)
 for s in NetworkManager bluetooth nftables apparmor systemd-timesyncd rros-firstboot rros-apply rros-live-user rros-live \
 	rros-selftest rros-serial-shell; do

@@ -80,7 +80,7 @@ run_serial() {
 }
 
 verdict() {   # verdict LOG MARCA QUÉ
-	grep -a -E '^\[(ok|FALLO)\]|=== |^==> ' "$1" | tr -d '\r' || true
+	grep -a -E '^\[(ok|FALLO)\]|=== |^==> |^info: ' "$1" | tr -d '\r' || true
 	if grep -aq "${2}_OK" "$1"; then
 		log "$3: CORRECTO"
 	else

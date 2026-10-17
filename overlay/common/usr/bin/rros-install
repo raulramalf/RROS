@@ -9,6 +9,9 @@
 set -euo pipefail
 # se lee la salida de lsblk, blkid...: siempre en inglés
 export LC_ALL=C
+# los archivos del sistema instalado se crean legibles, sea cual sea la umask de quien lo lanza (con 077, por
+# ejemplo, /etc/rros/rros.toml quedaría solo para root y el usuario no podría cargar su configuración)
+umask 022
 
 usage() {
 	cat <<'EOF'

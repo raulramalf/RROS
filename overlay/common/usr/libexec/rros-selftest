@@ -145,5 +145,11 @@ if has Hyprland; then
 	check "configuración de Hyprland válida" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest Hyprland --verify-config -c ~/.config/hypr/hyprland.conf"
 fi
 
+# medidas (informativas, no cuentan): memoria usada con el escritorio arrancado y tamaño del sistema
+echo "info: memoria usada $(awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {printf "%d MB de %d MB", (t-a)/1024, t/1024}' /proc/meminfo)"
+echo "info: sistema instalado $(du -sxm / 2>/dev/null | cut -f1) MB (sin /home ni /tmp)"
+for sfs in /run/archiso/bootmnt/arch/x86_64/airootfs.sfs /cdrom/casper/filesystem.squashfs; do
+	[ -e "$sfs" ] && echo "info: imagen comprimida del sistema $(du -m "$sfs" | cut -f1) MB"
+done
 echo "=== resultado: $ok correctas, $bad con fallo ==="
 [ "$bad" -eq 0 ] && echo "RROS_SELFTEST_OK" || echo "RROS_SELFTEST_FAIL"

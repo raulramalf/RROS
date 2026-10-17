@@ -7,8 +7,7 @@ disk=$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^rros\.installtest=//p')
 [ -n "$disk" ] || disk=/dev/vda
 echo "=== RROS installtest: $disk ==="
 pw=/run/rros-installtest.pw
-umask 077
-printf 'prueba-rros\n' > "$pw"
+(umask 077 && printf 'prueba-rros\n' > "$pw")
 set --
 grep -qw rros.installtest.cifrado /proc/cmdline && set -- --encrypt --passphrase-file "$pw"
 if rros-install --disk "$disk" --user rros --fullname "Prueba RROS" --hostname rros-prueba --password-file "$pw" \

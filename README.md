@@ -88,7 +88,7 @@ La ISO de Arch la construye GitHub Actions: pestaña *Actions* → workflow **Ar
 
 La GUI es una aplicación web local: necesita un navegador (Standard y Pro lo incluyen; Lite usa la TUI). No hay todavía una ventana con toolkit nativo (GTK/Qt).
 
-Medido en la ISO Lite de Arch con Plasma (QEMU, 2 GB de RAM, en el autotest): ~950 MB de RAM usada con el escritorio Plasma arrancado y el navegador abierto con la bienvenida (límite 1,3 GB); el sistema ocupa ~5,2 GB (límite 8) y la ISO ~2,6 GB. En la de Ubuntu: 2,3 GB y ~370 MB con cuatro apps abiertas. Standard y Pro aún no se han medido; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
+Medido por la CI en QEMU (2 GB de RAM), perfil Lite con Plasma: ~920 MB de RAM usada en el live con el escritorio arrancado y el navegador abierto con la bienvenida, y ~670 MB en el sistema instalado en la pantalla de inicio de sesión (límite 1,3 GB); el sistema instalado ocupa ~5,8 GB (límite 8) y la ISO ~2,6 GB. La CI instala en BIOS, en UEFI y cifrado, arranca cada instalación y pasa el autotest (130 comprobaciones). En la de Ubuntu: 2,3 GB y ~370 MB con cuatro apps abiertas. Standard y Pro aún no se han medido; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
 
 ## Uso rápido
 

@@ -13,6 +13,8 @@ out=$ROOT_DIR/build/rootfs-ubuntu-$profile
 
 make -C "$ROOT_DIR" install DESTDIR="$out" PREFIX=/usr
 "$ROOT_DIR/scripts/apply-overlay.sh" "$out" "$profile" ubuntu
+# mapa de teclado de la consola ya generado (español): lo cargan keyboard-setup y el initramfs
+chroot_run "$out" /usr/libexec/rros-vconsole --save
 # el usuario live lo crea casper al arrancar: no debe haber uno precreado ni restos de pruebas
 if grep -q '^rros:' "$out/etc/passwd"; then
 	chroot_run "$out" userdel -r rros 2>/dev/null || true

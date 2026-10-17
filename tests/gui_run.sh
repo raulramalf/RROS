@@ -28,10 +28,36 @@ for b in udisksctl rfkill; do printf '#!/bin/sh\necho "%s $*" >> "%s/dev-calls.t
 printf '#!/bin/sh\n[ "$3" = nftables.service ]\n' > "$T/bin/systemctl"
 printf '#!/bin/sh\necho "$*" >> "%s/a11y.txt"\n' "$T" > "$T/bin/rros-a11y"
 chmod +x "$T/bin/udisksctl" "$T/bin/rfkill" "$T/bin/systemctl" "$T/bin/rros-a11y"
+# instalador: un NVMe con Windows (EFI, MSR, NTFS de 60 GiB) y ~40 GiB libres; sudo y rros-install falsos
+N=$R/sys/devices/pci/nvme0n1
+mkdir -p "$N/device" "$T/run"
+echo 209715200 > "$N/size"; echo 259:0 > "$N/dev"; echo "WD Blue SN570" > "$N/device/model"
+echo E:ID_PART_TABLE_TYPE=gpt > "$R/run/udev/data/b259:0"
+i=1
+for p in "1 100 vfat c12a7328-f81f-11d2-ba4b-00a0c93ec93b" "101 16 - e3c9e316-0b5c-4db8-817d-f92df00215ae" "117 61440 ntfs ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"; do
+	read -r st sz fs ty <<<"$p"
+	mkdir -p "$N/nvme0n1p$i"
+	echo 1 > "$N/nvme0n1p$i/partition"; echo $((st * 2048)) > "$N/nvme0n1p$i/start"; echo $((sz * 2048)) > "$N/nvme0n1p$i/size"
+	echo "259:$i" > "$N/nvme0n1p$i/dev"
+	{ [ "$fs" = - ] || echo "E:ID_FS_TYPE=$fs"; echo "E:ID_PART_ENTRY_TYPE=$ty"; } > "$R/run/udev/data/b259:$i"
+	i=$((i + 1))
+done
+ln -s ../devices/pci/nvme0n1 "$R/sys/block/nvme0n1"
+# shellcheck disable=SC2016  # contenido literal de los programas falsos
+printf '#!/bin/sh\n[ "$1" = -n ] && shift\nexec "$@"\n' > "$T/bin/sudo"
+cat > "$T/bin/rros-install" <<FAKE
+#!/bin/sh
+printf '%s\\n' "\$@" > "$T/install-args.txt"
+prog="" pw=""
+while [ \$# -gt 0 ]; do case \$1 in --progress-file) prog=\$2; shift ;; --password-file) pw=\$2; shift ;; esac; shift; done
+cat "\$pw" > "$T/install-pw.txt"
+for s in "1/7 Comprobando el sistema a copiar" "4/7 Copiando el sistema (40 %)" "7/7 Listo"; do echo "==> \$s"; echo "\$s" > "\$prog"; sleep 0.5; done
+FAKE
+chmod +x "$T/bin/sudo" "$T/bin/rros-install"
 export RROS_PROFILE_DIR=$PWD/profiles RROS_PROFILE_FILE=$T/profile RROS_USER_CONF=$T/u.toml \
 	RROS_SYSTEM_CONF=$T/s.toml XDG_CONFIG_HOME=$T/xdg RROS_THEMES_DIR=$T/themes RROS_GUI_DIR=$PWD/gui \
 	RROS_APPS_CATALOG=$PWD/apps/catalog.toml PATH="$T/bin:$PATH" RROS_ROOT=$R \
-	RROS_TEMPLATES_DIR=$PWD/templates HOME=$T/home RROS_LIVE=1
+	RROS_TEMPLATES_DIR=$PWD/templates HOME=$T/home RROS_LIVE=1 XDG_RUNTIME_DIR=$T/run
 build/rros-settings web --no-open --port 18769 --token tk --timeout 300 > "$T/server.log" 2>&1 &
 sleep 0.8
 RROS_TEST_DIR=$T PORT=18769 TOKEN=tk node tests/gui_test.js

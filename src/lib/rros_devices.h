@@ -34,4 +34,9 @@ void rros_human_size(unsigned long long bytes, char *buf, size_t n);
 /* Montaje del sistema (/, /boot, /home...): nunca se desmonta desde aquí. */
 int rros_mount_is_system(const char *mountpoint);
 
+/* Para otros módulos que leen /sys (con el mismo `root`): */
+int rros_sys_read(const char *root, const char *rel, char *buf, size_t n);   /* 0 si existe */
+int rros_udev_prop(const char *root, const char *devnum, const char *key, char *out, size_t n);   /* 1 si está */
+int rros_mount_of(const char *root, const char *name, char *out, size_t n);   /* 1 si /dev/NAME está montado */
+
 #endif

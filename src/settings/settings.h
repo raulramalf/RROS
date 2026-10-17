@@ -29,6 +29,18 @@ int sb_json(struct sbuf *b, const char *s);
 
 /* Estado completo para la GUI, como JSON. 0 ok. */
 int model_state_json(const struct model *m, struct sbuf *out);
+/* Sistema live (la ISO, boot=casper; RROS_LIVE=1|0 lo fuerza en las pruebas). */
+int model_is_live(void);
+
+/* Instalación desde la GUI (install.c). */
+struct install_req {
+	char disk[64], mode[16], user[40], fullname[96], host[72], keymap[24], locale[24], tz[48];
+	char password[256], passphrase[256];
+	int encrypt;
+};
+int install_start(const struct install_req *r, char *err, size_t en);   /* 0 si se lanzó */
+int install_running(void);
+void install_status_json(struct sbuf *b);
 
 /* Utilidades de proceso. */
 void tool_dir_from_argv0(const char *argv0);

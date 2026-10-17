@@ -165,6 +165,19 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
 .dev .dn { flex: 1; min-width: 180px; } .dev .dn b { overflow-wrap: anywhere; } .dev .dn small { display: block; color: var(--muted); overflow-wrap: anywhere; }
 .formgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
 .formgrid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.formgrid label input, .formgrid label select { color: var(--text); }
+.muted { color: var(--muted); }
+ol.steps { display: flex; gap: 6px; flex-wrap: wrap; list-style: none; padding: 0; margin: 0 0 16px; }
+ol.steps li { font-size: 12.5px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+ol.steps li.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+ol.steps li.done { color: var(--text); }
+.card .an { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+label.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; margin-top: 6px; cursor: pointer; }
+label.opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+label.opt.off { opacity: 0.6; cursor: not-allowed; }
+label.opt input { margin-top: 3px; accent-color: var(--accent); }
+label.opt small { display: block; color: var(--muted); }
+pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; }
 #toast { position: fixed; bottom: max(16px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 9px 16px; max-width: min(560px, 92vw); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 20; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
 #toast.show { opacity: 1; }
 #toast.err { border-color: var(--red); color: var(--red); }
@@ -505,9 +518,223 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     });
     root.appendChild(links);
   }
+  /* ---------- instalar (solo en el sistema live) ---------- */
+  var LANGS = [["es_ES.UTF-8", "Español (España)", "es", "Europe/Madrid"], ["es_MX.UTF-8", "Español (México)", "latam", "America/Mexico_City"],
+    ["es_AR.UTF-8", "Español (Argentina)", "latam", "America/Argentina/Buenos_Aires"], ["es_CO.UTF-8", "Español (Colombia)", "latam", "America/Bogota"],
+    ["es_CL.UTF-8", "Español (Chile)", "latam", "America/Santiago"], ["es_PE.UTF-8", "Español (Perú)", "latam", "America/Lima"],
+    ["es_US.UTF-8", "Español (Estados Unidos)", "latam", "America/New_York"], ["en_US.UTF-8", "English (US)", "us", "America/New_York"]];
+  var KEYMAPS = [["es", "Español (España)"], ["latam", "Español (Latinoamérica)"], ["us", "Inglés (EE. UU.)"], ["gb", "Inglés (Reino Unido)"],
+    ["fr", "Francés"], ["de", "Alemán"], ["it", "Italiano"], ["pt", "Portugués"], ["br", "Portugués (Brasil)"]];
+  var ZONES = ["Europe/Madrid", "Atlantic/Canary", "Europe/Lisbon", "Europe/London", "America/Mexico_City", "America/Bogota", "America/Lima",
+    "America/Caracas", "America/Santiago", "America/Argentina/Buenos_Aires", "America/Montevideo", "America/New_York", "America/Los_Angeles", "Etc/UTC"];
+  var INS = { step: 0, disks: null, status: null, userEdited: false, hostEdited: false,
+    f: { locale: "es_ES.UTF-8", keymap: "es", timezone: "Europe/Madrid", disk: "", mode: "", encrypt: false, passphrase: "", passphrase2: "",
+         fullname: "", user: "", password: "", password2: "", hostname: "rros", confirm: false } };
+  var INS_STEPS = ["Idioma y teclado", "Disco", "Tu cuenta", "Resumen"];
+  function insField(label, el, hint) {
+    return h("label", null, label, el, hint ? h("small", { class: "muted", text: hint }) : null);
+  }
+  function insInput(name, attrs, after) {
+    var el = h("input", Object.assign({ type: "text", value: INS.f[name] }, attrs || {}));
+    el.addEventListener("input", function () { INS.f[name] = el.value; if (after) after(el.value); });
+    return el;
+  }
+  function insSelect(name, opts, after) {
+    var el = h("select", null);
+    opts.forEach(function (o) { el.appendChild(h("option", { value: o[0], selected: INS.f[name] === o[0], text: o[1] })); });
+    el.addEventListener("change", function () { INS.f[name] = el.value; if (after) after(el.value); });
+    return el;
+  }
+  function insDisk() { return (INS.disks && INS.disks.disks || []).filter(function (d) { return d.path === INS.f.disk; })[0]; }
+  function slug(s) {
+    return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/\s+/)[0].replace(/[^a-z0-9_-]/g, "").replace(/^[^a-z]+/, "").slice(0, 31);
+  }
+  /* comprueba el paso actual; devuelve el error o "" */
+  function insCheck(step) {
+    var f = INS.f, d = insDisk();
+    if (step === 0) return /^[A-Za-z0-9_+\/-]{1,40}$/.test(f.timezone) && f.timezone.indexOf("..") < 0 ? "" : "zona horaria no válida (p. ej. Europe/Madrid)";
+    if (step === 1) {
+      if (!d || !f.mode) return "elige un disco y cómo instalar";
+      if (f.mode === "alongside" && f.encrypt && d.alongside_crypt) return "cifrado: " + d.alongside_crypt;
+      if (f.encrypt && f.passphrase.length < 8) return "la contraseña del cifrado debe tener al menos 8 caracteres";
+      if (f.encrypt && f.passphrase !== f.passphrase2) return "las contraseñas del cifrado no coinciden";
+      return "";
+    }
+    if (step === 2) {
+      if (/[:,=]/.test(f.fullname)) return "el nombre no puede llevar : , ni =";
+      if (!/^[a-z][a-z0-9_-]{0,30}$/.test(f.user)) return "usuario: minúsculas, cifras, - y _, empezando por una letra";
+      if (!f.password) return "escribe una contraseña";
+      if (f.password !== f.password2) return "las contraseñas no coinciden";
+      if (!/^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/.test(f.hostname)) return "nombre del equipo: letras, cifras y - (sin espacios)";
+      return "";
+    }
+    if (step === 3 && f.mode === "wipe" && !f.confirm) return "marca la casilla para confirmar que se borrará el disco";
+    return "";
+  }
+  function insNav(root, nextLabel, onNext) {
+    var bar = h("div", { class: "wrapline", style: "margin-top:18px" });
+    if (INS.step > 0) bar.appendChild(h("button", { class: "btn ghost", type: "button", text: "Atrás", onclick: function () { INS.step--; drawPage(); } }));
+    bar.appendChild(h("button", { class: "btn", type: "button", id: "ins-next", text: nextLabel, onclick: function () {
+      var e = insCheck(INS.step);
+      if (e) return toast(e, true);
+      if (onNext) return onNext();
+      INS.step++; drawPage(); window.scrollTo(0, 0);
+    } }));
+    root.appendChild(bar);
+  }
   function drawInstall(root) {
     root.appendChild(h("h1", { text: "Instalar RROS" }));
-    root.appendChild(h("div", { class: "empty", text: "Cargando el instalador…" }));
+    if (!S.live) {
+      root.appendChild(h("p", { class: "sub", text: "RROS ya está instalado en este equipo. El instalador solo está en el sistema live (la ISO o la memoria USB)." }));
+      return;
+    }
+    if (INS.status === null) {
+      root.appendChild(h("div", { class: "empty", text: "Cargando el instalador…" }));
+      api("/api/install_status").then(function (st) { INS.status = st || {}; if (st && st.started) INS.step = "progress"; if (page === "install") drawPage(); });
+      return;
+    }
+    if (INS.step === "progress") return drawInstallProgress(root);
+    root.appendChild(h("p", { class: "sub", text: "Cuatro pasos y RROS queda en el disco. Puede ir junto a Windows (en el espacio libre) y cifrado. Mientras instalas puedes seguir usando el sistema." }));
+    var ol = h("ol", { class: "steps", "aria-label": "Pasos" });
+    INS_STEPS.forEach(function (n, i) { ol.appendChild(h("li", { class: i === INS.step ? "on" : i < INS.step ? "done" : "", "aria-current": i === INS.step ? "step" : null, text: (i + 1) + ". " + n })); });
+    root.appendChild(ol);
+    [drawInsLang, drawInsDisk, drawInsUser, drawInsSummary][INS.step](root);
+  }
+  function drawInsLang(root) {
+    var f = INS.f, tz = insInput("timezone", { list: "ins-zones", "aria-label": "Zona horaria" });
+    var dl = h("datalist", { id: "ins-zones" });
+    ZONES.forEach(function (z) { dl.appendChild(h("option", { value: z })); });
+    var km = insSelect("keymap", KEYMAPS, function (v) { setKey("input.keymap", v).then(function (ok) { if (ok) toast("Teclado de esta sesión: " + v); }); });
+    var lang = insSelect("locale", LANGS, function (v) {
+      var l = LANGS.filter(function (x) { return x[0] === v; })[0];
+      f.keymap = l[2]; f.timezone = l[3]; km.value = l[2]; tz.value = l[3];
+    });
+    root.appendChild(h("div", { class: "card pad formgrid" },
+      insField("Idioma del sistema", lang, "Menús y mensajes de las aplicaciones"),
+      insField("Teclado", km, "También el de la pantalla de la contraseña del disco"),
+      insField("Zona horaria", tz), dl,
+      insField("Prueba el teclado", h("input", { type: "text", placeholder: "ñ ç ¿? @ € …", "aria-label": "Prueba el teclado" }))));
+    insNav(root, "Siguiente");
+  }
+  function drawInsDisk(root) {
+    var f = INS.f;
+    if (INS.disks === null) {
+      root.appendChild(h("div", { class: "empty", text: "Buscando discos…" }));
+      api("/api/install_disks").then(function (r) { INS.disks = r && r.disks ? r : { disks: [], error: (r && r.error) || "no se pudieron leer los discos" }; if (page === "install") drawPage(); });
+      return;
+    }
+    var D = INS.disks;
+    root.appendChild(h("div", { class: "wrapline", style: "margin-bottom:12px" },
+      h("span", { class: "pill", text: "Arranque: " + (D.firmware === "uefi" ? "UEFI" : "BIOS (antiguo)") }),
+      h("span", { class: "pill", text: "RROS " + D.profile + " necesita " + (D.min_mb / 1024).toFixed(0) + " GB" }),
+      h("button", { class: "btn ghost small", type: "button", text: "Volver a buscar", onclick: function () { INS.disks = null; drawPage(); } })));
+    if (D.error) root.appendChild(h("div", { class: "empty", text: D.error }));
+    if (!D.disks.length && !D.error) root.appendChild(h("div", { class: "empty", text: "No hay ningún disco donde instalar." }));
+    D.disks.forEach(function (d) {
+      var card = h("div", { class: "card pad diskcard", "data-disk": d.path, style: "margin-bottom:10px" });
+      card.appendChild(h("div", { class: "an" }, h("b", { text: d.model + " · " + d.size_h }),
+        h("span", { class: "badge", text: d.path.slice(5) + " · " + d.kind + (d.pttype ? " · " + d.pttype.toUpperCase() : "") })));
+      var parts = d.parts.map(function (p) {
+        var what = p.role === "esp" ? "EFI" : p.role === "windows" ? (p.label || (p.fstype ? "Windows" : "reservada de Windows")) : p.role === "linux" ? "Linux" : (p.label || p.fstype || "sin formato");
+        return what + " " + p.size_h;
+      });
+      card.appendChild(h("p", { class: "sub", style: "margin:4px 0 8px", text: (d.systems ? "Tiene " + d.systems + ". " : "") + (parts.length ? "Particiones: " + parts.join(", ") + "." : "Vacío.") + (d.free_h ? " Libre: " + d.free_h + "." : "") }));
+      if (d.in_use) { card.appendChild(h("p", { class: "muted", text: "No disponible: " + d.in_use })); root.appendChild(card); return; }
+      function opt(mode, label, why) {
+        var id = "opt-" + d.name + "-" + mode, on = f.disk === d.path && f.mode === mode;
+        var r = h("input", { type: "radio", name: "ins-disk", id: id, checked: on, disabled: !!why, onchange: function () { f.disk = d.path; f.mode = mode; f.confirm = false; drawPage(); } });
+        return h("label", { class: "opt" + (why ? " off" : ""), for: id }, r, h("span", null, h("b", { text: label }), why ? h("small", { text: why }) : null));
+      }
+      card.appendChild(opt("alongside", d.systems ? "Instalar junto a " + d.systems + " (en el espacio libre, sin borrar nada)" : "Instalar en el espacio libre (sin borrar nada)", d.alongside));
+      card.appendChild(opt("wipe", "Borrar todo el disco e instalar RROS", d.wipe));
+      if (d.windows && d.alongside && /espacio libre/.test(d.alongside))
+        card.appendChild(h("p", { class: "sub", style: "margin:8px 0 0", text: "Para instalar junto a Windows, libera antes espacio desde Windows: Administración de discos → clic derecho en (C:) → Reducir volumen. Deja al menos " + (D.min_mb / 1024).toFixed(0) + " GB sin asignar, reinicia con esta memoria y vuelve aquí." }));
+      if (d.bitlocker) card.appendChild(h("p", { class: "sub", style: "margin:8px 0 0", text: "Windows usa BitLocker: ten a mano su clave de recuperación (cuenta Microsoft → Dispositivos); puede pedirla la primera vez que arranques Windows." }));
+      root.appendChild(card);
+    });
+    var d = insDisk(), cryptWhy = d && f.mode === "alongside" ? d.alongside_crypt : "";
+    var sw = h("input", { type: "checkbox", role: "switch", checked: f.encrypt && !cryptWhy, disabled: !!cryptWhy, "aria-label": "Cifrar el disco", onchange: function () { f.encrypt = sw.checked; drawPage(); } });
+    var box = h("div", { class: "card pad", style: "margin-top:16px" },
+      h("div", { class: "an" }, h("b", { text: "Cifrar el disco" }), h("label", { class: "switch" }, sw, h("span"))),
+      h("p", { class: "sub", style: "margin:4px 0 0", text: cryptWhy ? "No disponible: " + cryptWhy : "Protege tus archivos si pierdes el equipo o te lo roban: al encenderlo se pide una contraseña antes de arrancar (LUKS2, como Ubuntu)." }));
+    if (f.encrypt && !cryptWhy) {
+      box.appendChild(h("div", { class: "formgrid", style: "margin-top:10px" },
+        insField("Contraseña del cifrado", insInput("passphrase", { type: "password", autocomplete: "new-password" }), "Mínimo 8 caracteres"),
+        insField("Repítela", insInput("passphrase2", { type: "password", autocomplete: "new-password" }))));
+      box.appendChild(h("p", { class: "sub", style: "margin:8px 0 0;color:var(--yellow)", text: "Si la olvidas no hay forma de recuperar los datos. Apúntala en un lugar seguro." }));
+    }
+    root.appendChild(box);
+    insNav(root, "Siguiente");
+  }
+  function drawInsUser(root) {
+    var f = INS.f, user, host;
+    function sync() {
+      if (!INS.userEdited) { f.user = slug(f.fullname); user.value = f.user; }
+      if (!INS.hostEdited) { f.hostname = (f.user ? f.user + "-" : "") + "rros"; host.value = f.hostname; }
+    }
+    user = insInput("user", { autocomplete: "username", autocapitalize: "none", spellcheck: "false" }, function () { INS.userEdited = true; sync(); });
+    host = insInput("hostname", { autocapitalize: "none", spellcheck: "false" }, function () { INS.hostEdited = true; });
+    root.appendChild(h("div", { class: "card pad formgrid" },
+      insField("Tu nombre", insInput("fullname", { autocomplete: "name" }, sync), "Como quieres que aparezca"),
+      insField("Nombre de usuario", user, "Minúsculas, sin espacios"),
+      insField("Contraseña", insInput("password", { type: "password", autocomplete: "new-password" }), "Para entrar y para tareas de administración (sudo)"),
+      insField("Repite la contraseña", insInput("password2", { type: "password", autocomplete: "new-password" })),
+      insField("Nombre del equipo", host, "Cómo se ve en la red")));
+    insNav(root, "Siguiente");
+  }
+  function drawInsSummary(root) {
+    var f = INS.f, d = insDisk() || {}, lang = LANGS.filter(function (l) { return l[0] === f.locale; })[0], km = KEYMAPS.filter(function (k) { return k[0] === f.keymap; })[0];
+    var rows = h("div", { class: "card rows" });
+    [["Disco", d.model + " (" + d.path + ", " + d.size_h + ")"],
+     ["Cómo", f.mode === "alongside" ? "En el espacio libre (" + d.free_h + ")" + (d.systems ? ", junto a " + d.systems + ": al encender podrás elegir" : "") : "Borrando todo el disco"],
+     ["Cifrado", f.encrypt ? "Sí: se pedirá la contraseña al encender" : "No"],
+     ["Usuario", (f.fullname ? f.fullname + " · " : "") + f.user + " · equipo " + f.hostname],
+     ["Idioma y teclado", (lang ? lang[1] : f.locale) + " · " + (km ? km[1] : f.keymap) + " · " + f.timezone],
+     ["Perfil", INS.disks.profile]].forEach(function (r) { rows.appendChild(h("div", { class: "row" }, h("div", { class: "lbl" }, h("b", { text: r[0] })), h("div", { text: r[1] }))); });
+    root.appendChild(rows);
+    if (f.mode === "wipe") {
+      var cb = h("input", { type: "checkbox", id: "ins-confirm", checked: f.confirm, onchange: function () { f.confirm = cb.checked; } });
+      root.appendChild(h("div", { class: "card pad", style: "margin-top:14px;border-color:var(--red)" },
+        h("b", { style: "color:var(--red)", text: "Se borrará todo lo que hay en " + d.path + (d.systems ? " (incluido " + d.systems + ")" : "") }),
+        h("label", { class: "opt", for: "ins-confirm", style: "margin-top:8px" }, cb, h("span", { text: "Entiendo que se perderán los datos de este disco" }))));
+    } else {
+      root.appendChild(h("p", { class: "sub", style: "margin-top:14px", text: "Lo que ya hay en el disco no se toca: se crean particiones nuevas en el espacio libre. Aun así, haz antes una copia de seguridad de lo importante." }));
+    }
+    insNav(root, "Instalar ahora", function () {
+      var b = { disk: f.disk, mode: f.mode, encrypt: f.encrypt ? "1" : "0", passphrase: f.encrypt ? f.passphrase : "", user: f.user, fullname: f.fullname,
+                password: f.password, hostname: f.hostname, keymap: f.keymap, locale: f.locale, timezone: f.timezone };
+      document.getElementById("ins-next").disabled = true;
+      api("/api/install", b).then(function (r) {
+        if (!r.ok) { document.getElementById("ins-next").disabled = false; return toast(r.error, true); }
+        f.password = f.password2 = f.passphrase = f.passphrase2 = "";
+        INS.status = { started: true, running: true }; INS.step = "progress"; drawPage(); window.scrollTo(0, 0);
+      });
+    });
+  }
+  var insTimer = null;
+  function drawInstallProgress(root) {
+    var st = INS.status || {}, m = /\((\d+) %\)/.exec(st.text || ""), pct = st.steps ? Math.round(((st.step - 1) + (m ? +m[1] / 100 : 0)) * 100 / st.steps) : 0;
+    if (st.done && st.ok) pct = 100;
+    var box = h("div", { class: "card pad", id: "ins-progress" });
+    if (st.done && st.ok) {
+      box.appendChild(h("b", { text: "RROS está instalado" }));
+      box.appendChild(h("p", { class: "sub", style: "margin:4px 0 10px", text: "Reinicia y quita la memoria USB (o la ISO) cuando se apague la pantalla." + (INS.f.encrypt ? " Al encender te pedirá la contraseña del cifrado." : "") }));
+      box.appendChild(h("button", { class: "btn", type: "button", text: "Reiniciar ahora", onclick: function () { api("/api/reboot", {}).then(function (r) { if (!r.ok) toast(r.error, true); }); } }));
+    } else if (st.done) {
+      box.appendChild(h("b", { style: "color:var(--red)", text: "La instalación no se ha completado" }));
+      box.appendChild(h("p", { class: "sub", style: "margin:4px 0 10px", text: st.error || "Mira el registro de abajo." }));
+      box.appendChild(h("button", { class: "btn ghost", type: "button", text: "Volver al resumen", onclick: function () { INS.step = 3; INS.status = { started: false }; drawPage(); } }));
+    } else {
+      box.appendChild(h("b", { text: st.text || "Empezando…" }));
+      box.appendChild(h("small", { class: "muted", style: "display:block", text: st.steps ? "Paso " + st.step + " de " + st.steps : "" }));
+    }
+    box.appendChild(h("div", { class: "score", style: "margin:12px 0 0" }, h("div", { class: "bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(pct), "aria-label": "Progreso de la instalación" }, h("i", { style: "width:" + pct + "%" }))));
+    root.appendChild(box);
+    if (st.log) root.appendChild(h("details", { style: "margin-top:12px", open: st.done && !st.ok }, h("summary", { text: "Registro" }), h("pre", { class: "log", text: st.log })));
+    clearTimeout(insTimer);
+    if (!st.done) insTimer = setTimeout(function () {
+      api("/api/install_status").then(function (n) { if (n && n.started) INS.status = n; if (page === "install" && INS.step === "progress") drawPage(); });
+    }, 1500);
   }
 
   /* ---------- accesibilidad ---------- */

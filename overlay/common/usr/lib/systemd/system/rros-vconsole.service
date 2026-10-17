@@ -1,17 +1,16 @@
 [Unit]
-Description=RROS: teclado de la consola (/etc/vconsole.conf)
-# Ubuntu no trae systemd-vconsole-setup: este servicio carga el mapa con loadkeys antes del login en tty1
+Description=RROS: teclado de la consola (/etc/default/keyboard)
+# Ubuntu no trae systemd-vconsole-setup ni los mapas de kbd: rros-vconsole genera el mapa con ckbcomp
+# (la misma distribución XKB del escritorio) y lo carga antes del login en tty1
 DefaultDependencies=no
-After=systemd-remount-fs.service
+After=systemd-remount-fs.service keyboard-setup.service
 Before=getty.target getty@tty1.service
-ConditionPathExists=/etc/vconsole.conf
-ConditionFileIsExecutable=/usr/bin/loadkeys
+ConditionPathExists=/etc/default/keyboard
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-EnvironmentFile=/etc/vconsole.conf
-ExecStart=/usr/bin/loadkeys -q ${KEYMAP}
+ExecStart=/usr/libexec/rros-vconsole
 
 [Install]
 WantedBy=sysinit.target

@@ -27,6 +27,8 @@ cp "$initrd" "$iso_dir/casper/initrd"
 log "squashfs (zstd)"
 mksquashfs "$rootfs" "$iso_dir/casper/filesystem.squashfs" -comp zstd -Xcompression-level "${SQUASH_LEVEL:-15}" \
 	-e boot/vmlinuz-* boot/initrd.img-* -noappend
+# tamaño sin comprimir: el instalador lo usa para mostrar el porcentaje de la copia
+du -sx --block-size=1 "$rootfs" | cut -f1 > "$iso_dir/casper/filesystem.size"
 
 cat > "$iso_dir/boot/grub/grub.cfg" <<GRUB
 set timeout=3

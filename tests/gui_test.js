@@ -217,6 +217,58 @@ const SHOTS = process.env.SHOTS || '';
   ok(newBad.ok === false, 'un nombre que parece una opción se rechaza');
   await shot(p, 'gui-files', true);
 
+  // instalar desde el live: asistente de cuatro pasos (rros-install falso)
+  await p.click('#nav button:has-text("Instalar RROS")');
+  await p.waitForSelector('ol.steps li.on');
+  ok((await p.textContent('ol.steps li.on')).includes('Idioma'), 'el asistente empieza por el idioma');
+  await p.selectOption('.formgrid select >> nth=0', 'es_MX.UTF-8');
+  ok(await p.inputValue('.formgrid select >> nth=1') === 'latam' && await p.inputValue('input[list="ins-zones"]') === 'America/Mexico_City', 'el idioma propone teclado y zona horaria');
+  await p.selectOption('.formgrid select >> nth=1', 'es'); await p.waitForTimeout(500);
+  ok(/keymap = "es"/.test(userConf()), 'el teclado elegido se aplica a la sesión live');
+  await p.click('#ins-next');
+  await p.waitForSelector('.diskcard[data-disk="/dev/nvme0n1"]');
+  const nv = '.diskcard[data-disk="/dev/nvme0n1"]';
+  ok((await p.textContent(nv)).includes('Windows'), 'el disco muestra que tiene Windows');
+  ok((await p.textContent('.diskcard[data-disk="/dev/sdb"]')).includes('No disponible'), 'un disco con particiones montadas no se ofrece');
+  await p.click('#ins-next'); await p.waitForTimeout(200);
+  ok((await p.textContent('#toast')).includes('elige un disco'), 'sin disco no se avanza');
+  await p.click(nv + ' label.opt:has-text("junto a Windows")');
+  await p.check('input[aria-label="Cifrar el disco"]');
+  await p.fill('.card input[type="password"] >> nth=0', 'corta'); await p.fill('.card input[type="password"] >> nth=1', 'corta');
+  await p.click('#ins-next'); await p.waitForTimeout(200);
+  ok((await p.textContent('#toast')).includes('8 caracteres'), 'la contraseña del cifrado corta se rechaza');
+  await p.fill('.card input[type="password"] >> nth=0', 'disco seguro'); await p.fill('.card input[type="password"] >> nth=1', 'disco seguro');
+  await shot(p, 'gui-install-disk', true);
+  await p.click('#ins-next');
+  await p.waitForSelector('input[autocomplete="name"]');
+  await p.fill('input[autocomplete="name"]', 'Ana Pérez');
+  ok(await p.inputValue('input[autocomplete="username"]') === 'ana' && await p.inputValue('.formgrid label:has-text("equipo") input') === 'ana-rros', 'usuario y equipo salen del nombre');
+  await p.fill('.formgrid input[type="password"] >> nth=0', 'clave de ana'); await p.fill('.formgrid input[type="password"] >> nth=1', 'clave de ana');
+  await p.click('#ins-next');
+  await p.waitForSelector('text=Lo que ya hay en el disco no se toca');
+  ok((await p.textContent('#page')).includes('junto a Windows'), 'el resumen dice que se instala junto a Windows');
+  await p.click('#ins-next');
+  await p.waitForSelector('#ins-progress');
+  await p.waitForSelector('text=RROS está instalado', { timeout: 8000 });
+  await shot(p, 'gui-install-done', true);
+  const ia = fs.existsSync(`${DIR}/install-args.txt`) ? fs.readFileSync(`${DIR}/install-args.txt`, 'utf8').split('\n') : [];
+  const after = (o) => ia[ia.indexOf(o) + 1];
+  ok(after('--disk') === '/dev/nvme0n1' && ia.includes('--alongside') && ia.includes('--encrypt') && ia.includes('--yes'), 'rros-install recibe disco, modo y cifrado (' + ia.join(' ') + ')');
+  ok(after('--user') === 'ana' && after('--fullname') === 'Ana Pérez' && after('--hostname') === 'ana-rros', 'rros-install recibe el usuario');
+  ok(after('--locale') === 'es_MX.UTF-8' && after('--keymap') === 'es' && after('--timezone') === 'America/Mexico_City', 'rros-install recibe idioma, teclado y zona');
+  ok(!ia.join(' ').includes('clave de ana') && !ia.join(' ').includes('disco seguro'), 'las contraseñas no van en la línea de órdenes');
+  ok(fs.existsSync(`${DIR}/install-pw.txt`) && fs.readFileSync(`${DIR}/install-pw.txt`, 'utf8') === 'clave de ana\n', 'la contraseña llega en un archivo');
+  ok(!fs.existsSync(`${DIR}/run/rros-install.pw`) && !fs.existsSync(`${DIR}/run/rros-install.pp`), 'los archivos con contraseñas se borran al terminar');
+  {
+    const r = await p.evaluate(async (tok) => {
+      const f = (b) => fetch('/api/install', { method: 'POST', headers: { 'X-RROS-Token': tok, 'Content-Type': 'application/x-www-form-urlencoded' }, body: b }).then(x => x.json());
+      return [await f('disk=/dev/nvme0n1&mode=wipe&user=Ana&password=x&hostname=h&keymap=es&locale=es_ES.UTF-8&timezone=Etc/UTC'),
+              await f('disk=/dev/nvme0n1;reboot&mode=wipe&user=ana&password=x&hostname=h&keymap=es&locale=es_ES.UTF-8&timezone=Etc/UTC'),
+              await f('disk=/dev/nvme0n1&mode=wipe&user=ana&password=x&hostname=h&keymap=es&locale=es_ES.UTF-8&timezone=../../etc')];
+    }, 'tk');
+    ok(r.every(x => x.ok === false), 'el servidor rechaza usuario, disco o zona no válidos (' + JSON.stringify(r) + ')');
+  }
+
   // abrir directamente en una página (rros-settings open dispositivos)
   const d2 = await b.newPage({ viewport: { width: 1100, height: 800 } });
   d2.on('pageerror', e => errs.push('deep-link pageerror: ' + e.message));

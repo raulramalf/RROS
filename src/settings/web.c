@@ -583,6 +583,16 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 		char *args[] = { "rros-devices", "lista", "--json", NULL };
 
 		respond_capture(fd, "rros-devices", args, "los dispositivos");
+	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/install_disks")) {
+		char *args[] = { "rros-installer", "disks", "--json", NULL };
+
+		respond_capture(fd, "rros-installer", args, "los discos");
+	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/install_status")) {
+		struct sbuf st = { 0 };
+
+		install_status_json(&st);
+		respond_json(fd, 200, st.p ? st.p : "{}");
+		sb_free(&st);
 	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/templates")) {
 		char *args[] = { "rros-new", "lista", "--json", NULL };
 
@@ -661,6 +671,36 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 
 			respond_ok(fd, spawn_detached("rros-a11y", args) == 0, "no se pudo iniciar");
 		}
+	} else if (!strcmp(r.path, "/api/install")) {
+		struct install_req ir;
+
+		memset(&ir, 0, sizeof ir);
+		form_get(r.body, "disk", ir.disk, sizeof ir.disk);
+		form_get(r.body, "mode", ir.mode, sizeof ir.mode);
+		form_get(r.body, "user", ir.user, sizeof ir.user);
+		form_get(r.body, "fullname", ir.fullname, sizeof ir.fullname);
+		form_get(r.body, "hostname", ir.host, sizeof ir.host);
+		form_get(r.body, "keymap", ir.keymap, sizeof ir.keymap);
+		form_get(r.body, "locale", ir.locale, sizeof ir.locale);
+		form_get(r.body, "timezone", ir.tz, sizeof ir.tz);
+		form_get(r.body, "password", ir.password, sizeof ir.password);
+		form_get(r.body, "passphrase", ir.passphrase, sizeof ir.passphrase);
+		form_get(r.body, "encrypt", a, sizeof a);
+		ir.encrypt = !strcmp(a, "1");
+		if (!model_is_live())
+			respond_ok(fd, 0, "solo se instala desde el sistema live (la ISO o la memoria USB)");
+		else
+			respond_ok(fd, install_start(&ir, err, sizeof err) == 0, err);
+		/* que las contraseñas no queden en memoria (el cuerpo de la petición tampoco) */
+		memset(&ir, 0, sizeof ir);
+		memset(r.body, 0, sizeof r.body);
+	} else if (!strcmp(r.path, "/api/reboot")) {
+		char *args[] = { "systemctl", "reboot", NULL };
+
+		if (install_running())
+			respond_ok(fd, 0, "espera a que termine la instalación");
+		else
+			respond_ok(fd, spawn_detached("systemctl", args) == 0, "no se pudo reiniciar");
 	} else if (!strcmp(r.path, "/api/new_file")) {
 		char dir[400];
 

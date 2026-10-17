@@ -366,13 +366,76 @@ for a in json.load(sys.stdin):
 
 # --- instalador: la parte que no toca discos (plan y validación de argumentos) ---
 INST=$PWD/overlay/common/usr/bin/rros-install
-inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 8 --bios -p lite)
+inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 9 --bios -p lite)
 case $inst_out in *rros-root*ext4*) ;; *) fail "rros-install plan" ;; esac
 if PATH=$B:$PATH "$INST" --user 'Mal Usuario' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un usuario no válido"; fi
 if PATH=$B:$PATH "$INST" --hostname 'a;b' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un nombre de equipo no válido"; fi
 # shellcheck disable=SC2016  # el $( ) literal es justo lo que se prueba
 if PATH=$B:$PATH "$INST" --cmdline 'x$(id)' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un --cmdline peligroso"; fi
 if PATH=$B:$PATH "$INST" --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un dispositivo que no es un disco"; fi
+if PATH=$B:$PATH "$INST" --locale 'es;ES' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un idioma no válido"; fi
+if PATH=$B:$PATH "$INST" --fullname 'Ana:0:0' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un nombre completo con ':'"; fi
+
+# teclado de la consola: /etc/vconsole.conf es un enlace a /etc/default/keyboard (como en Ubuntu)
+VC=$T/vc
+mkdir -p "$VC/etc/default" "$VC/xkb/symbols" "$VC/bin"
+touch "$VC/xkb/symbols/es" "$VC/xkb/symbols/latam"
+printf 'KEYMAP=es\nXKBLAYOUT="es"\n' > "$VC/etc/default/keyboard"
+ln -s default/keyboard "$VC/etc/vconsole.conf"
+# shellcheck disable=SC2016  # ckbcomp falso: escribe la distribución que le piden
+printf '#!/bin/sh\necho "keymap $4"\n' > "$VC/bin/ckbcomp"
+chmod +x "$VC/bin/ckbcomp"
+VCON=$PWD/overlay/common/usr/libexec/rros-vconsole
+PATH=$VC/bin:$PATH RROS_ETC=$VC/etc RROS_XKB=$VC/xkb "$VCON" --save latam || fail "rros-vconsole --save latam"
+grep -qx 'KEYMAP=latam' "$VC/etc/vconsole.conf" || fail "rros-vconsole: KEYMAP en /etc/vconsole.conf"
+grep -qx 'XKBLAYOUT="latam"' "$VC/etc/default/keyboard" || fail "rros-vconsole: XKBLAYOUT en /etc/default/keyboard"
+[ -L "$VC/etc/vconsole.conf" ] || fail "rros-vconsole rompe el enlace /etc/vconsole.conf"
+zcat "$VC/etc/console-setup/cached_UTF-8_del.kmap.gz" | gq -x 'keymap latam' || fail "rros-vconsole: mapa de la consola"
+printf 'KEYMAP=la-latin1\n' > "$VC/etc/default/keyboard"
+PATH=$VC/bin:$PATH RROS_ETC=$VC/etc RROS_XKB=$VC/xkb "$VCON" --save || fail "rros-vconsole --save (la-latin1)"
+grep -qx 'XKBLAYOUT="latam"' "$VC/etc/default/keyboard" || fail "rros-vconsole: nombre de kbd (la-latin1)"
+if PATH=$VC/bin:$PATH RROS_ETC=$VC/etc RROS_XKB=$VC/xkb "$VCON" --save 'es;x' 2>/dev/null; then fail "rros-vconsole acepta un mapa no válido"; fi
+
+# discos para el instalador sobre un /sys falso: NVMe con Windows (ESP, MSR, NTFS) y 40 GiB libres
+DR=$T/disks
+mkpart() {   # disco parte inicio_mib tamaño_mib devnum udev...
+	local d=$DR/sys/devices/pci/$1/$2
+	mkdir -p "$d" "$DR/run/udev/data"
+	echo 1 > "$d/partition"; echo $(($3 * 2048)) > "$d/start"; echo $(($4 * 2048)) > "$d/size"; echo "$5" > "$d/dev"
+	shift 5
+	printf 'E:%s\n' "$@" > "$DR/run/udev/data/b$(cat "$d/dev")"
+}
+mkdir -p "$DR/sys/devices/pci/nvme0n1/device" "$DR/sys/block" "$DR/run/udev/data" "$DR/proc/self"
+echo 209715200 > "$DR/sys/devices/pci/nvme0n1/size"   # 100 GiB
+echo 259:0 > "$DR/sys/devices/pci/nvme0n1/dev"
+echo "Disco de prueba" > "$DR/sys/devices/pci/nvme0n1/device/model"
+echo E:ID_PART_TABLE_TYPE=gpt > "$DR/run/udev/data/b259:0"
+mkpart nvme0n1 nvme0n1p1 1 100 259:1 ID_FS_TYPE=vfat ID_PART_ENTRY_TYPE=c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+mkpart nvme0n1 nvme0n1p2 101 16 259:2 ID_PART_ENTRY_TYPE=e3c9e316-0b5c-4db8-817d-f92df00215ae
+mkpart nvme0n1 nvme0n1p3 117 61440 259:3 ID_FS_TYPE=ntfs ID_FS_LABEL=Windows
+ln -s ../devices/pci/nvme0n1 "$DR/sys/block/nvme0n1"
+: > "$DR/proc/self/mounts"
+dj=$(RROS_ROOT=$DR "$B/rros-installer" disks --json --uefi -p lite)
+python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+d=j["disks"][0]
+assert j["firmware"]=="uefi" and j["min_mb"]==8192, j
+assert d["path"]=="/dev/nvme0n1" and d["systems"]=="Windows" and d["windows"], d
+assert d["esp"]=="nvme0n1p1" and d["free_mb"]==102400-1-117-61440, d
+assert d["wipe"]=="" and d["alongside"]=="" and d["alongside_crypt"]=="", d
+assert [p["role"] for p in d["parts"]]==["esp","windows","windows"], d["parts"]
+' <<<"$dj" || fail "rros-installer disks --json"
+RROS_ROOT=$DR "$B/rros-installer" disks --uefi -p lite | gq 'nvme0n1.*gpt.*Windows' || fail "rros-installer disks (texto)"
+tbl=$(RROS_ROOT=$DR "$B/rros-installer" plan --disk /dev/nvme0n1 --alongside --encrypt --uefi -p lite --table)
+[ "$tbl" = "esp 1 100 vfat /boot/efi 1 0
+boot 61557 1024 ext4 /boot 0 0
+root 62581 39818 ext4 / 0 1" ] || fail "plan junto a Windows: $tbl"
+RROS_ROOT=$DR "$B/rros-installer" plan --disk /dev/nvme0n1 --alongside --uefi -p lite --sfdisk | gq -x 'start=61557MiB, size=40842MiB, type=L, name=rros-root' ||
+	fail "plan junto a Windows (sfdisk)"
+# el live (montado) no se ofrece
+echo "/dev/nvme0n1p3 /cdrom ntfs ro 0 0" > "$DR/proc/self/mounts"
+if RROS_ROOT=$DR "$B/rros-installer" plan --disk nvme0n1 --uefi -p lite >/dev/null 2>&1; then fail "plan acepta el disco del live"; fi
 
 # --- interfaces: rros-settings (TUI en un pty y servidor web local) ---
 if command -v python3 >/dev/null 2>&1; then

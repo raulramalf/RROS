@@ -46,6 +46,8 @@ chroot "$out" locale-gen es_ES.UTF-8 en_US.UTF-8
 log "instalando componentes RROS"
 make -C "$ROOT_DIR" install DESTDIR="$out" PREFIX=/usr
 "$ROOT_DIR/scripts/apply-overlay.sh" "$out" "$profile" ubuntu
+# mapa de teclado de la consola ya generado (español): lo cargan keyboard-setup y el initramfs
+chroot "$out" /usr/libexec/rros-vconsole --save
 # casper lee su configuración (usuario y nombre de equipo) desde el initramfs: se regenera tras la capa RROS
 log "regenerando el initramfs"
 chroot "$out" update-initramfs -u -k all

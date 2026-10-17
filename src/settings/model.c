@@ -230,6 +230,23 @@ static void put_dynamic(struct sbuf *b, const struct model *m, const char *prefi
 	sb_put(b, last ? "]" : "],");
 }
 
+int model_is_live(void)
+{
+	char cmd[1024] = "";
+	const char *env = getenv("RROS_LIVE");
+	FILE *cf;
+
+	if (env)
+		return !strcmp(env, "1");
+	cf = fopen("/proc/cmdline", "r");
+	if (cf) {
+		if (!fgets(cmd, sizeof cmd, cf))
+			cmd[0] = '\0';
+		fclose(cf);
+	}
+	return strstr(cmd, "boot=casper") != NULL;
+}
+
 int model_state_json(const struct model *m, struct sbuf *o)
 {
 	struct rros_theme th;
@@ -242,20 +259,7 @@ int model_state_json(const struct model *m, struct sbuf *o)
 	rros_theme_from_conf(&th, &m->eff);
 	rros_theme_palette(&th, &cur);
 	/* sistema live (la ISO): la interfaz ofrece instalar RROS */
-	{
-		char cmd[1024] = "";
-		const char *env = getenv("RROS_LIVE");
-		FILE *cf = fopen("/proc/cmdline", "r");
-		int live;
-
-		if (cf) {
-			if (!fgets(cmd, sizeof cmd, cf))
-				cmd[0] = '\0';
-			fclose(cf);
-		}
-		live = env ? !strcmp(env, "1") : strstr(cmd, "boot=casper") != NULL;
-		sb_printf(o, "{\"live\":%s,", live ? "true" : "false");
-	}
+	sb_printf(o, "{\"live\":%s,", model_is_live() ? "true" : "false");
 	sb_printf(o, "\"version\":\"%s\",\"codename\":\"%s\",\"profile\":", RROS_VERSION, RROS_CODENAME);
 	sb_json(o, m->profile);
 

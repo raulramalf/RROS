@@ -1,9 +1,11 @@
 #!/bin/bash
-# rros-install: instala RROS en un disco desde el sistema live (modo texto).
-#   rros-install                       asistente: elige disco, usuario y contraseña
+# rros-install: instala RROS en un disco desde el sistema live. El asistente gráfico (RROS Ajustes →
+# Instalar RROS) llama a este mismo programa.
+#   rros-install                       asistente en modo texto
 #   rros-install --disk /dev/vda --user ana --hostname rros --password-file F --yes
+#   rros-install --disk /dev/nvme0n1 --alongside --encrypt ...   junto a Windows y cifrado
 #   rros-install --disk /dev/vda --dry-run     muestra lo que haría sin tocar el disco
-# Borra TODO el disco elegido. El esquema de particiones lo calcula `rros-installer plan`.
+# El esquema de particiones lo calcula `rros-installer plan`.
 set -euo pipefail
 # se lee la salida de lsblk, blkid...: siempre en inglés
 export LC_ALL=C
@@ -11,16 +13,23 @@ export LC_ALL=C
 usage() {
 	cat <<'EOF'
 uso: rros-install [opciones]
-  --disk DISCO          disco destino, p. ej. /dev/vda (se borra entero)
+  --disk DISCO          disco destino, p. ej. /dev/vda (se borra entero salvo con --alongside)
+  --alongside           instala en el mayor espacio libre del disco, sin tocar lo que hay
+                        (p. ej. junto a Windows; disco GPT). Reutiliza su partición EFI.
+  --encrypt             cifra el sistema con LUKS2 (se pide la contraseña del disco al arrancar)
+  --passphrase-file F   primera línea = contraseña del cifrado (si falta, se pregunta)
   --user NOMBRE         usuario a crear (por defecto: rros)
+  --fullname TEXTO      nombre completo del usuario (opcional)
   --hostname NOMBRE     nombre del equipo (por defecto: rros)
   --password-file RUTA  primera línea = contraseña del usuario (si falta, se pregunta)
   --profile PERFIL      lite, standard o pro (por defecto: el perfil activo)
   --bios | --uefi       firmware de arranque (por defecto: el del equipo actual)
   --keymap NOMBRE       teclado, en consola y en el escritorio (por defecto: es)
+  --locale IDIOMA       idioma del sistema (por defecto: es_ES.UTF-8)
   --timezone ZONA       zona horaria, p. ej. Europe/Madrid (por defecto: UTC)
   --cmdline TEXTO       parámetros extra del kernel (p. ej. "console=ttyS0")
   --source DIR          sistema a copiar (por defecto: el sistema de archivos de la ISO)
+  --progress-file F     escribe ahí el paso actual ("3/7 Formateando"), para el asistente gráfico
   --dry-run             solo muestra el plan
   --yes                 no pide confirmación (para scripts)
 Sin argumentos se ejecuta como asistente. Ejemplo no interactivo:
@@ -34,23 +43,40 @@ if [ "${1:-}" = plan ]; then
 	exec rros-installer plan "$@"
 fi
 
-die() { echo "rros-install: $*" >&2; exit 1; }
+die() {
+	echo "rros-install: $*" >&2
+	[ -z "${progress:-}" ] || printf 'error %s\n' "$*" > "$progress" 2>/dev/null || true
+	exit 1
+}
 log() { echo "==> $*"; }
+STEPS=7
+step() {
+	log "$2"
+	[ -z "$progress" ] || printf '%s/%s %s\n' "$1" "$STEPS" "$2" > "$progress"
+}
 
-disk="" user=rros host=rros pwfile="" profile="" fw="" extra="" src="" keymap=es tz=Etc/UTC dry=0 yes=0
+disk="" user=rros fullname="" host=rros pwfile="" ppfile="" profile="" fw="" extra="" src="" keymap=es
+tz=Etc/UTC locale=es_ES.UTF-8 progress="" alongside=0 encrypt=0 dry=0 yes=0
+args=("$@")
 while [ $# -gt 0 ]; do
 	case $1 in
 	--disk) disk=${2:?falta el disco}; shift 2 ;;
+	--alongside) alongside=1; shift ;;
+	--encrypt) encrypt=1; shift ;;
+	--passphrase-file) ppfile=${2:?falta la ruta}; shift 2 ;;
 	--user) user=${2:?falta el usuario}; shift 2 ;;
+	--fullname) fullname=${2:-}; shift 2 ;;
 	--hostname) host=${2:?falta el nombre del equipo}; shift 2 ;;
 	--password-file) pwfile=${2:?falta la ruta}; shift 2 ;;
 	--profile) profile=${2:?falta el perfil}; shift 2 ;;
 	--bios) fw=bios; shift ;;
 	--uefi) fw=uefi; shift ;;
 	--keymap) keymap=${2:?falta el teclado}; shift 2 ;;
+	--locale) locale=${2:?falta el idioma}; shift 2 ;;
 	--timezone) tz=${2:?falta la zona horaria}; shift 2 ;;
 	--cmdline) extra=${2:-}; shift 2 ;;
 	--source) src=${2:?falta el directorio}; shift 2 ;;
+	--progress-file) progress=${2:?falta la ruta}; shift 2 ;;
 	--dry-run) dry=1; shift ;;
 	--yes) yes=1; shift ;;
 	-h | --help) usage; exit 0 ;;
@@ -58,84 +84,103 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-[ "$(id -u)" -eq 0 ] || { [ "$dry" -eq 1 ] || exec sudo "$0" "$@"; }
+[ "$(id -u)" -eq 0 ] || { [ "$dry" -eq 1 ] || exec sudo "$0" "${args[@]}"; }
 
 # nombres válidos: evitan que un valor escrito a mano acabe en una orden o en un archivo
 echo "$user" | grep -Eq '^[a-z_][a-z0-9_-]{0,30}$' || die "usuario no válido (minúsculas, cifras, - y _)"
+printf '%s\n' "$fullname" | grep -Eq '^[^:,=[:cntrl:]]{0,60}$' || die "nombre completo no válido (sin : , ni =)"
 echo "$host" | grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' || die "nombre de equipo no válido"
 echo "$extra" | grep -Eq '^[A-Za-z0-9_=,.: /-]*$' || die "--cmdline contiene caracteres no permitidos"
 echo "$keymap" | grep -Eq '^[a-z0-9_-]{2,20}$' || die "teclado no válido"
+echo "$locale" | grep -Eq '^[a-z]{2,3}_[A-Z]{2}\.UTF-8$' || die "idioma no válido (p. ej. es_ES.UTF-8)"
 echo "$tz" | grep -Eq '^[A-Za-z0-9_+/-]{1,40}$' || die "zona horaria no válida"
 case $tz in *..*) die "zona horaria no válida" ;; esac
 tmpconf=$(mktemp)
 RROS_USER_CONF=$tmpconf rros-config set input.keymap "$keymap" >/dev/null 2>&1 || { rm -f "$tmpconf"; die "teclado no aceptado: $keymap"; }
 rm -f "$tmpconf"
 [ -z "$profile" ] || echo "$profile" | grep -Eq '^[a-z0-9_-]+$' || die "perfil no válido"
+if [ -n "$progress" ]; then
+	: > "$progress" || die "no puedo escribir en $progress"
+fi
 
 # --- disco ---
-live_dev=""
-for m in /cdrom /run/live/medium; do
-	if [ -z "$live_dev" ]; then live_dev=$(findmnt -no SOURCE "$m" 2>/dev/null | head -1 || true); fi
-done
-live_disk=""
-[ -n "$live_dev" ] && live_disk=$(lsblk -no PKNAME "$live_dev" 2>/dev/null | head -1 || true)
-list_disks() {
-	lsblk -dnpo NAME,SIZE,MODEL,TYPE | awk '$NF=="disk"' | while read -r line; do
-		name=${line%% *}
-		[ "$name" = "/dev/${live_disk:-none}" ] && continue
-		echo "  $line"
-	done
-}
-if [ -z "$disk" ]; then
-	[ -t 0 ] || die "falta --disk (no hay terminal para preguntar)"
-	echo "Discos disponibles (se borrará por completo el que elijas):"
-	list_disks
-	read -r -p "Disco destino (por ejemplo /dev/vda): " disk
-fi
-[ -b "$disk" ] || die "$disk no es un disco"
-[ "$(lsblk -dno TYPE "$disk")" = disk ] || die "$disk no es un disco entero"
-[ "$disk" != "/dev/${live_disk:-none}" ] || die "$disk contiene el sistema live"
-if lsblk -no MOUNTPOINT "$disk" | grep -q .; then die "$disk tiene particiones montadas"; fi
-disk_bytes=$(lsblk -bdno SIZE "$disk")
-disk_gb=$((disk_bytes / 1024 / 1024 / 1024))
-
 if [ -z "$fw" ]; then
 	if [ -d /sys/firmware/efi ]; then fw=uefi; else fw=bios; fi
 fi
 [ -n "$profile" ] || profile=$(rros-config profile 2>/dev/null || echo lite)
-plan_args=(--disk-gb "$disk_gb" "--$fw" -p "$profile")
+if [ -z "$disk" ]; then
+	[ -t 0 ] || die "falta --disk (no hay terminal para preguntar)"
+	echo "Discos (tamaño, modelo, tabla de particiones, espacio libre y sistemas que tienen):"
+	rros-installer disks "--$fw" -p "$profile" | tail -n +2 | sed 's/^/  /'
+	read -r -p "Disco destino (por ejemplo /dev/vda): " disk
+	if rros-installer plan --disk "$disk" --alongside "--$fw" -p "$profile" >/dev/null 2>&1; then
+		read -r -p "¿Instalar en el espacio libre, sin borrar lo que hay (p. ej. Windows)? [S/n] " a
+		case $a in [nN]*) ;; *) alongside=1 ;; esac
+	fi
+	read -r -p "¿Cifrar el disco (pide una contraseña al arrancar)? [s/N] " a
+	case $a in [sS]*) encrypt=1 ;; esac
+fi
+[ -b "$disk" ] || die "$disk no es un disco"
+[ "$(lsblk -dno TYPE "$disk")" = disk ] || die "$disk no es un disco entero"
+dname=${disk#/dev/}
 
+plan_args=(--disk "$disk" "--$fw" -p "$profile")
+[ "$alongside" -eq 0 ] || plan_args+=(--alongside)
+[ "$encrypt" -eq 0 ] || plan_args+=(--encrypt)
+
+mode="borrar todo el disco"
+[ "$alongside" -eq 0 ] || mode="junto a lo que ya hay (espacio libre)"
+[ "$encrypt" -eq 0 ] || mode="$mode, cifrado"
 echo "Instalación de RROS"
-echo "  disco:    $disk (${disk_gb} GiB)   firmware: $fw   perfil: $profile"
-echo "  usuario:  $user   equipo: $host   teclado: $keymap   zona horaria: $tz"
-rros-installer plan "${plan_args[@]}" || die "el disco no sirve para este perfil"
+echo "  disco:    $disk ($(lsblk -dno SIZE "$disk" | tr -d ' '))   firmware: $fw   perfil: $profile"
+echo "  modo:     $mode"
+echo "  usuario:  $user   equipo: $host   teclado: $keymap   idioma: $locale   zona horaria: $tz"
+rros-installer plan "${plan_args[@]}" || die "el disco no sirve así"
 if [ "$dry" -eq 1 ]; then
 	echo "(simulación: no se ha tocado el disco)"
 	exit 0
 fi
 
-# --- contraseña ---
-password=""
-if [ -n "$pwfile" ]; then
-	[ -r "$pwfile" ] || die "no puedo leer $pwfile"
-	IFS= read -r password < "$pwfile" || true
-else
-	[ -t 0 ] || die "falta --password-file (no hay terminal para preguntar)"
-	read -r -s -p "Contraseña para $user: " password; echo
-	read -r -s -p "Repítela: " again; echo
-	[ "$password" = "$again" ] || die "las contraseñas no coinciden"
-fi
+# --- contraseñas ---
+read_secret() {   # $1 archivo (o vacío) $2 pregunta $3 opción; deja el resultado en $secret
+	secret=""
+	if [ -n "$1" ]; then
+		[ -r "$1" ] || die "no puedo leer $1"
+		IFS= read -r secret < "$1" || true
+	else
+		[ -t 0 ] || die "falta $3 (no hay terminal para preguntar)"
+		read -r -s -p "$2: " secret; echo
+		read -r -s -p "Repítela: " again; echo
+		[ "$secret" = "$again" ] || die "las contraseñas no coinciden"
+		again=""
+	fi
+}
+read_secret "$pwfile" "Contraseña para $user" --password-file
+password=$secret
 [ -n "$password" ] || die "la contraseña no puede estar vacía"
+passphrase=""
+if [ "$encrypt" -eq 1 ]; then
+	read_secret "$ppfile" "Contraseña del cifrado del disco (se pedirá al arrancar)" --passphrase-file
+	passphrase=$secret
+	[ "${#passphrase}" -ge 8 ] || die "la contraseña del cifrado debe tener al menos 8 caracteres"
+fi
+secret=""
 
 if [ "$yes" -ne 1 ]; then
 	[ -t 0 ] || die "falta --yes (no hay terminal para confirmar)"
 	echo
-	echo "ATENCIÓN: se borrará todo el contenido de $disk."
+	if [ "$alongside" -eq 1 ]; then
+		echo "Se crearán particiones nuevas en el espacio libre de $disk; lo que ya hay no se toca."
+		echo "Aun así, ten una copia de seguridad (y la clave de recuperación de BitLocker, si Windows la usa)."
+	else
+		echo "ATENCIÓN: se borrará todo el contenido de $disk."
+	fi
 	read -r -p "Escribe la ruta del disco para confirmar: " conf
 	[ "$conf" = "$disk" ] || die "cancelado"
 fi
 
 # --- origen: el sistema de archivos comprimido de la ISO (limpio, sin cambios de la sesión live) ---
+step 1 "Comprobando el sistema a copiar"
 if [ -z "$src" ]; then
 	for c in /rofs /run/live/rootfs/filesystem.squashfs; do
 		if [ -d "$c/etc" ]; then src=$c; break; fi
@@ -143,73 +188,166 @@ if [ -z "$src" ]; then
 fi
 [ -d "$src/etc" ] || die "no encuentro el sistema a copiar (usa --source DIR)"
 [ -e "$src/usr/share/zoneinfo/$tz" ] || die "zona horaria desconocida: $tz"
+[ "$encrypt" -eq 0 ] || command -v cryptsetup >/dev/null || die "falta cryptsetup en este sistema"
 
 target=$(mktemp -d /tmp/rros-target.XXXXXX)
+created=()   # particiones nuevas: junto a otro sistema se quitan si la instalación falla
 cleanup() {
+	local rc=$?
 	set +e
-	for m in run sys/firmware/efi/efivars sys proc dev/pts dev; do
+	for m in run sys/firmware/efi/efivars sys proc dev/pts dev boot/efi boot; do
 		mountpoint -q "$target/$m" && umount "$target/$m"
 	done
-	mountpoint -q "$target/boot/efi" && umount "$target/boot/efi"
 	mountpoint -q "$target" && umount "$target"
 	rmdir "$target" 2>/dev/null
+	[ ! -e /dev/mapper/rros-root ] || cryptsetup close rros-root
+	if [ "$rc" -ne 0 ] && [ "$alongside" -eq 1 ] && [ "${#created[@]}" -gt 0 ]; then
+		echo "rros-install: ha fallado; se quitan las particiones nuevas (${created[*]}) y lo demás queda como estaba" >&2
+		sfdisk --quiet --delete "$disk" "${created[@]}"
+		partprobe "$disk" 2>/dev/null
+	fi
 }
 trap cleanup EXIT
 
-# --- particiones y sistemas de archivos ---
-part() { case $disk in *[0-9]) echo "${disk}p$1" ;; *) echo "${disk}$1" ;; esac; }
-log "particionando $disk"
-wipefs -a "$disk" >/dev/null
-rros-installer plan "${plan_args[@]}" --sfdisk | sfdisk --wipe always --quiet "$disk"
+# --- particiones ---
+# la tabla del plan: rol inicio_mb tamaño_mb fs montaje reutilizada cifrada
+mapfile -t table < <(rros-installer plan "${plan_args[@]}" --table)
+[ "${#table[@]}" -gt 0 ] || die "no hay plan de particiones"
+# partición del disco que empieza en $1 MiB (los números cambian si ya había otras)
+part_at() {
+	local want=$(($1 * 2048)) s i
+	for i in 1 2 3 4 5 6 7 8; do
+		for s in /sys/block/"$dname"/"$dname"*/start; do
+			[ -r "$s" ] || continue
+			if [ "$(cat "$s")" = "$want" ] && [ -b "/dev/$(basename "${s%/start}")" ]; then
+				echo "/dev/$(basename "${s%/start}")"
+				return 0
+			fi
+		done
+		udevadm settle 2>/dev/null || true
+		sleep "$i"
+	done
+	return 1
+}
+
+step 2 "Creando las particiones en $disk"
+if [ "$alongside" -eq 1 ]; then
+	rros-installer plan "${plan_args[@]}" --sfdisk | sfdisk --append --quiet "$disk"
+else
+	wipefs -a "$disk" >/dev/null
+	rros-installer plan "${plan_args[@]}" --sfdisk | sfdisk --wipe always --wipe-partitions always --quiet "$disk"
+fi
 udevadm settle 2>/dev/null || true
 partprobe "$disk" 2>/dev/null || true
 udevadm settle 2>/dev/null || true
-if [ "$fw" = uefi ]; then esp=$(part 1); root=$(part 2); else root=$(part 2); fi
-[ -b "$root" ] || die "no aparece la partición $root"
+esp="" esp_reuse=0 boot="" root="" root_crypt=0
+for row in "${table[@]}"; do
+	read -r role start _ _ _ reuse crypt <<<"$row"
+	dev=$(part_at "$start") || die "no aparece la partición $role (inicio ${start} MiB)"
+	[ "$reuse" -eq 1 ] || created+=("$(cat "/sys/block/$dname/${dev#/dev/}/partition")")
+	case $role in
+	esp) esp=$dev; esp_reuse=$reuse ;;
+	boot) boot=$dev ;;
+	root) root=$dev; root_crypt=$crypt ;;
+	esac
+done
+[ -n "$root" ] || die "el plan no tiene partición raíz"
 
+# --- sistemas de archivos ---
 rootfs=ext4
 [ "$profile" = lite ] || rootfs=btrfs
 command -v "mkfs.$rootfs" >/dev/null || die "falta mkfs.$rootfs en este sistema"
-log "formateando ($rootfs)"
+what=$rootfs
+[ "$root_crypt" -eq 0 ] || what="$rootfs, cifrado con LUKS2"
+step 3 "Formateando ($what)"
+root_fs=$root
+if [ "$root_crypt" -eq 1 ]; then
+	printf '%s' "$passphrase" | cryptsetup luksFormat --type luks2 --batch-mode --label rros-crypt --key-file - "$root"
+	printf '%s' "$passphrase" | cryptsetup open --key-file - "$root" rros-root
+	root_fs=/dev/mapper/rros-root
+fi
+passphrase=""
 case $rootfs in
-ext4) mkfs.ext4 -q -F -L rros-root "$root"; mopts=defaults,noatime ;;
-btrfs) mkfs.btrfs -q -f -L rros-root "$root"; mopts=defaults,noatime,compress=zstd:3 ;;
+ext4) mkfs.ext4 -q -F -L rros-root "$root_fs"; mopts=defaults,noatime ;;
+btrfs) mkfs.btrfs -q -f -L rros-root "$root_fs"; mopts=defaults,noatime,compress=zstd:3 ;;
 *) die "sistema de archivos no soportado" ;;
 esac
-if [ "$fw" = uefi ]; then
-	command -v mkfs.vfat >/dev/null || die "falta mkfs.vfat (dosfstools)"
-	mkfs.vfat -F 32 -n ESP "$esp" >/dev/null
+[ -z "$boot" ] || mkfs.ext4 -q -F -L rros-boot "$boot"
+if [ -n "$esp" ]; then
+	if [ "$esp_reuse" -eq 1 ]; then
+		[ "$(blkid -s TYPE -o value "$esp")" = vfat ] || die "la partición EFI $esp no es FAT"
+	else
+		command -v mkfs.vfat >/dev/null || die "falta mkfs.vfat (dosfstools)"
+		mkfs.vfat -F 32 -n ESP "$esp" >/dev/null
+	fi
 fi
-mount -o "$mopts" "$root" "$target"
-if [ "$fw" = uefi ]; then
+mount -o "$mopts" "$root_fs" "$target"
+if [ -n "$boot" ]; then
+	mkdir -p "$target/boot"
+	mount "$boot" "$target/boot"
+fi
+if [ -n "$esp" ]; then
 	mkdir -p "$target/boot/efi"
 	mount "$esp" "$target/boot/efi"
 fi
 
 # --- copia ---
-log "copiando el sistema (puede tardar unos minutos)"
-tar -C "$src" --numeric-owner --xattrs --acls -cf - \
-	--exclude=./proc/* --exclude=./sys/* --exclude=./dev/* --exclude=./run/* --exclude=./tmp/* . |
-	tar -C "$target" --numeric-owner --xattrs --acls -xpf -
+step 4 "Copiando el sistema (puede tardar unos minutos)"
+total=0
+for f in /cdrom/casper/filesystem.size /run/live/medium/casper/filesystem.size; do
+	if [ -r "$f" ]; then total=$(tr -dc 0-9 < "$f"); break; fi
+done
+[ "${total:-0}" -gt 0 ] || total=$(du -sx --block-size=1 "$src" | cut -f1)
+[ "${total:-0}" -gt 0 ] || total=1
+copy_progress() {   # lee los avisos de tar («tar: N», N = registros de 10 KiB) y escribe el porcentaje
+	local line n pct last=-1
+	while IFS= read -r line; do
+		n=${line#tar: }
+		case $n in
+		'' | *[!0-9]*) echo "$line" >&2 ;;
+		*)
+			pct=$((n * 10240 * 100 / total))
+			[ "$pct" -le 99 ] || pct=99
+			if [ "$pct" -ne "$last" ] && [ -n "$progress" ]; then
+				printf '4/%s Copiando el sistema (%s %%)\n' "$STEPS" "$pct" > "$progress"
+				last=$pct
+			fi
+			;;
+		esac
+	done
+}
+tar -C "$src" --numeric-owner --xattrs --acls -cf - --checkpoint=2048 --checkpoint-action=echo='%u' \
+	--exclude=./proc/* --exclude=./sys/* --exclude=./dev/* --exclude=./run/* --exclude=./tmp/* . \
+	2> >(copy_progress) | tar -C "$target" --numeric-owner --xattrs --acls -xpf -
+wait $! 2>/dev/null || true   # que el último porcentaje no pise el paso siguiente
 mkdir -p "$target"/{proc,sys,dev,run,tmp}
 chmod 1777 "$target/tmp"
 
 # --- configuración del equipo ---
-log "configurando"
+step 5 "Creando tu usuario y configurando el equipo"
 echo "$host" > "$target/etc/hostname"
 {
 	echo "127.0.0.1 localhost"
 	echo "127.0.1.1 $host"
 	echo "::1 localhost ip6-localhost ip6-loopback"
 } > "$target/etc/hosts"
-root_uuid=$(blkid -s UUID -o value "$root")
 {
 	echo "# /etc/fstab - generado por rros-install"
-	echo "UUID=$root_uuid / $rootfs $mopts 0 1"
-	if [ "$fw" = uefi ]; then
-		echo "UUID=$(blkid -s UUID -o value "$esp") /boot/efi vfat umask=0077 0 2"
+	if [ "$root_crypt" -eq 1 ]; then
+		echo "/dev/mapper/rros-root / $rootfs $mopts 0 1"
+	else
+		echo "UUID=$(blkid -s UUID -o value "$root") / $rootfs $mopts 0 1"
 	fi
+	[ -z "$boot" ] || echo "UUID=$(blkid -s UUID -o value "$boot") /boot ext4 defaults,noatime 0 2"
+	[ -z "$esp" ] || echo "UUID=$(blkid -s UUID -o value "$esp") /boot/efi vfat umask=0077 0 2"
 } > "$target/etc/fstab"
+if [ "$root_crypt" -eq 1 ]; then
+	echo "rros-root UUID=$(blkid -s UUID -o value "$root") none luks,discard,initramfs" > "$target/etc/crypttab"
+	chmod 600 "$target/etc/crypttab"
+	# que cryptsetup entre siempre en el initramfs (pide la contraseña antes de montar /)
+	mkdir -p "$target/etc/cryptsetup-initramfs"
+	echo "CRYPTSETUP=y" > "$target/etc/cryptsetup-initramfs/conf-hook"
+fi
 : > "$target/etc/machine-id"
 rm -f "$target/var/lib/dbus/machine-id"
 
@@ -224,40 +362,68 @@ groups=""
 for g in sudo adm audio video input netdev plugdev render cdrom bluetooth lpadmin dialout; do
 	if grep -q "^$g:" "$target/etc/group"; then groups="$groups,$g"; fi
 done
-in_target useradd -m -s /bin/bash -G "${groups#,}" "$user"
+in_target useradd -m -s /bin/bash -c "$fullname" -G "${groups#,}" "$user"
 printf '%s:%s\n' "$user" "$password" | in_target chpasswd
 in_target passwd -l root >/dev/null 2>&1 || true
 password=""
 
-# teclado (consola y escritorio) y zona horaria
-printf 'KEYMAP=%s\n' "$keymap" > "$target/etc/vconsole.conf"
+# teclado (consola, escritorio y la pantalla de la contraseña del disco, con la misma distribución XKB),
+# idioma y zona horaria
+in_target /usr/libexec/rros-vconsole --save "$keymap" || echo "aviso: no se pudo preparar el teclado de la consola" >&2
 in_target su - "$user" -c "rros-config set input.keymap '$keymap'" >/dev/null
+if ! in_target locale -a 2>/dev/null | grep -qix "${locale%.UTF-8}.utf8"; then
+	in_target locale-gen "$locale" >/dev/null || echo "aviso: no se pudo generar el idioma $locale" >&2
+fi
+in_target rros-config set --system locale.language "$locale" >/dev/null
+in_target rros-config set --system locale.timezone "$tz" >/dev/null
+lang=${locale%%.*}
+printf 'LANG=%s\nLANGUAGE=%s:%s\n' "$locale" "$lang" "${lang%%_*}" > "$target/etc/default/locale"
 ln -sf "/usr/share/zoneinfo/$tz" "$target/etc/localtime"
 echo "$tz" > "$target/etc/timezone"
 
+if [ "$root_crypt" -eq 1 ]; then
+	# entran cryptsetup y el mapa de teclado de console-setup: la contraseña se teclea en la distribución elegida
+	log "regenerando el initramfs (con cryptsetup)"
+	in_target update-initramfs -u -k all
+fi
+
 # --- gestor de arranque ---
-log "instalando GRUB ($fw)"
+step 6 "Instalando el arranque (GRUB, $fw)"
 # la identidad de GRUB (nombre, colores y parámetros base) vive en /etc/default/grub.d/rros.cfg, que se lee
-# después de /etc/default/grub; los parámetros extra van en un archivo posterior para que no se pierdan
+# después de /etc/default/grub; lo propio de esta instalación va en un archivo posterior para que no se pierda
 cat > "$target/etc/default/grub" <<'EOF'
 # Edita y ejecuta: sudo update-grub (los valores de RROS están en /etc/default/grub.d/)
 GRUB_DEFAULT=0
 GRUB_DISABLE_RECOVERY=true
 EOF
-if [ -n "$extra" ]; then
-	mkdir -p "$target/etc/default/grub.d"
+mkdir -p "$target/etc/default/grub.d"
+{
+	echo "# generado por rros-install"
 	# shellcheck disable=SC2016  # la variable debe expandirla GRUB al leer el archivo, no esta orden
-	printf 'GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT %s"\n' "$extra" > "$target/etc/default/grub.d/zz-rros-install.cfg"
-fi
+	[ -z "$extra" ] || printf 'GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT %s"\n' "$extra"
+	if [ "$alongside" -eq 1 ]; then
+		# busca Windows y otros sistemas y deja el menú a la vista para elegir
+		echo "GRUB_DISABLE_OS_PROBER=false"
+		echo "GRUB_TIMEOUT_STYLE=menu"
+		echo "GRUB_TIMEOUT=10"
+	fi
+} > "$target/etc/default/grub.d/zz-rros-install.cfg"
 if [ "$fw" = uefi ]; then
 	in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=RROS --recheck ||
 		echo "aviso: no se pudo registrar la entrada en la NVRAM; se usa la ruta de arranque por defecto"
-	in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable --recheck
+	# la ruta por defecto (EFI/BOOT/BOOTX64.EFI) ayuda con firmwares que olvidan la NVRAM, pero si hay
+	# otro sistema en el disco es la suya: no se toca
+	[ "$alongside" -eq 1 ] || in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable --recheck
 else
 	in_target grub-install --target=i386-pc --recheck "$disk"
 fi
 in_target update-grub
+others=$(grep -c "^menuentry .*osprober" "$target/boot/grub/grub.cfg" || true)
 
 sync
-log "listo: RROS instalado en $disk. Apaga, quita la ISO y arranca desde el disco."
+step 7 "Listo"
+created=()
+log "listo: RROS instalado en $disk. Apaga, quita la ISO (o la memoria USB) y arranca desde el disco."
 echo "Usuario: $user   (se inicia sesión en tty1 y el escritorio arranca solo)"
+[ "$root_crypt" -eq 0 ] || echo "Al arrancar se pide la contraseña del cifrado del disco."
+[ "${others:-0}" -eq 0 ] || echo "El menú de arranque incluye $others sistema(s) más (p. ej. Windows)."

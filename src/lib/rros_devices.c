@@ -200,6 +200,27 @@ static int udev_prop(const char *root, const char *devnum, const char *key, char
 	return found;
 }
 
+int rros_sys_read(const char *root, const char *rel, char *buf, size_t n)
+{
+	return rd(root, rel, buf, n);
+}
+
+int rros_udev_prop(const char *root, const char *devnum, const char *key, char *out, size_t n)
+{
+	return udev_prop(root, devnum, key, out, n);
+}
+
+int rros_mount_of(const char *root, const char *name, char *out, size_t n)
+{
+	struct mnt m[128];
+	const char *mp = mounted_at(m, load_mounts(root, m, 128), name);
+
+	if (!mp)
+		return 0;
+	snprintf(out, n, "%s", mp);
+	return 1;
+}
+
 /* ---- discos ---- */
 
 static int skip_block(const char *n)

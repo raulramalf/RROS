@@ -24,8 +24,9 @@ grep -qE 'boot=casper|archisobasedir=' /proc/cmdline && LIVE=1
 echo "sistema: $([ "$LIVE" -eq 1 ] && echo live || echo instalado)"
 check "usuario 'rros'" id rros
 check "no existe el usuario 'ubuntu'" sh -c '! id ubuntu'
-# shellcheck disable=SC2016  # $(hostname) se evalúa dentro de sh -c
-check "nombre de equipo: $(hostname)" sh -c 'case "$(hostname)" in rros*) true ;; *) false ;; esac'
+# el nombre del equipo, del kernel (Arch no trae la orden hostname)
+host=$(cat /proc/sys/kernel/hostname)
+check "nombre de equipo: $host" sh -c "case '$host' in rros*) true ;; *) false ;; esac"
 check "kernel $(uname -r)" test -n "$(uname -r)"
 
 # base del sistema: ubuntu o arch (la escribe apply-identity.sh)

@@ -26,6 +26,9 @@ if [ -f /etc/locale.gen ]; then
 	sed -i -E 's/^#(es_ES\.UTF-8 UTF-8|en_US\.UTF-8 UTF-8)/\1/' /etc/locale.gen
 	locale-gen >/dev/null 2>&1 || true
 fi
+# la configuración del perfil (zram, red, cortafuegos, sysctl...) escrita ya: el generador de zram la lee al
+# principio del arranque, antes de que rros-apply.service la escriba
+command -v rros-apply >/dev/null 2>&1 && rros-apply >/dev/null 2>&1
 # systemd-firstboot pregunta en la consola lo que falte (zona horaria, teclado...) y deja el arranque
 # esperando: el live trae todo puesto y el instalador y Ajustes se encargan del resto
 systemctl mask systemd-firstboot.service >/dev/null 2>&1

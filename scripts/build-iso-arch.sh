@@ -75,11 +75,64 @@ file_permissions=(
 )
 EOF
 
-# menú de arranque: nombre de RROS y parámetros
+# menú de arranque, en español: RROS, «modo seguro» (sin el controlador gráfico, para pantallas negras) y
+# lector de pantalla (accessibility=on: rros-live-user activa Orca). Las entradas nuevas copian la primera de
+# releng para no depender del formato de cada versión de archiso.
+seguro="RROS Aurora ($profile) - modo seguro (gráficos básicos)"
+ayuda_seguro="Sin el controlador de la tarjeta gráfica: si la pantalla se queda negra o congelada."
+f=$P/syslinux/archiso_sys-linux.cfg
+if [ -f "$f" ]; then
+	awk -v label="$seguro" -v help="$ayuda_seguro" '
+		!done && /^LABEL / { inb = 1 }
+		inb { b[++nb] = $0 }
+		{ print }
+		inb && /^APPEND / {
+			inb = 0; done = 1; print ""
+			for (i = 1; i <= nb; i++) {
+				l = b[i]
+				if (l ~ /^LABEL /) l = "LABEL rrosseguro"
+				else if (l ~ /^MENU LABEL /) l = "MENU LABEL " label
+				else if (l ~ /^APPEND /) l = l " nomodeset"
+				else if (l ~ /^TEXT HELP/) { print l; print help; skip = 1; continue }
+				else if (l ~ /^ENDTEXT/) skip = 0
+				else if (skip) continue
+				print l
+			}
+		}' "$f" > "$f.new" && mv "$f.new" "$f"
+fi
+first=$(find "$P/efiboot/loader/entries" -name '*.conf' ! -name '*speech*' ! -name '*memtest*' ! -name '*shell*' 2>/dev/null | sort | head -1)
+if [ -n "$first" ]; then
+	sed -e "s/^title .*/title    $seguro/" -e 's/^\(options .*\)/\1 nomodeset/' -e 's/^sort-key .*/sort-key 01s/' \
+		"$first" > "$(dirname "$first")/01-archiso-seguro.conf"
+fi
 find "$P/syslinux" "$P/efiboot" "$P/grub" -type f \( -name '*.cfg' -o -name '*.conf' \) 2>/dev/null | while read -r f; do
-	sed -i -e "s/Arch Linux install medium/RROS Aurora ($profile)/g" -e "s/Arch Linux/RROS/g" \
-		-e "s|archisosearchuuid=%ARCHISO_UUID%|& lsm=landlock,lockdown,yama,integrity,apparmor,bpf quiet splash ${extra}|g" "$f"
+	sed -i -e "s/^Boot the .* with speakup screen reader\./Arranca RROS con el lector de pantalla Orca./" \
+		-e "s/^It allows you to install .* with speech feedback\./Puedes probarlo e instalarlo con voz./" \
+		-e "s/Arch Linux install medium/RROS Aurora ($profile)/g" \
+		-e "s/ with speakup screen reader/ con lector de pantalla/g" -e "s/ with ^speech/ con ^lector de pantalla/g" \
+		-e "s/ with speech$/ con lector de pantalla/" \
+		-e "s/^Boot the .*/Arranca RROS: pruébalo sin tocar el disco y, si te gusta, instálalo./" \
+		-e "/^It allows you to install /d" \
+		-e "s/Run Memtest86+ (RAM test)/Comprobar la memoria (Memtest86+)/g" \
+		-e "s/Boot existing OS/Arrancar el sistema del disco/g" \
+		-e "s/^Boot an existing operating system\./Arranca el sistema que ya está instalado en el disco./" \
+		-e "s/Hardware Information (HDT)/Información del equipo (HDT)/g" \
+		-e "s/^MENU LABEL Reboot$/MENU LABEL Reiniciar/" -e "s/^Reboot computer\./Reinicia el equipo./" \
+		-e "s/^MENU LABEL Power Off$/MENU LABEL Apagar/" -e "s/^Power off computer\./Apaga el equipo./" \
+		-e "s/^Press TAB to edit the disk and partition number to boot\./Pulsa TAB para elegir otro disco o partición./" \
+		-e "s/^The computer's firmware must support APM\./El firmware del equipo tiene que admitir APM./" \
+		-e "s/'System shutdown'/'Apagar'/" -e "s/'System restart'/'Reiniciar'/" \
+		-e "s/'UEFI Firmware Settings'/'Ajustes del firmware (UEFI)'/" \
+		-e "s/System shutting down\.\.\./Apagando.../" -e "s/System rebooting\.\.\./Reiniciando.../" \
+		-e "s/Arch Linux/RROS/g" \
+		-e "s|archisosearchuuid=%ARCHISO_UUID%|& lsm=landlock,lockdown,yama,integrity,apparmor,bpf quiet splash${extra:+ $extra}|g" "$f"
 done
+# fondo del menú BIOS: el de RROS, generado con los colores del tema (vesamenu: 640x480)
+if [ -f "$P/syslinux/splash.png" ]; then
+	HOME=$P/tmp-home XDG_DATA_HOME=$P/tmp-home "$RROS/rros-theme" -p "$profile" wallpaper --style aurora --size 640x480 \
+		--out "$P/syslinux/splash.png" >/dev/null || log "aviso: no se pudo generar el fondo del menú"
+	rm -rf "${P:?}/tmp-home"
+fi
 
 log "mkarchiso -> $iso"
 mkarchiso -v -w "$work" -o "$ROOT_DIR/build/iso-out-$profile" "$P"

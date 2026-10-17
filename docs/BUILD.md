@@ -6,7 +6,22 @@ make WERROR=1 && make test
 ```
 Necesita `gcc` y `make`.
 
-## ISO sobre Ubuntu 24.04 (estado: Lite construida y arrancada en QEMU; Standard y Pro sin construir)
+## ISO sobre Arch Linux (la base principal)
+Se construye con archiso en un Arch (o en el contenedor `archlinux`), como root:
+```
+pacman -S --needed archiso base-devel
+make
+sudo scripts/build-iso-arch.sh lite           # build/rros-arch-lite.iso
+BASE=arch ISO=build/rros-arch-lite.iso scripts/test-iso.sh lite selftest   # autotest en QEMU
+```
+Sin un Arch a mano lo hace GitHub Actions: workflow **Arch** (al pulsar *Run workflow*, o con `[iso-arch]` en el
+mensaje de un commit). Antes comprueba que todos los paquetes existen (`scripts/check-packages-arch.sh`, también los
+de la tienda), pasa las pruebas y valida con el Hyprland real las configuraciones que genera `rros-theme`
+(`scripts/check-hyprland.sh`). La ISO y el registro del autotest quedan como artefactos del workflow.
+
+La ISO de Arch arranca en BIOS y UEFI, **sin Secure Boot**.
+
+## ISO sobre Ubuntu 24.04 (base secundaria: Lite construida y arrancada en QEMU, también con Secure Boot)
 Requisitos (Ubuntu/Debian): `debootstrap squashfs-tools grub-pc-bin grub-efi-amd64-bin xorriso mtools qemu-system-x86 ovmf`.
 ```
 make
@@ -26,8 +41,7 @@ python3 scripts/qemu-console.py start|exec|shot|stop   # VM persistente con cons
 ```
 Sin KVM (por ejemplo en contenedores) QEMU emula por software y el arranque tarda minutos; con KVM es mucho más rápido.
 
-## Rootfs sobre Arch (estado: sin probar)
-Requiere `arch-install-scripts` en un Arch.
+Rootfs de Arch sin ISO (para un contenedor o un chroot; requiere `arch-install-scripts`):
 ```
 sudo scripts/build-rootfs-arch.sh lite
 ```

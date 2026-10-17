@@ -36,7 +36,8 @@ case "$mode" in
 				die "no se pudo sacar el kernel de $iso"
 			kernel=$out/vmlinuz initrd=$out/initrd
 			label=$(xorriso -indev "$iso" -pvd_info 2>/dev/null | sed -n 's/^Volume Id *: *//p' | tr -d "'")
-			append="archisobasedir=arch archisolabel=${label:-RROS_${profile^^}} console=ttyS0 rros.selftest loglevel=3"
+			append="archisobasedir=arch archisolabel=${label:-RROS_${profile^^}} lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
+			append+=" console=ttyS0 rros.selftest loglevel=3"
 		else
 			kernel=$iso_dir/casper/vmlinuz initrd=$iso_dir/casper/initrd
 			append="boot=casper quiet console=ttyS0 rros.selftest loglevel=3"
@@ -58,6 +59,8 @@ case "$mode" in
 		if grep -aq RROS_SELFTEST_OK "$out/serial.log"; then
 			log "AUTOTEST CORRECTO"
 		else
+			echo "--- últimas líneas de la consola serie ---"
+			tail -n 80 "$out/serial.log" | tr -d '\r'
 			die "el autotest falló o no terminó (mira $out/serial.log)"
 		fi
 		;;

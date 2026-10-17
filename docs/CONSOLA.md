@@ -163,6 +163,43 @@ rros theme use miotema
 
 Lo que no definas en tu tema se hereda del tema base. También puedes editar los colores con selectores en `rros settings`.
 
+### Escritorio y fondo
+
+El escritorio es Hyprland (en una máquina virtual sin aceleración gráfica, sway). Tres estilos ya preparados cambian
+de golpe la barra, el modo de las ventanas y el dock:
+
+```sh
+rros theme escritorio              # los estilos; * marca el que usas
+rros theme escritorio clasico      # barra abajo con «Inicio» y lista de ventanas, ventanas libres
+rros theme escritorio moderno      # barra flotante arriba y dock
+rros theme escritorio mosaico      # ventanas en mosaico y barra con escritorios
+```
+
+El fondo se genera con los colores de tu tema, así que cambia solo al cambiar de tema:
+
+```sh
+rros theme wallpaper --next                     # siguiente estilo (atajo: Mod+Alt+W)
+rros config set ui.wallpaper_style ondas        # aurora, ondas, degradado, circulos o liso
+rros config set ui.wallpaper ~/Imágenes/mar.jpg # tu propia imagen
+rros config set ui.wallpaper_mode fill          # fill, fit, center o tile
+rros theme wallpaper --style circulos --size 1920x1080 --out ~/fondo.png   # guardarlo como imagen
+```
+
+Efectos de Hyprland (todos están también en Ajustes → *Escritorio y fondo*):
+
+```sh
+rros config set ui.animation_style rebote   # suave, rapida, rebote o deslizar
+rros config set ui.blur_strength 10         # desenfoque de 1 a 20 (ui.blur true para activarlo)
+rros config set ui.border_gradient false    # borde de un solo color
+rros config set ui.dim_inactive true        # oscurece las ventanas sin foco
+rros config set ui.tiling_layout master     # mosaico: dwindle (espiral) o master (una grande y el resto en columna)
+rros config set ui.dock true                # dock con tus aplicaciones (nwg-dock-hyprland)
+rros config set input.gestures true         # tres dedos a los lados en el panel táctil: cambiar de escritorio
+```
+
+Lo que Hyprland permita y RROS no tenga como clave va en `~/.config/hypr/personal.conf` (se crea vacío y RROS
+no lo toca nunca).
+
 ### El panel
 
 ```sh
@@ -226,7 +263,8 @@ El valor es el comando tal como lo escribirías en la terminal.
 rros config unset keybind.navegador
 ```
 
-Después de cambiar atajos o reglas: `rros theme apply` (recarga sway).
+Después de cambiar atajos o reglas: `rros theme apply` (recarga Hyprland o sway). Los mismos atajos y reglas
+valen para los dos: RROS los traduce a la sintaxis de cada uno.
 
 ---
 

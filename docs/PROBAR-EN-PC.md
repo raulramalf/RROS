@@ -8,8 +8,9 @@ sin riesgo y para contar qué funciona, de forma que cada informe sirva para arr
 
 ## 1. Lo que necesitas
 
-- La ISO (`rros-lite.iso`; Standard y Pro todavía no se han construido). Se descarga del workflow **ISO** de
-  GitHub Actions o se genera con [BUILD.md](BUILD.md).
+- La ISO (`rros-arch-lite.iso`). Se descarga de los artefactos del workflow **Arch** de GitHub Actions o se
+  genera con [BUILD.md](BUILD.md). (La ISO de la base Ubuntu, `rros-lite.iso`, sigue sirviendo y es la única que
+  arranca con Secure Boot.)
 - Una memoria USB de 4 GB o más (se borra entera).
 - Para instalar: 10 GB libres (Lite). Si vas a instalarlo junto a Windows, una copia de seguridad y, si Windows
   usa BitLocker, su clave de recuperación (en tu cuenta Microsoft → Dispositivos).
@@ -41,12 +42,16 @@ La ISO es «híbrida» (como la de Ubuntu): se copia tal cual a la memoria, sin 
 4. Sale el menú de RROS. La primera opción arranca el sistema live; espera al escritorio (en un USB 2.0 puede
    tardar un par de minutos).
 
-**Secure Boot:** no hace falta desactivarlo. La ISO arranca como la de Ubuntu: con el *shim* firmado por
-Microsoft, el GRUB y el kernel firmados por Canonical. Si tu equipo aun así lo rechaza («Security Violation»),
-desactívalo en la BIOS/UEFI (pestaña *Security* o *Boot*) y cuéntalo en el informe.
+**Secure Boot: desactívalo** en la BIOS/UEFI (pestaña *Security* o *Boot*, opción *Secure Boot* → *Disabled*)
+antes de arrancar la ISO de Arch: Arch no firma su arranque y, con Secure Boot activo, el equipo la rechaza
+(«Security Violation» o vuelve al menú). Windows sigue arrancando igual con Secure Boot desactivado; si usa
+BitLocker, ten a mano la clave de recuperación por si la pide al cambiarlo.
 
 **Pantalla negra o congelada:** reinicia y elige **«modo seguro (gráficos básicos)»** en el menú. Arranca sin el
 controlador de la tarjeta gráfica (resolución fija y sin aceleración); dilo en el informe junto con la tarjeta.
+
+**Con lector de pantalla:** la entrada «con lector de pantalla» del menú arranca con Orca activado desde el
+principio (voz en español).
 
 **Windows con «Inicio rápido»:** si vas a instalar junto a Windows, desactívalo antes (Panel de control →
 Opciones de energía → *Elegir el comportamiento de los botones* → quita «Activar inicio rápido»). Si no, Windows

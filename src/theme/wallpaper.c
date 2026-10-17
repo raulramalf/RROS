@@ -289,7 +289,7 @@ static int write_png(const char *path, const uint8_t *rgb, int w, int h)
 	ihdr[8] = 8;    /* bits por canal */
 	ihdr[9] = 2;    /* RGB */
 	ihdr[10] = ihdr[11] = ihdr[12] = 0;
-	snprintf(tmp, sizeof tmp, "%s.tmp", path);
+	snprintf(tmp, sizeof tmp, "%s.%ld.tmp", path, (long)getpid());   /* dos generaciones a la vez no se pisan */
 	f = fopen(tmp, "wb");
 	if (!f) {
 		free(o.p);

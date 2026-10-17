@@ -212,7 +212,6 @@ static int cmd_apply(const char *profile, int quiet)
 		return 1;
 	}
 	rros_theme_palette(&t, &p);
-	ensure_wallpaper(&t, &p, wp, sizeof wp);
 	{
 		/* el archivo propio del usuario para Hyprland: existe siempre, así `source` no falla */
 		char personal[1100];
@@ -224,7 +223,9 @@ static int cmd_apply(const char *profile, int quiet)
 			fclose(pf);
 		}
 	}
+	/* primero la configuración (rápido) y después el fondo, que la primera vez tarda medio segundo */
 	rc = render_all(base, &t, &c, access("/usr/bin/swayfx", X_OK) == 0);
+	ensure_wallpaper(&t, &p, wp, sizeof wp);
 	if (rc == 0)
 		reload_desktop(&t, wp, quiet);
 	if (rc == 0 && !quiet)

@@ -16,7 +16,7 @@ const SHOTS = process.env.SHOTS || '';
   const shot = (page, name, full) => SHOTS ? page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: !!full }) : null;
   const local = (r) => /127\.0\.0\.1/.test(r.request().url()) ? r.continue() : r.abort();
   const p = await b.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
-  p.on('console', m => { if (m.type() === 'error' && !/ERR_FAILED|fonts|status of 400/.test(m.text())) errs.push(m.text()); });
+  p.on('console', m => { if (m.type() === 'error' && !/ERR_FAILED|fonts|status of 40[04]/.test(m.text())) errs.push(m.text()); });
   p.on('pageerror', e => errs.push('pageerror: ' + e.message));
   await p.route('**/*', local);
   await p.goto(URL);
@@ -50,8 +50,8 @@ const SHOTS = process.env.SHOTS || '';
   await gap.fill('9999'); await gap.dispatchEvent('change'); await p.waitForTimeout(400);
   ok(/gap = 21/.test(userConf()), 'un valor fuera de rango no se guarda');
   ok(await p.locator('#toast.err').count() === 1, 'se muestra el error');
-  await p.locator('[data-key="ui.blur"] .switch').click(); await p.waitForTimeout(400);
-  ok(/blur = true/.test(userConf()), 'interruptor guardado');
+  await p.locator('[data-key="ui.dim_inactive"] .switch').click(); await p.waitForTimeout(400);
+  ok(/dim_inactive = true/.test(userConf()), 'interruptor guardado');
   await p.locator('[data-key="ui.gap"] .reset').click(); await p.waitForTimeout(400);
   ok(!/gap/.test(userConf()), 'restablecer al valor del perfil');
   await shot(p, 'gui-ui');
@@ -216,6 +216,28 @@ const SHOTS = process.env.SHOTS || '';
   }, process.env.TOKEN || 'tk');
   ok(newBad.ok === false, 'un nombre que parece una opción se rechaza');
   await shot(p, 'gui-files', true);
+
+  // escritorio: estilos (clásico, moderno, mosaico), fondos con miniatura real y efectos
+  await p.click('#nav button:has-text("Escritorio y fondo")');
+  await p.waitForSelector('.acard[data-desktop="moderno"]');
+  ok(await p.locator('.acard[data-desktop]').count() === 3, 'tres estilos de escritorio');
+  await p.click('.acard[data-desktop="moderno"] button:has-text("Usar este estilo")');
+  await p.waitForSelector('.acard[data-desktop="moderno"] .badge.ok', { timeout: 8000 });
+  {
+    const u = userConf();
+    ok(/dock = true/.test(u) && /panel_position = "top"/.test(u) && /center = "clock"/.test(u), 'el estilo moderno escribe sus claves (dock, barra arriba)');
+  }
+  await p.waitForFunction(() => /url\(blob:/.test(getComputedStyle(document.querySelector('.wpthumb[data-style="ondas"]')).backgroundImage), null, { timeout: 15000 }).catch(() => {});
+  ok(/blob:/.test(await p.evaluate(() => getComputedStyle(document.querySelector('.wpthumb[data-style="ondas"]')).backgroundImage)), 'miniatura real del fondo (PNG generado por rros-theme)');
+  await p.click('.wpcard:has-text("Círculos")'); await p.waitForTimeout(600);
+  ok(/wallpaper_style = "circulos"/.test(userConf()), 'elegir un fondo lo guarda');
+  ok(await p.locator('.wpcard[aria-pressed="true"]:has-text("Círculos")').count() === 1, 'el fondo elegido queda marcado');
+  ok(await p.locator('.row:has-text("ui.animation_style")').count() === 1 && await p.locator('.row:has-text("ui.blur_strength")').count() === 1, 'efectos de Hyprland en la página');
+  await shot(p, 'gui-escritorio', true);
+  {
+    const st = await p.evaluate(async () => (await fetch('/api/wallpaper_preview?style=../../etc', { headers: { 'X-RROS-Token': 'tk' } })).status);
+    ok(st === 404, 'un estilo de fondo inventado se rechaza (' + st + ')');
+  }
 
   // instalar desde el live: asistente de cuatro pasos (rros-install falso)
   await p.click('#nav button:has-text("Instalar RROS")');

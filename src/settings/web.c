@@ -80,7 +80,7 @@ static void respond(int fd, int code, const char *ctype, const char *body, size_
 	int hl = snprintf(head, sizeof head,
 			  "HTTP/1.1 %d %s\r\nContent-Type: %s\r\nContent-Length: %zu\r\nCache-Control: no-store\r\n"
 			  "X-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\n"
-			  "Content-Security-Policy: default-src 'self' 'unsafe-inline'; img-src 'self' data:\r\n"
+			  "Content-Security-Policy: default-src 'self' 'unsafe-inline'; img-src 'self' data: blob:\r\n"
 			  "%sConnection: close\r\n\r\n",
 			  code, status_text(code), ctype, len, extra ? extra : "");
 
@@ -341,11 +341,12 @@ static void do_state(int fd)
 	model_free(&m);
 }
 
+/* en segundo plano: la ventana no espera (generar un fondo nuevo tarda medio segundo) */
 static void apply_desktop(void)
 {
 	char *args[] = { "rros-theme", "apply", "--quiet", NULL };
 
-	run_tool("rros-theme", args, 1);
+	spawn_detached("rros-theme", args);
 }
 
 static int needs_apply(const char *key)
@@ -511,6 +512,44 @@ static void respond_run(int fd, const char *tool, char *const argv[])
 	sb_free(&o);
 }
 
+/* miniatura de un estilo de fondo con los colores del tema actual (PNG) */
+static void do_wallpaper_preview(int fd, const char *query)
+{
+	static const char *const styles[] = { "aurora", "ondas", "degradado", "circulos" };
+	char style[16] = "", path[600], *body = NULL;
+	const char *dir = getenv("XDG_RUNTIME_DIR");
+	const char *st = NULL;
+	FILE *f;
+	long len;
+
+	form_get(query, "style", style, sizeof style);
+	for (size_t i = 0; i < sizeof styles / sizeof *styles; i++)
+		if (!strcmp(style, styles[i]))
+			st = styles[i];
+	if (!st) {
+		respond(fd, 404, "text/plain", "estilo desconocido", 18, NULL);
+		return;
+	}
+	snprintf(path, sizeof path, "%s/rros-fondo-%s.png", dir && *dir ? dir : "/tmp", st);
+	{
+		char *args[] = { "rros-theme", "wallpaper", "--style", (char *)st, "--size", "384x216", "--out", path, NULL };
+
+		if (run_tool("rros-theme", args, 1) != 0) {
+			respond(fd, 500, "text/plain", "no se pudo generar", 18, NULL);
+			return;
+		}
+	}
+	f = fopen(path, "rb");
+	if (f && fseek(f, 0, SEEK_END) == 0 && (len = ftell(f)) > 0 && len < 4 << 20 && fseek(f, 0, SEEK_SET) == 0 &&
+	    (body = malloc((size_t)len)) && fread(body, 1, (size_t)len, f) == (size_t)len)
+		respond(fd, 200, "image/png", body, (size_t)len, NULL);
+	else
+		respond(fd, 500, "text/plain", "no se pudo leer", 15, NULL);
+	free(body);
+	if (f)
+		fclose(f);
+}
+
 static int dev_id_valid(const char *s)
 {
 	size_t n = strlen(s);
@@ -593,6 +632,8 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 		install_status_json(&st);
 		respond_json(fd, 200, st.p ? st.p : "{}");
 		sb_free(&st);
+	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/wallpaper_preview")) {
+		do_wallpaper_preview(fd, r.query);
 	} else if (!strcmp(r.method, "GET") && !strcmp(r.path, "/api/templates")) {
 		char *args[] = { "rros-new", "lista", "--json", NULL };
 
@@ -661,6 +702,15 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 			respond_run(fd, "rros-devices", args);
 		} else {
 			respond_ok(fd, 0, "acción desconocida");
+		}
+	} else if (!strcmp(r.path, "/api/desktop")) {
+		form_get(r.body, "name", a, sizeof a);
+		if (!rros_desktop_find(a)) {
+			respond_ok(fd, 0, "estilo de escritorio desconocido");
+		} else {
+			char *args[] = { "rros-theme", "escritorio", a, NULL };
+
+			respond_run(fd, "rros-theme", args);
 		}
 	} else if (!strcmp(r.path, "/api/a11y")) {
 		form_get(r.body, "what", a, sizeof a);

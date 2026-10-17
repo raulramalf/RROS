@@ -37,6 +37,7 @@ font_size = 11
 corner_radius = 12
 layout = "tiling"
 workspaces = 6
+tiling_layout = "dwindle"
 
 [panel]
 # estilo «mosaico»: al estilo Hyprland (rros theme escritorio)
@@ -45,6 +46,9 @@ left = "apps,workspaces,window"
 center = "clock"
 right = "memory,cpu,network,audio,battery,tray,power"
 taskbar = false
+
+[input]
+gestures = true
 
 [system]
 auto_updates = true

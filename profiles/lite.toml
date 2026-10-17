@@ -33,6 +33,9 @@ scale = 100
 font_size = 10
 layout = "floating"
 workspaces = 4
+tiling_layout = "dwindle"
+blur_strength = 4
+dim_inactive = false
 
 [panel]
 # estilo «clásico»: barra de tareas abajo, como en Windows (rros theme escritorio)
@@ -41,6 +44,9 @@ left = "apps,taskbar"
 center = "none"
 right = "tray,network,audio,battery,clock,power"
 taskbar = true
+
+[input]
+gestures = true
 
 [system]
 auto_updates = true

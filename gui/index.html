@@ -166,6 +166,26 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
 .formgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end; }
 .formgrid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
 .formgrid label input, .formgrid label select { color: var(--text); }
+.dmock { position: relative; height: 96px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);
+  background: radial-gradient(circle at 80% 20%, var(--m-acc), transparent 55%), linear-gradient(160deg, var(--m-bg), var(--m-sur)); }
+.dmock i { position: absolute; display: flex; gap: 3px; align-items: center; }
+.dmock .win { background: var(--m-sur); border: 1px solid var(--m-txt); border-radius: 4px; opacity: .92; }
+.dmock .win.f { border-color: var(--m-acc); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+.dmock .bar { left: 0; right: 0; height: 12px; padding: 0 4px; background: rgba(0,0,0,.45); }
+.dmock .bar.bot { bottom: 0; } .dmock .bar.top { top: 0; } .dmock .bar.thin { height: 8px; }
+.dmock .bar.pill { left: 4px; right: 4px; top: 3px; border-radius: 999px; }
+.dmock .bar b { display: block; height: 6px; border-radius: 2px; background: var(--m-txt); }
+.dmock .start { width: 14px; background: var(--m-acc) !important; } .dmock .task { width: 22px; opacity: .6; } .dmock .task.on { opacity: 1; background: var(--m-acc) !important; }
+.dmock .clock { width: 18px; margin-left: auto; } .dmock .clock.mid { margin: 0 auto; }
+.dmock .ws { width: 8px; } .dmock .ws.on { background: var(--m-acc) !important; }
+.dmock .dock { bottom: 4px; left: 30%; right: 30%; height: 14px; justify-content: center; border-radius: 6px; background: rgba(255,255,255,.18); }
+.dmock .dock b { display: block; width: 8px; height: 8px; border-radius: 2px; background: var(--m-acc); }
+.wpgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 8px; }
+.wpcard { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.wpcard[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.wpcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wpcard span { font-size: 13px; font-weight: 500; padding: 0 2px; }
+.wpthumb { aspect-ratio: 16 / 9; border-radius: 6px; border: 1px solid rgba(128,128,128,.25); }
 .muted { color: var(--muted); }
 ol.steps { display: flex; gap: 6px; flex-wrap: wrap; list-style: none; padding: 0; margin: 0 0 16px; }
 ol.steps li { font-size: 12.5px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
@@ -261,7 +281,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     });
   }
   /* página inicial desde la dirección: #seguridad, #dispositivos, #archivos, #tienda, #cat:ui... */
-  var ALIAS = { seguridad: "security", dispositivos: "devices", archivos: "files", tienda: "apps", temas: "themes", copias: "backup", accesibilidad: "access", bienvenida: "welcome", instalar: "install" };
+  var ALIAS = { seguridad: "security", dispositivos: "devices", archivos: "files", tienda: "apps", temas: "themes", copias: "backup", accesibilidad: "access", bienvenida: "welcome", instalar: "install", escritorio: "desktop", fondo: "desktop" };
   (function () {
     var h0 = decodeURIComponent((location.hash || "").slice(1));
     if (/^[a-z:]{1,31}$/.test(h0)) page = ALIAS[h0] || h0;
@@ -323,6 +343,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     item("welcome", "Bienvenida");
     if (S.live) item("install", "Instalar RROS");
     nav.appendChild(h("div", { class: "grp", text: "Apariencia" }));
+    item("desktop", "Escritorio y fondo");
     item("themes", "Temas y colores");
     item("access", "Accesibilidad");
     nav.appendChild(h("div", { class: "grp", text: "Aplicaciones" }));
@@ -407,6 +428,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     var root = document.getElementById("page"); root.textContent = "";
     if (query) return drawSearch(root);
     if (page === "themes") return drawThemes(root);
+    if (page === "desktop") return drawDesktop(root);
     if (page === "backup") return drawBackup(root);
     if (page === "apps") return drawApps(root);
     if (page === "security") return drawSecurity(root);
@@ -496,6 +518,8 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
         h("p", { class: "sub", style: "margin:4px 0 10px", text: "Nada se guarda al apagar. Cuando quieras, instálalo en el disco (puede convivir con Windows)." }),
         h("button", { class: "btn", type: "button", text: "Instalar RROS", onclick: function () { go("install"); } })));
     }
+    root.appendChild(h("h2", { text: "Elige tu escritorio" }));
+    drawDesktopStyles(root);
     root.appendChild(h("h2", { text: "¿Cómo quieres las ventanas?" }));
     var cur = (keyObj("ui.layout") || {}).value, lay = h("div", { class: "apps", role: "group", "aria-label": "Modo de ventanas" });
     LAYOUTS.forEach(function (l) {
@@ -735,6 +759,92 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     if (!st.done) insTimer = setTimeout(function () {
       api("/api/install_status").then(function (n) { if (n && n.started) INS.status = n; if (page === "install" && INS.step === "progress") drawPage(); });
     }, 1500);
+  }
+
+  /* ---------- escritorio: estilos, fondo y efectos ---------- */
+  var WP_STYLES = [["aurora", "Aurora", "Cortinas de luz con los colores del tema"], ["ondas", "Ondas", "Capas de olas, como dunas"],
+    ["degradado", "Degradado", "Fundido suave con dos focos de color"], ["circulos", "Círculos", "Burbujas translúcidas"], ["liso", "Liso", "Solo el color de fondo"]];
+  var WP_THUMB = {}, wpKey = "";
+  /* mini maqueta de cada estilo de escritorio */
+  function deskMock(id) {
+    var p = S.current.palette, d = h("div", { class: "dmock dm-" + id });
+    d.style.cssText = "--m-bg:" + p.bg + ";--m-sur:" + p.surface + ";--m-acc:" + p.accent + ";--m-mag:" + p.magenta + ";--m-txt:" + p.muted;
+    if (id === "clasico") {
+      d.appendChild(h("i", { class: "win", style: "left:12%;top:14%;width:50%;height:46%" }));
+      d.appendChild(h("i", { class: "win f", style: "left:40%;top:28%;width:48%;height:44%" }));
+      d.appendChild(h("i", { class: "bar bot" }, h("b", { class: "start" }), h("b", { class: "task on" }), h("b", { class: "task" }), h("b", { class: "clock" })));
+    } else if (id === "moderno") {
+      d.appendChild(h("i", { class: "bar top thin" }, h("b", { class: "clock mid" })));
+      d.appendChild(h("i", { class: "win f", style: "left:16%;top:20%;width:56%;height:50%" }));
+      d.appendChild(h("i", { class: "dock" }, h("b"), h("b"), h("b"), h("b")));
+    } else {
+      d.appendChild(h("i", { class: "bar top pill" }, h("b", { class: "ws on" }), h("b", { class: "ws" }), h("b", { class: "clock mid" })));
+      d.appendChild(h("i", { class: "win f", style: "left:4%;top:20%;width:45%;height:74%" }));
+      d.appendChild(h("i", { class: "win", style: "left:51%;top:20%;width:45%;height:35%" }));
+      d.appendChild(h("i", { class: "win", style: "left:51%;top:59%;width:45%;height:35%" }));
+    }
+    return d;
+  }
+  function drawDesktopStyles(root) {
+    var grid = h("div", { class: "apps", role: "group", "aria-label": "Estilo de escritorio" });
+    (S.desktops || []).forEach(function (d) {
+      var on = S.desktop_current === d.id;
+      grid.appendChild(h("div", { class: "acard", "data-desktop": d.id }, deskMock(d.id),
+        h("div", { class: "an" }, h("b", { text: d.label }), on ? h("span", { class: "badge ok", text: "en uso" }) : null),
+        h("p", { text: d.desc }),
+        h("div", { class: "ab" }, h("button", { class: "btn small" + (on ? " ghost" : ""), type: "button", text: on ? "En uso" : "Usar este estilo", disabled: on, onclick: function () {
+          api("/api/desktop", { name: d.id }).then(function (r) {
+            if (!r.ok) return toast(r.error || r.output || "no se pudo aplicar", true);
+            toast("Escritorio: " + d.label.toLowerCase()); load();
+          });
+        } }), h("code", { text: "rros theme escritorio " + d.id }))));
+    });
+    if (!S.desktop_current) grid.appendChild(h("p", { class: "sub", text: "Ahora tienes un escritorio personalizado: elegir un estilo cambia el panel, el modo de ventanas y el dock." }));
+    root.appendChild(grid);
+  }
+  /* miniatura real (la genera rros-theme con los colores del tema); en la demo, un degradado */
+  function wpThumb(style) {
+    var p = S.current.palette, box = h("div", { class: "wpthumb", "data-style": style });
+    box.style.background = style === "liso" ? p.bg : "linear-gradient(160deg," + p.bg + "," + p.surface + " 60%," + p.accent + ")";
+    if (style === "liso" || window.RROS_MOCK) return box;
+    var key = p.bg + p.accent + p.magenta + p.cyan;
+    if (key !== wpKey) { WP_THUMB = {}; wpKey = key; }
+    function show(url) { box.style.background = "center/cover no-repeat url(" + url + ")"; }
+    if (WP_THUMB[style]) show(WP_THUMB[style]);
+    else fetch("/api/wallpaper_preview?style=" + style, { headers: { "X-RROS-Token": TOKEN } }).then(function (r) { return r.ok ? r.blob() : null; })
+      .then(function (b) { if (b) { WP_THUMB[style] = URL.createObjectURL(b); show(WP_THUMB[style]); } }).catch(function () {});
+    return box;
+  }
+  var DESK_KEYS = ["ui.compositor", "ui.effects", "ui.animations", "ui.animation_style", "ui.animation_speed", "ui.corner_radius", "ui.gap",
+    "ui.border_width", "ui.border_gradient", "ui.transparency", "ui.blur", "ui.blur_strength", "ui.shadows", "ui.dim_inactive",
+    "ui.layout", "ui.tiling_layout", "ui.workspaces", "ui.dock", "input.gestures", "ui.panel_position", "panel.style", "ui.panel_size", "panel.taskbar"];
+  function drawDesktop(root) {
+    root.appendChild(h("h1", { text: "Escritorio y fondo" }));
+    root.appendChild(h("p", { class: "sub", text: "El escritorio de RROS es Hyprland: animaciones, esquinas redondeadas, desenfoque y sombras, con barra de tareas y fondo. Si el equipo no tiene aceleración gráfica (máquinas virtuales), se usa sway, más sencillo, con los mismos ajustes." }));
+    root.appendChild(h("h2", { text: "Estilo" }));
+    drawDesktopStyles(root);
+    root.appendChild(h("h2", { text: "Fondo de pantalla" }));
+    var cur = (keyObj("ui.wallpaper_style") || {}).value || "aurora", own = (keyObj("ui.wallpaper") || {}).value;
+    var gal = h("div", { class: "wpgrid", role: "group", "aria-label": "Fondo de pantalla" });
+    WP_STYLES.forEach(function (w) {
+      var on = !own && cur === w[0];
+      gal.appendChild(h("button", { class: "wpcard", type: "button", "aria-pressed": String(on), title: w[2], onclick: function () {
+        setKey("ui.wallpaper_style", w[0]).then(function (ok) {
+          if (!ok) return;
+          (own ? unsetKey("ui.wallpaper") : load()).then(function () { toast("Fondo: " + w[1].toLowerCase()); });
+        });
+      } }, wpThumb(w[0]), h("span", { text: w[1] })));
+    });
+    root.appendChild(gal);
+    root.appendChild(h("p", { class: "sub", text: "Los fondos se dibujan con los colores del tema y cambian solos al cambiar de tema o de acento. Super + Alt + W pasa al siguiente. También puedes poner tu propia imagen:" }));
+    var rows = h("div", { class: "card rows" });
+    ["ui.wallpaper", "ui.wallpaper_mode"].forEach(function (k) { var o = keyObj(k); if (o) rows.appendChild(settingRow(o)); });
+    root.appendChild(rows);
+    root.appendChild(h("h2", { text: "Ventanas, efectos y panel" }));
+    var rows2 = h("div", { class: "card rows" });
+    DESK_KEYS.forEach(function (k) { var o = keyObj(k); if (o) rows2.appendChild(settingRow(o)); });
+    root.appendChild(rows2);
+    root.appendChild(h("p", { class: "sub", text: "¿Algo que no esté aquí? Tus propias líneas de Hyprland van en ~/.config/hypr/personal.conf (RROS no lo toca)." }));
   }
 
   /* ---------- accesibilidad ---------- */

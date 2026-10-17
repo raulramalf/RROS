@@ -263,6 +263,30 @@ int model_state_json(const struct model *m, struct sbuf *o)
 	sb_printf(o, "\"version\":\"%s\",\"codename\":\"%s\",\"profile\":", RROS_VERSION, RROS_CODENAME);
 	sb_json(o, m->profile);
 
+	/* estilos de escritorio (clásico, moderno, mosaico) y el que está en uso */
+	{
+		const struct rros_desktop_preset *now = rros_desktop_current(&m->eff);
+
+		sb_put(o, ",\"desktops\":[");
+		for (size_t i = 0; i < rros_desktop_presets_len; i++) {
+			const struct rros_desktop_preset *d = &rros_desktop_presets[i];
+
+			sb_printf(o, "%s{\"id\":\"%s\",\"label\":", i ? "," : "", d->id);
+			sb_json(o, d->label);
+			sb_put(o, ",\"desc\":");
+			sb_json(o, d->desc);
+			sb_put(o, ",\"keys\":{");
+			for (size_t k = 0; k < 12 && d->keys[k][0]; k++) {
+				sb_printf(o, "%s", k ? "," : "");
+				sb_json(o, d->keys[k][0]);
+				sb_put(o, ":");
+				sb_json(o, d->keys[k][1]);
+			}
+			sb_put(o, "}}");
+		}
+		sb_printf(o, "],\"desktop_current\":\"%s\"", now ? now->id : "");
+	}
+
 	/* categorías */
 	{
 		char names[24][16];

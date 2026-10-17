@@ -171,6 +171,13 @@
         d.state = on ? "activo" : "desactivado"; d.actions = on ? "block" : "unblock";
         return { ok: true, output: d.id + (on ? " activado" : " desactivado") };
       }
+      case "/api/desktop": {
+        var dk = (S.desktops || []).filter(function (x) { return x.id === b.name; })[0];
+        if (!dk) return { ok: false, error: "estilo de escritorio desconocido" };
+        Object.keys(dk.keys).forEach(function (k) { setKey(k, dk.keys[k]); });
+        S.desktop_current = dk.id;
+        return { ok: true, output: "escritorio: " + dk.label };
+      }
       case "/api/templates": return JSON.parse(JSON.stringify(TPLS));
       case "/api/new_file": {
         var t = TPLS.templates.filter(function (x) { return x.id === b.template; })[0];

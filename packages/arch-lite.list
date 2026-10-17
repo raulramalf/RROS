@@ -1,11 +1,1 @@
-sway
-foot
-wl-clipboard
-fuzzel
-grim
-slurp
-brightnessctl
-libnotify
-mako
-inter-font
-ttf-jetbrains-mono
+# Lite: solo lo de la base (Hyprland sin efectos, o sway en equipos sin aceleración gráfica).

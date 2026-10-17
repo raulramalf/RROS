@@ -1,11 +1,114 @@
+# Sistema y escritorio comunes a TODOS los perfiles (Arch Linux). Cada nombre se comprueba en CI con
+# `pacman -Si` (scripts/check-packages-arch.sh) contra los repositorios core y extra.
+
+# --- núcleo y arranque ---
 base
 linux
 linux-firmware
-networkmanager
-sudo
-pipewire
-pipewire-pulse
-wireplumber
-zram-generator
+sof-firmware            # sonido de los portátiles Intel desde ~2019
+alsa-ucm-conf           # perfiles de sonido de cada placa
+intel-ucode
+amd-ucode
+mkinitcpio
 grub
 efibootmgr
+os-prober               # Windows y otros sistemas en el menú de arranque
+dosfstools              # partición EFI (rros-install)
+mtools
+ntfs-3g
+cryptsetup              # disco cifrado (LUKS2)
+arch-install-scripts    # arch-chroot y genfstab (rros-install)
+zram-generator
+thermald
+
+# --- sistema ---
+networkmanager
+network-manager-applet
+bluez
+bluez-utils
+blueman
+sudo
+polkit
+polkit-gnome
+nftables
+which
+less
+nano
+man-db
+bash-completion
+curl
+wget
+pciutils
+usbutils
+kbd
+xdg-user-dirs
+xdg-utils
+udisks2
+udiskie
+gvfs
+upower
+power-profiles-daemon
+brightnessctl
+
+# --- sonido ---
+pipewire
+pipewire-pulse
+pipewire-alsa
+wireplumber
+pavucontrol
+playerctl
+
+# --- escritorio: Hyprland (sway si no hay aceleración gráfica) ---
+hyprland
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+hyprlock
+sway                    # alternativa ligera y sin GPU (máquinas virtuales)
+swaybg
+swayidle
+swaylock
+waybar
+foot
+fuzzel
+mako
+libnotify
+grim
+slurp
+wl-clipboard
+cliphist
+kanshi
+nwg-dock-hyprland       # dock (estilo «moderno»)
+qt5-wayland
+qt6-wayland
+
+# --- fuentes, iconos y cursor ---
+noto-fonts
+noto-fonts-emoji
+inter-font
+ttf-jetbrains-mono
+ttf-liberation
+adwaita-icon-theme
+papirus-icon-theme
+
+# --- accesibilidad ---
+orca
+espeak-ng
+speech-dispatcher
+
+# --- aplicaciones ---
+epiphany
+thunar
+thunar-archive-plugin
+thunar-volman
+tumbler
+mousepad
+imv
+evince
+mpv
+file-roller
+galculator
+btop
+flatpak
+zip
+unzip
+7zip

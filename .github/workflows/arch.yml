@@ -1,0 +1,68 @@
+name: Arch
+
+# RROS sobre Arch Linux con Hyprland.
+#  - comprobar: en cada cambio, en un contenedor Arch: los paquetes existen, compila, pasan las pruebas y
+#    la configuración de Hyprland que genera rros-theme la acepta el Hyprland de verdad.
+#  - iso: construye la ISO con archiso y la arranca en QEMU con el autotest. A mano (Run workflow) o con
+#    «[iso-arch]» en el mensaje del commit.
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Perfil de hardware
+        type: choice
+        options: [lite, standard, pro]
+        default: lite
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    steps:
+      - name: Paquetes de compilación y Hyprland
+        run: pacman -Syu --noconfirm --needed base-devel git python hyprland sway
+      - uses: actions/checkout@v4
+      - name: Los paquetes de las listas existen en Arch
+        run: scripts/check-packages-arch.sh
+      - name: Compilar y pruebas
+        run: make WERROR=1 && make test WERROR=1
+      - name: Configuración de Hyprland válida
+        run: |
+          useradd -m prueba
+          chown -R prueba .
+          su prueba -c 'scripts/check-hyprland.sh'
+
+  iso:
+    needs: comprobar
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[iso-arch]')
+    runs-on: ubuntu-24.04
+    env:
+      PROFILE: ${{ inputs.profile || 'lite' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: ISO con archiso (contenedor Arch)
+        run: |
+          docker run --rm --privileged -v "$PWD:/rros" -w /rros -e PROFILE archlinux:latest bash -ec '
+            pacman -Syu --noconfirm --needed archiso base-devel git python
+            make WERROR=1
+            scripts/build-iso-arch.sh "$PROFILE"'
+          sudo chown -R "$(id -u):$(id -g)" build
+      - name: Autotest de arranque en QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 xorriso
+          sudo chmod a+rw /dev/kvm || true
+          BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-$PROFILE" \
+            scripts/test-iso.sh "$PROFILE" selftest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rros-arch-${{ env.PROFILE }}-selftest-log
+          path: build/test-arch-${{ env.PROFILE }}/serial.log
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rros-arch-${{ env.PROFILE }}-iso
+          path: build/rros-arch-${{ env.PROFILE }}.iso
+          if-no-files-found: error

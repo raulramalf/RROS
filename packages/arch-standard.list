@@ -1,16 +1,24 @@
-sway
-foot
-wl-clipboard
-waybar
-xdg-desktop-portal-wlr
-bluez
-flatpak
-fuzzel
-grim
-slurp
-brightnessctl
-libnotify
-mako
-inter-font
-ttf-jetbrains-mono
-epiphany
+# Standard: oficina ligera, correo, herramientas de sistema, impresión y vídeo acelerado.
+abiword
+gnumeric
+geary
+gnome-system-monitor
+gnome-disk-utility
+audacious
+simple-scan
+cups
+system-config-printer
+gvfs-mtp                # móviles
+gvfs-smb                # carpetas de red
+git
+python
+gst-plugins-good
+gst-plugins-bad
+gst-plugins-ugly
+gst-libav
+ffmpeg
+btrfs-progs
+vulkan-intel
+vulkan-radeon
+libva-mesa-driver       # vídeo acelerado (AMD)
+intel-media-driver      # vídeo acelerado (Intel recientes)

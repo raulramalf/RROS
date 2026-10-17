@@ -19,13 +19,20 @@ check "identidad: ID=rros ($PRETTY_NAME)" test "$ID" = rros
 check "perfil activo: $(cat /etc/rros/profile 2>/dev/null)" test -s /etc/rros/profile
 check "usuario live 'rros'" id rros
 check "no existe el usuario 'ubuntu'" sh -c '! id ubuntu'
-check "nombre de equipo: $(hostname)" test "$(hostname)" = rros
+# shellcheck disable=SC2016  # $(hostname) se evalúa dentro de sh -c
+check "nombre de equipo: $(hostname)" sh -c 'case "$(hostname)" in rros*) true ;; *) false ;; esac'
 check "kernel $(uname -r)" test -n "$(uname -r)"
 
+# base del sistema: ubuntu o arch (la escribe apply-identity.sh)
+BASE=ubuntu
+if [ -r /etc/rros/identity ]; then BASE=$(sed -n 's/^RROS_BASE=//p' /etc/rros/identity); fi
+[ -n "$BASE" ] || { [ -e /etc/arch-release ] && BASE=arch || BASE=ubuntu; }
+echo "base: $BASE"
+
 for app in sway waybar foot fuzzel mako epiphany thunar mousepad evince mpv file-roller galculator btop flatpak \
-           swaylock swayidle nm-applet blueman-applet udiskie pavucontrol grim slurp cliphist wdisplays \
+           swaylock swayidle swaybg nm-applet blueman-applet udiskie pavucontrol grim slurp cliphist \
            rros rros-config rros-theme rros-apps rros-settings rros-apply rros-security rros-devices rros-new \
-           nft rfkill unattended-upgrade apparmor_parser udisksctl xdg-user-dir; do
+           rros-lock rros-dock rros-informe nft rfkill udisksctl xdg-user-dir; do
 	check "programa: $app" has "$app"
 done
 for desk in org.gnome.Epiphany thunar org.xfce.mousepad org.gnome.Evince mpv org.gnome.FileRoller galculator imv; do
@@ -37,17 +44,16 @@ check "polkit activo (o disponible)" sh -c 'systemctl is-active --quiet polkit |
 check "snap no instalado" sh -c '! test -e /usr/bin/snap'
 check "rros-apply se ejecutó" systemctl is-active --quiet rros-apply
 check "zram como swap" sh -c 'swapon --show | grep -q zram'
-check "sin telemetría (apport/whoopsie)" sh -c '! systemctl is-enabled --quiet apport 2>/dev/null'
+check "identidad: os-release de RROS" grep -q '^ID=rros' /etc/os-release
 
 check "rros doctor (usuario)" as_user "rros doctor"
-for tool in rros-install rros-installer sfdisk mkfs.ext4 mkfs.vfat grub-install efibootmgr tar; do
+for tool in rros-install rros-installer sfdisk mkfs.ext4 mkfs.vfat grub-install efibootmgr tar cryptsetup os-prober; do
 	check "instalador: $tool" has "$tool"
 done
+# shellcheck disable=SC2016
+check "instalador: rros-installer disks" sh -c 'rros-installer disks --json | grep -q "\"disks\""'
 check "red: el cable lo gestiona NetworkManager" sh -c '! nmcli -t dev status | grep -q ":ethernet:unmanaged"'
-# idioma
-check "idioma del sistema: español" grep -q '^LANG=es_ES.UTF-8' /etc/default/locale
 check "locale es_ES.UTF-8 generado" sh -c 'locale -a | grep -qix es_ES.utf8'
-check "traducciones de GTK y NetworkManager (paquetes de idioma)" test -f /usr/share/locale-langpack/es/LC_MESSAGES/gtk30.mo -a -f /usr/share/locale-langpack/es/LC_MESSAGES/nm-applet.mo
 # seguridad (la aplica rros-apply al arrancar)
 check "cortafuegos: tabla inet rros con política drop" sh -c 'nft list table inet rros | grep -q "policy drop"'
 check "cortafuegos: nftables arranca con el sistema" systemctl is-enabled --quiet nftables
@@ -55,12 +61,7 @@ check "kernel endurecido (kptr_restrict = 2)" test "$(sysctl -n kernel.kptr_rest
 check "kernel endurecido (protected_regular = 2)" test "$(sysctl -n fs.protected_regular 2>/dev/null)" = 2
 # el aislamiento que usan Epiphany (WebKit) y Flatpak: crear un espacio de nombres como usuario
 check "aislamiento de aplicaciones (bwrap) como usuario" as_user "bwrap --ro-bind / / --dev /dev --proc /proc true"
-check "perfiles de AppArmor de Epiphany y Flatpak presentes" test -f /etc/apparmor.d/epiphany -a -f /etc/apparmor.d/flatpak
-check "AppArmor activo" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
-check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/common-auth
-# (el archivo que crea casper en el live tiene permisos 0644 y visudo -c lo marca; sudo lo acepta)
-check "sudo: configuración válida (sudoers y la de RROS)" sh -c 'visudo -cqf /etc/sudoers && visudo -cqf /etc/sudoers.d/rros'
-check "actualizaciones de seguridad automáticas" grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
+check "sudo: configuración de RROS válida" sh -c 'visudo -cqf /etc/sudoers.d/rros'
 # shellcheck disable=SC2016
 check "rros-security: auditoría" sh -c 'rros-security --json | grep -q "\"score\""'
 # dispositivos y archivos
@@ -68,28 +69,52 @@ check "rros-security: auditoría" sh -c 'rros-security --json | grep -q "\"score
 check "rros-devices: ve la tarjeta de red" sh -c 'rros-devices lista red --json | grep -q "\"cat\":\"red\""'
 check "rros-new: crea un script ejecutable" as_user "cd /tmp && rm -f rros-selftest.sh && rros-new bash rros-selftest >/dev/null && test -x /tmp/rros-selftest.sh"
 check "primer inicio: carpetas en español y plantillas" as_user "rros-first-login; test -d ~/Documentos && test -f ~/Plantillas/'Script de Bash.sh'"
-check "teclado de la consola: rros-vconsole activo" systemctl is-active --quiet rros-vconsole
-# el mapa lo genera ckbcomp (Ubuntu no trae los de kbd): en el español, la tecla 2 lleva " con Mayús
-check "teclado de la consola: mapa español" sh -c "zcat /etc/console-setup/cached_UTF-8_del.kmap.gz | grep -q '^keycode 3 = U+0032 U+0022'"
-# instalador
-for app in rros-install rros-installer cryptsetup os-prober sfdisk mkfs.vfat grub-install ckbcomp; do
-	check "instalador: $app" has "$app"
-done
-# shellcheck disable=SC2016
-check "instalador: rros-installer disks" sh -c 'rros-installer disks --json | grep -q "\"disks\""'
-check "instalador: el initramfs puede llevar cryptsetup" test -x /usr/share/initramfs-tools/hooks/cryptroot
-check "ISO: tamaño del sistema para el progreso de la copia" sh -c '! grep -q boot=casper /proc/cmdline || test -s /cdrom/casper/filesystem.size'
 check "blueman-mechanism no arranca en el boot (solo por D-Bus)" sh -c '! systemctl is-enabled --quiet blueman-mechanism'
 check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'
 # shellcheck disable=SC2016
 check "catálogo de apps (54)" sh -c 'test "$(rros-apps list | wc -l)" -ge 50'
+check "mimeapps: navegador por defecto" sh -c 'grep -q Epiphany /etc/xdg/mimeapps.list'
+
+if [ "$BASE" = arch ]; then
+	for app in Hyprland hyprctl hyprlock nwg-dock-hyprland pacman arch-chroot genfstab mkinitcpio; do
+		check "Arch: $app" has "$app"
+	done
+	check "idioma del sistema: español" grep -q '^LANG=es_ES.UTF-8' /etc/locale.conf
+	check "traducciones de GTK y NetworkManager" test -f /usr/share/locale/es/LC_MESSAGES/gtk30.mo -a -f /usr/share/locale/es/LC_MESSAGES/nm-applet.mo
+	check "teclado de la consola: español" sh -c 'grep -q "^KEYMAP=es" /etc/vconsole.conf && ls /usr/share/kbd/keymaps/i386/qwerty/es.map*'
+	check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/system-auth
+	check "sudo: el grupo wheel administra" sh -c 'visudo -cqf /etc/sudoers.d/10-rros-wheel'
+	check "instalador: cifrado en el initramfs (hook sd-encrypt)" test -e /usr/lib/initcpio/install/sd-encrypt
+	check "live: el sistema a copiar está montado" sh -c '! grep -q archisobasedir /proc/cmdline || test -d /run/archiso/airootfs/etc'
+else
+	for app in unattended-upgrade apparmor_parser ckbcomp; do
+		check "Ubuntu: $app" has "$app"
+	done
+	check "idioma del sistema: español" grep -q '^LANG=es_ES.UTF-8' /etc/default/locale
+	check "traducciones de GTK y NetworkManager (paquetes de idioma)" test -f /usr/share/locale-langpack/es/LC_MESSAGES/gtk30.mo -a -f /usr/share/locale-langpack/es/LC_MESSAGES/nm-applet.mo
+	check "sin telemetría (apport/whoopsie)" sh -c '! systemctl is-enabled --quiet apport 2>/dev/null'
+	check "perfiles de AppArmor de Epiphany y Flatpak presentes" test -f /etc/apparmor.d/epiphany -a -f /etc/apparmor.d/flatpak
+	check "AppArmor activo" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
+	check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/common-auth
+	check "actualizaciones de seguridad automáticas" grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
+	check "teclado de la consola: rros-vconsole activo" systemctl is-active --quiet rros-vconsole
+	# el mapa lo genera ckbcomp (Ubuntu no trae los de kbd): en el español, la tecla 2 lleva " con Mayús
+	check "teclado de la consola: mapa español" sh -c "zcat /etc/console-setup/cached_UTF-8_del.kmap.gz | grep -q '^keycode 3 = U+0032 U+0022'"
+	check "instalador: el initramfs puede llevar cryptsetup" test -x /usr/share/initramfs-tools/hooks/cryptroot
+	check "ISO: tamaño del sistema para el progreso de la copia" sh -c '! grep -q boot=casper /proc/cmdline || test -s /cdrom/casper/filesystem.size'
+fi
+
+# escritorio: el tema se genera (Hyprland y sway), con fondo
 check "rros-theme apply (usuario)" as_user "rros-theme apply --quiet"
+check "fondo de pantalla generado" as_user "ls ~/.local/share/rros/fondos/*.png"
+check "waybar: configuración generada" as_user "grep -q modules-left ~/.config/waybar/config"
+check "GTK y terminal configurados" as_user "test -s ~/.config/gtk-4.0/gtk.css && test -s ~/.config/foot/foot.ini && test -s ~/.config/swaylock/config"
 check "configuración de sway válida" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sway --validate"
 # arranca sway de verdad sin pantalla: si algún comando de la configuración falla, sway lanza swaynag (la barra roja)
 check "sway arranca sin errores de configuración" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sh -c 'timeout 5 sway -d > /tmp/sway-selftest.log 2>&1; ! grep -q \"namespace swaynag\" /tmp/sway-selftest.log'"
-check "waybar: configuración generada" as_user "grep -q modules-left ~/.config/waybar/config"
-check "GTK y terminal configurados" as_user "test -s ~/.config/gtk-4.0/gtk.css && test -s ~/.config/foot/foot.ini && test -s ~/.config/swaylock/config"
-check "mimeapps: navegador por defecto" sh -c 'grep -q Epiphany /etc/xdg/mimeapps.list'
+if has Hyprland; then
+	check "configuración de Hyprland válida" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest Hyprland --verify-config -c ~/.config/hypr/hyprland.conf"
+fi
 
 echo "=== resultado: $ok correctas, $bad con fallo ==="
 [ "$bad" -eq 0 ] && echo "RROS_SELFTEST_OK" || echo "RROS_SELFTEST_FAIL"

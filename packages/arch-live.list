@@ -1,0 +1,3 @@
+# Solo en la ISO (sistema live): arranque de archiso. El instalador no los copia como «necesarios».
+mkinitcpio-archiso
+syslinux

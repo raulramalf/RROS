@@ -6,6 +6,7 @@
 #            COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
 #   En screenshot: FIRMWARE=bios|uefi|secboot (secboot = UEFI con Secure Boot y las claves de Microsoft,
 #   como un PC con Windows) y MEDIA=cd|usb (la ISO grabada en una memoria USB)
+#   BASE=arch para la ISO de Arch (ISO=build/rros-arch-PERFIL.iso)
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
 
@@ -27,9 +28,21 @@ case "$mode" in
 	selftest)
 		log "arranque por consola serie con autotest (RAM ${ram} MB); puede tardar varios minutos sin KVM"
 		: > "$out/serial.log"
+		if [ "${BASE:-ubuntu}" = arch ]; then
+			# ISO de archiso: el kernel y el initramfs se sacan de la propia ISO
+			need_cmd xorriso
+			xorriso -osirrox on -indev "$iso" -extract /arch/boot/x86_64/vmlinuz-linux "$out/vmlinuz" \
+				-extract /arch/boot/x86_64/initramfs-linux.img "$out/initrd" >/dev/null 2>&1 ||
+				die "no se pudo sacar el kernel de $iso"
+			kernel=$out/vmlinuz initrd=$out/initrd
+			label=$(xorriso -indev "$iso" -pvd_info 2>/dev/null | sed -n 's/^Volume Id *: *//p' | tr -d "'")
+			append="archisobasedir=arch archisolabel=${label:-RROS_${profile^^}} console=ttyS0 rros.selftest loglevel=3"
+		else
+			kernel=$iso_dir/casper/vmlinuz initrd=$iso_dir/casper/initrd
+			append="boot=casper quiet console=ttyS0 rros.selftest loglevel=3"
+		fi
 		qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot \
-			-kernel "$iso_dir/casper/vmlinuz" -initrd "$iso_dir/casper/initrd" \
-			-append "boot=casper quiet console=ttyS0 rros.selftest loglevel=3" \
+			-kernel "$kernel" -initrd "$initrd" -append "$append" \
 			-cdrom "$iso" > "$out/serial.log" 2>&1 &
 		qpid=$!
 		# se corta en cuanto el autotest da su veredicto (el apagado del live puede tardar mucho sin KVM)

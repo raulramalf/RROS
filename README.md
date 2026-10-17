@@ -19,7 +19,7 @@ Sistema operativo ligero y muy personalizable sobre **Arch Linux**, con el escri
 ### En el navegador (sin instalar nada)
 La carpeta [`site/`](site/) es una web estática de demostración:
 
-- **`escritorio.html`**: el escritorio de RROS simulado, con los tres estilos (clásico, moderno y mosaico), los fondos reales que genera `rros-theme` para cada tema, la barra de tareas con «Inicio», el dock y las ventanas.
+- **`escritorio.html`**: el escritorio de RROS funcionando en el navegador, con el aspecto del de Plasma: barra de menús arriba, dock abajo, ventanas que se abren, arrastran, redimensionan, minimizan, maximizan y cierran, buscador (Ctrl + Espacio) y aplicaciones que funcionan (terminal con órdenes, archivos, editor que guarda, calculadora, navegador, tienda, preferencias con temas y fondos, y RROS Ajustes). Los archivos y preferencias se guardan en el navegador.
 - **`ajustes.html`**: la ventana real de RROS Ajustes (temas, escritorio y fondo, tienda, seguridad, accesibilidad, instalador) con un servidor simulado.
 
 En tu equipo: `python3 -m http.server -d site` y abre <http://localhost:8000>. Para regenerarla después de cambiar el código: `make && scripts/build-site.sh`.
@@ -30,7 +30,7 @@ Lo que **no** se puede ver en Vercel (ni en ningún navegador): el sistema opera
 
 ![Demo del escritorio en el navegador: estilo clásico con el fondo aurora, terminal, archivos y RROS Ajustes](docs/img/rros-escritorio-demo.png)
 
-*Demo del navegador (`site/escritorio.html`), no una captura del sistema: los fondos sí son los que genera `rros-theme`.*
+*Escritorio web (`site/escritorio.html`), no una captura del sistema: los fondos sí son los que genera `rros-theme`.*
 
 ### En una máquina virtual o en un PC (el sistema completo)
 La ISO de Arch la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → *Run workflow* (o `[iso-arch]` en el mensaje de un commit). Al terminar, descarga el artefacto `rros-arch-lite-iso`. Arranca en QEMU, VirtualBox o GNOME Boxes, o grábala en una memoria USB para un PC (hay que desactivar Secure Boot). También se construye en un Arch con `scripts/build-iso-arch.sh lite`. Más en [docs/TRY.md](docs/TRY.md) y [docs/PROBAR-EN-PC.md](docs/PROBAR-EN-PC.md).

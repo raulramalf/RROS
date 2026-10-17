@@ -2,267 +2,892 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RROS Escritorio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* La página es un monitor: arriba los mandos (los mismos que Ajustes → Escritorio y fondo), debajo la pantalla 16:9.
-   Los colores de la pantalla salen de las paletas reales de rros-theme; los fondos son los PNG que genera. */
+/* Escritorio web de RROS, con el aspecto del escritorio Plasma de RROS: barra de menús arriba, dock abajo,
+   ventanas con los botones de semáforo a la izquierda. Los colores son las paletas reales de rros-theme. */
 :root {
-  --page: #0a0d18; --ink: #e6ecff; --dim: #8a96bd; --line: #26305a; --chip: #141c38;
+  --bg: #0b1020; --surface: #141c38; --text: #e6ecff; --muted: #8a96bd; --border: #26305a;
+  --accent: #7c5cff; --red: #ff6b81; --green: #4ade80; --yellow: #fbbf24; --blue: #60a5fa; --cyan: #22d3ee; --magenta: #c084fc;
   --ui: "Inter", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
-  color-scheme: dark;
+  --bar: 30px; color-scheme: dark;
 }
 * { box-sizing: border-box }
-html, body { margin: 0 }
-body { background: var(--page); color: var(--ink); font: 15px/1.5 var(--ui);
-  padding: 20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)) }
-.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px }
-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px }
-h1 { margin: 0; font-size: 1.5rem; letter-spacing: -.01em }
-header p { margin: 0; color: var(--dim); max-width: 62ch }
-header a { color: var(--ink) }
-.controls { display: flex; flex-wrap: wrap; gap: 14px 24px }
-.group { display: grid; gap: 6px }
-.group > span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim) }
-.seg { display: flex; flex-wrap: wrap; gap: 4px; background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 3px }
-.seg button { font: 500 .88rem var(--ui); color: var(--dim); background: none; border: 0; border-radius: 7px; padding: 6px 12px; cursor: pointer }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--page) }
-.seg button:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px }
-.note { color: var(--dim); font-size: .85rem; margin: 0 }
-.note code { font-family: var(--mono); color: var(--ink) }
+html, body { height: 100%; margin: 0; overflow: hidden }
+body { background: var(--bg); color: var(--text); font: 13px/1.45 var(--ui); user-select: none; -webkit-user-select: none }
+button { font: inherit; color: inherit }
+#desktop { position: fixed; inset: 0; background: var(--bg) center / cover no-repeat; transition: background-image .4s }
 
-/* ---- la pantalla ---- */
-.monitor { border: 1px solid var(--line); border-radius: 14px; padding: 10px; background: #05070d }
-.screen { position: relative; aspect-ratio: 16 / 9; max-width: 100%; overflow: hidden; border-radius: 6px;
-  container-type: inline-size; font-family: var(--ui); color: var(--t-text);
-  background: var(--t-bg) center / cover no-repeat; transition: background-image .4s }
-.screen * { box-sizing: border-box }
-/* barra (waybar) */
-.bar { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 1.2cqw;
-  height: 3.1cqw; padding: 0 1cqw; font-size: 1.05cqw; z-index: 5;
-  background: color-mix(in srgb, var(--t-surface) 88%, transparent) }
-.bar.top { top: 0 } .bar.bottom { bottom: 0; height: 3.6cqw }
-.bar.floating { left: .8cqw; right: .8cqw; top: .6cqw; border-radius: .9cqw; border: 1px solid var(--t-border) }
-.bar.pill { left: 0; right: 0; top: .5cqw; background: none }
-.bar.pill .mod { background: color-mix(in srgb, var(--t-surface) 92%, transparent); border: 1px solid var(--t-border); border-radius: 2cqw; padding: .35cqw .9cqw }
-.bar .grow { flex: 1 }
-.mod { display: flex; align-items: center; gap: .6cqw; white-space: nowrap }
-.btn-start { font-weight: 600; background: var(--t-accent); color: var(--t-bg); border: 0; border-radius: .6cqw; padding: .4cqw .9cqw; font: 600 1.05cqw var(--ui); cursor: pointer }
-.ws { display: flex; gap: .35cqw }
-.ws i { width: 1.6cqw; height: 1.6cqw; border-radius: .4cqw; display: grid; place-items: center; font: normal .85cqw var(--ui); color: var(--t-muted); background: var(--t-bg) }
-.ws i.on { background: var(--t-accent); color: var(--t-bg); width: 2.6cqw }
-.task { display: flex; gap: .4cqw; overflow: hidden }
-.task button { font: .95cqw var(--ui); color: var(--t-text); background: color-mix(in srgb, var(--t-text) 8%, transparent); border: 0; border-bottom: .2cqw solid transparent; border-radius: .4cqw; padding: .35cqw .8cqw; cursor: pointer; max-width: 13cqw; overflow: hidden; text-overflow: ellipsis }
-.task button.on { border-bottom-color: var(--t-accent); background: color-mix(in srgb, var(--t-accent) 22%, transparent) }
-.updates { color: var(--t-yellow); font-weight: 600 }
-.muted { color: var(--t-muted) }
-/* ventanas */
-.win { position: absolute; display: flex; flex-direction: column; border-radius: var(--rad); overflow: hidden;
-  background: color-mix(in srgb, var(--t-surface) 94%, transparent); box-shadow: 0 1.2cqw 3cqw rgba(0,0,0,.45);
-  border: .18cqw solid var(--t-border); transition: left .35s cubic-bezier(.2,.9,.3,1.15), top .35s cubic-bezier(.2,.9,.3,1.15), width .35s, height .35s, opacity .3s; cursor: default }
-.win.focus { border-color: transparent; background-clip: padding-box;
-  outline: .18cqw solid transparent; box-shadow: 0 0 0 .18cqw var(--t-accent), 0 0 0 .18cqw var(--t-magenta), 0 1.4cqw 3.4cqw rgba(0,0,0,.55);
-  background-image: none }
-.win.focus::before { content: ""; position: absolute; inset: -.18cqw; border-radius: inherit; padding: .18cqw; z-index: -1;
-  background: linear-gradient(45deg, var(--t-accent), var(--t-magenta)) }
-.win.dim { opacity: .82 }
-.title { height: 2.3cqw; display: flex; align-items: center; gap: .6cqw; padding: 0 .9cqw; font-size: .95cqw; color: var(--t-muted); border-bottom: 1px solid var(--t-border) }
-.title b { color: var(--t-text); font-weight: 600 }
-.body { flex: 1; overflow: hidden; padding: .9cqw 1.1cqw; font-size: 1cqw; min-height: 0 }
-.term { font-family: var(--mono); background: color-mix(in srgb, var(--t-bg) 92%, transparent); line-height: 1.45; white-space: pre; font-size: .92cqw }
-.c-acc { color: var(--t-accent) } .c-cy { color: var(--t-cyan) } .c-gr { color: var(--t-green) } .c-ye { color: var(--t-yellow) } .c-mu { color: var(--t-muted) }
-.files { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8cqw; align-content: start }
-.files div { display: grid; justify-items: center; gap: .3cqw; font-size: .9cqw; text-align: center }
-.files div::before { content: ""; width: 3.4cqw; height: 2.6cqw; border-radius: .35cqw; background: var(--t-blue); opacity: .85 }
-.files div.doc::before { width: 2.4cqw; height: 3cqw; background: var(--t-text); opacity: .7 }
-.side { display: grid; grid-template-columns: 9cqw 1fr; gap: 1cqw; height: 100% }
-.side nav { display: grid; gap: .3cqw; align-content: start; font-size: .9cqw }
-.side nav span { padding: .3cqw .6cqw; border-radius: .4cqw; color: var(--t-muted) }
-.side nav span.on { background: color-mix(in srgb, var(--t-accent) 22%, transparent); color: var(--t-text) }
-.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7cqw }
-.card { border: 1px solid var(--t-border); border-radius: .6cqw; padding: .6cqw; font-size: .82cqw; display: grid; gap: .4cqw }
-.mock { height: 4cqw; border-radius: .4cqw; background: center / cover; position: relative; overflow: hidden }
-.mock::after { content: ""; position: absolute; left: 0; right: 0; height: .5cqw; background: var(--t-surface) }
-.mock.b::after { bottom: 0 } .mock.t::after { top: 0 }
-.card.on { border-color: var(--t-accent) }
-/* dock */
-.dock { position: absolute; bottom: .9cqw; left: 50%; transform: translateX(-50%); display: flex; gap: .7cqw; padding: .6cqw .9cqw;
-  border-radius: 1.4cqw; background: color-mix(in srgb, var(--t-surface) 80%, transparent); border: 1px solid var(--t-border); z-index: 5 }
-.dock i { width: 3.2cqw; height: 3.2cqw; border-radius: .9cqw; display: grid; place-items: center; font: normal 600 1.1cqw var(--ui); color: var(--t-bg) }
-/* menú de inicio (fuzzel) */
-.launcher { position: absolute; z-index: 9; width: 26cqw; border-radius: .9cqw; padding: .8cqw; display: grid; gap: .3cqw;
-  background: var(--t-surface); border: .15cqw solid var(--t-accent); font-size: 1cqw; box-shadow: 0 1.5cqw 4cqw rgba(0,0,0,.5) }
-.launcher .q { border: 1px solid var(--t-border); border-radius: .5cqw; padding: .45cqw .7cqw; color: var(--t-muted); margin-bottom: .3cqw }
-.launcher div { padding: .35cqw .7cqw; border-radius: .4cqw }
-.launcher div.on { background: var(--t-accent); color: var(--t-bg) }
-@media (prefers-reduced-motion: reduce) { .win, .screen { transition: none } }
-footer { color: var(--dim); font-size: .85rem }
-footer a { color: var(--ink) }
+/* --- barra de menús --- */
+#menubar { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--bar) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) max(10px, env(safe-area-inset-right, 0px)) 0 max(10px, env(safe-area-inset-left, 0px));
+  display: flex; align-items: center; gap: 2px; z-index: 9000;
+  background: color-mix(in srgb, var(--surface) 72%, transparent); backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4); border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent) }
+.mb { height: 24px; padding: 0 9px; border: 0; background: none; border-radius: 6px; cursor: default; white-space: nowrap; display: flex; align-items: center; gap: 6px }
+.mb:hover, .mb[aria-expanded="true"] { background: color-mix(in srgb, var(--text) 14%, transparent) }
+.mb.app { font-weight: 700 }
+.mb .logo { width: 16px; height: 16px }
+#menubar .spacer { flex: 1 }
+.mb.st { color: var(--text); font-variant-numeric: tabular-nums }
+@media (max-width: 640px) { .mb.opt { display: none } }
+
+/* menús desplegables */
+.menu { position: absolute; z-index: 9500; min-width: 210px; padding: 5px; border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 14px 40px rgba(0,0,0,.45) }
+.menu button { display: flex; justify-content: space-between; gap: 24px; width: 100%; padding: 5px 10px; border: 0; background: none; border-radius: 5px; text-align: left; cursor: default }
+.menu button:hover, .menu button:focus-visible { background: var(--accent); color: #fff; outline: none }
+.menu button:disabled { color: var(--muted); background: none }
+.menu kbd { font: 12px var(--ui); color: inherit; opacity: .6 }
+.menu hr { border: 0; border-top: 1px solid color-mix(in srgb, var(--text) 12%, transparent); margin: 4px 6px }
+
+/* --- iconos del escritorio --- */
+#icons { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); top: calc(var(--bar) + 18px); display: grid; gap: 14px; z-index: 1 }
+.dicon { width: 84px; display: grid; justify-items: center; gap: 4px; padding: 6px 2px; border-radius: 8px; border: 1px solid transparent; background: none; cursor: default; text-align: center; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,.7) }
+.dicon.sel { background: color-mix(in srgb, var(--accent) 30%, transparent); border-color: color-mix(in srgb, var(--accent) 60%, transparent) }
+.dicon svg { width: 48px; height: 48px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)) }
+
+/* --- ventanas --- */
+.win { position: absolute; display: flex; flex-direction: column; min-width: 280px; min-height: 160px; border-radius: 12px; overflow: hidden;
+  background: var(--surface); border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow: 0 22px 60px rgba(0,0,0,.55), 0 0 0 .5px rgba(0,0,0,.6) }
+.win.inactive { box-shadow: 0 12px 30px rgba(0,0,0,.4) }
+.win.anim { transition: left .28s cubic-bezier(.2,.8,.2,1), top .28s cubic-bezier(.2,.8,.2,1), width .28s cubic-bezier(.2,.8,.2,1), height .28s cubic-bezier(.2,.8,.2,1), transform .3s ease, opacity .3s ease }
+.win.opening { transform: scale(.94); opacity: 0 }
+.win.closing { transform: scale(.94); opacity: 0 }
+.titlebar { height: 38px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; cursor: default; position: relative; background: var(--surface) }
+.lights { display: flex; gap: 8px; z-index: 1 }
+.light { width: 12px; height: 12px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; cursor: default }
+.light svg { width: 8px; height: 8px; opacity: 0; stroke: rgba(0,0,0,.6); stroke-width: 1.6; stroke-linecap: round; fill: none }
+.lights:hover .light svg, .light:focus-visible svg { opacity: 1 }
+.light.close { background: #ff5f57 } .light.min { background: #febc2e } .light.max { background: #28c840 }
+.win.inactive .light { background: color-mix(in srgb, var(--text) 22%, transparent) }
+.win.inactive .lights:hover .light.close { background: #ff5f57 } .win.inactive .lights:hover .light.min { background: #febc2e } .win.inactive .lights:hover .light.max { background: #28c840 }
+.wtitle { position: absolute; left: 90px; right: 90px; text-align: center; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none }
+.win.inactive .wtitle { color: var(--muted) }
+.wbody { flex: 1; min-height: 0; overflow: auto; background: var(--bg); user-select: text; -webkit-user-select: text; position: relative }
+.grip { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; z-index: 2 }
+
+/* --- dock --- */
+#dock { position: absolute; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 8000;
+  display: flex; align-items: flex-end; gap: 6px; padding: 7px 9px; border-radius: 20px; max-width: calc(100vw - 16px); overflow-x: auto;
+  background: color-mix(in srgb, var(--surface) 55%, transparent); backdrop-filter: blur(22px) saturate(1.5); -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); box-shadow: 0 10px 30px rgba(0,0,0,.35) }
+.dk { position: relative; width: 50px; height: 50px; flex: none; border: 0; padding: 0; background: none; cursor: default; transition: transform .15s ease, width .15s, height .15s }
+.dk:hover { transform: translateY(-6px) scale(1.12) }
+.dk svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)) }
+.dk::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--text); opacity: 0 }
+.dk.running::after { opacity: .85 }
+.dk .tip { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); padding: 3px 9px; border-radius: 6px; white-space: nowrap; font-size: 12px; pointer-events: none;
+  background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); opacity: 0; transition: opacity .12s }
+.dk:hover .tip { opacity: 1 }
+.dsep { width: 1px; align-self: stretch; margin: 4px 3px; background: color-mix(in srgb, var(--text) 20%, transparent); flex: none }
+.dk.bounce { animation: bounce .6s ease 2 }
+@keyframes bounce { 50% { transform: translateY(-14px) } }
+@media (max-width: 640px) { .dk { width: 40px; height: 40px } .dk .tip { display: none } }
+
+/* --- buscador (Súper+Espacio) --- */
+#spot { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); width: min(620px, calc(100vw - 32px)); z-index: 9800; border-radius: 14px; overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent); box-shadow: 0 30px 80px rgba(0,0,0,.55) }
+#spot input { width: 100%; border: 0; background: none; color: var(--text); font: 20px var(--ui); padding: 16px 18px; outline: none }
+#spot ul { list-style: none; margin: 0; padding: 0 6px 6px; max-height: 50vh; overflow: auto; border-top: 1px solid color-mix(in srgb, var(--text) 10%, transparent) }
+#spot li { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; cursor: default }
+#spot li svg { width: 26px; height: 26px }
+#spot li.on { background: var(--accent); color: #fff }
+#spot li small { margin-left: auto; opacity: .65 }
+
+/* --- notificaciones --- */
+#toasts { position: absolute; right: max(12px, env(safe-area-inset-right, 0px)); top: calc(var(--bar) + 10px); display: grid; gap: 8px; z-index: 9900; width: min(330px, calc(100vw - 24px)) }
+.toast { padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 10px 30px rgba(0,0,0,.4); display: flex; gap: 10px; align-items: center; animation: tin .25s ease }
+.toast svg { width: 30px; height: 30px; flex: none }
+.toast b { display: block }
+@keyframes tin { from { transform: translateX(30px); opacity: 0 } }
+
+/* --- aplicaciones --- */
+.pad { padding: 14px 16px }
+.term { font: 13px/1.5 var(--mono); padding: 10px 12px; min-height: 100%; cursor: text; white-space: pre-wrap; word-break: break-word; background: color-mix(in srgb, var(--bg) 92%, #000) }
+.term .in { display: flex } .term input { flex: 1; min-width: 0; border: 0; outline: none; background: none; color: var(--text); font: inherit; padding: 0 }
+.c-acc { color: var(--accent) } .c-cy { color: var(--cyan) } .c-gr { color: var(--green) } .c-ye { color: var(--yellow) } .c-mu { color: var(--muted) } .c-red { color: var(--red) } .c-bl { color: var(--blue) }
+.fm { display: grid; grid-template-columns: 150px 1fr; height: 100% }
+.fm nav { padding: 10px 8px; display: grid; gap: 2px; align-content: start; background: var(--surface); border-right: 1px solid var(--border); font-size: 12.5px }
+.fm nav h6 { margin: 8px 8px 2px; font-size: 11px; color: var(--muted); font-weight: 600 }
+.fm nav button { border: 0; background: none; text-align: left; padding: 4px 8px; border-radius: 6px; cursor: default; display: flex; gap: 8px; align-items: center }
+.fm nav button.on { background: color-mix(in srgb, var(--text) 12%, transparent) }
+.fm nav svg { width: 16px; height: 16px }
+.fm .main { display: flex; flex-direction: column; min-width: 0 }
+.fm .tool { display: flex; gap: 6px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--surface) }
+.fm .grid { flex: 1; overflow: auto; padding: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; align-content: start }
+.file { display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border-radius: 8px; border: 1px solid transparent; background: none; cursor: default; text-align: center; font-size: 12px; word-break: break-word }
+.file.sel { background: color-mix(in srgb, var(--accent) 25%, transparent) }
+.file svg { width: 46px; height: 46px }
+.btn { border: 1px solid var(--border); background: color-mix(in srgb, var(--text) 8%, transparent); padding: 4px 10px; border-radius: 7px; cursor: default }
+.btn:hover { background: color-mix(in srgb, var(--text) 14%, transparent) }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: #fff }
+.btn:focus-visible, .light:focus-visible, .dk:focus-visible, .mb:focus-visible, .file:focus-visible, .dicon:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.crumb { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.editor { display: flex; flex-direction: column; height: 100% }
+.editor textarea { flex: 1; resize: none; border: 0; outline: none; padding: 14px 16px; background: var(--bg); color: var(--text); font: 14px/1.6 var(--mono) }
+.editor .tool { display: flex; gap: 6px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--border); background: var(--surface) }
+.calc { display: grid; grid-template-rows: auto 1fr; height: 100%; background: var(--surface) }
+.calc .disp { padding: 18px 16px 8px; text-align: right; font: 300 40px var(--ui); overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums }
+.calc .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border) }
+.calc .keys button { border: 0; background: color-mix(in srgb, var(--text) 9%, var(--surface)); font-size: 20px; cursor: default; min-height: 52px }
+.calc .keys button:active { filter: brightness(1.4) }
+.calc .keys .op { background: #ff9f0a; color: #fff } .calc .keys .fn { background: color-mix(in srgb, var(--text) 22%, var(--surface)) }
+.calc .keys .zero { grid-column: span 2 }
+.web { display: flex; flex-direction: column; height: 100% }
+.web .tool { display: flex; gap: 6px; padding: 7px 10px; background: var(--surface); border-bottom: 1px solid var(--border) }
+.web .url { flex: 1; min-width: 0; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 4px 10px; font: 13px var(--ui) }
+.web .page { flex: 1; overflow: auto; padding: 28px 32px; background: #f6f7fb; color: #1b1f33; user-select: text }
+.web .page h1 { font-size: 26px; margin: 0 0 10px } .web .page a { color: #4b32d6; cursor: pointer }
+.store { padding: 16px; display: grid; gap: 10px }
+.store .row { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border) }
+.store .row svg { width: 44px; height: 44px }
+.store small { color: var(--muted) }
+.prefs { display: grid; grid-template-columns: 170px 1fr; height: 100% }
+.prefs nav { background: var(--surface); padding: 10px 8px; display: grid; gap: 2px; align-content: start; border-right: 1px solid var(--border) }
+.prefs nav button { border: 0; background: none; text-align: left; padding: 6px 10px; border-radius: 7px; cursor: default }
+.prefs nav button.on { background: var(--accent); color: #fff }
+.prefs section { padding: 18px 20px; display: grid; gap: 18px; align-content: start; overflow: auto }
+.prefs h3 { margin: 0; font-size: 16px }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px }
+.sw { width: 110px; border: 2px solid transparent; border-radius: 10px; padding: 0; overflow: hidden; background: none; cursor: default; text-align: center; font-size: 12px }
+.sw.on { border-color: var(--accent) }
+.sw img, .sw .chip { display: block; width: 100%; height: 64px; object-fit: cover }
+.sw span { display: block; padding: 4px }
+.viewer { display: grid; place-items: center; height: 100%; background: #000 }
+.viewer img { max-width: 100%; max-height: 100%; object-fit: contain }
+.about { display: grid; justify-items: center; gap: 8px; padding: 22px; text-align: center }
+.about svg { width: 84px; height: 84px }
+.about table { border-spacing: 10px 3px; text-align: left; font-variant-numeric: tabular-nums }
+.about td:first-child { color: var(--muted); text-align: right }
+iframe.full { border: 0; width: 100%; height: 100%; display: block; background: #fff }
+#hint { position: absolute; left: 50%; top: calc(var(--bar) + 14px); transform: translateX(-50%); z-index: 2; padding: 8px 14px; border-radius: 10px; font-size: 12.5px; max-width: calc(100vw - 32px); text-align: center;
+  background: color-mix(in srgb, var(--surface) 75%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid color-mix(in srgb, var(--text) 10%, transparent) }
+@media (prefers-reduced-motion: reduce) { .win.anim, .dk, .toast, .dk.bounce { transition: none; animation: none } }
+@media (max-width: 640px) { .fm { grid-template-columns: 1fr } .fm nav { display: none } .prefs { grid-template-columns: 1fr } .prefs nav { display: flex; overflow-x: auto } #icons { display: none } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>RROS Escritorio</h1>
-    <p>Simulación del escritorio Hyprland de RROS. Los fondos son los que genera <code>rros-theme</code> con cada tema; ventanas, barra y dock siguen la configuración que escribe. Pulsa las ventanas, «Inicio» o los botones de la barra. <a href="ajustes.html">Abrir RROS Ajustes</a></p>
-  </header>
-
-  <div class="controls" role="group" aria-label="Opciones del escritorio">
-    <div class="group"><span>Estilo de escritorio</span><div class="seg" id="seg-desk"></div></div>
-    <div class="group"><span>Fondo</span><div class="seg" id="seg-wp"></div></div>
-    <div class="group"><span>Tema</span><div class="seg" id="seg-theme"></div></div>
-  </div>
-  <p class="note" id="cmd"></p>
-
-  <div class="monitor"><div class="screen" id="screen" aria-label="Escritorio simulado"></div></div>
-
-  <footer>Esto es una simulación en el navegador: el sistema de verdad se prueba con la ISO (máquina virtual o PC). Código: <a href="https://github.com/raulramalf/RROS">github.com/raulramalf/RROS</a></footer>
+<div id="desktop" aria-label="Escritorio de RROS">
+  <div id="menubar" role="menubar"></div>
+  <div id="hint">Escritorio de RROS en el navegador: abre aplicaciones desde el dock, arrastra las ventanas por su barra, usa los botones de colores para cerrar, minimizar o maximizar. <b>Ctrl + Espacio</b> busca aplicaciones.</div>
+  <div id="icons"></div>
+  <div id="dock" role="toolbar" aria-label="Dock"></div>
+  <div id="toasts" aria-live="polite"></div>
 </div>
 <script>
-// paletas reales de rros-theme (variante oscura)
+"use strict";
+// ---------------------------------------------------------------- datos
 var THEMES = {
-  aurora:  { bg:"#0b1020", surface:"#141c38", text:"#e6ecff", muted:"#8a96bd", border:"#26305a", green:"#4ade80", yellow:"#fbbf24", blue:"#60a5fa", magenta:"#c084fc", cyan:"#22d3ee", accent:"#7c5cff" },
-  nord:    { bg:"#2e3440", surface:"#3b4252", text:"#eceff4", muted:"#8f9bb3", border:"#4c566a", green:"#a3be8c", yellow:"#ebcb8b", blue:"#81a1c1", magenta:"#b48ead", cyan:"#88c0d0", accent:"#88c0d0" },
-  dracula: { bg:"#282a36", surface:"#343746", text:"#f8f8f2", muted:"#8a93c5", border:"#44475a", green:"#50fa7b", yellow:"#f1fa8c", blue:"#8be9fd", magenta:"#ff79c6", cyan:"#8be9fd", accent:"#bd93f9" },
-  gruvbox: { bg:"#282828", surface:"#3c3836", text:"#ebdbb2", muted:"#928374", border:"#504945", green:"#b8bb26", yellow:"#fabd2f", blue:"#83a598", magenta:"#d3869b", cyan:"#8ec07c", accent:"#fabd2f" }
+  aurora:  { name: "Aurora",  bg:"#0b1020", surface:"#141c38", text:"#e6ecff", muted:"#8a96bd", border:"#26305a", accent:"#7c5cff", red:"#ff6b81", green:"#4ade80", yellow:"#fbbf24", blue:"#60a5fa", cyan:"#22d3ee", magenta:"#c084fc" },
+  nord:    { name: "Nord",    bg:"#2e3440", surface:"#3b4252", text:"#eceff4", muted:"#8f9bb3", border:"#4c566a", accent:"#88c0d0", red:"#bf616a", green:"#a3be8c", yellow:"#ebcb8b", blue:"#81a1c1", cyan:"#88c0d0", magenta:"#b48ead" },
+  dracula: { name: "Dracula", bg:"#282a36", surface:"#343746", text:"#f8f8f2", muted:"#8a93c5", border:"#44475a", accent:"#bd93f9", red:"#ff5555", green:"#50fa7b", yellow:"#f1fa8c", blue:"#8be9fd", cyan:"#8be9fd", magenta:"#ff79c6" },
+  gruvbox: { name: "Gruvbox", bg:"#282828", surface:"#3c3836", text:"#ebdbb2", muted:"#928374", border:"#504945", accent:"#fabd2f", red:"#fb4934", green:"#b8bb26", yellow:"#fabd2f", blue:"#83a598", cyan:"#8ec07c", magenta:"#d3869b" }
 };
-// los tres estilos de rros-theme escritorio (claves reales)
-var DESKS = {
-  clasico: { label:"Clásico", pos:"bottom", style:"flat", layout:"floating", dock:false, rad:".5cqw",
-             keys:"panel_position=bottom · taskbar=true · layout=floating" },
-  moderno: { label:"Moderno", pos:"top", style:"floating", layout:"floating", dock:true, rad:"1cqw",
-             keys:"panel_position=top · panel.style=floating · dock=true" },
-  mosaico: { label:"Mosaico", pos:"top", style:"pill", layout:"tiling", dock:false, rad:".7cqw",
-             keys:"layout=tiling · tiling_layout=dwindle · panel.style=pill" }
+var WPS = { aurora: "Aurora", ondas: "Ondas", degradado: "Degradado", circulos: "Círculos" };
+
+// iconos de las aplicaciones (dibujados, tipo cuadrado redondeado)
+function ico(bg1, bg2, glyph) {
+  return '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g' + bg1.slice(1) + bg2.slice(1) + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + bg1 + '"/><stop offset="1" stop-color="' + bg2 +
+    '"/></linearGradient></defs><rect x="3" y="3" width="58" height="58" rx="14" fill="url(#g' + bg1.slice(1) + bg2.slice(1) + ')"/>' + glyph + '</svg>';
+}
+var LOGO = '<svg viewBox="0 0 64 64" class="logo" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="16" fill="url(#lg)"/><path d="M22 46V18h12.5c6 0 9.5 3.3 9.5 8.4 0 3.9-2.1 6.6-5.6 7.7L44.5 46h-6.3l-5.6-11.2H27.6V46z M27.6 30.3h6.4c2.8 0 4.4-1.4 4.4-3.8s-1.6-3.8-4.4-3.8h-6.4z" fill="#fff"/></svg>';
+var FOLDER = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 16a5 5 0 0 1 5-5h14l6 6h22a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5z" fill="#4f8fe8"/><path d="M6 24h52v24a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5z" fill="#6aa6f5"/></svg>';
+var DOC = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M16 6h22l12 12v38a3 3 0 0 1-3 3H16a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3z" fill="#f2f4fa"/><path d="M38 6v12h12z" fill="#c7cde0"/><path d="M20 30h22M20 37h22M20 44h15" stroke="#9aa3c0" stroke-width="2.4" stroke-linecap="round"/></svg>';
+var IMG = '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="7" y="11" width="50" height="42" rx="5" fill="#f2f4fa"/><circle cx="22" cy="25" r="5" fill="#fbbf24"/><path d="M11 49l14-15 9 9 7-6 12 12z" fill="#4ade80"/></svg>';
+
+var APPS = {
+  files:  { name: "Archivos", icon: ico("#5ea2ff", "#2f6fe0", '<path d="M14 22a4 4 0 0 1 4-4h10l4 4h14a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4z" fill="#fff" opacity=".95"/>'), w: 720, h: 460 },
+  web:    { name: "Firefox", icon: ico("#ff9a3c", "#e1306c", '<circle cx="32" cy="32" r="15" fill="none" stroke="#fff" stroke-width="4"/><path d="M17 32h30M32 17c-6 7-6 23 0 30M32 17c6 7 6 23 0 30" stroke="#fff" stroke-width="2.5" fill="none"/>'), w: 820, h: 540 },
+  term:   { name: "Terminal", icon: ico("#2a3142", "#11151f", '<path d="M17 24l9 8-9 8" stroke="#4ade80" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 41h16" stroke="#e6ecff" stroke-width="4" stroke-linecap="round"/>'), w: 660, h: 420 },
+  edit:   { name: "Editor de texto", icon: ico("#fbd46a", "#f0a422", '<rect x="18" y="14" width="28" height="36" rx="3" fill="#fff"/><path d="M23 23h18M23 30h18M23 37h12" stroke="#c48a10" stroke-width="2.6" stroke-linecap="round"/>'), w: 640, h: 440 },
+  calc:   { name: "Calculadora", icon: ico("#7a7f8c", "#3c4048", '<rect x="18" y="13" width="28" height="11" rx="2" fill="#dfe3ec"/><g fill="#ff9f0a"><circle cx="22" cy="32" r="3"/><circle cx="32" cy="32" r="3"/><circle cx="42" cy="32" r="3"/><circle cx="22" cy="42" r="3"/><circle cx="32" cy="42" r="3"/><circle cx="42" cy="42" r="3"/></g>'), w: 300, h: 450, fixed: true },
+  store:  { name: "Tienda", icon: ico("#36d1dc", "#5b86e5", '<path d="M18 24h28l-3 22H21z" fill="#fff"/><path d="M25 24a7 7 0 0 1 14 0" stroke="#fff" stroke-width="3.5" fill="none"/>'), w: 640, h: 500 },
+  prefs:  { name: "Preferencias", icon: ico("#9aa3b5", "#5d6577", '<circle cx="32" cy="32" r="13" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="6 4.2"/><circle cx="32" cy="32" r="6" fill="#fff"/>'), w: 720, h: 500 },
+  ajustes:{ name: "RROS Ajustes", icon: ico("#7c5cff", "#22d3ee", '<path d="M22 46V18h12.5c6 0 9.5 3.3 9.5 8.4 0 3.9-2.1 6.6-5.6 7.7L44.5 46h-6.3l-5.6-11.2H27.6V46z M27.6 30.3h6.4c2.8 0 4.4-1.4 4.4-3.8s-1.6-3.8-4.4-3.8h-6.4z" fill="#fff"/>'), w: 980, h: 640 },
+  viewer: { name: "Visor de imágenes", icon: ico("#4ade80", "#16a34a", '<rect x="15" y="17" width="34" height="30" rx="3" fill="#fff"/><circle cx="25" cy="27" r="4" fill="#fbbf24"/><path d="M18 44l10-10 7 7 5-4 6 7z" fill="#16a34a"/>'), w: 720, h: 460, hidden: true },
+  about:  { name: "Acerca de RROS", icon: LOGO, w: 360, h: 380, fixed: true, hidden: true },
+  trash:  { name: "Papelera", icon: ico("#c9ced9", "#8f97a8", '<path d="M22 22h20l-2 24H24z" fill="#fff"/><path d="M19 21h26M28 17h8" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>'), w: 620, h: 420 }
 };
-var WPS = { aurora:"Aurora", ondas:"Ondas", degradado:"Degradado", circulos:"Círculos" };
-var WINDOWS = [
-  { id:"term", name:"foot", title:"Terminal" },
-  { id:"files", name:"Thunar", title:"Archivos · ~/Documentos" },
-  { id:"set", name:"RROS Ajustes", title:"RROS Ajustes · Escritorio y fondo" }
-];
-var st = { desk:"clasico", wp:"aurora", theme:"aurora", focus:"set", menu:false };
-try { var saved = JSON.parse(localStorage.getItem("rros-escritorio") || "null"); if (saved) for (var k in saved) if (k in st && k !== "menu") st[k] = saved[k]; } catch (e) {}
+var DOCK = ["files", "web", "term", "edit", "calc", "store", "prefs", "ajustes"];
 
-var scr = document.getElementById("screen");
-function h(tag, attrs, html) { var e = document.createElement(tag); for (var k in (attrs || {})) e.setAttribute(k, attrs[k]); if (html != null) e.innerHTML = html; return e; }
+// sistema de archivos virtual (se guarda en este navegador)
+var FS_DEFAULT = {
+  "Documentos": { "Bienvenida.txt": "Bienvenido a RROS.\n\nEsto es el escritorio de RROS funcionando en el navegador:\n- Arrastra las ventanas por su barra de título.\n- Los botones de colores cierran (rojo), minimizan (ámbar) y maximizan (verde).\n- Ctrl + Espacio abre el buscador.\n- En la terminal, escribe «ayuda».\n\nEl sistema de verdad (Arch Linux con Plasma) se instala desde la ISO.\n",
+                  "Lista de la compra.txt": "- pan\n- leche\n- café\n- fruta\n" },
+  "Descargas": {},
+  "Imágenes": { "aurora.jpg": "@img:aurora-aurora", "ondas.jpg": "@img:aurora-ondas", "círculos.jpg": "@img:dracula-circulos", "degradado.jpg": "@img:nord-degradado" },
+  "Música": {}, "Vídeos": {}, "Escritorio": { "Notas.txt": "Ideas para RROS:\n- tema propio\n- más fondos\n" }
+};
+var state = { theme: "aurora", wp: "aurora", dockSize: 50, fs: null, trash: {}, installed: {} };
+try { var sv = JSON.parse(localStorage.getItem("rros-web") || "null"); if (sv) for (var k in sv) state[k] = sv[k]; } catch (e) {}
+if (!state.fs) state.fs = JSON.parse(JSON.stringify(FS_DEFAULT));
+function save() { try { localStorage.setItem("rros-web", JSON.stringify(state)); } catch (e) {} }
 
-function seg(id, map, key) {
-  var box = document.getElementById(id); box.textContent = "";
-  Object.keys(map).forEach(function (k) {
-    var b = h("button", { type:"button", "aria-pressed": String(st[key] === k) }, typeof map[k] === "string" ? map[k] : map[k].label || k[0].toUpperCase() + k.slice(1));
-    b.onclick = function () { st[key] = k; st.menu = false; render(); };
+// ---------------------------------------------------------------- utilidades
+function $(s, r) { return (r || document).querySelector(s); }
+function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+var desk = $("#desktop");
+function toast(title, text, icon) {
+  var t = el("div", "toast", (icon || LOGO) + "<div><b>" + esc(title) + "</b>" + esc(text || "") + "</div>");
+  $("#toasts").appendChild(t);
+  setTimeout(function () { t.style.transition = "opacity .3s"; t.style.opacity = "0"; setTimeout(function () { t.remove(); }, 320); }, 3800);
+}
+function applyTheme() {
+  var t = THEMES[state.theme], r = document.documentElement.style;
+  ["bg","surface","text","muted","border","accent","red","green","yellow","blue","cyan","magenta"].forEach(function (k) { r.setProperty("--" + k, t[k]); });
+  desk.style.backgroundImage = "url(fondos/" + state.theme + "-" + state.wp + ".jpg)";
+  document.querySelectorAll(".dk").forEach(function (d) { d.style.width = d.style.height = state.dockSize + "px"; });
+}
+
+// ---------------------------------------------------------------- ventanas
+var wins = [], z = 100, seq = 0, focused = null;
+function openApp(id, arg) {
+  var a = APPS[id];
+  if (!a) return;
+  // una sola ventana para algunas aplicaciones: se trae al frente
+  var single = ["prefs", "ajustes", "store", "calc", "about", "trash"].indexOf(id) >= 0;
+  var ex = wins.filter(function (w) { return w.app === id; });
+  if (single && ex.length) { restore(ex[0]); return ex[0]; }
+  var vw = innerWidth, vh = innerHeight, small = vw < 700;
+  var w = { id: ++seq, app: id, max: false, min: false };
+  var W = Math.min(a.w, vw - 20), H = Math.min(a.h, vh - 130);
+  var off = (wins.length % 6) * 26;
+  w.el = el("div", "win anim opening");
+  w.el.setAttribute("role", "dialog");
+  w.el.setAttribute("aria-label", a.name);
+  w.el.style.width = W + "px"; w.el.style.height = H + "px";
+  w.el.style.left = Math.max(8, Math.round((vw - W) / 2) - 60 + off) + "px";
+  w.el.style.top = Math.max(40, Math.round((vh - H) / 2) - 50 + off) + "px";
+  w.el.innerHTML = '<div class="titlebar"><div class="lights">' +
+    '<button class="light close" aria-label="Cerrar"><svg viewBox="0 0 8 8"><path d="M1.5 1.5l5 5M6.5 1.5l-5 5"/></svg></button>' +
+    '<button class="light min" aria-label="Minimizar"><svg viewBox="0 0 8 8"><path d="M1.2 4h5.6"/></svg></button>' +
+    '<button class="light max" aria-label="Maximizar"' + (a.fixed ? " disabled" : "") + '><svg viewBox="0 0 8 8"><path d="M4 1.2v5.6M1.2 4h5.6"/></svg></button>' +
+    '</div><div class="wtitle">' + esc(a.name) + '</div></div><div class="wbody"></div>' + (a.fixed ? "" : '<div class="grip"></div>');
+  desk.appendChild(w.el);
+  wins.push(w);
+  w.body = $(".wbody", w.el);
+  w.setTitle = function (t) { $(".wtitle", w.el).textContent = t; if (focused === w) renderMenubar(); };
+  $(".close", w.el).onclick = function (e) { e.stopPropagation(); closeWin(w); };
+  $(".min", w.el).onclick = function (e) { e.stopPropagation(); minimize(w); };
+  $(".max", w.el).onclick = function (e) { e.stopPropagation(); if (!a.fixed) toggleMax(w); };
+  w.el.addEventListener("pointerdown", function () { focus(w); }, true);
+  dragTitle(w);
+  if (!a.fixed) resizeGrip(w);
+  BUILD[id](w, arg);
+  focus(w);
+  requestAnimationFrame(function () { requestAnimationFrame(function () { w.el.classList.remove("opening"); }); });
+  if (small && !a.fixed) toggleMax(w);
+  renderDock();
+  var dk = $('.dk[data-app="' + id + '"]');
+  if (dk && ex.length === 0) { dk.classList.add("bounce"); setTimeout(function () { dk.classList.remove("bounce"); }, 1300); }
+  $("#hint") && $("#hint").remove();
+  return w;
+}
+function focus(w) {
+  if (!w || w.min) return;
+  focused = w;
+  w.el.style.zIndex = ++z;
+  wins.forEach(function (o) { o.el.classList.toggle("inactive", o !== w); });
+  renderMenubar();
+}
+function topWin() {
+  var vis = wins.filter(function (w) { return !w.min; }).sort(function (a, b) { return b.el.style.zIndex - a.el.style.zIndex; });
+  return vis[0] || null;
+}
+function closeWin(w) {
+  if (w.onclose) w.onclose();
+  w.el.classList.add("anim", "closing");
+  setTimeout(function () { w.el.remove(); }, 260);
+  wins = wins.filter(function (o) { return o !== w; });
+  if (focused === w) { focused = null; focus(topWin()); renderMenubar(); }
+  renderDock();
+}
+function dockPos(app) {
+  var d = $('.dk[data-app="' + app + '"]') || $("#dock");
+  var r = d.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+function minimize(w) {
+  var r = w.el.getBoundingClientRect(), p = dockPos(w.app);
+  w.el.classList.add("anim");
+  w.el.style.transformOrigin = "center";
+  w.el.style.transform = "translate(" + (p.x - (r.left + r.width / 2)) + "px," + (p.y - (r.top + r.height / 2)) + "px) scale(.06)";
+  w.el.style.opacity = "0";
+  w.min = true;
+  setTimeout(function () { if (w.min) w.el.style.visibility = "hidden"; }, 300);
+  if (focused === w) { focused = null; focus(topWin()); renderMenubar(); }
+  renderDock();
+}
+function restore(w) {
+  if (w.min) {
+    w.min = false;
+    w.el.style.visibility = "";
+    w.el.classList.add("anim");
+    requestAnimationFrame(function () { w.el.style.transform = ""; w.el.style.opacity = ""; });
+  }
+  focus(w);
+  renderDock();
+}
+function toggleMax(w) {
+  w.el.classList.add("anim");
+  if (!w.max) {
+    w.prev = { l: w.el.style.left, t: w.el.style.top, w: w.el.style.width, h: w.el.style.height };
+    w.el.style.left = "0px"; w.el.style.top = getComputedStyle(document.getElementById("menubar")).height;
+    w.el.style.width = innerWidth + "px"; w.el.style.height = (innerHeight - parseInt(w.el.style.top, 10)) + "px";
+    w.el.style.borderRadius = "0";
+  } else {
+    w.el.style.left = w.prev.l; w.el.style.top = w.prev.t; w.el.style.width = w.prev.w; w.el.style.height = w.prev.h;
+    w.el.style.borderRadius = "";
+  }
+  w.max = !w.max;
+  setTimeout(function () { w.el.classList.remove("anim"); if (w.onresize) w.onresize(); }, 300);
+}
+function dragTitle(w) {
+  var bar = $(".titlebar", w.el);
+  bar.addEventListener("dblclick", function (e) { if (!e.target.closest(".lights") && !APPS[w.app].fixed) toggleMax(w); });
+  bar.addEventListener("pointerdown", function (e) {
+    if (e.target.closest(".lights") || e.button !== 0) return;
+    var sx = e.clientX, sy = e.clientY, ox = w.el.offsetLeft, oy = w.el.offsetTop, moved = false;
+    w.el.classList.remove("anim");
+    bar.setPointerCapture(e.pointerId);
+    function mv(ev) {
+      var dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 3) return;
+      if (w.max && !moved) { // arrastrar una ventana maximizada la devuelve a su tamaño
+        toggleMax(w); w.el.classList.remove("anim");
+        ox = ev.clientX - parseInt(w.prev.w, 10) / 2; oy = 30;
+      }
+      moved = true;
+      w.el.style.left = Math.min(innerWidth - 60, Math.max(-parseInt(w.el.style.width, 10) + 80, ox + dx)) + "px";
+      w.el.style.top = Math.min(innerHeight - 50, Math.max(30, oy + dy)) + "px";
+    }
+    function up() { bar.removeEventListener("pointermove", mv); bar.removeEventListener("pointerup", up); }
+    bar.addEventListener("pointermove", mv);
+    bar.addEventListener("pointerup", up);
+  });
+}
+function resizeGrip(w) {
+  var g = $(".grip", w.el);
+  g.addEventListener("pointerdown", function (e) {
+    e.stopPropagation();
+    var sx = e.clientX, sy = e.clientY, ow = w.el.offsetWidth, oh = w.el.offsetHeight;
+    w.el.classList.remove("anim");
+    g.setPointerCapture(e.pointerId);
+    function mv(ev) {
+      w.el.style.width = Math.max(280, ow + ev.clientX - sx) + "px";
+      w.el.style.height = Math.max(160, oh + ev.clientY - sy) + "px";
+      if (w.onresize) w.onresize();
+    }
+    function up() { g.removeEventListener("pointermove", mv); g.removeEventListener("pointerup", up); }
+    g.addEventListener("pointermove", mv);
+    g.addEventListener("pointerup", up);
+  });
+}
+
+// ---------------------------------------------------------------- barra de menús
+var openMenu = null;
+function closeMenus() { if (openMenu) { openMenu.el.remove(); openMenu.btn.setAttribute("aria-expanded", "false"); openMenu = null; } }
+function showMenu(btn, items) {
+  if (openMenu && openMenu.btn === btn) { closeMenus(); return; }
+  closeMenus();
+  var m = el("div", "menu");
+  m.setAttribute("role", "menu");
+  items.forEach(function (it) {
+    if (it === "-") { m.appendChild(el("hr")); return; }
+    var b = el("button", "", esc(it[0]) + (it[2] ? "<kbd>" + esc(it[2]) + "</kbd>" : ""));
+    b.setAttribute("role", "menuitem");
+    if (!it[1]) b.disabled = true; else b.onclick = function () { closeMenus(); it[1](); };
+    m.appendChild(b);
+  });
+  var r = btn.getBoundingClientRect();
+  m.style.left = Math.min(r.left, innerWidth - 230) + "px";
+  m.style.top = (r.bottom + 4) + "px";
+  desk.appendChild(m);
+  btn.setAttribute("aria-expanded", "true");
+  openMenu = { el: m, btn: btn };
+  var first = m.querySelector("button:not(:disabled)");
+  if (first) first.focus();
+}
+document.addEventListener("pointerdown", function (e) { if (openMenu && !e.target.closest(".menu") && e.target !== openMenu.btn && !openMenu.btn.contains(e.target)) closeMenus(); });
+function mbtn(label, cls, items) {
+  var b = el("button", "mb " + (cls || ""), label);
+  b.setAttribute("aria-haspopup", "menu");
+  b.setAttribute("aria-expanded", "false");
+  b.onclick = function () { showMenu(b, typeof items === "function" ? items() : items); };
+  return b;
+}
+function renderMenubar() {
+  var mb = $("#menubar"), w = focused, app = w ? APPS[w.app].name : "Archivos";
+  mb.textContent = "";
+  mb.appendChild(mbtn(LOGO + '<span class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden">Menú RROS</span>', "", [
+    ["Acerca de RROS", function () { openApp("about"); }],
+    "-",
+    ["Preferencias del sistema…", function () { openApp("prefs"); }],
+    ["Tienda de aplicaciones…", function () { openApp("store"); }],
+    ["RROS Ajustes…", function () { openApp("ajustes"); }],
+    "-",
+    ["Forzar salida de todas las ventanas", function () { wins.slice().forEach(closeWin); }],
+    ["Reiniciar el escritorio", function () { location.reload(); }],
+    ["Borrar mis archivos y preferencias", function () { try { localStorage.removeItem("rros-web"); } catch (e) {} location.reload(); }]
+  ]));
+  mb.appendChild(mbtn(esc(app), "app", [
+    ["Acerca de " + app, function () { toast(app, "Aplicación de RROS"); }],
+    "-",
+    ["Ocultar " + app, w ? function () { minimize(w); } : null, "Ctrl M"],
+    ["Salir de " + app, w ? function () { wins.filter(function (o) { return o.app === w.app; }).forEach(closeWin); } : null, "Ctrl Q"]
+  ]));
+  mb.appendChild(mbtn("Archivo", "opt", [
+    ["Nueva ventana de Archivos", function () { openApp("files"); }, "Ctrl N"],
+    ["Nuevo documento de texto", function () { openApp("edit"); }],
+    ["Nueva terminal", function () { openApp("term"); }],
+    "-",
+    ["Cerrar ventana", w ? function () { closeWin(w); } : null, "Ctrl W"]
+  ]));
+  mb.appendChild(mbtn("Editar", "opt", [
+    ["Copiar", function () { document.execCommand && document.execCommand("copy"); }, "Ctrl C"],
+    ["Seleccionar todo", function () { var t = w && w.el.querySelector("textarea"); if (t) t.select(); }, "Ctrl A"]
+  ]));
+  mb.appendChild(mbtn("Ventana", "opt", function () {
+    var items = [
+      ["Minimizar", w ? function () { minimize(w); } : null, "Ctrl M"],
+      ["Maximizar / restaurar", w && !APPS[w.app].fixed ? function () { toggleMax(w); } : null],
+      ["Mosaico: dos ventanas en paralelo", function () { tile(); }],
+      "-"
+    ];
+    wins.forEach(function (o) { items.push([(o.min ? "◦ " : "• ") + $(".wtitle", o.el).textContent, function () { restore(o); }]); });
+    if (!wins.length) items.push(["No hay ventanas abiertas", null]);
+    return items;
+  }));
+  mb.appendChild(mbtn("Ayuda", "opt", [
+    ["Atajos del escritorio", function () { toast("Atajos", "Ctrl+Espacio buscar · Ctrl+W cerrar · Ctrl+M minimizar · doble clic en la barra: maximizar"); }],
+    ["Guía de RROS (GitHub)", function () { openApp("web", "https://github.com/raulramalf/RROS"); }]
+  ]));
+  mb.appendChild(el("div", "spacer"));
+  mb.appendChild(mbtn('<svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><path d="M8 11.5l2.3-2.6a3.2 3.2 0 0 0-4.6 0zM3.4 6.6a6.6 6.6 0 0 1 9.2 0l1.4-1.6a8.7 8.7 0 0 0-12 0zM.4 3.3a10.8 10.8 0 0 1 15.2 0L15 2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>', "st opt", [
+    ["Wi-Fi: conectado a «Casa»", null], ["Red: LAN", null], "-", ["Configuración de red…", function () { openApp("prefs", "red"); }]
+  ]));
+  mb.appendChild(mbtn("🔈︎ 60 %", "st opt", [["Volumen 60 %", null], ["Salida: altavoces", null], "-", ["Configuración de sonido…", function () { openApp("prefs", "sonido"); }]]));
+  mb.appendChild(mbtn("87 %", "st opt", [["Batería: 87 % (3 h 20 min)", null], ["Perfil: equilibrado", null]]));
+  var c = mbtn(clockText(), "st", function () { var d = new Date(); return [[d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" }), null]]; });
+  c.id = "clock";
+  mb.appendChild(c);
+}
+function clockText() {
+  var d = new Date();
+  return d.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" }).replace(".", "") + "  " + d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+setInterval(function () { var c = $("#clock"); if (c) c.textContent = clockText(); }, 15000);
+function tile() {
+  var vis = wins.filter(function (w) { return !w.min; }).sort(function (a, b) { return b.el.style.zIndex - a.el.style.zIndex; }).slice(0, 2);
+  var top = 30, H = innerHeight - top - 84;
+  vis.forEach(function (w, i) {
+    w.el.classList.add("anim"); w.max = false; w.el.style.borderRadius = "";
+    w.el.style.left = (8 + i * (innerWidth / 2)) + "px"; w.el.style.top = (top + 8) + "px";
+    w.el.style.width = (innerWidth / 2 - 16) + "px"; w.el.style.height = H + "px";
+  });
+}
+
+// ---------------------------------------------------------------- dock
+function renderDock() {
+  var d = $("#dock");
+  d.textContent = "";
+  var list = DOCK.slice();
+  Object.keys(state.installed).forEach(function (k) { list.push("inst:" + k); });
+  list.push("|", "trash");
+  wins.forEach(function (w) { if (list.indexOf(w.app) < 0 && !APPS[w.app].hidden) list.splice(list.indexOf("|"), 0, w.app); });
+  list.forEach(function (id) {
+    if (id === "|") { d.appendChild(el("div", "dsep")); return; }
+    var inst = id.indexOf("inst:") === 0, a = inst ? { name: state.installed[id.slice(5)].name, icon: state.installed[id.slice(5)].icon } : APPS[id];
+    var b = el("button", "dk", a.icon + '<span class="tip">' + esc(a.name) + "</span>");
+    b.dataset.app = id;
+    b.setAttribute("aria-label", a.name);
+    b.style.width = b.style.height = state.dockSize + "px";
+    if (wins.some(function (w) { return w.app === id; })) b.classList.add("running");
+    b.onclick = function () {
+      if (inst) { toast(a.name, "Instalada desde la Tienda. En el navegador solo se puede ver: ábrela en el sistema real."); return; }
+      var mine = wins.filter(function (w) { return w.app === id; });
+      if (!mine.length) { openApp(id); return; }
+      var hidden = mine.filter(function (w) { return w.min; });
+      if (focused && focused.app === id && !hidden.length) { minimize(focused); return; }
+      (hidden[0] ? restore(hidden[0]) : focus(mine[mine.length - 1]));
+    };
+    d.appendChild(b);
+  });
+}
+
+// ---------------------------------------------------------------- iconos del escritorio
+function renderIcons() {
+  var box = $("#icons");
+  box.textContent = "";
+  [["Inicio", FOLDER, function () { openApp("files", ""); }], ["Documentos", FOLDER, function () { openApp("files", "Documentos"); }],
+   ["Bienvenida.txt", DOC, function () { openApp("edit", "Documentos/Bienvenida.txt"); }], ["Papelera", APPS.trash.icon, function () { openApp("trash"); }]].forEach(function (it) {
+    var b = el("button", "dicon", it[1] + "<span>" + esc(it[0]) + "</span>");
+    b.onclick = function () { document.querySelectorAll(".dicon.sel").forEach(function (o) { o.classList.remove("sel"); }); b.classList.add("sel"); };
+    b.ondblclick = it[2];
+    b.onkeydown = function (e) { if (e.key === "Enter") it[2](); };
     box.appendChild(b);
   });
 }
+desk.addEventListener("pointerdown", function (e) { if (e.target === desk) document.querySelectorAll(".dicon.sel").forEach(function (o) { o.classList.remove("sel"); }); });
 
-function clock() { var d = new Date(); return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
-function date() { var d = new Date(); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear(); }
-
-function bodyOf(id, t) {
-  if (id === "term") return '<div class="body term">' +
-    '<span class="c-gr">rros@rros-lite</span>:<span class="c-acc">~</span>$ rros-fetch\n' +
-    '<span class="c-acc">   ▄▄▄▄▄▄   </span>  <b>rros</b>@rros-lite\n' +
-    '<span class="c-acc">  ██▀▀▀▀██  </span>  <span class="c-cy">SO</span>       RROS 0.2.0 (Aurora, lite)\n' +
-    '<span class="c-acc">  ██▄▄▄▄█▀  </span>  <span class="c-cy">Base</span>     Arch Linux · kernel 7.2\n' +
-    '<span class="c-acc">  ██  ▀██▄  </span>  <span class="c-cy">Escritorio</span> Hyprland · ' + st.desk + '\n' +
-    '<span class="c-acc">  ▀▀    ▀▀  </span>  <span class="c-cy">Tema</span>     ' + st.theme + ' · fondo ' + st.wp + '\n' +
-    '              <span class="c-cy">RAM</span>      394 MB de 512 MB\n\n' +
-    '<span class="c-gr">rros@rros-lite</span>:<span class="c-acc">~</span>$ rros theme escritorio ' + st.desk + '\n' +
-    '<span class="c-mu">escritorio «' + DESKS[st.desk].label.toLowerCase() + '» aplicado</span>\n' +
-    '<span class="c-gr">rros@rros-lite</span>:<span class="c-acc">~</span>$ <span class="c-ye">▍</span></div>';
-  if (id === "files") return '<div class="body files">' +
-    ['Documentos','Descargas','Imágenes','Música','Vídeos','Plantillas'].map(function (n) { return '<div>' + n + '</div>'; }).join('') +
-    '<div class="doc">notas.txt</div><div class="doc">factura.pdf</div></div>';
-  var cards = Object.keys(DESKS).map(function (k) {
-    var d = DESKS[k];
-    return '<div class="card' + (k === st.desk ? ' on' : '') + '"><div class="mock ' + (d.pos === "bottom" ? "b" : "t") +
-      '" style="background-image:url(fondos/' + st.theme + '-' + st.wp + '.jpg)"></div><b>' + d.label + '</b></div>';
-  }).join('');
-  return '<div class="body"><div class="side"><nav><span>Inicio</span><span>Apariencia</span><span class="on">Escritorio y fondo</span><span>Tienda</span><span>Seguridad</span><span>Accesibilidad</span><span>Instalar RROS</span></nav>' +
-    '<div style="display:grid;gap:.8cqw;align-content:start"><b style="font-size:1.2cqw">Elige tu escritorio</b><div class="cards">' + cards + '</div>' +
-    '<span class="muted" style="font-size:.85cqw">Efectos: animaciones suaves · desenfoque 6 · borde con degradado · gestos con tres dedos</span></div></div></div>';
+// ---------------------------------------------------------------- sistema de archivos
+function dirAt(path) {
+  var node = state.fs;
+  if (!path) return node;
+  var parts = path.split("/");
+  for (var i = 0; i < parts.length; i++) { if (!node || typeof node[parts[i]] !== "object") return null; node = node[parts[i]]; }
+  return node;
+}
+function readFile(path) { var i = path.lastIndexOf("/"), d = dirAt(path.slice(0, Math.max(0, i))); var v = d && d[path.slice(i + 1)]; return typeof v === "string" ? v : null; }
+function writeFile(path, text) { var i = path.lastIndexOf("/"), d = dirAt(path.slice(0, Math.max(0, i))); if (!d) return false; d[path.slice(i + 1)] = text; save(); return true; }
+function isImg(v) { return typeof v === "string" && v.indexOf("@img:") === 0; }
+function openPath(path) {
+  var v = readFile(path);
+  if (v === null) { if (dirAt(path)) openApp("files", path); return; }
+  if (isImg(v)) openApp("viewer", path); else openApp("edit", path);
 }
 
-// geometría: libres (solapadas) o mosaico dwindle (sin solapar, con huecos)
-function layout(d) {
-  var top = d.pos === "top" ? 4.4 : 1.6, bottom = d.pos === "bottom" ? 4.6 : (d.dock ? 6.4 : 1.6);
-  var H = 56.25, g = 0.9; // alto de la pantalla en cqw (16:9)
-  if (d.layout === "tiling") {
-    var avail = H - top - bottom, half = (100 - 3 * g) / 2;
-    return { term:[g, top, half, avail], files:[2*g+half, top, half, (avail-g)/2], set:[2*g+half, top+(avail+g)/2, half, (avail-g)/2] };
+// ---------------------------------------------------------------- aplicaciones
+var BUILD = {};
+
+BUILD.files = function (w, start) {
+  var cwd = typeof start === "string" ? start : "", sel = null;
+  w.body.innerHTML = '<div class="fm"><nav></nav><div class="main"><div class="tool"><button class="btn up" aria-label="Subir">‹</button><span class="crumb"></span><span style="flex:1"></span>' +
+    '<button class="btn nf">Nueva carpeta</button><button class="btn nd">Nuevo texto</button><button class="btn del">Mover a la papelera</button></div><div class="grid" role="listbox"></div></div></div>';
+  var nav = $("nav", w.body), grid = $(".grid", w.body);
+  function side() {
+    nav.innerHTML = "<h6>Favoritos</h6>";
+    [["", "Inicio"], ["Escritorio", "Escritorio"], ["Documentos", "Documentos"], ["Descargas", "Descargas"], ["Imágenes", "Imágenes"], ["Música", "Música"], ["Vídeos", "Vídeos"]].forEach(function (p) {
+      var b = el("button", cwd === p[0] ? "on" : "", FOLDER + esc(p[1]));
+      b.onclick = function () { cwd = p[0]; draw(); };
+      nav.appendChild(b);
+    });
+    var t = el("button", "", APPS.trash.icon + "Papelera"); t.onclick = function () { openApp("trash"); }; nav.appendChild(t);
   }
-  return { set:[30, top + 3, 52, 34], term:[5, top + 1.5, 42, 27], files:[56, top + 15, 36, 26] };
-}
+  function draw() {
+    side();
+    var d = dirAt(cwd) || state.fs;
+    $(".crumb", w.body).textContent = "/home/rros" + (cwd ? "/" + cwd : "");
+    w.setTitle(cwd ? cwd.split("/").pop() : "Inicio");
+    grid.textContent = "";
+    Object.keys(d).sort(function (a, b) { return (typeof d[b] === "object") - (typeof d[a] === "object") || a.localeCompare(b); }).forEach(function (name) {
+      var v = d[name], full = (cwd ? cwd + "/" : "") + name;
+      var f = el("button", "file" + (sel === full ? " sel" : ""), (typeof v === "object" ? FOLDER : isImg(v) ? IMG : DOC) + "<span>" + esc(name) + "</span>");
+      f.setAttribute("role", "option");
+      f.onclick = function () { sel = full; grid.querySelectorAll(".file").forEach(function (o) { o.classList.toggle("sel", o === f); }); };
+      f.ondblclick = function () { if (typeof v === "object") { cwd = full; sel = null; draw(); } else openPath(full); };
+      f.onkeydown = function (e) { if (e.key === "Enter") f.ondblclick(); };
+      grid.appendChild(f);
+    });
+    if (!Object.keys(d).length) grid.appendChild(el("p", "crumb", "Esta carpeta está vacía."));
+  }
+  $(".up", w.body).onclick = function () { if (cwd) { cwd = cwd.split("/").slice(0, -1).join("/"); draw(); } };
+  $(".nf", w.body).onclick = function () { var d = dirAt(cwd), n = "Carpeta nueva", i = 2; while (d[n]) n = "Carpeta nueva " + i++; d[n] = {}; save(); draw(); };
+  $(".nd", w.body).onclick = function () { var d = dirAt(cwd), n = "Documento.txt", i = 2; while (d[n]) n = "Documento " + i++ + ".txt"; d[n] = ""; save(); draw(); openApp("edit", (cwd ? cwd + "/" : "") + n); };
+  $(".del", w.body).onclick = function () {
+    if (!sel) { toast("Archivos", "Selecciona primero un archivo o una carpeta."); return; }
+    var i = sel.lastIndexOf("/"), d = dirAt(sel.slice(0, Math.max(0, i))), n = sel.slice(i + 1);
+    state.trash[n] = d[n]; delete d[n]; save(); sel = null; draw(); refreshAll("trash");
+    toast("Papelera", "«" + n + "» se ha movido a la papelera.", APPS.trash.icon);
+  };
+  w.refresh = draw;
+  draw();
+};
 
-function render() {
-  try { localStorage.setItem("rros-escritorio", JSON.stringify({ desk: st.desk, wp: st.wp, theme: st.theme })); } catch (e) {}
-  seg("seg-desk", DESKS, "desk"); seg("seg-wp", WPS, "wp");
-  seg("seg-theme", { aurora:"Aurora", nord:"Nord", dracula:"Dracula", gruvbox:"Gruvbox" }, "theme");
-  var t = THEMES[st.theme], d = DESKS[st.desk];
-  for (var k in t) scr.style.setProperty("--t-" + k, t[k]);
-  scr.style.setProperty("--rad", d.rad);
-  scr.style.backgroundImage = "url(fondos/" + st.theme + "-" + st.wp + ".jpg)";
-  document.getElementById("cmd").innerHTML = "En RROS: <code>rros theme escritorio " + st.desk + "</code> · <code>rros config set ui.wallpaper_style " + st.wp +
-    "</code> · <code>rros theme use " + st.theme + "</code> <span>(" + d.keys + ")</span>";
-  scr.textContent = "";
+BUILD.trash = function (w) {
+  w.body.innerHTML = '<div class="fm" style="grid-template-columns:1fr"><div class="main"><div class="tool"><span class="crumb">Papelera</span><span style="flex:1"></span><button class="btn res">Recuperar todo</button><button class="btn emp">Vaciar la papelera</button></div><div class="grid"></div></div></div>';
+  function draw() {
+    var g = $(".grid", w.body); g.textContent = "";
+    Object.keys(state.trash).forEach(function (n) { g.appendChild(el("div", "file", (typeof state.trash[n] === "object" ? FOLDER : DOC) + "<span>" + esc(n) + "</span>")); });
+    if (!Object.keys(state.trash).length) g.appendChild(el("p", "crumb", "La papelera está vacía."));
+  }
+  $(".emp", w.body).onclick = function () { state.trash = {}; save(); draw(); toast("Papelera", "La papelera se ha vaciado.", APPS.trash.icon); };
+  $(".res", w.body).onclick = function () { Object.keys(state.trash).forEach(function (n) { state.fs.Documentos[n] = state.trash[n]; }); state.trash = {}; save(); draw(); refreshAll("files"); toast("Papelera", "Recuperado en Documentos."); };
+  w.refresh = draw;
+  draw();
+};
+function refreshAll(app) { wins.forEach(function (w) { if (w.app === app && w.refresh) w.refresh(); }); }
 
-  var geo = layout(d), order = WINDOWS.slice().sort(function (a, b) { return (a.id === st.focus) - (b.id === st.focus); });
-  order.forEach(function (w) {
-    var g = geo[w.id], el = h("div", { class: "win" + (w.id === st.focus ? " focus" : " dim"), tabindex: "0", role: "button", "aria-label": "Ventana " + w.name },
-      '<div class="title"><b>' + w.name + '</b><span>' + w.title + '</span></div>' + bodyOf(w.id, t));
-    el.style.left = g[0] + "cqw"; el.style.top = g[1] + "cqw"; el.style.width = g[2] + "cqw"; el.style.height = g[3] + "cqw";
-    el.onclick = el.onkeydown = function (e) { if (e.type === "keydown" && e.key !== "Enter") return; st.focus = w.id; st.menu = false; render(); };
-    scr.appendChild(el);
+BUILD.edit = function (w, path) {
+  var file = typeof path === "string" ? path : null;
+  w.body.innerHTML = '<div class="editor"><div class="tool"><button class="btn pri sv">Guardar</button><button class="btn sa">Guardar como…</button><span class="crumb st"></span></div><textarea spellcheck="false" aria-label="Texto"></textarea></div>';
+  var ta = $("textarea", w.body), st = $(".st", w.body);
+  ta.value = file ? readFile(file) || "" : "";
+  function title() { w.setTitle((file ? file.split("/").pop() : "Sin título") + (ta.dataset.dirty ? " — editado" : "")); st.textContent = file ? "~/" + file : "Aún no se ha guardado"; }
+  ta.oninput = function () { ta.dataset.dirty = "1"; title(); };
+  function saveAs() {
+    var name = "Documento " + new Date().toLocaleTimeString("es-ES").replace(/:/g, ".") + ".txt";
+    file = "Documentos/" + name; doSave();
+  }
+  function doSave() { if (!file) return saveAs(); writeFile(file, ta.value); delete ta.dataset.dirty; title(); refreshAll("files"); toast("Guardado", "~/" + file, APPS.edit.icon); }
+  $(".sv", w.body).onclick = doSave;
+  $(".sa", w.body).onclick = saveAs;
+  ta.addEventListener("keydown", function (e) { if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); doSave(); } });
+  title();
+  setTimeout(function () { ta.focus(); }, 50);
+};
+
+BUILD.viewer = function (w, path) {
+  var v = readFile(path) || "";
+  w.setTitle(path.split("/").pop());
+  w.body.innerHTML = '<div class="viewer"><img alt="' + esc(path.split("/").pop()) + '" src="fondos/' + esc(v.slice(5)) + '.jpg"></div>';
+};
+
+BUILD.calc = function (w) {
+  w.body.innerHTML = '<div class="calc"><div class="disp" aria-live="polite">0</div><div class="keys"></div></div>';
+  var disp = $(".disp", w.body), keys = $(".keys", w.body), cur = "0", acc = null, op = null, fresh = true;
+  function show() { var n = Number(cur); disp.textContent = isFinite(n) ? (Math.abs(n) > 1e12 ? n.toExponential(6) : String(+n.toPrecision(12)).replace(".", ",")) : "Error"; }
+  function calc(a, b, o) { return o === "+" ? a + b : o === "−" ? a - b : o === "×" ? a * b : o === "÷" ? a / b : b; }
+  function press(k) {
+    if (/^[0-9]$/.test(k)) { cur = fresh || cur === "0" ? k : cur + k; fresh = false; }
+    else if (k === ",") { if (fresh) { cur = "0."; fresh = false; } else if (cur.indexOf(".") < 0) cur += "."; }
+    else if (k === "AC") { cur = "0"; acc = null; op = null; fresh = true; }
+    else if (k === "±") cur = String(-Number(cur));
+    else if (k === "%") cur = String(Number(cur) / 100);
+    else if (k === "=") { if (op !== null) { cur = String(calc(acc, Number(cur), op)); acc = null; op = null; fresh = true; } }
+    else { if (op !== null && !fresh) cur = String(calc(acc, Number(cur), op)); acc = Number(cur); op = k; fresh = true; }
+    show();
+  }
+  ["AC", "±", "%", "÷", "7", "8", "9", "×", "4", "5", "6", "−", "1", "2", "3", "+", "0", ",", "="].forEach(function (k) {
+    var b = el("button", /[÷×−+=]/.test(k) ? "op" : /[A±%]/.test(k) ? "fn" : k === "0" ? "zero" : "", k);
+    b.onclick = function () { press(k); };
+    keys.appendChild(b);
   });
+  w.el.addEventListener("keydown", function (e) {
+    var m = { "/": "÷", "*": "×", "-": "−", "+": "+", "Enter": "=", "=": "=", "Escape": "AC", ",": ",", ".": ",", "%": "%" };
+    if (/^[0-9]$/.test(e.key)) press(e.key); else if (m[e.key]) { e.preventDefault(); press(m[e.key]); }
+  });
+  w.el.tabIndex = -1;
+  setTimeout(function () { w.el.focus(); }, 50);
+};
 
-  // barra
-  var bar = h("div", { class: "bar " + (d.pos === "bottom" ? "bottom" : "top") + (d.style !== "flat" ? " " + d.style : "") });
-  var start = h("button", { class: "btn-start", type: "button" }, d.pos === "bottom" ? "◆ Inicio" : "Aplicaciones");
-  start.onclick = function () { st.menu = !st.menu; render(); };
-  var left = h("div", { class: "mod" }); left.appendChild(start);
-  if (d.pos !== "bottom") left.appendChild(h("div", { class: "ws" }, '<i class="on">1</i><i>2</i><i>3</i><i>4</i>'));
-  bar.appendChild(left);
-  if (d.pos === "bottom") {
-    var task = h("div", { class: "task" });
-    WINDOWS.forEach(function (w) {
-      var b = h("button", { type: "button", class: w.id === st.focus ? "on" : "" }, w.name);
-      b.onclick = function () { st.focus = w.id; st.menu = false; render(); };
-      task.appendChild(b);
-    });
-    bar.appendChild(task);
-  } else if (st.desk === "mosaico") {
-    bar.appendChild(h("div", { class: "mod muted" }, WINDOWS.filter(function (w) { return w.id === st.focus; })[0].title));
+var PAGES = {
+  "rros://inicio": '<h1>Bienvenido a RROS</h1><p>Esta es la página de inicio del navegador. En el sistema de verdad, Firefox navega por Internet; aquí, dentro de una página web, solo puede mostrar páginas propias.</p><ul><li><a data-go="rros://novedades">Novedades de RROS</a></li><li><a data-go="rros://atajos">Atajos del escritorio</a></li><li><a href="https://github.com/raulramalf/RROS" target="_blank" rel="noopener">Código en GitHub (se abre en otra pestaña)</a></li></ul>',
+  "rros://novedades": '<h1>Novedades</h1><ul><li>Escritorio KDE Plasma con barra de menús arriba y dock, como macOS.</li><li>Barras de título con botones de semáforo y los colores del tema.</li><li>Instalador con cifrado del disco, probado en BIOS y UEFI.</li><li>Tienda con las aplicaciones de Arch Linux y Flathub.</li></ul><p><a data-go="rros://inicio">← Volver</a></p>',
+  "rros://atajos": '<h1>Atajos</h1><table><tr><td>Ctrl + Espacio</td><td>Buscar aplicaciones y archivos</td></tr><tr><td>Ctrl + W</td><td>Cerrar la ventana</td></tr><tr><td>Ctrl + M</td><td>Minimizar</td></tr><tr><td>Doble clic en la barra</td><td>Maximizar o restaurar</td></tr></table><p><a data-go="rros://inicio">← Volver</a></p>'
+};
+BUILD.web = function (w, url) {
+  w.body.innerHTML = '<div class="web"><div class="tool"><button class="btn bk" aria-label="Atrás">‹</button><button class="btn rl" aria-label="Recargar">↻</button><input class="url" aria-label="Dirección"><button class="btn go">Ir</button></div><div class="page"></div></div>';
+  var hist = [], input = $(".url", w.body), page = $(".page", w.body);
+  function go(u, push) {
+    u = (u || "rros://inicio").trim();
+    if (push !== false) hist.push(u);
+    input.value = u;
+    if (PAGES[u]) { page.innerHTML = PAGES[u]; w.setTitle(page.querySelector("h1").textContent + " — Firefox"); }
+    else if (/^https?:\/\//.test(u)) {
+      page.innerHTML = '<h1>Abrir en otra pestaña</h1><p>Una página web no puede mostrar otros sitios dentro de sí misma.</p><p><a href="' + esc(u) + '" target="_blank" rel="noopener">Abrir ' + esc(u) + '</a></p><p><a data-go="rros://inicio">← Inicio</a></p>';
+      w.setTitle(u + " — Firefox");
+    } else { page.innerHTML = '<h1>Buscar «' + esc(u) + '»</h1><p>Sin conexión a buscadores desde esta demo. Prueba <a data-go="rros://novedades">las novedades</a>.</p>'; w.setTitle("Búsqueda — Firefox"); }
+    page.querySelectorAll("[data-go]").forEach(function (a) { a.onclick = function () { go(a.dataset.go); }; });
   }
-  bar.appendChild(h("div", { class: "grow" }));
-  if (d.pos !== "bottom") { bar.appendChild(h("div", { class: "mod" }, "<b>" + clock() + "</b>")); bar.appendChild(h("div", { class: "grow" })); }
-  if (st.desk === "mosaico") { bar.appendChild(h("div", { class: "mod muted" }, "RAM 0.4G")); bar.appendChild(h("div", { class: "mod muted" }, "CPU 3%")); }
-  bar.appendChild(h("div", { class: "mod updates", title: "Actualizaciones pendientes" }, "ACT 3"));
-  bar.appendChild(h("div", { class: "mod" }, "LAN"));
-  bar.appendChild(h("div", { class: "mod" }, "VOL 60%"));
-  bar.appendChild(h("div", { class: "mod" }, "BAT 87%"));
-  if (d.pos === "bottom") bar.appendChild(h("div", { class: "mod" }, "<b>" + clock() + "</b>&nbsp;&nbsp;" + date()));
-  bar.appendChild(h("div", { class: "mod muted" }, "Apagar"));
-  scr.appendChild(bar);
+  $(".go", w.body).onclick = function () { go(input.value); };
+  input.onkeydown = function (e) { if (e.key === "Enter") go(input.value); };
+  $(".bk", w.body).onclick = function () { if (hist.length > 1) { hist.pop(); go(hist[hist.length - 1], false); } };
+  $(".rl", w.body).onclick = function () { go(input.value, false); };
+  go(typeof url === "string" ? url : "rros://inicio");
+};
 
-  if (d.dock) {
-    var dock = h("div", { class: "dock" });
-    [["W", t.blue], ["A", t.yellow], ["T", t.green], ["E", t.magenta], ["R", t.accent]].forEach(function (x) {
-      var i = h("i", { title: x[0] }, x[0]); i.style.background = x[1]; dock.appendChild(i);
+var STORE = [
+  ["LibreOffice", "Oficina: textos, hojas de cálculo y presentaciones", "#2fb34a", "#167d2f"], ["GIMP", "Edición de fotos", "#8b6a43", "#5b4129"],
+  ["VLC", "Reproduce cualquier vídeo y música", "#ff9a1f", "#e06a00"], ["Telegram", "Mensajería", "#38b0e3", "#1c86c2"],
+  ["Steam", "Juegos (Flathub)", "#2a3b57", "#121c2c"], ["VS Code", "Editor de código", "#3ba6f4", "#0e6ec5"],
+  ["Krita", "Dibujo y pintura digital", "#e14bd2", "#8d2bb8"], ["Blender", "Modelado y animación 3D", "#f5a142", "#d86a12"]
+];
+BUILD.store = function (w) {
+  w.body.innerHTML = '<div class="store"><h3 style="margin:0">Tienda de aplicaciones</h3><small>En el sistema real instala con pacman o Flathub (rros apps install). Aquí se añade al dock.</small><div class="list" style="display:grid;gap:10px"></div></div>';
+  var list = $(".list", w.body);
+  STORE.forEach(function (s) {
+    var key = s[0].toLowerCase().replace(/\s/g, ""), icon = ico(s[2], s[3], '<text x="32" y="41" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="24" fill="#fff">' + s[0][0] + "</text>");
+    var row = el("div", "row", icon + "<div><b>" + esc(s[0]) + "</b><br><small>" + esc(s[1]) + "</small></div>");
+    var b = el("button", "btn" + (state.installed[key] ? "" : " pri"), state.installed[key] ? "Quitar" : "Instalar");
+    b.onclick = function () {
+      if (state.installed[key]) { delete state.installed[key]; toast("Tienda", s[0] + " se ha quitado."); }
+      else { b.textContent = "Instalando…"; b.disabled = true; setTimeout(function () { state.installed[key] = { name: s[0], icon: icon }; save(); renderDock(); toast(s[0] + " instalada", "Ya está en el dock.", icon); BUILD.store(w); }, 900); return; }
+      save(); renderDock(); BUILD.store(w);
+    };
+    row.appendChild(b);
+    list.appendChild(row);
+  });
+};
+
+BUILD.prefs = function (w, sectionArg) {
+  var sec = typeof sectionArg === "string" ? sectionArg : "apariencia";
+  var SECS = [["apariencia", "Apariencia"], ["fondo", "Fondo de pantalla"], ["dock", "Dock"], ["red", "Red"], ["sonido", "Sonido"], ["acerca", "Acerca de"]];
+  w.body.innerHTML = '<div class="prefs"><nav></nav><section></section></div>';
+  function draw() {
+    var nav = $("nav", w.body), s = $("section", w.body);
+    nav.textContent = "";
+    SECS.forEach(function (x) { var b = el("button", x[0] === sec ? "on" : "", x[1]); b.onclick = function () { sec = x[0]; draw(); }; nav.appendChild(b); });
+    w.setTitle("Preferencias — " + SECS.filter(function (x) { return x[0] === sec; })[0][1]);
+    if (sec === "apariencia") {
+      s.innerHTML = "<h3>Tema</h3><p class='crumb'>Los mismos temas que «rros theme use». Cambian ventanas, barra, dock y fondo.</p><div class='swatches'></div>";
+      Object.keys(THEMES).forEach(function (k) {
+        var t = THEMES[k], b = el("button", "sw" + (k === state.theme ? " on" : ""), '<div class="chip" style="background:linear-gradient(135deg,' + t.surface + " 0 55%," + t.accent + " 55% 75%," + t.bg + ' 75%)"></div><span>' + t.name + "</span>");
+        b.onclick = function () { state.theme = k; save(); applyTheme(); draw(); toast("Tema", t.name + " aplicado"); };
+        s.querySelector(".swatches").appendChild(b);
+      });
+    } else if (sec === "fondo") {
+      s.innerHTML = "<h3>Fondo de pantalla</h3><p class='crumb'>Generados por rros-theme con los colores del tema.</p><div class='swatches'></div>";
+      Object.keys(WPS).forEach(function (k) {
+        var b = el("button", "sw" + (k === state.wp ? " on" : ""), '<img alt="" src="fondos/' + state.theme + "-" + k + '.jpg"><span>' + WPS[k] + "</span>");
+        b.onclick = function () { state.wp = k; save(); applyTheme(); draw(); };
+        s.querySelector(".swatches").appendChild(b);
+      });
+    } else if (sec === "dock") {
+      s.innerHTML = '<h3>Dock</h3><label>Tamaño de los iconos <input type="range" id="dsz" min="36" max="72" value="' + state.dockSize + '"></label>';
+      $("#dsz", s).oninput = function (e) { state.dockSize = +e.target.value; save(); renderDock(); };
+    } else if (sec === "red") {
+      s.innerHTML = "<h3>Red</h3><p>Wi-Fi: conectado a «Casa» (WPA2). Cable: LAN conectada.</p><p class='crumb'>En el sistema real lo gestiona NetworkManager desde la bandeja de la barra.</p>";
+    } else if (sec === "sonido") {
+      s.innerHTML = '<h3>Sonido</h3><label>Volumen <input type="range" id="vol" min="0" max="100" value="60"></label><p class="crumb">PipeWire en el sistema real.</p>';
+    } else {
+      s.innerHTML = '<h3>Acerca de</h3><p>RROS 0.2.0 «Aurora» · base Arch Linux · escritorio KDE Plasma.</p><button class="btn pri" id="ab">Más información</button>';
+      $("#ab", s).onclick = function () { openApp("about"); };
+    }
+  }
+  w.refresh = draw;
+  draw();
+};
+
+BUILD.ajustes = function (w) {
+  w.body.innerHTML = '<iframe class="full" src="ajustes.html" title="RROS Ajustes"></iframe>';
+};
+
+BUILD.about = function (w) {
+  w.body.innerHTML = '<div class="about">' + LOGO.replace('class="logo"', "") + '<h2 style="margin:4px 0 0">RROS</h2><div class="crumb">Versión 0.2.0 «Aurora»</div>' +
+    '<table><tr><td>Base</td><td>Arch Linux</td></tr><tr><td>Escritorio</td><td>KDE Plasma (Wayland)</td></tr><tr><td>Perfil</td><td>Standard</td></tr><tr><td>Memoria</td><td>8 GB</td></tr><tr><td>Tema</td><td>' + THEMES[state.theme].name + '</td></tr></table>' +
+    '<p class="crumb" style="max-width:30ch">Esto es una demostración en el navegador. El sistema se instala desde la ISO.</p></div>';
+};
+
+// terminal: un intérprete pequeño con órdenes de verdad sobre el sistema de archivos virtual
+BUILD.term = function (w) {
+  var cwd = "", hist = [], hi = 0;
+  w.body.innerHTML = '<div class="term"><div class="out"></div><div class="in"><span class="pr"></span><input aria-label="Orden" autocomplete="off" spellcheck="false"></div></div>';
+  var out = $(".out", w.body), input = $("input", w.body), pr = $(".pr", w.body), box = $(".term", w.body);
+  function prompt() { return '<span class="c-gr">rros@rros</span>:<span class="c-bl">~' + (cwd ? "/" + esc(cwd) : "") + "</span>$ "; }
+  function print(html) { out.insertAdjacentHTML("beforeend", html + "\n"); box.parentNode.scrollTop = box.parentNode.scrollHeight; }
+  function resolve(p) {
+    if (!p || p === "~") return "";
+    var parts = (p.charAt(0) === "/" || p.charAt(0) === "~" ? [] : cwd ? cwd.split("/") : []);
+    p.replace(/^~\/?/, "").replace(/^\/home\/rros\/?/, "").split("/").forEach(function (s) { if (!s || s === ".") return; if (s === "..") parts.pop(); else parts.push(s); });
+    return parts.join("/");
+  }
+  var CMDS = {
+    ayuda: function () { return "Órdenes: ls, cd, pwd, cat, mkdir, touch, rm, echo, clear, date, whoami, uname, neofetch, rros-fetch,\nabrir ARCHIVO, rros theme use TEMA, rros theme list, rros apps list, historial"; },
+    help: function () { return CMDS.ayuda(); },
+    ls: function (a) { var d = dirAt(resolve(a[0] || "")); if (!d || typeof d !== "object") return '<span class="c-red">ls: no existe: ' + esc(a[0]) + "</span>";
+      return Object.keys(d).map(function (n) { return typeof d[n] === "object" ? '<span class="c-bl">' + esc(n) + "/</span>" : esc(n); }).join("  ") || ""; },
+    cd: function (a) { var p = resolve(a[0] || ""); if (p && (!dirAt(p) || typeof dirAt(p) !== "object")) return '<span class="c-red">cd: no existe la carpeta: ' + esc(a[0]) + "</span>"; cwd = p; return null; },
+    pwd: function () { return "/home/rros" + (cwd ? "/" + esc(cwd) : ""); },
+    cat: function (a) { var v = readFile(resolve(a[0] || "")); return v === null ? '<span class="c-red">cat: no existe el archivo: ' + esc(a[0] || "") + "</span>" : isImg(v) ? "(imagen: usa «abrir »)" : esc(v); },
+    mkdir: function (a) { var p = resolve(a[0] || ""), i = p.lastIndexOf("/"), d = dirAt(p.slice(0, Math.max(0, i))); if (!a[0] || !d) return "mkdir: falta el nombre"; d[p.slice(i + 1)] = {}; save(); refreshAll("files"); return null; },
+    touch: function (a) { var p = resolve(a[0] || ""); if (!a[0]) return "touch: falta el nombre"; if (readFile(p) === null) writeFile(p, ""); refreshAll("files"); return null; },
+    rm: function (a) { var p = resolve(a.filter(function (x) { return x[0] !== "-"; })[0] || ""), i = p.lastIndexOf("/"), d = dirAt(p.slice(0, Math.max(0, i))), n = p.slice(i + 1);
+      if (!d || !(n in d)) return '<span class="c-red">rm: no existe: ' + esc(n) + "</span>"; state.trash[n] = d[n]; delete d[n]; save(); refreshAll("files"); refreshAll("trash"); return "movido a la papelera: " + esc(n); },
+    echo: function (a, raw) { var m = raw.match(/^echo\s+(.*?)\s*>\s*(\S+)$/); if (m) { writeFile(resolve(m[2]), m[1].replace(/^["']|["']$/g, "") + "\n"); refreshAll("files"); return null; } return esc(a.join(" ")); },
+    clear: function () { out.innerHTML = ""; return null; },
+    date: function () { return new Date().toLocaleString("es-ES", { dateStyle: "full", timeStyle: "medium" }); },
+    whoami: function () { return "rros"; },
+    uname: function (a) { return a[0] === "-a" ? "Linux rros 7.2.10-arch1-1 #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux" : "Linux"; },
+    historial: function () { return hist.map(function (h, i) { return (i + 1) + "  " + esc(h); }).join("\n"); },
+    abrir: function (a) { var p = resolve(a[0] || ""); if (readFile(p) === null && !dirAt(p)) return '<span class="c-red">abrir: no existe: ' + esc(a[0] || "") + "</span>"; openPath(p); return null; },
+    "xdg-open": function (a) { return CMDS.abrir(a); },
+    "rros-fetch": function () { var t = THEMES[state.theme];
+      return '<span class="c-acc">   ▄▄▄▄▄▄   </span>  <b>rros</b>@rros\n<span class="c-acc">  ██▀▀▀▀██  </span>  <span class="c-cy">SO</span>         RROS 0.2.0 (Aurora)\n<span class="c-acc">  ██▄▄▄▄█▀  </span>  <span class="c-cy">Base</span>       Arch Linux\n' +
+        '<span class="c-acc">  ██  ▀██▄  </span>  <span class="c-cy">Escritorio</span> KDE Plasma (Wayland)\n<span class="c-acc">  ▀▀    ▀▀  </span>  <span class="c-cy">Tema</span>       ' + t.name + " · fondo " + WPS[state.wp] + "\n              <span class=\"c-cy\">Terminal</span>   Konsole"; },
+    neofetch: function () { return CMDS["rros-fetch"](); },
+    rros: function (a) {
+      if (a[0] === "theme" && a[1] === "list") return Object.keys(THEMES).map(function (k) { return (k === state.theme ? "* " : "  ") + k; }).join("\n");
+      if (a[0] === "theme" && a[1] === "use") { if (!THEMES[a[2]]) return '<span class="c-red">rros theme: tema desconocido: ' + esc(a[2] || "") + "</span> (rros theme list)"; state.theme = a[2]; save(); applyTheme(); refreshAll("prefs"); return "tema aplicado: " + a[2]; }
+      if (a[0] === "apps" && a[1] === "list") return STORE.map(function (s) { var k = s[0].toLowerCase().replace(/\s/g, ""); return (s[0] + "                ").slice(0, 16) + (state.installed[k] ? "instalada" : "-"); }).join("\n");
+      if (a[0] === "apps" && a[1] === "install") { var s = STORE.filter(function (x) { return x[0].toLowerCase().replace(/\s/g, "") === a[2]; })[0]; if (!s) return "rros apps: no hay ninguna app «" + esc(a[2] || "") + "»"; state.installed[a[2]] = { name: s[0], icon: ico(s[2], s[3], '<text x="32" y="41" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="24" fill="#fff">' + s[0][0] + "</text>") }; save(); renderDock(); return "Instalando " + s[0] + " con pacman...\nListo: " + s[0]; }
+      return "uso: rros theme use TEMA · rros theme list · rros apps list · rros apps install ID";
+    },
+    sudo: function () { return "[sudo] en esta demo no hace falta: no hay sistema que cambiar."; },
+    exit: function () { closeWin(w); return null; }
+  };
+  function run(line) {
+    print(prompt() + esc(line));
+    if (!line.trim()) return;
+    hist.push(line); hi = hist.length;
+    var parts = line.trim().split(/\s+/), cmd = parts.shift();
+    if (!CMDS[cmd]) { print('<span class="c-red">' + esc(cmd) + ": orden no encontrada</span> (escribe «ayuda»)"); return; }
+    var r = CMDS[cmd](parts, line.trim());
+    if (r !== null && r !== undefined && r !== "") print(r);
+  }
+  input.onkeydown = function (e) {
+    if (e.key === "Enter") { run(input.value); input.value = ""; pr.innerHTML = prompt(); }
+    else if (e.key === "ArrowUp") { if (hi > 0) input.value = hist[--hi]; e.preventDefault(); }
+    else if (e.key === "ArrowDown") { if (hi < hist.length - 1) input.value = hist[++hi]; else { hi = hist.length; input.value = ""; } e.preventDefault(); }
+    else if (e.key === "l" && e.ctrlKey) { e.preventDefault(); out.innerHTML = ""; }
+  };
+  box.onclick = function () { if (!getSelection().toString()) input.focus(); };
+  print(CMDS["rros-fetch"]() + '\n\n<span class="c-mu">Escribe «ayuda» para ver las órdenes.</span>');
+  pr.innerHTML = prompt();
+  w.setTitle("rros@rros: ~");
+  setTimeout(function () { input.focus(); }, 60);
+};
+
+// ---------------------------------------------------------------- buscador
+function spotlight() {
+  if ($("#spot")) { $("#spot").remove(); return; }
+  var s = el("div", "", '<input placeholder="Buscar aplicaciones y archivos" aria-label="Buscar"><ul role="listbox"></ul>');
+  s.id = "spot";
+  desk.appendChild(s);
+  var input = $("input", s), ul = $("ul", s), items = [], on = 0;
+  function files(node, base, acc) { Object.keys(node).forEach(function (n) { var p = base ? base + "/" + n : n; if (typeof node[n] === "object") files(node[n], p, acc); else acc.push(p); }); return acc; }
+  function draw() {
+    var q = input.value.trim().toLowerCase();
+    items = Object.keys(APPS).filter(function (k) { return !APPS[k].hidden || k === "about"; }).filter(function (k) { return !q || APPS[k].name.toLowerCase().indexOf(q) >= 0; })
+      .map(function (k) { return { label: APPS[k].name, icon: APPS[k].icon, kind: "Aplicación", go: function () { openApp(k); } }; });
+    if (q) files(state.fs, "", []).filter(function (p) { return p.toLowerCase().indexOf(q) >= 0; }).slice(0, 8)
+      .forEach(function (p) { items.push({ label: p.split("/").pop(), icon: isImg(readFile(p)) ? IMG : DOC, kind: "~/" + p, go: function () { openPath(p); } }); });
+    on = Math.min(on, Math.max(0, items.length - 1));
+    ul.innerHTML = "";
+    items.forEach(function (it, i) {
+      var li = el("li", i === on ? "on" : "", it.icon + esc(it.label) + "<small>" + esc(it.kind) + "</small>");
+      li.setAttribute("role", "option");
+      li.onclick = function () { s.remove(); it.go(); };
+      ul.appendChild(li);
     });
-    scr.appendChild(dock);
   }
-  if (st.menu) {
-    var m = h("div", { class: "launcher" }, '<div class="q">Buscar aplicación…</div><div class="on">Web (Epiphany)</div><div>Archivos</div><div>Terminal</div><div>Editor de texto</div><div>RROS Ajustes</div><div>Tienda de aplicaciones</div>');
-    if (d.pos === "bottom") { m.style.left = "1cqw"; m.style.bottom = "4.6cqw"; } else { m.style.left = "1cqw"; m.style.top = "4.4cqw"; }
-    scr.appendChild(m);
-  }
+  input.oninput = function () { on = 0; draw(); };
+  input.onkeydown = function (e) {
+    if (e.key === "ArrowDown") { on = Math.min(items.length - 1, on + 1); draw(); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { on = Math.max(0, on - 1); draw(); e.preventDefault(); }
+    else if (e.key === "Enter" && items[on]) { s.remove(); items[on].go(); }
+    else if (e.key === "Escape") s.remove();
+  };
+  draw();
+  input.focus();
 }
-render();
-setInterval(function () { if (!st.menu) render(); }, 60000);
+
+// ---------------------------------------------------------------- teclado
+document.addEventListener("keydown", function (e) {
+  var mod = e.ctrlKey || e.metaKey;
+  if (mod && e.code === "Space") { e.preventDefault(); spotlight(); return; }
+  if (e.key === "Escape") { closeMenus(); var sp = $("#spot"); if (sp) sp.remove(); }
+  if (!mod || !focused) return;
+  if (e.key === "w" || e.key === "q") { e.preventDefault(); closeWin(focused); }
+  else if (e.key === "m") { e.preventDefault(); minimize(focused); }
+});
+
+// ---------------------------------------------------------------- arranque
+applyTheme();
+renderMenubar();
+renderDock();
+renderIcons();
+setTimeout(function () { toast("Bienvenido a RROS", "Abre las aplicaciones desde el dock o con Ctrl + Espacio."); }, 600);
 </script>
 </body>
 </html>

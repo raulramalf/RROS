@@ -685,6 +685,7 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 		form_get(r.body, "timezone", ir.tz, sizeof ir.tz);
 		form_get(r.body, "password", ir.password, sizeof ir.password);
 		form_get(r.body, "passphrase", ir.passphrase, sizeof ir.passphrase);
+		form_get(r.body, "cmdline", ir.cmdline, sizeof ir.cmdline);
 		form_get(r.body, "encrypt", a, sizeof a);
 		ir.encrypt = !strcmp(a, "1");
 		if (!model_is_live())

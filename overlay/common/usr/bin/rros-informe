@@ -1,0 +1,125 @@
+#!/bin/sh
+# rros-informe (`rros informe`): informe de hardware para contar cómo funciona RROS en un PC real.
+# Lo que se prueba a mano (Wi-Fi, sonido, suspensión...) va en la plantilla de GitHub; esto recoge lo
+# que el sistema sabe solo. No incluye números de serie, direcciones MAC, UUID ni nombres de usuario o equipo.
+#   rros informe               lo muestra y lo guarda en ~/rros-informe-FECHA.md
+#   rros informe --stdout      solo lo muestra (para pegarlo o guardarlo donde quieras)
+set -u
+export LC_ALL=C
+ROOT=${RROS_ROOT:-}
+save=1
+case ${1:-} in
+--stdout) save=0 ;;
+-h | --help) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+'') ;;
+*) echo "uso: rros informe [--stdout]" >&2; exit 2 ;;
+esac
+
+rd() { if [ -r "$ROOT$1" ]; then head -c 200 "$ROOT$1" | tr -d '\n'; fi; }
+has() { command -v "$1" >/dev/null 2>&1; }
+# quita direcciones MAC, UUID y números de serie que se cuelen en la salida de otros programas
+clean() { sed -E 's/([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}/XX:XX:XX:XX:XX:XX/g; s/[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}/<uuid>/g; s/(serial|Serial|SerialNumber)[=: ]+[^ ,]+/\1 <oculto>/g'; }
+
+report() {
+	# shellcheck disable=SC1091
+	. "$ROOT/etc/os-release" 2>/dev/null || true
+	live=no
+	grep -q boot=casper "$ROOT/proc/cmdline" 2>/dev/null && live=sí
+	if [ -d "$ROOT/sys/firmware/efi" ]; then
+		fw=UEFI
+		sb=desconocido
+		if has mokutil && [ -z "$ROOT" ]; then
+			sb=$(mokutil --sb-state 2>/dev/null | head -1)
+		else
+			for f in "$ROOT"/sys/firmware/efi/efivars/SecureBoot-*; do
+				[ -r "$f" ] || continue
+				case $(od -An -tu1 -j4 -N1 "$f" | tr -d ' ') in 1) sb="SecureBoot enabled" ;; 0) sb="SecureBoot disabled" ;; esac
+			done
+		fi
+	else
+		fw="BIOS (Legacy/CSM)"
+		sb="no aplica"
+	fi
+	echo "# Informe de hardware de RROS"
+	echo
+	echo "| | |"
+	echo "|---|---|"
+	echo "| RROS | ${PRETTY_NAME:-?} · perfil $(rd /etc/rros/profile) · live: $live |"
+	echo "| Kernel | $(uname -r) |"
+	echo "| Equipo | $(rd /sys/class/dmi/id/sys_vendor) $(rd /sys/class/dmi/id/product_name) $(rd /sys/class/dmi/id/product_version) |"
+	echo "| Placa | $(rd /sys/class/dmi/id/board_vendor) $(rd /sys/class/dmi/id/board_name) |"
+	echo "| Firmware | $fw · $(rd /sys/class/dmi/id/bios_vendor) $(rd /sys/class/dmi/id/bios_version) ($(rd /sys/class/dmi/id/bios_date)) |"
+	echo "| Secure Boot | $sb |"
+	echo "| CPU | $(grep -m1 '^model name' "$ROOT/proc/cpuinfo" 2>/dev/null | cut -d: -f2- | sed 's/^ *//') · $(grep -c '^processor' "$ROOT/proc/cpuinfo" 2>/dev/null) hilos |"
+	echo "| RAM | $(awk '/^MemTotal/ {printf "%.1f GB", $2 / 1048576}' "$ROOT/proc/meminfo" 2>/dev/null) |"
+	echo "| Suspensión | $(rd /sys/power/mem_sleep) |"
+	echo
+
+	echo "## Tarjetas (PCI) y su controlador"
+	echo
+	echo '```'
+	if has lspci && [ -z "$ROOT" ]; then
+		# las que no tienen controlador son las candidatas a no funcionar
+		lspci -k 2>/dev/null | awk '
+			/^[0-9a-f]/ { if (dev != "") print dev (drv != "" ? "  [" drv "]" : "  [SIN CONTROLADOR]"); dev = $0; drv = "" }
+			/Kernel driver in use:/ { sub(/.*in use: /, ""); drv = $0 }
+			END { if (dev != "") print dev (drv != "" ? "  [" drv "]" : "  [SIN CONTROLADOR]") }' | clean
+	else
+		for d in "$ROOT"/sys/bus/pci/devices/*; do
+			[ -e "$d/class" ] || continue
+			drv=$(basename "$(readlink "$d/driver" 2>/dev/null)" 2>/dev/null)
+			echo "$(basename "$d") $(cat "$d/class") $(cat "$d/vendor"):$(cat "$d/device")  [${drv:-SIN CONTROLADOR}]"
+		done
+	fi
+	echo '```'
+	echo
+
+	echo "## Dispositivos (rros devices)"
+	echo
+	echo '```'
+	if has rros-devices; then rros-devices lista 2>/dev/null | clean; else echo "(rros-devices no está)"; fi
+	echo '```'
+	echo
+
+	echo "## Pantalla, red y sonido"
+	echo
+	echo '```'
+	for c in "$ROOT"/sys/class/drm/card*-*; do
+		[ -r "$c/status" ] || continue
+		echo "pantalla $(basename "$c"): $(cat "$c/status") $(head -1 "$c/modes" 2>/dev/null)"
+	done
+	for c in "$ROOT"/sys/class/drm/card[0-9]; do
+		[ -e "$c/device/driver" ] && echo "gráficos $(basename "$c"): controlador $(basename "$(readlink "$c/device/driver")")"
+	done
+	if has swaymsg && [ -n "${SWAYSOCK:-}" ]; then
+		swaymsg -t get_outputs 2>/dev/null | grep -E '"(name|make|model|current_mode)"|"width"|"height"|"refresh"' | tr -d ' ' | paste -sd' ' | clean
+	fi
+	if has nmcli; then nmcli -t -f DEVICE,TYPE,STATE device 2>/dev/null | sed 's/^/red: /'; fi
+	if has rfkill; then rfkill list 2>/dev/null | sed 's/^/radio: /'; fi
+	[ -r "$ROOT/proc/asound/cards" ] && sed 's/^/sonido: /' "$ROOT/proc/asound/cards"
+	if has wpctl; then wpctl status 2>/dev/null | sed -n '/Sinks:/,/Sources:/p' | sed 's/^/audio: /' | head -12; fi
+	echo '```'
+	echo
+
+	echo "## Firmware que falta y errores de este arranque"
+	echo
+	echo '```'
+	if has journalctl && [ -z "$ROOT" ]; then
+		journalctl -k -b --no-pager -o cat 2>/dev/null | grep -iE 'firmware: failed|failed to load|direct firmware load' | sort -u | head -20 | clean
+		journalctl -b -p err --no-pager -o cat 2>/dev/null | sort | uniq -c | sort -rn | head -25 | clean
+	else
+		echo "(sin journalctl)"
+	fi
+	echo '```'
+	echo
+	echo "Generado por \`rros informe\` el $(date +%F). No incluye números de serie, direcciones MAC ni nombres."
+}
+
+if [ "$save" -eq 1 ]; then
+	out=${HOME:-/tmp}/rros-informe-$(date +%F).md
+	report | tee "$out"
+	echo
+	echo "Guardado en $out: pégalo en https://github.com/raulramalf/RROS/issues/new?template=hardware.yml" >&2
+else
+	report
+fi

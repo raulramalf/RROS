@@ -36,6 +36,7 @@ int model_is_live(void);
 struct install_req {
 	char disk[64], mode[16], user[40], fullname[96], host[72], keymap[24], locale[24], tz[48];
 	char password[256], passphrase[256];
+	char cmdline[128];       /* parámetros extra del kernel (solo por la API: pruebas en QEMU) */
 	int encrypt;
 };
 int install_start(const struct install_req *r, char *err, size_t en);   /* 0 si se lanzó */

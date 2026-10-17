@@ -6,8 +6,10 @@ systemd-sysv
 udev
 dbus
 dbus-user-session
-linux-image-generic     # se sustituirá por el kernel propio (scripts/build-kernel.sh)
+linux-image-generic-hwe-24.04  # el kernel de Ubuntu 24.04.4 de escritorio (HWE): soporta los equipos más nuevos
 linux-firmware          # Wi-Fi, GPU y demás hardware real
+firmware-sof-signed     # sonido de los portátiles Intel desde ~2019 (Sound Open Firmware)
+thermald                # temperatura y ventiladores en procesadores Intel
 initramfs-tools
 zstd                    # initramfs comprimido con zstd
 casper
@@ -78,6 +80,7 @@ udiskie                 # monta USB y discos al enchufarlos
 pipewire
 pipewire-pulse
 pipewire-alsa
+alsa-ucm-conf           # perfiles de sonido de cada placa (altavoces, auriculares, micrófono)
 wireplumber
 libspa-0.2-bluetooth
 pavucontrol

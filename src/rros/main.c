@@ -111,6 +111,7 @@ static void usage(void)
 	      "  budget    presupuesto de RAM/disco   (rros-budget)\n"
 	      "  hw        hardware y perfil          (rros-hwdetect)\n"
 	      "  install   instala RROS en un disco   (rros-install; `install plan` solo calcula)\n"
+	      "  informe   informe de hardware para contar cómo va RROS en tu PC (rros-informe)\n"
 	      "  doctor    diagnóstico del sistema\n"
 	      "  version\n"
 	      "\n"

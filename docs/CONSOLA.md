@@ -36,7 +36,8 @@ rros config set ui.accent '#22d3ee'
 | `rros budget` | Comprueba el presupuesto de memoria y disco |
 | `rros hw` | Hardware detectado y perfil recomendado |
 | `rros install plan` | Calcula las particiones (no toca ningún disco) |
-| `rros install` | Instala RROS en un disco desde el sistema live (borra el disco elegido; `--dry-run` solo simula) |
+| `rros install` | Instala RROS desde el sistema live: borrando el disco o junto a Windows, con cifrado opcional (`--dry-run` solo simula). También en RROS Ajustes → *Instalar RROS* |
+| `rros informe` | Informe de hardware para contar cómo funciona RROS en tu PC (sin números de serie ni MAC) |
 | `rros seguridad` | Auditoría de seguridad con puntuación; niveles y cortafuegos (`rros-security`) |
 | `rros dispositivos` | Discos, USB, red, radios, sonido, pantallas, batería; montar y expulsar (`rros-devices`) |
 | `rros nuevo` | Crear archivos y proyectos desde plantillas (`rros-new`) |
@@ -268,11 +269,31 @@ echo $?                                # el código del último comando
 ### Plan de instalación
 
 ```sh
+rros-installer disks                                  # discos: tamaño, tabla, espacio libre, Windows/Linux
 rros install plan --disk-gb 64 --uefi -p standard
 rros install plan --disk-gb 64 --uefi -p standard --sfdisk   # el script de particiones
+rros install plan --disk /dev/nvme0n1 --alongside --encrypt   # junto a Windows y cifrado
 ```
 
 Solo **calcula**; no escribe en ningún disco.
+
+### Instalar
+
+```sh
+rros install                                     # asistente de texto: disco, modo, cifrado, usuario
+rros install --disk /dev/nvme0n1 --alongside --encrypt \
+     --user ana --fullname "Ana Pérez" --hostname ana-pc \
+     --keymap es --locale es_ES.UTF-8 --timezone Europe/Madrid \
+     --password-file /tmp/pw --passphrase-file /tmp/disco --yes
+```
+
+| Opción | Qué hace |
+|---|---|
+| `--alongside` | Usa el mayor espacio libre del disco (GPT) y deja lo demás como está; reutiliza la partición EFI de Windows y añade Windows al menú de arranque (os-prober) |
+| `--encrypt` | Cifra el sistema con LUKS2; `/boot` va aparte sin cifrar (GRUB no abre LUKS2). Al encender se pide la contraseña con tu distribución de teclado |
+| `--progress-file F` | Escribe el paso actual en F (lo usa el asistente gráfico) |
+
+Si la instalación falla junto a otro sistema, quita las particiones que había creado.
 
 ---
 

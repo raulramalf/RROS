@@ -4,6 +4,8 @@
 #   test-iso.sh PERFIL screenshot   arranca con GRUB y guarda una captura del escritorio
 # Variables: RAM_MB (por defecto 2048), WAIT (segundos antes de la primera captura, 300),
 #            COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
+#   En screenshot: FIRMWARE=bios|uefi|secboot (secboot = UEFI con Secure Boot y las claves de Microsoft,
+#   como un PC con Windows) y MEDIA=cd|usb (la ISO grabada en una memoria USB)
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
 
@@ -11,7 +13,7 @@ profile=${1:?uso: $0 PERFIL selftest|screenshot}
 mode=${2:-selftest}
 check_profile "$profile"
 need_cmd qemu-system-x86_64
-iso=$ROOT_DIR/build/rros-$profile.iso
+iso=${ISO:-$ROOT_DIR/build/rros-$profile.iso}
 iso_dir=$ROOT_DIR/build/iso-$profile
 out=${OUT:-$ROOT_DIR/build/test-$profile}
 ram=${RAM_MB:-2048}
@@ -50,8 +52,25 @@ case "$mode" in
 		need_cmd python3
 		sock=$out/monitor.sock
 		rm -f "$sock"
-		log "arranque gráfico con GRUB; captura a los ${WAIT:-300} s"
-		qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -cdrom "$iso" -boot d -vga std -display none \
+		fwargs=()
+		case ${FIRMWARE:-bios} in
+		bios) ;;
+		uefi)
+			cp /usr/share/OVMF/OVMF_VARS_4M.fd "$out/vars.fd"
+			fwargs=(-drive "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd" -drive "if=pflash,format=raw,file=$out/vars.fd") ;;
+		secboot)
+			cp /usr/share/OVMF/OVMF_VARS_4M.ms.fd "$out/vars.fd"
+			fwargs=(-machine "q35,smm=on" -global "driver=cfi.pflash01,property=secure,value=on"
+				-drive "if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd" -drive "if=pflash,format=raw,file=$out/vars.fd") ;;
+		*) die "FIRMWARE: bios, uefi o secboot" ;;
+		esac
+		if [ "${MEDIA:-cd}" = usb ]; then
+			media=(-device qemu-xhci -drive "file=$iso,if=none,id=usb0,format=raw,readonly=on" -device "usb-storage,drive=usb0,bootindex=0")
+		else
+			media=(-cdrom "$iso" -boot d)
+		fi
+		log "arranque por el firmware (${FIRMWARE:-bios}, ${MEDIA:-cd}); captura a los ${WAIT:-300} s"
+		qemu-system-x86_64 "${accel[@]}" "${fwargs[@]}" -m "$ram" -smp 2 "${media[@]}" -vga std -display none \
 			-monitor "unix:$sock,server,nowait" -serial "file:$out/serial.log" -no-reboot &
 		qpid=$!
 		trap 'kill "$qpid" 2>/dev/null || true' EXIT

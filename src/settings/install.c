@@ -105,6 +105,10 @@ int install_start(const struct install_req *r, char *err, size_t en)
 		snprintf(err, en, "idioma, teclado o zona horaria no válidos");
 		return -1;
 	}
+	if (*r->cmdline && !charset_ok(r->cmdline, "_=,.: /-", 1, 120)) {
+		snprintf(err, en, "parámetros del kernel no válidos");
+		return -1;
+	}
 	if (!*r->password || !no_ctrl(r->password, "", 200)) {
 		snprintf(err, en, "escribe una contraseña para tu usuario");
 		return -1;
@@ -175,6 +179,10 @@ int install_start(const struct install_req *r, char *err, size_t en)
 	argv[n++] = (char *)r->locale;
 	argv[n++] = "--timezone";
 	argv[n++] = (char *)r->tz;
+	if (*r->cmdline) {
+		argv[n++] = "--cmdline";
+		argv[n++] = (char *)r->cmdline;
+	}
 	argv[n++] = "--progress-file";
 	argv[n++] = prog;
 	argv[n] = NULL;

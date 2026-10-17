@@ -25,3 +25,6 @@ gstreamer1.0-plugins-ugly
 gstreamer1.0-libav
 ffmpeg
 btrfs-progs             # sistema de archivos de root en este perfil (rros-install)
+mesa-vulkan-drivers     # Vulkan (juegos y apps 3D)
+mesa-va-drivers         # vídeo acelerado por la GPU (AMD, Intel antiguas)
+intel-media-va-driver   # vídeo acelerado en Intel recientes

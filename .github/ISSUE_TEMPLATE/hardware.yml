@@ -1,0 +1,81 @@
+name: Informe de hardware
+description: Cuenta cómo funciona RROS en tu PC (live o instalado). Sirve aunque todo vaya bien.
+title: "[hardware] Marca y modelo del equipo"
+labels: ["hardware"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por probar RROS en un equipo real. La guía está en [docs/PROBAR-EN-PC.md](https://github.com/raulramalf/RROS/blob/main/docs/PROBAR-EN-PC.md).
+        Abre una terminal (Super + Intro), ejecuta `rros informe` y pega abajo lo que muestra. No incluye números de serie, direcciones MAC ni nombres.
+  - type: input
+    id: equipo
+    attributes:
+      label: Equipo
+      description: Marca y modelo (portátil o sobremesa), y año aproximado
+      placeholder: "Lenovo ThinkPad T480, 2018"
+    validations:
+      required: true
+  - type: dropdown
+    id: como
+    attributes:
+      label: Cómo lo has probado
+      options:
+        - Live desde una memoria USB
+        - Live y luego instalado (borrando el disco)
+        - Live y luego instalado junto a Windows
+        - Instalado con el disco cifrado
+        - Otro (explícalo abajo)
+    validations:
+      required: true
+  - type: dropdown
+    id: firmware
+    attributes:
+      label: Arranque
+      options:
+        - UEFI con Secure Boot activado
+        - UEFI con Secure Boot desactivado
+        - BIOS / Legacy / CSM
+        - No lo sé
+    validations:
+      required: true
+  - type: checkboxes
+    id: funciona
+    attributes:
+      label: Qué funciona (marca lo que hayas comprobado que va bien)
+      options:
+        - label: Arranca el live y se ve el escritorio
+        - label: Resolución correcta de la pantalla (y la externa por HDMI/DisplayPort, si la hay)
+        - label: Brillo de la pantalla
+        - label: Teclado y touchpad (clic, desplazamiento)
+        - label: Wi-Fi
+        - label: Ethernet (cable)
+        - label: Bluetooth
+        - label: Sonido por los altavoces y por auriculares
+        - label: Micrófono
+        - label: Cámara
+        - label: Memorias USB (montar y expulsar)
+        - label: Suspender y volver (cerrar la tapa)
+        - label: Batería (se ve el porcentaje)
+        - label: La instalación termina sin errores
+        - label: Arranca desde el disco después de instalar
+        - label: Windows sigue arrancando (si lo instalaste junto a Windows)
+        - label: Pide la contraseña del cifrado y acepta la buena (si cifraste el disco)
+  - type: textarea
+    id: falla
+    attributes:
+      label: Qué no funciona o funciona mal
+      description: Lo que esperabas, lo que pasó y cómo repetirlo. Si la pantalla se quedó en negro, prueba la entrada «modo seguro» del menú de arranque y dilo aquí.
+  - type: textarea
+    id: informe
+    attributes:
+      label: Salida de `rros informe`
+      render: markdown
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión de la ISO
+      description: El nombre del archivo o la salida de `rros version`
+      placeholder: "rros-lite.iso de 2026-10-17 / RROS 0.2.0 (Aurora)"

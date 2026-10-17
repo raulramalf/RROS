@@ -69,6 +69,16 @@ check "rros-devices: ve la tarjeta de red" sh -c 'rros-devices lista red --json 
 check "rros-new: crea un script ejecutable" as_user "cd /tmp && rm -f rros-selftest.sh && rros-new bash rros-selftest >/dev/null && test -x /tmp/rros-selftest.sh"
 check "primer inicio: carpetas en español y plantillas" as_user "rros-first-login; test -d ~/Documentos && test -f ~/Plantillas/'Script de Bash.sh'"
 check "teclado de la consola: rros-vconsole activo" systemctl is-active --quiet rros-vconsole
+# el mapa lo genera ckbcomp (Ubuntu no trae los de kbd): en el español, la tecla 2 lleva " con Mayús
+check "teclado de la consola: mapa español" sh -c "zcat /etc/console-setup/cached_UTF-8_del.kmap.gz | grep -q '^keycode 3 = U+0032 U+0022'"
+# instalador
+for app in rros-install rros-installer cryptsetup os-prober sfdisk mkfs.vfat grub-install ckbcomp; do
+	check "instalador: $app" has "$app"
+done
+# shellcheck disable=SC2016
+check "instalador: rros-installer disks" sh -c 'rros-installer disks --json | grep -q "\"disks\""'
+check "instalador: el initramfs puede llevar cryptsetup" test -x /usr/share/initramfs-tools/hooks/cryptroot
+check "ISO: tamaño del sistema para el progreso de la copia" sh -c '! grep -q boot=casper /proc/cmdline || test -s /cdrom/casper/filesystem.size'
 check "blueman-mechanism no arranca en el boot (solo por D-Bus)" sh -c '! systemctl is-enabled --quiet blueman-mechanism'
 check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'
 # shellcheck disable=SC2016

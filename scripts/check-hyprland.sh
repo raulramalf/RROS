@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Valida con el propio Hyprland (Hyprland --verify-config) la configuración que genera rros-theme para
 # cada perfil, estilo de escritorio y modo de ventanas, también con atajos y reglas del usuario.
-# Además informa de qué variante de las opciones que cambian entre versiones entiende el Hyprland
-# instalado (las que rros-theme escribe entre «hyprlang noerror»).
+# Además prueba una a una las formas de reglas y atajos que salen de las traducciones.
 # Se ejecuta en Arch (en CI) como usuario normal, tras `make`.
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
@@ -68,31 +67,28 @@ EOF
 "$RROS/rros-theme" -p pro render --out "$T/usr" >/dev/null
 verify "usuario (atajos, reglas, efectos)" "$T/usr/hypr/hyprland.conf"
 
-# qué variante entiende esta versión (informativo): cada línea sin «noerror»
+# cada forma que escriben las traducciones de atajos y reglas, una a una
 probe() {   # probe LÍNEA...
 	local f=$T/probe.conf
 	printf '%s\n' "$@" > "$f"
 	if Hyprland --verify-config -c "$f" > "$T/probe.txt" 2>&1 && ! grep -qiE 'error|invalid' "$T/probe.txt"; then
-		echo "acepta    $*"
+		echo "ok      $*"
 	else
-		echo "no acepta $*: $(grep -iE 'error|invalid' "$T/probe.txt" | tail -1)"
+		echo "FALLO   $*: $(grep -iE 'error|invalid' "$T/probe.txt" | tail -1)"
+		bad=$((bad + 1))
 	fi
 }
-log "variantes de sintaxis de esta versión"
-probe "gesture = 3, horizontal, workspace"
-probe "gestures {" "    workspace_swipe = true" "}"
+log "reglas y atajos traducidos"
 m="match:class ^(prueba)\$"
-for eff in "float on" "pin on" "fullscreen on" "workspace 3" "opacity 0.8" "idle_inhibit fullscreen" "idleinhibit fullscreen" \
-	"no_border on" "noborder on" "border_size 2" "bordersize 2" "group set" "group set always"; do
+for eff in "float on" "pin on" "fullscreen on" "workspace 3" "opacity 0.8" "idle_inhibit fullscreen" \
+	"border_size 0" "border_size 2" "group set"; do
 	probe "windowrule = $eff, $m"
 done
 probe "windowrule = float on, match:title ^(Notas)\$"
-for d in "layoutmsg, togglesplit" "togglesplit," "pin," "movetoworkspacesilent, special" "togglespecialworkspace," "cyclenext," \
-	"changegroupactive, f" "togglegroup,"; do
+for d in "layoutmsg, togglesplit" "pin," "movetoworkspacesilent, special" "togglespecialworkspace," \
+	"togglegroup," "changegroupactive, f" "movefocus, l" "movewindow, r" "fullscreen, 0" "togglefloating,"; do
 	probe "bind = SUPER, X, $d"
 done
-probe "dwindle {" "    preserve_split = true" "}"
-probe "group {" "    groupbar {" "        font_size = 12" "    }" "}"
 
 [ "$bad" -eq 0 ] || die "$bad configuraciones de Hyprland no válidas"
-log "configuraciones de Hyprland válidas: $((n + 1))"
+log "configuraciones de Hyprland válidas: $((n + 1)), y todas las formas traducidas"

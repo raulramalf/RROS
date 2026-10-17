@@ -391,7 +391,7 @@ int main(void)
 	CHECK(strstr(s, "windowrule = float on, match:class .*") != NULL);
 	CHECK(strstr(s, "windowrulev2") == NULL && strstr(s, "pseudotile") == NULL);
 	CHECK(strstr(s, "bind = SUPER, G, layoutmsg, togglesplit") != NULL);
-	CHECK(strstr(s, "# hyprlang noerror true\ngesture = 3, horizontal, workspace") != NULL);
+	CHECK(strstr(s, "\ngesture = 3, horizontal, workspace\n") != NULL && strstr(s, "workspace_swipe") == NULL);
 	CHECK(strstr(s, "exec-once = rros-dock") != NULL);
 	CHECK(strstr(s, "exec-once = swaybg -i /inexistente/.local/share/rros/fondos/aurora-") != NULL);
 	CHECK(strstr(s, "bind = SUPER, 2, workspace, 2") != NULL && strstr(s, "workspace, 3") == NULL);

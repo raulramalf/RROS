@@ -1,6 +1,6 @@
 /* Hyprland: ~/.config/hypr/hyprland.conf y hyprlock.conf desde las mismas claves que sway.
- * Las opciones que cambian de nombre entre versiones de Hyprland van entre
- * `# hyprlang noerror true/false`: la versión instalada usa la que entiende y calla las demás. */
+ * Sintaxis de Hyprland 0.53 y posteriores (reglas «match:», gestos «gesture =»); la CI de Arch la
+ * valida con Hyprland --verify-config. */
 #include "theme.h"
 
 #include <stdlib.h>
@@ -188,13 +188,8 @@ void rros_render_hyprland(const struct rros_theme *t, const struct rros_palette 
 	fprintf(f, "    mouse_move_enables_dpms = true\n    key_press_enables_dpms = true\n    vrr = %d\n}\n",
 		!strcmp(t->vrr, "on") ? 1 : !strcmp(t->vrr, "auto") ? 2 : 0);
 
-	/* lo que cambia de sintaxis entre versiones de Hyprland */
-	fputs("\n# hyprlang noerror true\n", f);
-	if (t->gestures) {
-		fputs("gesture = 3, horizontal, workspace\n", f);                              /* 0.51 y posteriores */
-		fputs("gestures {\n    workspace_swipe = true\n    workspace_swipe_fingers = 3\n}\n", f);  /* anteriores */
-	}
-	fputs("# hyprlang noerror false\n", f);
+	if (t->gestures)
+		fputs("\ngesture = 3, horizontal, workspace\n", f);
 	/* reglas de ventana (sintaxis de Hyprland 0.53 y posteriores) */
 	if (floating)
 		fputs("windowrule = float on, match:class .*\n", f);

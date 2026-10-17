@@ -1,6 +1,7 @@
 #!/bin/sh
 # Autotest de arranque: comprueba que el sistema está completo y lo cuenta por la consola.
-# Se activa con el parámetro del kernel `rros.selftest` (ver rros-selftest.service).
+# Se activa con el parámetro del kernel `rros.selftest` (ver rros-selftest.service). Vale para el sistema live y
+# para el instalado (la prueba de instalación instala con el usuario «rros» y el equipo «rros-prueba»).
 ok=0 bad=0
 # las comprobaciones leen la salida de programas: siempre en inglés, sea cual sea el idioma del sistema
 export LC_ALL=C
@@ -17,7 +18,11 @@ echo "=== RROS selftest ==="
 . /etc/os-release
 check "identidad: ID=rros ($PRETTY_NAME)" test "$ID" = rros
 check "perfil activo: $(cat /etc/rros/profile 2>/dev/null)" test -s /etc/rros/profile
-check "usuario live 'rros'" id rros
+# sistema live (ISO) o instalado en un disco
+LIVE=0
+grep -qE 'boot=casper|archisobasedir=' /proc/cmdline && LIVE=1
+echo "sistema: $([ "$LIVE" -eq 1 ] && echo live || echo instalado)"
+check "usuario 'rros'" id rros
 check "no existe el usuario 'ubuntu'" sh -c '! id ubuntu'
 # shellcheck disable=SC2016  # $(hostname) se evalúa dentro de sh -c
 check "nombre de equipo: $(hostname)" sh -c 'case "$(hostname)" in rros*) true ;; *) false ;; esac'
@@ -70,7 +75,16 @@ check "rros-devices: ve la tarjeta de red" sh -c 'rros-devices lista red --json 
 check "rros-new: crea un script ejecutable" as_user "cd /tmp && rm -f rros-selftest.sh && rros-new bash rros-selftest >/dev/null && test -x /tmp/rros-selftest.sh"
 check "primer inicio: carpetas en español y plantillas" as_user "rros-first-login; test -d ~/Documentos && test -f ~/Plantillas/'Script de Bash.sh'"
 check "blueman-mechanism no arranca en el boot (solo por D-Bus)" sh -c '! systemctl is-enabled --quiet blueman-mechanism'
-check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'
+if [ "$LIVE" -eq 1 ]; then
+	check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'
+else
+	check "instalado: inicio de sesión normal en tty1 (sin el automático del live)" sh -c '! systemctl is-active --quiet rros-live && systemctl is-active --quiet getty@tty1'
+	check "instalado: el usuario tiene contraseña" sh -c 'passwd -S rros | grep -q " P "'
+	check "instalado: el usuario administra (sudo)" sh -c 'id -nG rros | grep -qwE "wheel|sudo"'
+	check "instalado: la raíz está en /etc/fstab" grep -qE '^[^#[:space:]]+[[:space:]]+/[[:space:]]' /etc/fstab
+	check "instalado: GRUB con la entrada de RROS" sh -c 'grep -q RROS /boot/grub/grub.cfg'
+	check "instalado: zona horaria de la instalación" sh -c 'readlink /etc/localtime | grep -q Europe/Madrid'
+fi
 # shellcheck disable=SC2016
 check "catálogo de apps (54)" sh -c 'test "$(rros-apps list | wc -l)" -ge 50'
 check "mimeapps: navegador por defecto" sh -c 'grep -q Epiphany /etc/xdg/mimeapps.list'
@@ -91,6 +105,12 @@ if [ "$BASE" = arch ]; then
 	check "actualizaciones: descarga diaria (rros-updates.timer)" sh -c 'command -v checkupdates >/dev/null && systemctl is-enabled --quiet rros-updates.timer'
 	check "faillock: límite de intentos de RROS" grep -q '^deny = ' /etc/security/faillock.conf
 	check "live: el sistema a copiar está montado" sh -c '! grep -q archisobasedir /proc/cmdline || test -d /run/archiso/airootfs/etc'
+	if [ "$LIVE" -eq 0 ]; then
+		check "instalado: initramfs propio (sin los hooks de archiso)" sh -c '! test -e /etc/mkinitcpio.conf.d/archiso.conf && lsinitcpio /boot/initramfs-linux.img | grep -q "usr/lib/systemd/systemd" && ! lsinitcpio /boot/initramfs-linux.img | grep -q hooks/archiso'
+		check "instalado: sin el llavero temporal del live" sh -c '! test -e /etc/systemd/system/pacman-init.service'
+		check "instalado: llavero de pacman inicializado" sh -c 'pacman-key --list-keys >/dev/null 2>&1'
+		check "instalado: kernel en /boot" test -e /boot/vmlinuz-linux
+	fi
 else
 	for app in unattended-upgrade apparmor_parser ckbcomp; do
 		check "Ubuntu: $app" has "$app"

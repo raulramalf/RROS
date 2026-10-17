@@ -1,0 +1,14 @@
+[Unit]
+Description=RROS: prueba de instalación en un disco virtual (solo con rros.installtest en la línea del kernel)
+ConditionKernelCommandLine=rros.installtest
+After=multi-user.target rros-apply.service rros-live-user.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c '/usr/libexec/rros-installtest 2>&1 | tee /dev/console'
+ExecStartPost=/bin/sh -c 'sleep 2; systemctl poweroff'
+TimeoutStartSec=1800
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

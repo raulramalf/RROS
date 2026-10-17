@@ -51,18 +51,25 @@ jobs:
       - name: Autotest de arranque en QEMU
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-system-x86 xorriso
+          sudo apt-get install -y qemu-system-x86 qemu-utils xorriso
           sudo chmod a+rw /dev/kvm || true
           BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" selftest
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: rros-arch-${{ env.PROFILE }}-selftest-log
-          path: build/test-arch-${{ env.PROFILE }}/serial.log
-          if-no-files-found: ignore
+      # la ISO se publica si el live pasa su autotest, aunque después falle la prueba de instalación
       - uses: actions/upload-artifact@v4
         with:
           name: rros-arch-${{ env.PROFILE }}-iso
           path: build/rros-arch-${{ env.PROFILE }}.iso
           if-no-files-found: error
+      - name: Instalación en un disco virtual y arranque desde él
+        run: |
+          BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-install-$PROFILE" \
+            scripts/test-iso.sh "$PROFILE" install
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rros-arch-${{ env.PROFILE }}-selftest-log
+          path: |
+            build/test-arch-${{ env.PROFILE }}/serial.log
+            build/test-arch-install-${{ env.PROFILE }}/*.log
+          if-no-files-found: ignore

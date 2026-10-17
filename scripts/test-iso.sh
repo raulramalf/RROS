@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Arranca la ISO de RROS en QEMU y comprueba que el sistema funciona.
 #   test-iso.sh PERFIL selftest     arranque por consola serie con el autotest (rros.selftest)
+#   test-iso.sh PERFIL install      instala en un disco virtual (rros.installtest), arranca desde él y pasa el autotest
 #   test-iso.sh PERFIL screenshot   arranca con GRUB y guarda una captura del escritorio
-# Variables: RAM_MB (por defecto 2048), WAIT (segundos antes de la primera captura, 300),
+# Variables: RAM_MB (por defecto 2048), TIMEOUT (segundos de cada arranque, 1500), DISK_GB (16), WAIT (segundos antes de la primera captura, 300),
 #            COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
 #   En screenshot: FIRMWARE=bios|uefi|secboot (secboot = UEFI con Secure Boot y las claves de Microsoft,
 #   como un PC con Windows) y MEDIA=cd|usb (la ISO grabada en una memoria USB)
@@ -10,7 +11,7 @@
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
 
-profile=${1:?uso: $0 PERFIL selftest|screenshot}
+profile=${1:?uso: $0 PERFIL selftest|install|screenshot}
 mode=${2:-selftest}
 check_profile "$profile"
 need_cmd qemu-system-x86_64
@@ -24,45 +25,81 @@ mkdir -p "$out"
 accel=()
 [ -w /dev/kvm ] && accel=(-enable-kvm -cpu host)
 
+# kernel, initramfs y parámetros para arrancar la ISO directamente, con TEST como parámetro del autotest
+live_args() {   # live_args TEST
+	if [ "${BASE:-ubuntu}" = arch ]; then
+		# ISO de archiso: el kernel y el initramfs se sacan de la propia ISO
+		need_cmd xorriso
+		xorriso -osirrox on -indev "$iso" -extract /arch/boot/x86_64/vmlinuz-linux "$out/vmlinuz" \
+			-extract /arch/boot/x86_64/initramfs-linux.img "$out/initrd" >/dev/null 2>&1 ||
+			die "no se pudo sacar el kernel de $iso"
+		kernel=$out/vmlinuz initrd=$out/initrd
+		label=$(xorriso -indev "$iso" -pvd_info 2>/dev/null | sed -n 's/^Volume Id *: *//p' | tr -d "'")
+		append="archisobasedir=arch archisolabel=${label:-RROS_${profile^^}} lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
+		append+=" console=ttyS0 $1 loglevel=3"
+	else
+		kernel=$iso_dir/casper/vmlinuz initrd=$iso_dir/casper/initrd
+		append="boot=casper quiet console=ttyS0 $1 loglevel=3"
+	fi
+}
+
+# run_serial LOG MARCA ESPERA_APAGADO qemu-args...: arranca QEMU con la consola en LOG y espera a que aparezca
+# MARCA_OK o MARCA_FAIL (o TIMEOUT); con ESPERA_APAGADO=1 deja después que el sistema se apague solo
+run_serial() {
+	local log=$1 mark=$2 wait_off=$3 waited=0
+	shift 3
+	: > "$log"
+	qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot "$@" > "$log" 2>&1 &
+	qpid=$!
+	while kill -0 "$qpid" 2>/dev/null && [ "$waited" -lt "${TIMEOUT:-1500}" ]; do
+		grep -aq "${mark}_\(OK\|FAIL\)" "$log" && break
+		sleep 5
+		waited=$((waited + 5))
+	done
+	if [ "$wait_off" -eq 1 ]; then   # que termine de escribir en el disco antes de cortar
+		waited=0
+		while kill -0 "$qpid" 2>/dev/null && [ "$waited" -lt 180 ]; do
+			sleep 2
+			waited=$((waited + 2))
+		done
+	fi
+	kill "$qpid" 2>/dev/null || true
+	wait "$qpid" 2>/dev/null || true
+}
+
+verdict() {   # verdict LOG MARCA QUÉ
+	grep -a -E '^\[(ok|FALLO)\]|=== |^==> ' "$1" | tr -d '\r' || true
+	if grep -aq "${2}_OK" "$1"; then
+		log "$3: CORRECTO"
+	else
+		echo "--- últimas líneas de la consola serie ---"
+		tail -n 80 "$1" | tr -d '\r'
+		die "$3: falló o no terminó (mira $1)"
+	fi
+}
+
 case "$mode" in
 	selftest)
 		log "arranque por consola serie con autotest (RAM ${ram} MB); puede tardar varios minutos sin KVM"
-		: > "$out/serial.log"
-		if [ "${BASE:-ubuntu}" = arch ]; then
-			# ISO de archiso: el kernel y el initramfs se sacan de la propia ISO
-			need_cmd xorriso
-			xorriso -osirrox on -indev "$iso" -extract /arch/boot/x86_64/vmlinuz-linux "$out/vmlinuz" \
-				-extract /arch/boot/x86_64/initramfs-linux.img "$out/initrd" >/dev/null 2>&1 ||
-				die "no se pudo sacar el kernel de $iso"
-			kernel=$out/vmlinuz initrd=$out/initrd
-			label=$(xorriso -indev "$iso" -pvd_info 2>/dev/null | sed -n 's/^Volume Id *: *//p' | tr -d "'")
-			append="archisobasedir=arch archisolabel=${label:-RROS_${profile^^}} lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
-			append+=" console=ttyS0 rros.selftest loglevel=3"
-		else
-			kernel=$iso_dir/casper/vmlinuz initrd=$iso_dir/casper/initrd
-			append="boot=casper quiet console=ttyS0 rros.selftest loglevel=3"
-		fi
-		qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot \
-			-kernel "$kernel" -initrd "$initrd" -append "$append" \
-			-cdrom "$iso" > "$out/serial.log" 2>&1 &
-		qpid=$!
-		# se corta en cuanto el autotest da su veredicto (el apagado del live puede tardar mucho sin KVM)
-		waited=0
-		while kill -0 "$qpid" 2>/dev/null && [ "$waited" -lt "${TIMEOUT:-1500}" ]; do
-			grep -aq 'RROS_SELFTEST_\(OK\|FAIL\)' "$out/serial.log" && break
-			sleep 5
-			waited=$((waited + 5))
-		done
-		kill "$qpid" 2>/dev/null || true
-		wait "$qpid" 2>/dev/null || true
-		grep -a -E '^\[(ok|FALLO)\]|=== ' "$out/serial.log" | tr -d '\r' || true
-		if grep -aq RROS_SELFTEST_OK "$out/serial.log"; then
-			log "AUTOTEST CORRECTO"
-		else
-			echo "--- últimas líneas de la consola serie ---"
-			tail -n 80 "$out/serial.log" | tr -d '\r'
-			die "el autotest falló o no terminó (mira $out/serial.log)"
-		fi
+		live_args rros.selftest
+		run_serial "$out/serial.log" RROS_SELFTEST 0 -kernel "$kernel" -initrd "$initrd" -append "$append" -cdrom "$iso"
+		verdict "$out/serial.log" RROS_SELFTEST "autotest del live"
+		;;
+	install)
+		# 1) el live instala en un disco virtual sin preguntas (rros.installtest); 2) se arranca desde el disco
+		#    (BIOS, GRUB del disco) y el sistema instalado pasa el autotest
+		need_cmd qemu-img
+		disk=$out/disco.qcow2
+		rm -f "$disk"
+		qemu-img create -f qcow2 "$disk" "${DISK_GB:-16}G" >/dev/null
+		log "instalación en un disco virtual de ${DISK_GB:-16} GB (RAM ${ram} MB)"
+		live_args rros.installtest=/dev/vda
+		run_serial "$out/install.log" RROS_INSTALL 1 -kernel "$kernel" -initrd "$initrd" -append "$append" -cdrom "$iso" \
+			-drive "file=$disk,if=virtio,format=qcow2"
+		verdict "$out/install.log" RROS_INSTALL "instalación"
+		log "arranque desde el disco instalado"
+		run_serial "$out/serial.log" RROS_SELFTEST 0 -drive "file=$disk,if=virtio,format=qcow2" -boot c
+		verdict "$out/serial.log" RROS_SELFTEST "autotest del sistema instalado"
 		;;
 	screenshot)
 		need_cmd python3

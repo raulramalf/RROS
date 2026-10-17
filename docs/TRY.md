@@ -50,7 +50,7 @@ rros install --disk /dev/vda --user ana --hostname mi-pc --keymap es --timezone 
              --password-file /tmp/pw --yes          # sin preguntas (para scripts)
 ```
 Borra **todo** el disco elegido y pide escribir su ruta para confirmar (salvo con `--yes`); `--alongside` instala en el espacio libre junto a otro sistema y `--encrypt` cifra con LUKS2. También hay asistente gráfico en RROS Ajustes → *Instalar RROS*.
-Estado: con la base Arch, la CI lo prueba en cada ISO de principio a fin en QEMU: instala sin preguntas en un disco virtual (`scripts/test-iso.sh lite install`), arranca desde el disco y el sistema instalado pasa el autotest; también cifrado con LUKS2 (la prueba escribe la contraseña en la consola al arrancar). Con la base Ubuntu se probó en QEMU con BIOS y UEFI, cifrado y junto a un Windows simulado.
+Estado: con la base Arch, la CI lo prueba en cada ISO de principio a fin en QEMU: instala sin preguntas en un disco virtual (`scripts/test-iso.sh lite install`), arranca desde el disco (BIOS y UEFI) y el sistema instalado pasa el autotest; también cifrado con LUKS2 (la prueba escribe la contraseña en la consola al arrancar). Con la base Ubuntu se probó en QEMU con BIOS y UEFI, cifrado y junto a un Windows simulado.
 
 ## Qué mirar al arrancar
 - `rros-fetch` y `rros doctor`: identidad, perfil y presupuesto.

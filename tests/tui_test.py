@@ -77,16 +77,16 @@ send("+"); send("+"); send("+"); send("+"); send("+"); send("+"); send("+")
 check('gap = 64' in userconf(), "el entero se detiene en el máximo (64)")
 
 # bool: alternar con Enter
-send("/"); send("ui.blur"); send("\r")
+send("/"); send("ui.hot_corners"); send("\r")
 send("\r")
-check('blur = true' in userconf(), "Enter alterna un booleano")
+check('hot_corners = true' in userconf(), "Enter alterna un booleano")
 send("\r")
-check('blur = false' in userconf(), "y lo vuelve a alternar")
+check('hot_corners = false' in userconf(), "y lo vuelve a alternar")
 
 # enum: ciclar con la flecha derecha
 send("/"); send("ui.panel_position"); send("\r")
 send("\x1b[C")
-check('panel_position = "bottom"' in userconf(), "flecha derecha cicla un enum (top -> bottom)")
+check('panel_position = "left"' in userconf(), "flecha derecha cicla un enum (bottom -> left)")
 
 # texto: editar con línea de entrada
 send("/"); send("ui.accent"); send("\r")

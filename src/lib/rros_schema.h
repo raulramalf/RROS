@@ -41,5 +41,8 @@ int rros_dynamic_check(const char *key, const char *val, char *err, size_t n);
 int rros_keybind_to_sway(const char *val, char *out, size_t n);
 int rros_rule_to_sway(const char *val, char *out, size_t n);
 int rros_autostart_to_sway(const char *val, char *out, size_t n);
+/* Lo mismo para Hyprland: "MODS, TECLA, dispatcher, args" y "ACCIÓN, criterio" (sin la palabra clave). */
+int rros_keybind_to_hypr(const char *val, char *out, size_t n);
+int rros_rule_to_hypr(const char *val, char *out, size_t n);
 
 #endif

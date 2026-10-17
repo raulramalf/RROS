@@ -1,4 +1,4 @@
-/* Generador del escritorio RROS ("RROS Shell"): sway, waybar, foot, mako, fuzzel y GTK. */
+/* Generador del escritorio RROS ("RROS Shell"): Hyprland o sway, waybar, foot, mako, fuzzel, GTK y el fondo. */
 #ifndef RROS_THEME_H
 #define RROS_THEME_H
 
@@ -27,7 +27,9 @@ struct rros_theme {
 	int animations, blur, shadows, clock_24h, battery_percent;
 	int natural_scroll, tap_to_click, dwt, numlock, pointer_speed;
 	int repeat_delay, repeat_rate, battery_low;
-	int full_compositor;
+	int hyprland;                   /* ui.compositor = hyprland (si no, sway) */
+	int animation_speed, blur_strength, dim_inactive, border_gradient, dock, gestures;
+	char animation_style[10], tiling[8], wallpaper_style[12], vrr[6];
 	char app_term[48], app_browser[48], app_files[48], app_editor[48];
 	int lock_min, screen_off_min, suspend_min;
 	int high_contrast, reduce_motion, screen_reader, osk;   /* accesibilidad */
@@ -65,6 +67,27 @@ void rros_render_fuzzel(const struct rros_theme *, const struct rros_palette *, 
 void rros_render_swaylock(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 void rros_render_gtk_settings(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 void rros_render_gtk_css(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
+void rros_render_hyprland(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
+void rros_render_hyprlock(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
+
+/* Fondo de pantalla: el elegido (ui.wallpaper) o uno generado con la paleta (ui.wallpaper_style).
+ * Escribe en out la ruta de la imagen, o "" si el fondo es un color liso. */
+void rros_wallpaper_path(const struct rros_theme *t, const struct rros_palette *p, char *out, size_t n);
+/* Genera el PNG del estilo con la paleta. 0 ok. */
+int rros_wallpaper_render(const char *style, const struct rros_palette *p, int w, int h, const char *path);
+/* "#rrggbb" -> componentes */
+void rros_hex_rgb(const char *hex, int *r, int *g, int *b);
+
+/* Estilos de escritorio: un conjunto de claves (panel, ventanas, dock) que se escriben de una vez. */
+struct rros_desktop_preset {
+	const char *id, *label, *desc;
+	const char *keys[12][2];
+};
+extern const struct rros_desktop_preset rros_desktop_presets[];
+extern const size_t rros_desktop_presets_len;
+const struct rros_desktop_preset *rros_desktop_find(const char *id);
+/* El estilo cuyas claves coinciden todas con la configuración, o NULL (personalizado). */
+const struct rros_desktop_preset *rros_desktop_current(const struct rros_conf *c);
 
 #define RROS_GENERATED "Generado por rros-theme"
 

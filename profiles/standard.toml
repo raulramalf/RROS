@@ -17,13 +17,18 @@ font = "Inter"
 font_mono = "JetBrains Mono"
 gap = 8
 border_width = 2
-panel_position = "top"
-panel_size = 32
-compositor = "full"
+panel_position = "bottom"
+panel_size = 40
+compositor = "hyprland"
+wallpaper_style = "aurora"
+animation_style = "suave"
+border_gradient = true
+blur_strength = 6
+dock = false
 effects = "basic"
 animations = true
 animation_speed = 100
-blur = false
+blur = true
 shadows = true
 transparency = 10
 scale = 100
@@ -31,6 +36,14 @@ font_size = 11
 corner_radius = 8
 layout = "floating"
 workspaces = 4
+
+[panel]
+# estilo «clásico»: barra de tareas abajo, como en Windows (rros theme escritorio)
+style = "flat"
+left = "apps,taskbar"
+center = "none"
+right = "tray,network,audio,battery,clock,power"
+taskbar = true
 
 [system]
 auto_updates = true

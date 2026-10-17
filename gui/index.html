@@ -992,7 +992,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
 
   function val(key, def) { var k = keyObj(key); return k && k.value !== "" ? k.value : def; }
   function preview() {
-    var p = S.current.palette, full = val("ui.compositor", "minimal") === "full" && val("ui.effects", "off") !== "off";
+    var p = S.current.palette, full = val("ui.compositor", "hyprland") === "hyprland" || val("ui.effects", "off") !== "off";
     var d = h("div", { class: "desk pos-" + (val("ui.panel_position", "top") === "bottom" ? "bottom" : "top") });
     d.style.cssText = "--p-bg:" + p.bg + ";--p-surface:" + p.surface + ";--p-text:" + p.text + ";--p-muted:" + p.muted + ";--p-border:" + p.border + ";--p-accent:" + p.accent + ";--p-green:" + p.green +
       ";--gap:" + val("ui.gap", 8) + "px;--bw:" + val("ui.border_width", 2) + "px;--rad:" + (full ? val("ui.corner_radius", 8) : 0) + "px";
@@ -1000,7 +1000,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     d.appendChild(h("div", { class: "panel" }, ws, h("span", { text: "12:30" }), h("span", { class: "pf", text: "RROS " + S.profile })));
     d.appendChild(h("div", { class: "area" },
       h("div", { class: "w f" }, h("div", { class: "t", text: "foot — terminal" }), h("div", { class: "c" }, h("span", { class: "a", text: "rros ~ ➜ rros theme list" }), h("span", { class: "g", text: "* " + S.current.theme }), h("span", { class: "m", text: "  nord  dracula  gruvbox…" }))),
-      h("div", { class: "w" }, h("div", { class: "t", text: "ajustes" }), h("div", { class: "c" }, h("span", { text: "ui.gap = " + val("ui.gap", 8) }), h("span", { class: "m", text: "esquinas " + (full ? val("ui.corner_radius", 8) + " px" : "(sin SwayFX)") })))));
+      h("div", { class: "w" }, h("div", { class: "t", text: "ajustes" }), h("div", { class: "c" }, h("span", { text: "ui.gap = " + val("ui.gap", 8) }), h("span", { class: "m", text: "esquinas " + (full ? val("ui.corner_radius", 8) + " px" : "rectas (sway)") })))));
     return d;
   }
 

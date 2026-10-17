@@ -18,8 +18,14 @@ font_mono = "JetBrains Mono"
 gap = 10
 border_width = 3
 panel_position = "top"
-panel_size = 36
-compositor = "full"
+panel_size = 32
+compositor = "hyprland"
+wallpaper_style = "ondas"
+animation_style = "suave"
+border_gradient = true
+blur_strength = 8
+dim_inactive = true
+dock = false
 effects = "advanced"
 animations = true
 animation_speed = 100
@@ -29,8 +35,16 @@ transparency = 20
 scale = 100
 font_size = 11
 corner_radius = 12
-layout = "hybrid"
+layout = "tiling"
 workspaces = 6
+
+[panel]
+# estilo «mosaico»: al estilo Hyprland (rros theme escritorio)
+style = "pill"
+left = "apps,workspaces,window"
+center = "clock"
+right = "memory,cpu,network,audio,battery,tray,power"
+taskbar = false
 
 [system]
 auto_updates = true

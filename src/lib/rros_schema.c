@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #define S(k, d)            { k, RROS_T_STR, 0, 0, NULL, 0, d }
 #define I(k, lo, hi, d)    { k, RROS_T_INT, lo, hi, NULL, 0, d }
@@ -41,17 +42,24 @@ const struct rros_key rros_schema[] = {
 	E("ui.font_antialias", "none|grayscale|rgba", "Suavizado de fuentes"),
 	S("ui.wallpaper", "Ruta del fondo de pantalla"),
 	E("ui.wallpaper_mode", "fill|fit|stretch|center|tile", "Ajuste del fondo"),
-	E("ui.compositor", "minimal|full", "Compositor Wayland"),
+	E("ui.wallpaper_style", "aurora|ondas|degradado|circulos|liso", "Fondo generado con los colores del tema (si no eliges una imagen)"),
+	E("ui.compositor", "hyprland|sway", "Compositor Wayland: Hyprland (animaciones y efectos) o sway (más ligero)"),
 	E("ui.effects", "off|basic|advanced", "Nivel de efectos visuales"),
 	B("ui.animations", "Animaciones de ventanas y menús"),
 	I("ui.animation_speed", 25, 400, "Velocidad de animación (%)"),
+	E("ui.animation_style", "suave|rapida|rebote|deslizar", "Estilo de las animaciones de ventanas y escritorios"),
 	I("ui.transparency", 0, 100, "Transparencia de paneles y ventanas (%)"),
 	B("ui.blur", "Desenfoque de fondo"),
+	I("ui.blur_strength", 1, 20, "Intensidad del desenfoque"),
 	B("ui.shadows", "Sombras de ventanas"),
+	B("ui.dim_inactive", "Oscurecer un poco las ventanas sin foco"),
+	B("ui.border_gradient", "Borde de la ventana activa en degradado (acento → magenta)"),
 	I("ui.corner_radius", 0, 32, "Radio de esquinas (px)"),
 	I("ui.gap", 0, 64, "Separación entre ventanas (px)"),
 	I("ui.border_width", 0, 16, "Grosor de borde de ventana (px)"),
 	E("ui.layout", "floating|tiling|hybrid", "Modo de gestión de ventanas"),
+	E("ui.tiling_layout", "dwindle|master", "Reparto del mosaico: en espiral (dwindle) o una ventana principal (master)"),
+	B("ui.dock", "Dock de aplicaciones abajo, como en macOS"),
 	E("ui.panel_position", "top|bottom|left|right", "Posición del panel"),
 	I("ui.panel_size", 16, 128, "Tamaño del panel (px)"),
 	B("ui.panel_autohide", "Ocultar panel automáticamente"),
@@ -98,6 +106,7 @@ const struct rros_key rros_schema[] = {
 	B("input.disable_while_typing", "Desactivar touchpad al escribir"),
 	I("input.pointer_speed", -100, 100, "Velocidad del puntero"),
 	B("input.numlock_on_boot", "Bloq Num al iniciar"),
+	B("input.gestures", "Gestos del touchpad: deslizar con tres dedos cambia de escritorio"),
 
 	/* ---- energía ---- */
 	E("power.mode", "saver|balanced|performance", "Modo de energía"),
@@ -518,6 +527,160 @@ int rros_autostart_to_sway(const char *val, char *out, size_t n)
 	if (!text_ok(val, 200))
 		return -1;
 	return (size_t)snprintf(out, n, "exec %s", val) >= n ? -1 : 0;
+}
+
+/* ---- Hyprland: la misma entrada, otra sintaxis ---- */
+
+/* copia s duplicando '#' (en la configuración de Hyprland '#' empieza un comentario) */
+static int hypr_escape(const char *s, char *out, size_t n)
+{
+	size_t o = 0;
+
+	for (; *s; s++) {
+		if (o + 3 >= n)
+			return -1;
+		if (*s == '#')
+			out[o++] = '#';
+		out[o++] = *s;
+	}
+	out[o] = '\0';
+	return 0;
+}
+
+static const char *hypr_dir(const char *w)
+{
+	return !strcmp(w, "left") ? "l" : !strcmp(w, "right") ? "r" : !strcmp(w, "up") ? "u" :
+	       !strcmp(w, "down") ? "d" : NULL;
+}
+
+/* "Mod+Shift+b exec firefox" -> "SUPER SHIFT, b, exec, firefox" */
+int rros_keybind_to_hypr(const char *val, char *out, size_t n)
+{
+	char tmp[512], combo[96], mods[64] = "", key[40] = "", cmd[32], a1[40], a2[40], a3[40], a4[40], esc[420];
+	const char *rest, *r, *disp = NULL, *arg = "";
+	char *tok, *save = NULL, *parts[8];
+	int np = 0, w;
+
+	if (rros_keybind_to_sway(val, tmp, sizeof tmp))
+		return -1;
+	rest = next_token(val, combo, sizeof combo);
+	for (tok = strtok_r(combo, "+", &save); tok && np < 8; tok = strtok_r(NULL, "+", &save))
+		parts[np++] = tok;
+	if (np == 0 || tok)
+		return -1;
+	for (int i = 0; i < np - 1; i++) {
+		const char *m = !strcmp(parts[i], "Mod") || !strcmp(parts[i], "Mod4") || !strcasecmp(parts[i], "Super") ? "SUPER" :
+				!strcasecmp(parts[i], "Shift") ? "SHIFT" :
+				!strcasecmp(parts[i], "Ctrl") || !strcasecmp(parts[i], "Control") ? "CTRL" :
+				!strcasecmp(parts[i], "Alt") || !strcmp(parts[i], "Mod1") ? "ALT" : NULL;
+
+		if (!m || strlen(mods) + strlen(m) + 2 >= sizeof mods)
+			return -1;
+		if (*mods)
+			strcat(mods, " ");
+		strcat(mods, m);
+	}
+	snprintf(key, sizeof key, "%s", parts[np - 1]);
+
+	r = next_token(rest, cmd, sizeof cmd);
+	r = next_token(r, a1, sizeof a1);
+	r = next_token(r, a2, sizeof a2);
+	r = next_token(r, a3, sizeof a3);
+	r = next_token(r, a4, sizeof a4);
+	if (!strcmp(cmd, "exec")) {
+		if (hypr_escape(rest + 5, esc, sizeof esc))
+			return -1;
+		disp = "exec";
+		arg = esc;
+	} else if (!strcmp(cmd, "kill") && !*a1) {
+		disp = "killactive";
+	} else if (!strcmp(cmd, "fullscreen")) {
+		disp = "fullscreen";
+		arg = "0";
+	} else if ((!strcmp(cmd, "floating") || !strcmp(cmd, "sticky")) && (!strcmp(a1, "toggle") || !strcmp(a1, "enable"))) {
+		disp = !strcmp(cmd, "floating") ? "togglefloating" : "pin";
+	} else if (!strcmp(cmd, "workspace")) {
+		const char *num = !strcmp(a1, "number") ? a2 : a1;
+
+		disp = "workspace";
+		arg = !strcmp(num, "next") ? "e+1" : !strcmp(num, "prev") ? "e-1" : num;
+		if (!*arg || strspn(arg, "0123456789+-e") != strlen(arg))
+			return -1;
+	} else if (!strcmp(cmd, "move") && hypr_dir(a1) && !*a2) {
+		disp = "movewindow";
+		arg = hypr_dir(a1);
+	} else if (!strcmp(cmd, "move") && (!strcmp(a1, "scratchpad") || (!strcmp(a1, "container") && !strcmp(a3, "scratchpad")))) {
+		disp = "movetoworkspacesilent";
+		arg = "special";
+	} else if (!strcmp(cmd, "move")) {
+		/* move [container] to workspace [number] N */
+		const char *v[4] = { a1, a2, a3, a4 };
+		int i = !strcmp(v[0], "container") ? 1 : 0;
+
+		if (strcmp(v[i], "to") || strcmp(v[i + 1], "workspace"))
+			return -1;
+		arg = !strcmp(v[i + 2], "number") ? (i + 3 < 4 ? v[i + 3] : r) : v[i + 2];
+		if (!*arg || strspn(arg, "0123456789") != strlen(arg))
+			return -1;
+		disp = "movetoworkspace";
+	} else if (!strcmp(cmd, "focus") && hypr_dir(a1)) {
+		disp = "movefocus";
+		arg = hypr_dir(a1);
+	} else if (!strcmp(cmd, "layout") && (!strcmp(a1, "tabbed") || !strcmp(a1, "stacking"))) {
+		disp = "togglegroup";
+	} else if ((!strcmp(cmd, "layout") && !strcmp(a1, "toggle")) || !strcmp(cmd, "splith") || !strcmp(cmd, "splitv")) {
+		disp = "togglesplit";
+	} else if (!strcmp(cmd, "reload")) {
+		disp = "exec";
+		arg = "hyprctl reload";
+	} else if (!strcmp(cmd, "scratchpad") && !strcmp(a1, "show")) {
+		disp = "togglespecialworkspace";
+	}
+	if (!disp)
+		return -1;   /* resize, mode...: sin equivalente directo */
+	w = snprintf(out, n, "%s, %s, %s, %s", mods, key, disp, arg);
+	return (w < 0 || (size_t)w >= n) ? -1 : 0;
+}
+
+/* "app_id=firefox workspace 2" -> "workspace 2, class:^(firefox)$" (sin la palabra windowrule) */
+int rros_rule_to_hypr(const char *val, char *out, size_t n)
+{
+	char tmp[512], crit[96], act[32], a1[32], a2[32], match[120];
+	const char *rest, *eq;
+	int w;
+
+	if (rros_rule_to_sway(val, tmp, sizeof tmp))
+		return -1;
+	rest = next_token(val, crit, sizeof crit);
+	eq = strchr(crit, '=');
+	if (!strncmp(crit, "app_id=", 7) || !strncmp(crit, "class=", 6))
+		snprintf(match, sizeof match, "class:^(%s)$", eq + 1);
+	else if (!strncmp(crit, "title=", 6))
+		snprintf(match, sizeof match, "title:^(%s)$", eq + 1);
+	else
+		return -1;   /* window_role: Hyprland no lo tiene */
+	rest = next_token(rest, act, sizeof act);
+	rest = next_token(rest, a1, sizeof a1);
+	next_token(rest, a2, sizeof a2);
+	if (!strcmp(act, "floating"))
+		w = snprintf(out, n, "float, %s", match);
+	else if (!strcmp(act, "sticky"))
+		w = snprintf(out, n, "pin, %s", match);
+	else if (!strcmp(act, "fullscreen"))
+		w = snprintf(out, n, "fullscreen, %s", match);
+	else if (!strcmp(act, "inhibit_idle"))
+		w = snprintf(out, n, "idleinhibit fullscreen, %s", match);
+	else if (!strcmp(act, "workspace"))
+		w = snprintf(out, n, "workspace %s, %s", a1, match);
+	else if (!strcmp(act, "opacity"))
+		w = snprintf(out, n, "opacity %s, %s", a1, match);
+	else if (!strcmp(act, "border") && !strcmp(a1, "none"))
+		w = snprintf(out, n, "noborder, %s", match);
+	else if (!strcmp(act, "border"))
+		w = snprintf(out, n, "bordersize %s, %s", a2, match);
+	else
+		return -1;
+	return (w < 0 || (size_t)w >= n) ? -1 : 0;
 }
 
 int rros_dynamic_check(const char *key, const char *val, char *err, size_t n)

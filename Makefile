@@ -11,7 +11,7 @@ DESTDIR ?=
 
 LIB_SRC := $(wildcard src/lib/*.c)
 PLAN_SRC := src/installer/plan.c
-THEME_SRC := src/theme/theme.c src/theme/palettes.c
+THEME_SRC := src/theme/theme.c src/theme/palettes.c src/theme/hypr.c src/theme/wallpaper.c
 BINS := build/rros-hwdetect build/rros-config build/rros-budget build/rros-installer \
         build/rros-theme build/rros-fetch build/rros build/rros-apply build/rros-settings build/rros-apps \
         build/rros-security build/rros-devices build/rros-new
@@ -38,11 +38,11 @@ build/rros-settings: $(SETTINGS_SRC) $(THEME_SRC) $(LIB_SRC)
 
 $(BINS):
 	@mkdir -p build
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 build/tests/%: tests/%.c $(LIB_SRC) $(PLAN_SRC) $(THEME_SRC) tests/check.h
 	@mkdir -p build/tests
-	$(CC) $(CFLAGS) $(SAN) -Itests -o $@ $< $(LIB_SRC) $(PLAN_SRC) $(THEME_SRC)
+	$(CC) $(CFLAGS) $(SAN) -Itests -o $@ $< $(LIB_SRC) $(PLAN_SRC) $(THEME_SRC) -lm
 
 test: $(TESTS) $(BINS)
 	@set -e; for t in $(TESTS); do echo "== $$t"; $$t; done

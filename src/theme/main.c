@@ -28,6 +28,8 @@ static const struct target targets[] = {
 	{ "gtk-3.0/gtk.css", rros_render_gtk_css },
 	{ "gtk-4.0/settings.ini", rros_render_gtk_settings },
 	{ "gtk-4.0/gtk.css", rros_render_gtk_css },
+	{ "hypr/hyprland.conf", rros_render_hyprland },
+	{ "hypr/hyprlock.conf", rros_render_hyprlock },
 };
 
 static void usage(void)
@@ -38,7 +40,9 @@ static void usage(void)
 	      "  cycle                  pasa al siguiente tema\n"
 	      "  toggle                 alterna oscuro/claro\n"
 	      "  new NOMBRE [--base T]  crea un tema propio para editar\n"
-	      "  apply [--quiet]        escribe ~/.config/{sway,waybar,foot,mako,fuzzel,gtk-*} y recarga\n"
+	      "  apply [--quiet]        escribe ~/.config/{hypr,sway,waybar,foot,mako,fuzzel,gtk-*} y recarga\n"
+	      "  escritorio [ESTILO]    estilos de escritorio (clasico, moderno, mosaico); con ESTILO lo aplica\n"
+	      "  wallpaper [--next | --style S] [--out F] [--size AxB]   genera el fondo con los colores del tema\n"
 	      "  palette                muestra la paleta calculada\n"
 	      "  render --out DIR [--swayfx]   escribe en DIR (pruebas)\n", stderr);
 }
@@ -134,9 +138,62 @@ static int load_theme(struct rros_theme *t, struct rros_conf *c, const char *pro
 		fputs("rros-theme: configuración ilegible (rros-config validate)\n", stderr);
 	else
 		rros_theme_from_conf(t, c);
-	if (rc)
+	if (rc) {
 		rros_conf_free(c);
-	return rc;
+		return rc;
+	}
+	/* el compositor que de verdad corre (rros-session cae a sway si no hay aceleración gráfica) */
+	{
+		const char *sess = getenv("RROS_SESSION");
+
+		if (sess && !strcmp(sess, "sway"))
+			t->hyprland = 0;
+		else if (sess && !strcmp(sess, "hyprland"))
+			t->hyprland = 1;
+		else if (getenv("HYPRLAND_INSTANCE_SIGNATURE"))
+			t->hyprland = 1;
+		else if (getenv("SWAYSOCK"))
+			t->hyprland = 0;
+	}
+	return 0;
+}
+
+/* genera el fondo del tema si hace falta (el nombre del archivo cambia con los colores) */
+static void ensure_wallpaper(const struct rros_theme *t, const struct rros_palette *p, char *path, size_t n)
+{
+	rros_wallpaper_path(t, p, path, n);
+	if (!path[0] || t->wallpaper[0] || access(path, R_OK) == 0)
+		return;
+	if (rros_mkdir_parents(path) || rros_wallpaper_render(t->wallpaper_style, p, 1920, 1080, path)) {
+		fprintf(stderr, "rros-theme: no se pudo generar el fondo %s\n", path);
+		path[0] = '\0';
+	}
+}
+
+/* recarga lo que está en marcha: compositor, fondo, panel y notificaciones */
+static void reload_desktop(const struct rros_theme *t, const char *wallpaper, int quiet)
+{
+	int bad = 0;
+
+	if (getenv("HYPRLAND_INSTANCE_SIGNATURE")) {
+		char cmd[700];
+
+		bad |= system("hyprctl reload >/dev/null 2>&1") != 0;
+		if (wallpaper[0])
+			snprintf(cmd, sizeof cmd, "pkill -x swaybg; setsid swaybg -i '%s' -m %s >/dev/null 2>&1 &", wallpaper,
+				 t->wallpaper[0] ? t->wallpaper_mode : "fill");
+		else
+			snprintf(cmd, sizeof cmd, "pkill -x swaybg; setsid swaybg -c '#000000' >/dev/null 2>&1 &");
+		bad |= system(cmd) != 0;
+	} else if (getenv("SWAYSOCK")) {
+		bad |= system("swaymsg -q reload >/dev/null 2>&1") != 0;
+	} else {
+		return;
+	}
+	if (system("pkill -SIGUSR2 waybar >/dev/null 2>&1; makoctl reload >/dev/null 2>&1 || pkill -SIGUSR2 mako >/dev/null 2>&1") != 0)
+		bad = 1;
+	if (bad && !quiet)
+		fputs("rros-theme: aviso: no se pudo recargar todo el escritorio\n", stderr);
 }
 
 static int cmd_apply(const char *profile, int quiet)
@@ -144,7 +201,7 @@ static int cmd_apply(const char *profile, int quiet)
 	struct rros_theme t;
 	struct rros_conf c;
 	struct rros_palette p;
-	char base[1024];
+	char base[1024], wp[300];
 	int rc;
 
 	if (load_theme(&t, &c, profile))
@@ -154,11 +211,22 @@ static int cmd_apply(const char *profile, int quiet)
 		rros_conf_free(&c);
 		return 1;
 	}
-	rc = render_all(base, &t, &c, t.full_compositor && access("/usr/bin/swayfx", X_OK) == 0);
 	rros_theme_palette(&t, &p);
-	if (rc == 0 && getenv("SWAYSOCK"))
-		if (system("swaymsg -q reload >/dev/null 2>&1; pkill -SIGUSR2 waybar >/dev/null 2>&1; pkill -SIGUSR2 mako >/dev/null 2>&1") != 0 && !quiet)
-			fputs("rros-theme: aviso: no se pudo recargar el escritorio\n", stderr);
+	ensure_wallpaper(&t, &p, wp, sizeof wp);
+	{
+		/* el archivo propio del usuario para Hyprland: existe siempre, así `source` no falla */
+		char personal[1100];
+		FILE *pf;
+
+		snprintf(personal, sizeof personal, "%s/hypr/personal.conf", base);
+		if (access(personal, F_OK) != 0 && rros_mkdir_parents(personal) == 0 && (pf = fopen(personal, "w"))) {
+			fputs("# Tus líneas para Hyprland (https://wiki.hypr.land). RROS no toca este archivo.\n", pf);
+			fclose(pf);
+		}
+	}
+	rc = render_all(base, &t, &c, access("/usr/bin/swayfx", X_OK) == 0);
+	if (rc == 0)
+		reload_desktop(&t, wp, quiet);
 	if (rc == 0 && !quiet)
 		printf("tema aplicado: %s (%s, acento %s) en %s\n", t.theme, t.dark ? "oscuro" : "claro", p.accent, base);
 	rros_conf_free(&c);
@@ -224,6 +292,104 @@ static int cmd_list(const char *profile)
 	return 0;
 }
 
+static int cmd_desktop(const char *profile, const char *name)
+{
+	struct rros_theme t;
+	struct rros_conf c;
+	const struct rros_desktop_preset *cur, *d;
+	char err[300];
+
+	if (!name) {
+		if (load_theme(&t, &c, profile))
+			return 1;
+		cur = rros_desktop_current(&c);
+		for (size_t i = 0; i < rros_desktop_presets_len; i++) {
+			d = &rros_desktop_presets[i];
+			printf("%c %-9s %s\n", d == cur ? '*' : ' ', d->id, d->desc);
+		}
+		if (!cur)
+			puts("  (ahora: personalizado)");
+		rros_conf_free(&c);
+		return 0;
+	}
+	d = rros_desktop_find(name);
+	if (!d) {
+		fprintf(stderr, "rros-theme: no hay ningún estilo de escritorio '%s' (clasico, moderno, mosaico)\n", name);
+		return 1;
+	}
+	for (size_t k = 0; k < 12 && d->keys[k][0]; k++)
+		if (rros_user_set(d->keys[k][0], d->keys[k][1], 0, err, sizeof err)) {
+			fprintf(stderr, "rros-theme: %s\n", err);
+			return 1;
+		}
+	printf("escritorio: %s\n", d->label);
+	return cmd_apply(profile, 1);
+}
+
+static int cmd_wallpaper(const char *profile, int argc, char **argv, int i)
+{
+	static const char *styles[] = { "aurora", "ondas", "degradado", "circulos", "liso" };
+	const char *style = NULL, *out = NULL;
+	int w = 1920, h = 1080, next = 0;
+	struct rros_theme t;
+	struct rros_conf c;
+	struct rros_palette p;
+	char err[300];
+
+	for (; i < argc; i++) {
+		if (!strcmp(argv[i], "--style") && i + 1 < argc)
+			style = argv[++i];
+		else if (!strcmp(argv[i], "--out") && i + 1 < argc)
+			out = argv[++i];
+		else if (!strcmp(argv[i], "--size") && i + 1 < argc && sscanf(argv[++i], "%dx%d", &w, &h) == 2)
+			;
+		else if (!strcmp(argv[i], "--next"))
+			next = 1;
+		else {
+			usage();
+			return 2;
+		}
+	}
+	if (load_theme(&t, &c, profile))
+		return 1;
+	rros_conf_free(&c);
+	rros_theme_palette(&t, &p);
+	if (next) {
+		size_t k = 0;
+
+		while (k < 4 && strcmp(styles[k], t.wallpaper_style))
+			k++;
+		if (rros_user_set("ui.wallpaper_style", styles[(k + 1) % 4], 0, err, sizeof err) ||
+		    (t.wallpaper[0] && rros_user_unset("ui.wallpaper", 0, err, sizeof err))) {
+			fprintf(stderr, "rros-theme: %s\n", err);
+			return 1;
+		}
+		printf("fondo: %s\n", styles[(k + 1) % 4]);
+		return cmd_apply(profile, 1);
+	}
+	if (!style)
+		style = t.wallpaper_style;
+	if (!out) {
+		fputs("rros-theme: indica --out ARCHIVO.png (o usa --next para cambiar el del escritorio)\n", stderr);
+		return 2;
+	}
+	{
+		size_t k = 0;
+
+		while (k < 4 && strcmp(styles[k], style))
+			k++;
+		if (k == 4) {
+			fprintf(stderr, "rros-theme: estilo de fondo desconocido: %s (aurora, ondas, degradado, circulos)\n", style);
+			return 1;
+		}
+	}
+	if (rros_wallpaper_render(style, &p, w, h, out)) {
+		fprintf(stderr, "rros-theme: no se pudo escribir %s\n", out);
+		return 1;
+	}
+	return 0;
+}
+
 static int cmd_cycle(const char *profile)
 {
 	struct rros_theme_info list[64];
@@ -268,6 +434,10 @@ int main(int argc, char **argv)
 		return cmd_list(profile);
 	if (!strcmp(cmd, "cycle"))
 		return cmd_cycle(profile);
+	if (!strcmp(cmd, "escritorio") || !strcmp(cmd, "desktop"))
+		return cmd_desktop(profile, i < argc ? argv[i] : NULL);
+	if (!strcmp(cmd, "wallpaper") || !strcmp(cmd, "fondo"))
+		return cmd_wallpaper(profile, argc, argv, i);
 	if (!strcmp(cmd, "use") && i + 1 == argc)
 		return cmd_use(profile, argv[i]);
 	if (!strcmp(cmd, "new") && i < argc) {

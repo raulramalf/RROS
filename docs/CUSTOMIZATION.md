@@ -19,17 +19,24 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.font_antialias` | opción | none|grayscale|rgba | Suavizado de fuentes |
 | `ui.wallpaper` | texto |  | Ruta del fondo de pantalla |
 | `ui.wallpaper_mode` | opción | fill|fit|stretch|center|tile | Ajuste del fondo |
-| `ui.compositor` | opción | minimal|full | Compositor Wayland |
+| `ui.wallpaper_style` | opción | aurora|ondas|degradado|circulos|liso | Fondo generado con los colores del tema (si no eliges una imagen) |
+| `ui.compositor` | opción | hyprland|sway | Compositor Wayland: Hyprland (animaciones y efectos) o sway (más ligero) |
 | `ui.effects` | opción | off|basic|advanced | Nivel de efectos visuales |
 | `ui.animations` | booleano | true / false | Animaciones de ventanas y menús |
 | `ui.animation_speed` | entero | 25 – 400 | Velocidad de animación (%) |
+| `ui.animation_style` | opción | suave|rapida|rebote|deslizar | Estilo de las animaciones de ventanas y escritorios |
 | `ui.transparency` | entero | 0 – 100 | Transparencia de paneles y ventanas (%) |
 | `ui.blur` | booleano | true / false | Desenfoque de fondo |
+| `ui.blur_strength` | entero | 1 – 20 | Intensidad del desenfoque |
 | `ui.shadows` | booleano | true / false | Sombras de ventanas |
+| `ui.dim_inactive` | booleano | true / false | Oscurecer un poco las ventanas sin foco |
+| `ui.border_gradient` | booleano | true / false | Borde de la ventana activa en degradado (acento → magenta) |
 | `ui.corner_radius` | entero | 0 – 32 | Radio de esquinas (px) |
 | `ui.gap` | entero | 0 – 64 | Separación entre ventanas (px) |
 | `ui.border_width` | entero | 0 – 16 | Grosor de borde de ventana (px) |
 | `ui.layout` | opción | floating|tiling|hybrid | Modo de gestión de ventanas |
+| `ui.tiling_layout` | opción | dwindle|master | Reparto del mosaico: en espiral (dwindle) o una ventana principal (master) |
+| `ui.dock` | booleano | true / false | Dock de aplicaciones abajo, como en macOS |
 | `ui.panel_position` | opción | top|bottom|left|right | Posición del panel |
 | `ui.panel_size` | entero | 16 – 128 | Tamaño del panel (px) |
 | `ui.panel_autohide` | booleano | true / false | Ocultar panel automáticamente |
@@ -66,6 +73,7 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `input.disable_while_typing` | booleano | true / false | Desactivar touchpad al escribir |
 | `input.pointer_speed` | entero | -100 – 100 | Velocidad del puntero |
 | `input.numlock_on_boot` | booleano | true / false | Bloq Num al iniciar |
+| `input.gestures` | booleano | true / false | Gestos del touchpad: deslizar con tres dedos cambia de escritorio |
 | `power.mode` | opción | saver|balanced|performance | Modo de energía |
 | `power.screen_off_minutes` | entero | 0 – 1440 | Apagar pantalla tras N minutos (0 = nunca) |
 | `power.suspend_minutes` | entero | 0 – 1440 | Suspender tras N minutos (0 = nunca) |

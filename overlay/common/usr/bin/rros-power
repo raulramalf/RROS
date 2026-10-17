@@ -7,8 +7,12 @@ confirm() {
 }
 
 case "$choice" in
-	Bloquear) exec swaylock -f ;;
-	"Cerrar sesión") confirm "¿Cerrar sesión?" && exec swaymsg exit ;;
+	Bloquear) exec rros-lock -f ;;
+	"Cerrar sesión")
+		confirm "¿Cerrar sesión?" || exit 0
+		if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then exec hyprctl dispatch exit; fi
+		exec swaymsg exit
+		;;
 	Suspender) exec systemctl suspend ;;
 	Reiniciar) confirm "¿Reiniciar?" && exec systemctl reboot ;;
 	Apagar) confirm "¿Apagar?" && exec systemctl poweroff ;;

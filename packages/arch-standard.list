@@ -20,5 +20,4 @@ ffmpeg
 btrfs-progs
 vulkan-intel
 vulkan-radeon
-libva-mesa-driver       # vídeo acelerado (AMD)
-intel-media-driver      # vídeo acelerado (Intel recientes)
+intel-media-driver      # vídeo acelerado en Intel recientes (AMD: ya va en mesa)

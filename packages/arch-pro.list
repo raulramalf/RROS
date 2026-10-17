@@ -25,5 +25,4 @@ ffmpeg
 btrfs-progs
 vulkan-intel
 vulkan-radeon
-libva-mesa-driver
 intel-media-driver

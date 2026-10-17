@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <stdio.h>
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -365,6 +366,43 @@ static int cmd_list(const char *profile)
 	return 0;
 }
 
+/* En una sesión de Plasma, el estilo cambia también los paneles: plasmashell ejecuta el guion del estilo
+ * (/usr/share/rros/plasma/ESTILO.js) por D-Bus, sin shell de por medio. */
+static void plasma_layout(const char *id)
+{
+	const char *desk = getenv("XDG_CURRENT_DESKTOP"), *dir = getenv("RROS_PLASMA_LAYOUTS");
+	char path[600], *script;
+	FILE *f;
+	long len;
+	pid_t pid;
+	int st;
+
+	if (!desk || !strstr(desk, "KDE"))
+		return;
+	snprintf(path, sizeof path, "%s/%s.js", dir && *dir ? dir : "/usr/share/rros/plasma", id);
+	if (!(f = fopen(path, "r")))
+		return;
+	fseek(f, 0, SEEK_END);
+	len = ftell(f);
+	rewind(f);
+	script = len > 0 && len < 65536 ? calloc(1, (size_t)len + 1) : NULL;
+	if (!script || fread(script, 1, (size_t)len, f) != (size_t)len) {
+		fclose(f);
+		free(script);
+		return;
+	}
+	fclose(f);
+	pid = fork();
+	if (pid == 0) {
+		execlp("qdbus6", "qdbus6", "org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell.evaluateScript",
+		       script, (char *)NULL);
+		_exit(127);
+	}
+	if (pid < 0 || waitpid(pid, &st, 0) < 0 || !WIFEXITED(st) || WEXITSTATUS(st) != 0)
+		fputs("rros-theme: aviso: Plasma no pudo cambiar los paneles\n", stderr);
+	free(script);
+}
+
 static int cmd_desktop(const char *profile, const char *name)
 {
 	struct rros_theme t;
@@ -396,6 +434,7 @@ static int cmd_desktop(const char *profile, const char *name)
 			return 1;
 		}
 	printf("escritorio: %s\n", d->label);
+	plasma_layout(d->id);
 	return cmd_apply(profile, 1);
 }
 

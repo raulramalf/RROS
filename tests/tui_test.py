@@ -97,7 +97,7 @@ check(wait_conf('hot_corners = false'), "y lo vuelve a alternar")
 # enum: ciclar con la flecha derecha
 send("/"); send("ui.panel_position"); send("\r")
 send("\x1b[C")
-check(wait_conf('panel_position = "left"'), "flecha derecha cicla un enum (bottom -> left)")
+check(wait_conf('panel_position = "bottom"'), "flecha derecha cicla un enum (top -> bottom)")
 
 # texto: editar con línea de entrada
 send("/"); send("ui.accent"); send("\r")

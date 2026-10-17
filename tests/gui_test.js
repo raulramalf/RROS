@@ -221,11 +221,11 @@ const SHOTS = process.env.SHOTS || '';
   await p.click('#nav button:has-text("Escritorio y fondo")');
   await p.waitForSelector('.acard[data-desktop="moderno"]');
   ok(await p.locator('.acard[data-desktop]').count() === 3, 'tres estilos de escritorio');
-  await p.click('.acard[data-desktop="moderno"] button:has-text("Usar este estilo")');
-  await p.waitForSelector('.acard[data-desktop="moderno"] .badge.ok', { timeout: 8000 });
+  await p.click('.acard[data-desktop="clasico"] button:has-text("Usar este estilo")');
+  await p.waitForSelector('.acard[data-desktop="clasico"] .badge.ok', { timeout: 8000 });
   {
     const u = userConf();
-    ok(/dock = true/.test(u) && /panel_position = "top"/.test(u) && /center = "clock"/.test(u), 'el estilo moderno escribe sus claves (dock, barra arriba)');
+    ok(/dock = false/.test(u) && /panel_position = "bottom"/.test(u) && /taskbar = true/.test(u), 'el estilo clásico escribe sus claves (barra abajo, lista de ventanas)');
   }
   await p.waitForFunction(() => /url\(blob:/.test(getComputedStyle(document.querySelector('.wpthumb[data-style="ondas"]')).backgroundImage), null, { timeout: 15000 }).catch(() => {});
   ok(/blob:/.test(await p.evaluate(() => getComputedStyle(document.querySelector('.wpthumb[data-style="ondas"]')).backgroundImage)), 'miniatura real del fondo (PNG generado por rros-theme)');

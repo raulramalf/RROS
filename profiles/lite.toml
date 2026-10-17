@@ -17,13 +17,13 @@ font = "Inter"
 font_mono = "JetBrains Mono"
 gap = 4
 border_width = 2
-panel_position = "bottom"
-panel_size = 40
+panel_position = "top"
+panel_size = 30
 compositor = "hyprland"
 wallpaper_style = "degradado"
 animation_style = "rapida"
 border_gradient = false
-dock = false
+dock = true
 effects = "off"
 animations = false
 blur = false
@@ -38,12 +38,12 @@ blur_strength = 4
 dim_inactive = false
 
 [panel]
-# estilo «clásico»: barra de tareas abajo, como en Windows (rros theme escritorio)
-style = "flat"
-left = "apps,taskbar"
-center = "none"
-right = "updates,tray,network,audio,battery,clock,power"
-taskbar = true
+# estilo «moderno»: barra fina arriba y dock abajo, como en macOS (rros theme escritorio)
+style = "floating"
+left = "apps,workspaces"
+center = "clock"
+right = "updates,tray,network,audio,battery,power"
+taskbar = false
 
 [input]
 gestures = true

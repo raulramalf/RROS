@@ -5,6 +5,8 @@
 #   rros-install --disk /dev/vda --dry-run     muestra lo que haría sin tocar el disco
 # Borra TODO el disco elegido. El esquema de particiones lo calcula `rros-installer plan`.
 set -euo pipefail
+# se lee la salida de lsblk, blkid...: siempre en inglés
+export LC_ALL=C
 
 usage() {
 	cat <<'EOF'

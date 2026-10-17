@@ -177,6 +177,15 @@ int rros_theme_palette(const struct rros_theme *t, struct rros_palette *p)
 		load_palette("aurora", t->dark, p, 0);
 	if (t->accent[0])
 		put(p->accent, t->accent);
+	if (t->high_contrast) {
+		/* alto contraste: negro y blanco puros, acento amarillo (o azul oscuro en claro) */
+		static const struct rros_palette dark = { "#000000", "#000000", "#ffffff", "#f0f0f0", "#ffffff",
+			"#ffff00", "", "#ff6b6b", "#5cff5c", "#ffff00", "#66ccff", "#ff99ff", "#66ffff" };
+		static const struct rros_palette light = { "#ffffff", "#ffffff", "#000000", "#1a1a1a", "#000000",
+			"#0000cc", "", "#b00000", "#006400", "#7a5c00", "#0000cc", "#800080", "#005f5f" };
+
+		*p = t->dark ? dark : light;
+	}
 	mix(p->accent, p->bg, 55, p->accent_dim);
 	return miss;
 }

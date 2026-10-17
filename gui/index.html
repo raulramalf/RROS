@@ -248,7 +248,7 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     });
   }
   /* página inicial desde la dirección: #seguridad, #dispositivos, #archivos, #tienda, #cat:ui... */
-  var ALIAS = { seguridad: "security", dispositivos: "devices", archivos: "files", tienda: "apps", temas: "themes", copias: "backup" };
+  var ALIAS = { seguridad: "security", dispositivos: "devices", archivos: "files", tienda: "apps", temas: "themes", copias: "backup", accesibilidad: "access", bienvenida: "welcome", instalar: "install" };
   (function () {
     var h0 = decodeURIComponent((location.hash || "").slice(1));
     if (/^[a-z:]{1,31}$/.test(h0)) page = ALIAS[h0] || h0;
@@ -264,7 +264,7 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     return api("/api/set", { key: key, value: String(value) }).then(function (r) {
       if (!r.ok) { toast(r.error, true); return load().then(function () { return false; }); }
       var ko = keyObj(key); if (ko) { ko.value = String(value); ko.source = "user"; }
-      if (/^ui\.(theme|accent|color_scheme)$/.test(key)) return load().then(function () { return true; });
+      if (/^ui\.(theme|accent|color_scheme|high_contrast)$/.test(key)) return load().then(function () { return true; });
       return true;
     });
   }
@@ -306,13 +306,17 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
       nav.appendChild(h("button", { type: "button", "aria-current": page === id && !query ? "page" : null, onclick: function () { go(id); } },
         h("span", { text: label }), count != null ? h("span", { class: "count", text: String(count) }) : null));
     }
+    nav.appendChild(h("div", { class: "grp", text: "Empezar" }));
+    item("welcome", "Bienvenida");
+    if (S.live) item("install", "Instalar RROS");
     nav.appendChild(h("div", { class: "grp", text: "Apariencia" }));
     item("themes", "Temas y colores");
+    item("access", "Accesibilidad");
     nav.appendChild(h("div", { class: "grp", text: "Aplicaciones" }));
     item("apps", "Tienda de aplicaciones");
     item("files", "Crear archivos");
     nav.appendChild(h("div", { class: "grp", text: "Ajustes" }));
-    S.categories.forEach(function (c) { if (c.id !== "security") item("cat:" + c.id, c.label, counts[c.id] || 0); });
+    S.categories.forEach(function (c) { if (c.id !== "security" && c.id !== "access") item("cat:" + c.id, c.label, counts[c.id] || 0); });
     nav.appendChild(h("div", { class: "grp", text: "Personalización" }));
     DYN.forEach(function (d) { item("dyn:" + d[0], d[1], S.dynamic[d[0]].length); });
     nav.appendChild(h("div", { class: "grp", text: "Sistema" }));
@@ -395,6 +399,9 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
     if (page === "security") return drawSecurity(root);
     if (page === "devices") return drawDevices(root);
     if (page === "files") return drawFiles(root);
+    if (page === "access") return drawAccess(root);
+    if (page === "welcome") return drawWelcome(root);
+    if (page === "install") return drawInstall(root);
     if (page.indexOf("dyn:") === 0) return drawDynamic(root, page.slice(4));
     var cat = page.slice(4), c = S.categories.filter(function (x) { return x.id === cat; })[0] || S.categories[0];
     root.appendChild(h("h1", { text: c.label }));
@@ -455,6 +462,76 @@ h2 { font-family: var(--font-display); font-size: 16px; margin: 28px 0 10px; }
       });
       if (!shown.length) list.appendChild(h("div", { class: "empty", text: "Ninguna aplicación coincide." }));
     }
+  }
+
+  /* ---------- bienvenida ---------- */
+  var KEYS_HELP = [["Super + D", "Menú de aplicaciones (también el botón «Aplicaciones»)"], ["Super + Intro", "Terminal"],
+    ["Super + B", "Navegador"], ["Super + E", "Archivos"], ["Super + Q", "Cerrar la ventana"], ["Super + F", "Pantalla completa"],
+    ["Super + flechas", "Pasar a otra ventana"], ["Super + 1, 2, 3...", "Cambiar de escritorio"],
+    ["Super + Mayús + número", "Llevar la ventana a otro escritorio"], ["Super + V", "Historial del portapapeles"],
+    ["Super + ,", "Ajustes"], ["Super + Esc", "Bloquear"], ["Super + Mayús + E", "Apagar, reiniciar, cerrar sesión"],
+    ["Super + Alt + S", "Lector de pantalla"], ["Super + F1", "Esta ayuda"]];
+  var LAYOUTS = [["floating", "Ventanas libres", "Como en Windows o macOS: arrástralas por la barra de título y haz clic para elegir."],
+    ["tiling", "Mosaico", "Las ventanas se reparten la pantalla solas; rápido con el teclado y sin solaparse."],
+    ["hybrid", "Pestañas", "Cada ventana ocupa todo el escritorio y cambias entre ellas como en un navegador."]];
+  function drawWelcome(root) {
+    root.appendChild(h("h1", { text: "Bienvenido a RROS" }));
+    root.appendChild(h("p", { class: "sub", text: "Tres cosas para empezar: cómo quieres las ventanas, los atajos básicos y dónde está cada cosa. Vuelve aquí cuando quieras con Super + F1 (Super es la tecla de Windows)." }));
+    if (S.live) {
+      root.appendChild(h("div", { class: "card", style: "padding:16px;margin-bottom:16px" },
+        h("b", { text: "Estás probando RROS sin instalar" }),
+        h("p", { class: "sub", style: "margin:4px 0 10px", text: "Nada se guarda al apagar. Cuando quieras, instálalo en el disco (puede convivir con Windows)." }),
+        h("button", { class: "btn", type: "button", text: "Instalar RROS", onclick: function () { go("install"); } })));
+    }
+    root.appendChild(h("h2", { text: "¿Cómo quieres las ventanas?" }));
+    var cur = (keyObj("ui.layout") || {}).value, lay = h("div", { class: "apps", role: "group", "aria-label": "Modo de ventanas" });
+    LAYOUTS.forEach(function (l) {
+      lay.appendChild(h("div", { class: "acard", "data-layout": l[0] }, h("div", { class: "an" }, h("b", { text: l[1] }), cur === l[0] ? h("span", { class: "badge ok", text: "en uso" }) : null),
+        h("p", { text: l[2] }),
+        h("div", { class: "ab" }, h("button", { class: "btn small" + (cur === l[0] ? " ghost" : ""), type: "button", text: cur === l[0] ? "Elegido" : "Elegir", disabled: cur === l[0], onclick: function () {
+          setKey("ui.layout", l[0]).then(function (ok) { if (ok) { toast("Ventanas: " + l[1].toLowerCase()); drawPage(); } });
+        } }))));
+    });
+    root.appendChild(lay);
+    root.appendChild(h("h2", { text: "Lo básico" }));
+    var tbl = h("div", { class: "card rows" });
+    KEYS_HELP.forEach(function (k) { tbl.appendChild(h("div", { class: "row" }, h("div", { class: "lbl" }, h("b", { text: k[1] })), h("code", { text: k[0] }))); });
+    root.appendChild(tbl);
+    root.appendChild(h("p", { class: "sub", text: "Con el ratón: el botón «Aplicaciones» del panel abre el menú; las ventanas abiertas aparecen en el panel (clic para ir a una, clic central para cerrarla); Super + arrastrar mueve una ventana y Super + clic derecho la cambia de tamaño." }));
+    root.appendChild(h("h2", { text: "¿Qué quieres hacer?" }));
+    var links = h("div", { class: "wrapline" });
+    [["themes", "Cambiar el aspecto"], ["apps", "Instalar programas"], ["files", "Crear un archivo"], ["access", "Accesibilidad"], ["security", "Seguridad"], ["devices", "Dispositivos"]].forEach(function (l) {
+      links.appendChild(h("button", { class: "btn ghost", type: "button", text: l[1], onclick: function () { go(l[0]); } }));
+    });
+    root.appendChild(links);
+  }
+  function drawInstall(root) {
+    root.appendChild(h("h1", { text: "Instalar RROS" }));
+    root.appendChild(h("div", { class: "empty", text: "Cargando el instalador…" }));
+  }
+
+  /* ---------- accesibilidad ---------- */
+  var A11Y_KEYS = ["access.screen_reader", "access.onscreen_keyboard", "ui.high_contrast", "ui.reduce_motion", "ui.font_size", "ui.scale", "ui.cursor_size"];
+  function drawAccess(root) {
+    root.appendChild(h("h1", { text: "Accesibilidad" }));
+    root.appendChild(h("p", { class: "sub", text: "Lector de pantalla con voz en español, teclado en pantalla, alto contraste y tamaños. Los cambios se aplican al instante." }));
+    function a11y(what, label) {
+      return h("button", { class: "btn", type: "button", text: label, onclick: function () {
+        api("/api/a11y", { what: what }).then(function (r) { if (!r.ok) return toast(r.error, true); toast(label + ": hecho"); });
+      } });
+    }
+    root.appendChild(h("div", { class: "apps" },
+      h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: "Lector de pantalla" }), h("span", { class: "badge", text: "Super+Alt+S" })),
+        h("p", { text: "Orca lee en voz alta lo que hay en las aplicaciones. Funciona con las apps GTK (archivos, editor, navegador, ajustes); los atajos propios de Orca dependen del compositor." }),
+        h("div", { class: "ab" }, a11y("lector", "Activar o desactivar ahora"))),
+      h("div", { class: "acard" }, h("div", { class: "an" }, h("b", { text: "Teclado en pantalla" }), h("span", { class: "badge", text: "Super+Alt+K" })),
+        h("p", { text: "Un teclado táctil en la parte de abajo, para pantallas táctiles o si no puedes usar el teclado físico." }),
+        h("div", { class: "ab" }, a11y("teclado", "Mostrar u ocultar ahora")))));
+    root.appendChild(h("h2", { text: "Ajustes" }));
+    var rows = h("div", { class: "card rows" });
+    A11Y_KEYS.forEach(function (key) { var k = keyObj(key); if (k) rows.appendChild(settingRow(k)); });
+    root.appendChild(rows);
+    root.appendChild(h("p", { class: "sub", text: "Más atajos: Super+F1 abre la ayuda de bienvenida, Super+Intro una terminal y Super+D el menú de aplicaciones." }));
   }
 
   /* ---------- seguridad ---------- */

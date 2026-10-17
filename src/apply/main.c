@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "rros_profile.h"
+#include "rros_schema.h"
 #include "rros_security.h"
 
 static const struct { const char *key, *unit; } services[] = {
@@ -254,6 +255,47 @@ int main(int argc, char **argv)
 		 rros_conf_get_bool(&c, "net.wifi_powersave", 0) ? 3 : 2,
 		 rros_conf_get_bool(&c, "net.mac_randomize", 0) ? "random" : "preserve");
 	bad |= write_text("/etc/NetworkManager/conf.d/90-rros.conf", buf) != 0;
+
+	/* idioma y zona horaria */
+	{
+		const char *lang = rros_conf_get(&c, "locale.language"), *tz = rros_conf_get(&c, "locale.timezone");
+
+		if (lang && rros_locale_name_ok(lang)) {
+			char ll[8] = "";
+			const char *us = strchr(lang, '_');
+
+			if (us && us - lang < (long)sizeof ll)
+				snprintf(ll, sizeof ll, "%.*s", (int)(us - lang), lang);
+			if (*ll)
+				snprintf(buf, sizeof buf, "# Generado por rros-apply (locale.language)\nLANG=%s\nLANGUAGE=%.*s:%s\n",
+					 lang, (int)(strchr(lang, '.') - lang), lang, ll);
+			else
+				snprintf(buf, sizeof buf, "# Generado por rros-apply (locale.language)\nLANG=%s\n", lang);
+			bad |= write_text("/etc/default/locale", buf) != 0;
+		}
+		if (tz && rros_timezone_name_ok(tz)) {
+			char zone[300], link[400], target[300];
+
+			snprintf(zone, sizeof zone, "%s/usr/share/zoneinfo/%s", root, tz);
+			snprintf(target, sizeof target, "/usr/share/zoneinfo/%s", tz);
+			snprintf(link, sizeof link, "%s/etc/localtime", root);
+			if (access(zone, R_OK) != 0) {
+				fprintf(stderr, "rros-apply: zona horaria desconocida: %s\n", tz);
+				bad = 1;
+			} else {
+				char tmp[420];
+
+				snprintf(tmp, sizeof tmp, "%s.rros-tmp", link);
+				unlink(tmp);
+				if (rros_mkdir_parents(link) || symlink(target, tmp) || rename(tmp, link)) {
+					fprintf(stderr, "rros-apply: no se pudo cambiar la zona horaria\n");
+					bad = 1;
+				}
+				snprintf(buf, sizeof buf, "%s\n", tz);
+				bad |= write_text("/etc/timezone", buf) != 0;
+			}
+		}
+	}
 
 	{
 		struct rros_secpol sp;

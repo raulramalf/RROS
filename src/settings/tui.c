@@ -27,7 +27,7 @@ struct row {
 };
 
 #define MAXROWS 160
-#define MAXCATS 20
+#define MAXCATS 24
 
 static struct termios orig;
 static int raw_on;
@@ -150,7 +150,7 @@ static int read_key(void)
 
 static void setup_cats(void)
 {
-	ncats = model_categories(cats, 16);
+	ncats = model_categories(cats, MAXCATS - 3);   /* deja sitio a atajos, reglas e inicio */
 	for (size_t i = 0; i < ncats; i++)
 		catlabels[i] = model_category_label(cats[i]);
 	snprintf(cats[ncats], 16, "keybind"); catlabels[ncats++] = "Atajos";
@@ -374,7 +374,7 @@ static int affects_desktop(const char *key)
 {
 	return !strncmp(key, "ui.", 3) || !strncmp(key, "panel.", 6) || !strncmp(key, "term.", 5) ||
 	       !strncmp(key, "input.", 6) || !strncmp(key, "keybind.", 8) || !strncmp(key, "rule.", 5) ||
-	       !strncmp(key, "autostart.", 10);
+	       !strncmp(key, "autostart.", 10) || !strncmp(key, "access.", 7);
 }
 
 /* Los ajustes del sistema los aplica rros-apply como root: sin root solo se explica cómo hacerlo. */

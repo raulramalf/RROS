@@ -50,6 +50,7 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `panel.left` | texto |  | Módulos a la izquierda, separados por comas |
 | `panel.center` | texto |  | Módulos en el centro, separados por comas |
 | `panel.right` | texto |  | Módulos a la derecha, separados por comas |
+| `panel.taskbar` | booleano | true / false | Mostrar las ventanas abiertas en el panel (clic: ir a ella; clic central: cerrarla) |
 | `term.scrollback` | entero | 0 – 100000 | Líneas de historial de la terminal |
 | `term.cursor` | opción | block|beam|underline | Forma del cursor de la terminal |
 | `term.padding` | entero | 0 – 40 | Margen interior de la terminal (px) |
@@ -100,6 +101,8 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `privacy.crash_reports` | booleano | true / false | Informes de fallos |
 | `privacy.lock_minutes` | entero | 0 – 1440 | Bloquear pantalla tras N minutos (0 = nunca) |
 | `privacy.disk_encryption` | booleano | true / false | Cifrado de disco (LUKS) en la instalación |
+| `access.screen_reader` | booleano | true / false | Lector de pantalla (Orca) al iniciar sesión; Super+Alt+S lo activa o desactiva |
+| `access.onscreen_keyboard` | booleano | true / false | Teclado en pantalla al iniciar sesión; Super+Alt+K lo muestra u oculta |
 | `security.firewall` | booleano | true / false | Cortafuegos: bloquea las conexiones entrantes no pedidas |
 | `security.firewall_ping` | booleano | true / false | Responder a ping con el cortafuegos activo |
 | `security.firewall_allow` | texto |  | Puertos abiertos, p. ej. 8080/tcp,5000-5010/udp (vacío = ninguno) |

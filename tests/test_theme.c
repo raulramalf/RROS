@@ -49,7 +49,7 @@ int main(void)
 	s = render(rros_render_sway, &t);
 	CHECK(strstr(s, "gaps inner 14") != NULL);
 	CHECK(strstr(s, "gaps outer 7") != NULL);
-	CHECK(strstr(s, "default_border pixel 4") != NULL);
+	CHECK(strstr(s, "default_border normal 4") != NULL);   /* ventanas libres: con barra de título */
 	CHECK(strstr(s, "#ff8800 #ff8800 #0b1020") != NULL);
 	CHECK(strstr(s, "output * scale 1.50") != NULL);
 	CHECK(strstr(s, "xkb_layout latam") != NULL);
@@ -143,7 +143,7 @@ int main(void)
 	/* ---- panel configurable ---- */
 	from_text(&t, "[panel]\nstyle = \"floating\"\nleft = \"workspaces,window\"\nright = \"cpu,hackme,battery\"\n");
 	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"modules-left\": [\"sway/workspaces\", \"sway/window\"]") != NULL);
+	CHECK(strstr(s, "\"modules-left\": [\"sway/workspaces\", \"sway/window\", \"wlr/taskbar\"]") != NULL);
 	CHECK(strstr(s, "\"modules-right\": [\"cpu\", \"battery\"]") != NULL); /* módulo desconocido, descartado */
 	CHECK(strstr(s, "hackme") == NULL);
 	CHECK(strstr(s, "\"margin\": \"6 8 0 8\"") != NULL);
@@ -255,7 +255,7 @@ int main(void)
 	/* panel con botón de aplicaciones y de energía */
 	from_text(&t, "");
 	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"modules-left\": [\"custom/apps\", \"sway/workspaces\", \"sway/mode\"]") != NULL);
+	CHECK(strstr(s, "\"modules-left\": [\"custom/apps\", \"sway/workspaces\", \"sway/mode\", \"wlr/taskbar\"]") != NULL);
 	CHECK(strstr(s, "\"custom/power\"]") != NULL);
 	CHECK(strstr(s, "\"on-click\": \"pavucontrol\"") != NULL);
 	free(s);
@@ -304,5 +304,62 @@ int main(void)
 	}
 
 	rros_conf_free(&cur);
+	/* ---- accesibilidad ---- */
+	{
+		struct rros_palette pal;
+		char *gtk;
+
+		from_text(&t, "[ui]\nhigh_contrast = true\nborder_width = 1\n");
+		rros_theme_palette(&t, &pal);
+		CHECK(!strcmp(pal.bg, "#000000") && !strcmp(pal.text, "#ffffff"));
+		CHECK(t.border >= 3);
+		gtk = render(rros_render_gtk_settings, &t);
+		CHECK(strstr(gtk, "gtk-theme-name=HighContrast") != NULL);
+		free(gtk);
+		from_text(&t, "[ui]\nhigh_contrast = true\ncolor_scheme = \"light\"\n");
+		rros_theme_palette(&t, &pal);
+		CHECK(!strcmp(pal.bg, "#ffffff") && !strcmp(pal.text, "#000000"));
+
+		from_text(&t, "[ui]\nreduce_motion = true\n");
+		gtk = render(rros_render_gtk_settings, &t);
+		CHECK(strstr(gtk, "gtk-enable-animations=false") != NULL);
+		CHECK(strstr(gtk, "HighContrast") == NULL);
+		free(gtk);
+
+		from_text(&t, "");
+		s = render(rros_render_sway, &t);
+		CHECK(strstr(s, "bindsym $mod+Alt+s exec rros-a11y lector") != NULL);
+		CHECK(strstr(s, "bindsym $mod+Alt+k exec rros-a11y teclado") != NULL);
+		CHECK(strstr(s, "exec rros-a11y lector on") == NULL);
+		free(s);
+		from_text(&t, "[access]\nscreen_reader = true\nonscreen_keyboard = true\n");
+		s = render(rros_render_sway, &t);
+		CHECK(strstr(s, "exec rros-a11y lector on") != NULL && strstr(s, "exec rros-a11y teclado on") != NULL);
+		free(s);
+		/* el usuario puede quitarse el atajo del lector sin que sway se queje de duplicados */
+		from_text(&t, "[keybind]\nmio = \"Mod+Alt+s exec foot\"\n");
+		s = render(rros_render_sway, &t);
+		CHECK(strstr(s, "rros-a11y lector") == NULL);
+		free(s);
+	}
+	/* ---- facilidad: lista de ventanas, barras de título y clic para enfocar ---- */
+	from_text(&t, "");
+	s = render(rros_render_waybar, &t);
+	CHECK(strstr(s, "\"wlr/taskbar\"]") != NULL || strstr(s, "\"wlr/taskbar\",") != NULL);
+	CHECK(strstr(s, "\"on-click-middle\": \"close\"") != NULL);
+	free(s);
+	from_text(&t, "[panel]\ntaskbar = false\n");
+	s = render(rros_render_waybar, &t);
+	CHECK(strstr(s, "[\"wlr/taskbar\"") == NULL && strstr(s, ", \"wlr/taskbar\"") == NULL);
+	free(s);
+	from_text(&t, "[ui]\nlayout = \"floating\"\n");
+	s = render(rros_render_sway, &t);
+	CHECK(strstr(s, "default_floating_border normal") != NULL && strstr(s, "focus_follows_mouse no") != NULL);
+	free(s);
+	from_text(&t, "[ui]\nlayout = \"tiling\"\n");
+	s = render(rros_render_sway, &t);
+	CHECK(strstr(s, "default_border pixel") != NULL && strstr(s, "focus_follows_mouse yes") != NULL);
+	CHECK(strstr(s, "bindsym $mod+F1 exec rros-settings open bienvenida") != NULL);
+	free(s);
 	DONE();
 }

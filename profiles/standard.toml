@@ -70,3 +70,7 @@ camera = true
 login_attempts = 10
 sudo_timeout_minutes = 5
 core_dumps = false
+
+[locale]
+# idioma del sistema (menús de las aplicaciones); la zona horaria la elige el instalador
+language = "es_ES.UTF-8"

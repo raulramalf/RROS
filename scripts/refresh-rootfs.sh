@@ -17,6 +17,7 @@ make -C "$ROOT_DIR" install DESTDIR="$out" PREFIX=/usr
 if grep -q '^rros:' "$out/etc/passwd"; then
 	chroot_run "$out" userdel -r rros 2>/dev/null || true
 fi
+chroot_run "$out" locale-gen es_ES.UTF-8 en_US.UTF-8 >/dev/null
 log "regenerando el initramfs"
 chroot_run "$out" update-initramfs -u -k all
 systemctl --root="$out" enable rros-firstboot.service rros-apply.service rros-live.service rros-selftest.service rros-serial-shell.service rros-vconsole.service rros-live-userns.service >/dev/null 2>&1 || true

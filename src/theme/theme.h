@@ -30,6 +30,8 @@ struct rros_theme {
 	int full_compositor;
 	char app_term[48], app_browser[48], app_files[48], app_editor[48];
 	int lock_min, screen_off_min, suspend_min;
+	int high_contrast, reduce_motion, screen_reader, osk;   /* accesibilidad */
+	int taskbar;                                            /* lista de ventanas en el panel */
 };
 
 struct rros_theme_info {

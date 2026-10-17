@@ -350,7 +350,7 @@ static void apply_desktop(void)
 
 static int needs_apply(const char *key)
 {
-	static const char *cats[] = { "ui.", "panel.", "term.", "input.", "keybind.", "rule.", "autostart." };
+	static const char *cats[] = { "ui.", "panel.", "term.", "input.", "keybind.", "rule.", "autostart.", "access." };
 
 	for (size_t i = 0; i < sizeof cats / sizeof *cats; i++)
 		if (!strncmp(key, cats[i], strlen(cats[i])))
@@ -651,6 +651,15 @@ static int handle(int fd, long *last_ping, int *seen_ping, int *quit)
 			respond_run(fd, "rros-devices", args);
 		} else {
 			respond_ok(fd, 0, "acción desconocida");
+		}
+	} else if (!strcmp(r.path, "/api/a11y")) {
+		form_get(r.body, "what", a, sizeof a);
+		if (strcmp(a, "lector") && strcmp(a, "teclado")) {
+			respond_ok(fd, 0, "ayuda desconocida");
+		} else {
+			char *args[] = { "rros-a11y", a, NULL };
+
+			respond_ok(fd, spawn_detached("rros-a11y", args) == 0, "no se pudo iniciar");
 		}
 	} else if (!strcmp(r.path, "/api/new_file")) {
 		char dir[400];

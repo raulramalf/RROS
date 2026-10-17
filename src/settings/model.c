@@ -66,7 +66,8 @@ static const struct { const char *id, *label; } cats[] = {
 	{ "ui", "Interfaz" }, { "panel", "Panel" }, { "term", "Terminal" }, { "display", "Pantalla" },
 	{ "input", "Entrada" }, { "audio", "Sonido" }, { "power", "Energía" }, { "net", "Red" },
 	{ "system", "Sistema" }, { "services", "Servicios" }, { "locale", "Región" },
-	{ "privacy", "Privacidad" }, { "security", "Seguridad" }, { "boot", "Arranque" },
+	{ "privacy", "Privacidad" }, { "access", "Accesibilidad" }, { "security", "Seguridad" },
+	{ "boot", "Arranque" },
 };
 
 size_t model_categories(char names[][16], size_t max)
@@ -240,13 +241,28 @@ int model_state_json(const struct model *m, struct sbuf *o)
 
 	rros_theme_from_conf(&th, &m->eff);
 	rros_theme_palette(&th, &cur);
-	sb_printf(o, "{\"version\":\"%s\",\"codename\":\"%s\",\"profile\":", RROS_VERSION, RROS_CODENAME);
+	/* sistema live (la ISO): la interfaz ofrece instalar RROS */
+	{
+		char cmd[1024] = "";
+		const char *env = getenv("RROS_LIVE");
+		FILE *cf = fopen("/proc/cmdline", "r");
+		int live;
+
+		if (cf) {
+			if (!fgets(cmd, sizeof cmd, cf))
+				cmd[0] = '\0';
+			fclose(cf);
+		}
+		live = env ? !strcmp(env, "1") : strstr(cmd, "boot=casper") != NULL;
+		sb_printf(o, "{\"live\":%s,", live ? "true" : "false");
+	}
+	sb_printf(o, "\"version\":\"%s\",\"codename\":\"%s\",\"profile\":", RROS_VERSION, RROS_CODENAME);
 	sb_json(o, m->profile);
 
 	/* categorías */
 	{
-		char names[16][16];
-		size_t n = model_categories(names, 16);
+		char names[24][16];
+		size_t n = model_categories(names, 24);
 
 		sb_put(o, ",\"categories\":[");
 		for (size_t i = 0; i < n; i++) {

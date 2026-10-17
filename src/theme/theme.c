@@ -122,6 +122,15 @@ void rros_theme_from_conf(struct rros_theme *t, const struct rros_conf *c)
 	t->term_padding = (int)cfg_int(c, "term.padding", 10);
 	cfg_enum(c, "term.cursor", "block", t->term_cursor, sizeof t->term_cursor);
 	t->animations = rros_conf_get_bool(c, "ui.animations", 1);
+	t->high_contrast = rros_conf_get_bool(c, "ui.high_contrast", 0);
+	t->reduce_motion = rros_conf_get_bool(c, "ui.reduce_motion", 0);
+	t->screen_reader = rros_conf_get_bool(c, "access.screen_reader", 0);
+	t->osk = rros_conf_get_bool(c, "access.onscreen_keyboard", 0);
+	t->taskbar = rros_conf_get_bool(c, "panel.taskbar", 1);
+	if (t->reduce_motion)
+		t->animations = 0;
+	if (t->high_contrast && t->border < 3)
+		t->border = 3;   /* bordes de ventana bien visibles */
 	t->blur = rros_conf_get_bool(c, "ui.blur", 0);
 	t->shadows = rros_conf_get_bool(c, "ui.shadows", 0);
 	t->clock_24h = rros_conf_get_bool(c, "ui.clock_24h", 1);
@@ -189,9 +198,14 @@ void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p,
 	fprintf(f, "# %s. No lo edites: usa `rros-config set ui.<clave> <valor>`.\n", RROS_GENERATED);
 	fprintf(f, "set $mod Mod4\nset $term %s\nset $menu fuzzel\n\n", t->app_term);
 	fprintf(f, "font pango:%s %d\n", t->font, t->font_size);
-	fprintf(f, "default_border pixel %d\ndefault_floating_border pixel %d\n", t->border, t->border);
+	/* con ventanas libres hay barra de título: se arrastran con el ratón, como en Windows o macOS */
+	if (strcmp(t->layout, "floating") == 0)
+		fprintf(f, "default_border normal %d\ndefault_floating_border normal %d\n", t->border, t->border);
+	else
+		fprintf(f, "default_border pixel %d\ndefault_floating_border pixel %d\n", t->border, t->border);
 	fprintf(f, "gaps inner %d\ngaps outer %d\nsmart_borders on\n", t->gap, t->gap / 2);
-	fputs("focus_follows_mouse yes\nfloating_modifier $mod normal\n", f);
+	/* en mosaico, el foco sigue al ratón; con ventanas libres se hace clic, como en otros sistemas */
+	fprintf(f, "focus_follows_mouse %s\nfloating_modifier $mod normal\n", strcmp(t->layout, "floating") ? "yes" : "no");
 	fprintf(f, "seat seat0 xcursor_theme %s %d\n\n", t->cursor_theme, t->cursor_size);
 	fprintf(f, "client.focused          %s %s %s %s %s\n", p->accent, p->accent, p->bg, p->accent, p->accent);
 	fprintf(f, "client.focused_inactive %s %s %s %s %s\n", p->border, p->surface, p->muted, p->border, p->border);
@@ -269,6 +283,10 @@ void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p,
 		BIND("$mod+Shift+t", "exec rros-theme cycle");
 		BIND("$mod+comma", "exec rros-settings open");
 		BIND("$mod+p", "exec foot -T RROS -e sh -c 'rros-fetch; rros doctor; read -r _'");
+		/* accesibilidad: los mismos atajos que en GNOME para el lector de pantalla */
+		BIND("$mod+Alt+s", "exec rros-a11y lector");
+		BIND("$mod+Alt+k", "exec rros-a11y teclado");
+		BIND("$mod+F1", "exec rros-settings open bienvenida");
 		BIND("$mod+Left", "focus left");
 		BIND("$mod+Right", "focus right");
 		BIND("$mod+Up", "focus up");
@@ -309,6 +327,10 @@ void rros_render_sway(const struct rros_theme *t, const struct rros_palette *p,
 	      "XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DESKTOP\n", f);
 	fputs("exec rros-polkit-agent\nexec nm-applet --indicator\nexec blueman-applet\nexec udiskie\n", f);
 	fputs("exec wl-paste --watch cliphist store\nexec rros-first-login\n", f);
+	if (t->screen_reader)
+		fputs("exec rros-a11y lector on\n", f);
+	if (t->osk)
+		fputs("exec rros-a11y teclado on\n", f);
 	if (t->lock_min || t->screen_off_min || t->suspend_min) {
 		fputs("exec swayidle -w", f);
 		if (t->lock_min)
@@ -382,7 +404,7 @@ static const struct { const char *name, *module; } modmap[] = {
 	{ "memory", "memory" }, { "cpu", "cpu" }, { "network", "network" }, { "audio", "pulseaudio" },
 	{ "battery", "battery" }, { "tray", "tray" }, { "disk", "disk" }, { "temperature", "temperature" },
 	{ "backlight", "backlight" }, { "idle", "idle_inhibitor" },
-	{ "apps", "custom/apps" }, { "power", "custom/power" },
+	{ "apps", "custom/apps" }, { "power", "custom/power" }, { "taskbar", "wlr/taskbar" },
 };
 
 static void emit_modules(FILE *f, const char *key, const char *list, int last)
@@ -419,7 +441,15 @@ void rros_render_waybar(const struct rros_theme *t, const struct rros_palette *p
 
 		fprintf(f, "  \"margin\": \"%s\",\n", m);
 	}
-	emit_modules(f, "modules-left", t->panel_left, 0);
+	{
+		/* la lista de ventanas abiertas va a la izquierda, tras los escritorios, salvo que ya esté puesta */
+		char left[200];
+
+		snprintf(left, sizeof left, "%s%s", t->panel_left,
+			 t->taskbar && !strstr(t->panel_left, "taskbar") && !strstr(t->panel_center, "taskbar") &&
+			 !strstr(t->panel_right, "taskbar") ? ",taskbar" : "");
+		emit_modules(f, "modules-left", left, 0);
+	}
 	emit_modules(f, "modules-center", t->panel_center, 0);
 	emit_modules(f, "modules-right", t->panel_right, 0);
 	fputs("  \"sway/workspaces\": { \"disable-scroll\": true },\n", f);
@@ -435,6 +465,8 @@ void rros_render_waybar(const struct rros_theme *t, const struct rros_palette *p
 	fputs("  \"backlight\": { \"format\": \"LUZ {percent}%\" },\n", f);
 	fputs("  \"idle_inhibitor\": { \"format\": \"{icon}\", \"format-icons\": { \"activated\": \"CAFE\", \"deactivated\": \"cafe\" } },\n", f);
 	fputs("  \"tray\": { \"spacing\": 8 },\n", f);
+	fputs("  \"wlr/taskbar\": { \"format\": \"{icon} {title:.22}\", \"icon-size\": 16, \"tooltip-format\": \"{title}\", "
+	      "\"on-click\": \"activate\", \"on-click-middle\": \"close\" },\n", f);
 	fputs("  \"custom/apps\": { \"format\": \"Aplicaciones\", \"on-click\": \"fuzzel\", \"tooltip\": false },\n", f);
 	fputs("  \"custom/power\": { \"format\": \"Apagar\", \"on-click\": \"rros-power\", \"tooltip\": false },\n", f);
 	fprintf(f, "  \"battery\": { \"states\": { \"warning\": %d, \"critical\": 5 }, \"format\": \"%s\", \"interval\": 30 }\n}\n",
@@ -481,6 +513,11 @@ void rros_render_waybar_css(const struct rros_theme *t, const struct rros_palett
 	fprintf(f, "#custom-apps, #custom-power { padding: 0 12px; margin: 3px 4px; border-radius: %dpx; background: %s; color: %s; }\n",
 		pill ? 999 : t->radius, p->surface, p->text);
 	fprintf(f, "#custom-apps:hover, #custom-power:hover { background: %s; color: %s; }\n", p->accent, p->bg);
+	/* ventanas abiertas: la activa con el color de acento */
+	fprintf(f, "#taskbar button { padding: 0 8px; margin: 3px 2px; border-radius: %dpx; color: %s; background: transparent; }\n",
+		pill ? 999 : t->radius, p->muted);
+	fprintf(f, "#taskbar button.active { color: %s; background: %s; }\n", p->text, p->accent_dim);
+	fprintf(f, "#taskbar button:hover { color: %s; background: %s; }\n", p->text, p->surface);
 	fprintf(f, "#clock { font-weight: bold; }\n#memory { color: %s; }\n#cpu { color: %s; }\n", p->cyan, p->magenta);
 	fprintf(f, "#battery.warning { color: %s; }\n#battery.critical { color: %s; }\n", p->yellow, p->red);
 	if (t->animations)
@@ -558,6 +595,9 @@ void rros_render_gtk_settings(const struct rros_theme *t, const struct rros_pale
 	fprintf(f, "gtk-application-prefer-dark-theme=%d\ngtk-icon-theme-name=%s\ngtk-font-name=%s %d\n",
 		t->dark, t->icon_theme, t->font, t->font_size);
 	fprintf(f, "gtk-cursor-theme-name=%s\ngtk-cursor-theme-size=%d\n", t->cursor_theme, t->cursor_size);
+	fprintf(f, "gtk-enable-animations=%s\n", t->animations ? "true" : "false");
+	if (t->high_contrast)
+		fputs("gtk-theme-name=HighContrast\n", f);
 }
 
 void rros_render_gtk_css(const struct rros_theme *t, const struct rros_palette *p,

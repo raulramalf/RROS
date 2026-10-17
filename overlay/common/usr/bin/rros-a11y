@@ -1,0 +1,44 @@
+#!/bin/sh
+# Ayudas de accesibilidad de la sesión.
+#   rros-a11y lector [on|off]    lector de pantalla Orca (sin argumento: lo activa o lo desactiva)
+#   rros-a11y teclado [on|off]   teclado en pantalla (wvkbd)
+# Atajos: Super+Alt+S (lector) y Super+Alt+K (teclado). Para que arranquen siempre:
+#   rros config set access.screen_reader true    ·    rros config set access.onscreen_keyboard true
+what=${1:-}
+want=${2:-toggle}
+case $what in
+lector) proc=orca ;;
+teclado) proc=wvkbd-mobintl ;;
+*) echo "uso: rros-a11y lector|teclado [on|off]" >&2; exit 2 ;;
+esac
+running=0
+pgrep -x "$proc" >/dev/null 2>&1 && running=1
+if [ "$want" = toggle ]; then
+	if [ "$running" = 1 ]; then want=off; else want=on; fi
+fi
+say() { notify-send -t 2500 "Accesibilidad" "$1" 2>/dev/null || true; }
+case $want in
+on)
+	[ "$running" = 1 ] && exit 0
+	if ! command -v "$proc" >/dev/null 2>&1; then
+		say "Falta $proc: instálalo con «rros apps»"
+		exit 1
+	fi
+	if [ "$what" = lector ]; then
+		# Orca habla por speech-dispatcher; las apps GTK le cuentan qué hay en pantalla por AT-SPI
+		setsid orca --replace >/dev/null 2>&1 &
+		say "Lector de pantalla activado (Super+Alt+S para quitarlo)"
+	else
+		# capa inferior de la pantalla, altura proporcional; se oculta con Super+Alt+K
+		setsid wvkbd-mobintl -L 260 >/dev/null 2>&1 &
+		say "Teclado en pantalla activado (Super+Alt+K para quitarlo)"
+	fi
+	;;
+off)
+	pkill -x "$proc" 2>/dev/null
+	[ "$what" = lector ] && say "Lector de pantalla desactivado"
+	[ "$what" = teclado ] && say "Teclado en pantalla desactivado"
+	;;
+*) echo "uso: rros-a11y lector|teclado [on|off]" >&2; exit 2 ;;
+esac
+exit 0

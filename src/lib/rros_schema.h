@@ -23,6 +23,9 @@ const char *rros_type_name(enum rros_type t);
 /* 1 si la clave la aplica rros-apply como root (red, servicios, seguridad...): se guarda en
  * /etc/rros/rros.toml, no en la configuración del usuario. */
 int rros_key_system_scope(const char *key);
+/* idiomas tipo es_ES.UTF-8 / C.UTF-8 y zonas tipo Europe/Madrid (sin rutas peligrosas) */
+int rros_locale_name_ok(const char *v);
+int rros_timezone_name_ok(const char *v);
 /* 0 ok; <0 con mensaje en err */
 int rros_schema_check(const struct rros_key *k, const char *val, int quoted,
 		      char *err, size_t n);

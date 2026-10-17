@@ -121,6 +121,34 @@ const SHOTS = process.env.SHOTS || '';
   }, process.env.TOKEN || 'tk');
   ok(evil.ok === false, 'un identificador de aplicación con caracteres peligrosos se rechaza');
 
+  // bienvenida: elegir el modo de ventanas
+  await p.click('#nav button:has-text("Bienvenida")');
+  await p.waitForSelector('[data-layout="floating"]');
+  ok(await p.locator('#nav button:has-text("Instalar RROS")').count() === 1, 'en el live se ofrece instalar');
+  ok(await p.locator('[data-layout="floating"] button[disabled]').count() === 1, 'el perfil Standard viene con ventanas libres');
+  await p.click('[data-layout="tiling"] button'); await p.waitForTimeout(600);
+  ok(/layout = "tiling"/.test(userConf()) && /focus_follows_mouse yes/.test(fs.readFileSync(`${DIR}/xdg/sway/config`, 'utf8')), 'mosaico elegido');
+  await p.click('[data-layout="floating"] button'); await p.waitForTimeout(600);
+  ok(/layout = "floating"/.test(userConf()), 'modo de ventanas guardado');
+  const swayCfg = fs.readFileSync(`${DIR}/xdg/sway/config`, 'utf8');
+  ok(/default_border normal/.test(swayCfg) && /focus_follows_mouse no/.test(swayCfg), 'ventanas libres: barra de título y clic para enfocar');
+  ok(/wlr\/taskbar/.test(fs.readFileSync(`${DIR}/xdg/waybar/config`, 'utf8')), 'el panel muestra las ventanas abiertas');
+  await shot(p, 'gui-welcome', true);
+
+  // accesibilidad
+  await p.click('#nav button:has-text("Accesibilidad")');
+  await p.waitForSelector('[data-key="ui.high_contrast"]');
+  await p.locator('[data-key="ui.high_contrast"] .switch').click(); await p.waitForTimeout(600);
+  ok(/high_contrast = true/.test(userConf()), 'alto contraste guardado');
+  ok(/gtk-theme-name=HighContrast/.test(fs.readFileSync(`${DIR}/xdg/gtk-3.0/settings.ini`, 'utf8')), 'el alto contraste llega a GTK');
+  ok((await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim())) === '#000000', 'la ventana de ajustes también pasa a alto contraste');
+  await p.locator('[data-key="ui.high_contrast"] .reset').click(); await p.waitForTimeout(600);
+  await p.locator('[data-key="access.screen_reader"] .switch').click(); await p.waitForTimeout(600);
+  ok(/exec rros-a11y lector on/.test(fs.readFileSync(`${DIR}/xdg/sway/config`, 'utf8')), 'el lector de pantalla arranca con la sesión');
+  await p.click('button:has-text("Activar o desactivar ahora")'); await p.waitForTimeout(600);
+  ok(fs.existsSync(`${DIR}/a11y.txt`) && /^lector$/m.test(fs.readFileSync(`${DIR}/a11y.txt`, 'utf8')), 'el botón activa el lector');
+  await shot(p, 'gui-access', true);
+
   // seguridad: auditoría, niveles y puertos (con sudo en una terminal)
   await p.click('#nav button:has-text("Seguridad")');
   await p.waitForSelector('.check');

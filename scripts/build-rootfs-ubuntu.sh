@@ -40,6 +40,8 @@ log "instalando paquetes: $pkgs"
 chroot "$out" apt-get update
 # shellcheck disable=SC2086
 DEBIAN_FRONTEND=noninteractive chroot "$out" apt-get install -y $pkgs
+# idiomas del sistema (el de por defecto lo fija /etc/default/locale y locale.language)
+chroot "$out" locale-gen es_ES.UTF-8 en_US.UTF-8
 
 log "instalando componentes RROS"
 make -C "$ROOT_DIR" install DESTDIR="$out" PREFIX=/usr

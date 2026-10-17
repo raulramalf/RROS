@@ -1,2 +1,2 @@
-# Solo para la ISO: el instalador gráfico.
-calamares
+# Solo para la ISO. El instalador de RROS (rros-install y el asistente de RROS Ajustes)
+# usa paquetes que también necesita el sistema instalado, así que están en ubuntu-base.list.

@@ -26,11 +26,12 @@ printf 'table inet rros {\n chain input { policy drop; }\n}\n' > "$R/etc/nftable
 for b in udisksctl rfkill; do printf '#!/bin/sh\necho "%s $*" >> "%s/dev-calls.txt"\n' "$b" "$T" > "$T/bin/$b"; done
 # shellcheck disable=SC2016  # contenido literal del systemctl falso
 printf '#!/bin/sh\n[ "$3" = nftables.service ]\n' > "$T/bin/systemctl"
-chmod +x "$T/bin/udisksctl" "$T/bin/rfkill" "$T/bin/systemctl"
+printf '#!/bin/sh\necho "$*" >> "%s/a11y.txt"\n' "$T" > "$T/bin/rros-a11y"
+chmod +x "$T/bin/udisksctl" "$T/bin/rfkill" "$T/bin/systemctl" "$T/bin/rros-a11y"
 export RROS_PROFILE_DIR=$PWD/profiles RROS_PROFILE_FILE=$T/profile RROS_USER_CONF=$T/u.toml \
 	RROS_SYSTEM_CONF=$T/s.toml XDG_CONFIG_HOME=$T/xdg RROS_THEMES_DIR=$T/themes RROS_GUI_DIR=$PWD/gui \
 	RROS_APPS_CATALOG=$PWD/apps/catalog.toml PATH="$T/bin:$PATH" RROS_ROOT=$R \
-	RROS_TEMPLATES_DIR=$PWD/templates HOME=$T/home
+	RROS_TEMPLATES_DIR=$PWD/templates HOME=$T/home RROS_LIVE=1
 build/rros-settings web --no-open --port 18769 --token tk --timeout 300 > "$T/server.log" 2>&1 &
 sleep 0.8
 RROS_TEST_DIR=$T PORT=18769 TOKEN=tk node tests/gui_test.js

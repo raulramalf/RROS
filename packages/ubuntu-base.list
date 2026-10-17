@@ -33,6 +33,11 @@ polkitd
 pkexec
 policykit-1-gnome       # ventana de contraseña al instalar o cambiar ajustes
 locales
+language-pack-es        # traducciones al español de los paquetes de Ubuntu (main)
+language-pack-es-base
+language-pack-gnome-es  # GTK, Evince, NetworkManager...
+language-pack-gnome-es-base
+hunspell-es             # corrector ortográfico en español
 ca-certificates
 bash-completion
 curl
@@ -50,6 +55,19 @@ nftables                # cortafuegos (security.firewall)
 apparmor                # perfiles de confinamiento de aplicaciones
 unattended-upgrades     # actualizaciones de seguridad automáticas (system.auto_updates)
 rfkill                  # activar/desactivar Wi-Fi y Bluetooth (rros-devices)
+
+# --- accesibilidad ---
+orca                    # lector de pantalla (Super+Alt+S)
+at-spi2-core            # bus de accesibilidad que usan Orca y las apps GTK
+speech-dispatcher       # voz para Orca
+speech-dispatcher-espeak-ng  # voz en español (eSpeak NG)
+wvkbd                   # teclado en pantalla
+
+# --- instalación: cifrado y arranque junto a otros sistemas ---
+cryptsetup              # disco cifrado (LUKS)
+cryptsetup-initramfs    # pide la contraseña del disco al arrancar
+os-prober               # GRUB encuentra Windows y otros sistemas
+ntfs-3g                 # leer particiones de Windows
 
 # --- discos y USB ---
 udisks2

@@ -28,4 +28,8 @@ fi
 # Flathub para la tienda de aplicaciones (necesita red; si no hay, se reintenta al instalar)
 (rros-apps setup >/dev/null 2>&1) &
 touch "$flag"
-notify-send "Bienvenido a RROS" "Mod+D aplicaciones · Mod+B navegador · Mod+E archivos · Mod+, ajustes" 2>/dev/null
+# la ventana de bienvenida (también con Super+F1): modo de ventanas, atajos y, en el live, instalar
+if [ -n "${WAYLAND_DISPLAY:-}" ]; then
+	(sleep 4; rros-settings open bienvenida >/dev/null 2>&1) &
+fi
+notify-send "Bienvenido a RROS" "Super+D aplicaciones · Super+F1 ayuda · Super+, ajustes" 2>/dev/null

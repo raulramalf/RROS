@@ -124,6 +124,14 @@ grep -q 'kernel.kptr_restrict = 2' "$T/sysroot/etc/sysctl.d/80-rros-security.con
 grep -q 'timestamp_timeout=5' "$T/sysroot/etc/sudoers.d/rros" || fail "tiempo de sudo"
 grep -q 'deny = 10' "$T/sysroot/etc/security/faillock.conf" || fail "bloqueo por intentos"
 grep -q 'Unattended-Upgrade "1"' "$T/sysroot/etc/apt/apt.conf.d/20auto-upgrades" || fail "actualizaciones automáticas"
+grep -q '^LANG=es_ES.UTF-8' "$T/sysroot/etc/default/locale" || fail "idioma del sistema"
+grep -q '^LANGUAGE=es_ES:es' "$T/sysroot/etc/default/locale" || fail "LANGUAGE"
+if "$B/rros-config" -p standard set locale.timezone '../../etc/shadow' 2>/dev/null; then fail "zona horaria con ruta aceptada"; fi
+if "$B/rros-config" -p standard set locale.language 'es_ES.UTF-8;id' 2>/dev/null; then fail "idioma no válido aceptado"; fi
+"$B/rros-config" -p standard set --system locale.language en_US.UTF-8 || fail "idioma en la capa del sistema"
+"$B/rros-apply" -p standard --root "$T/sysroot" >/dev/null
+grep -q '^LANG=en_US.UTF-8' "$T/sysroot/etc/default/locale" || fail "cambiar el idioma"
+"$B/rros-config" -p standard unset --system locale.language
 "$B/rros-config" -p standard set security.usb_storage false
 "$B/rros-config" -p standard set security.firewall_allow '8080/tcp,6000-6010/udp'
 "$B/rros-apply" -p standard --root "$T/sysroot" >/dev/null

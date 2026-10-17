@@ -76,6 +76,7 @@ const struct rros_key rros_schema[] = {
 	S("panel.left", "Módulos a la izquierda, separados por comas"),
 	S("panel.center", "Módulos en el centro, separados por comas"),
 	S("panel.right", "Módulos a la derecha, separados por comas"),
+	B("panel.taskbar", "Mostrar las ventanas abiertas en el panel (clic: ir a ella; clic central: cerrarla)"),
 
 	/* ---- terminal ---- */
 	I("term.scrollback", 0, 100000, "Líneas de historial de la terminal"),
@@ -147,6 +148,10 @@ const struct rros_key rros_schema[] = {
 	I("privacy.lock_minutes", 0, 1440, "Bloquear pantalla tras N minutos (0 = nunca)"),
 	B("privacy.disk_encryption", "Cifrado de disco (LUKS) en la instalación"),
 
+	/* ---- accesibilidad (además de ui.high_contrast, ui.reduce_motion, ui.font_size, ui.scale y ui.cursor_size) ---- */
+	B("access.screen_reader", "Lector de pantalla (Orca) al iniciar sesión; Super+Alt+S lo activa o desactiva"),
+	B("access.onscreen_keyboard", "Teclado en pantalla al iniciar sesión; Super+Alt+K lo muestra u oculta"),
+
 	/* ---- seguridad (las aplica rros-apply como root; ver docs/SEGURIDAD.md) ---- */
 	B("security.firewall", "Cortafuegos: bloquea las conexiones entrantes no pedidas"),
 	B("security.firewall_ping", "Responder a ping con el cortafuegos activo"),
@@ -174,9 +179,39 @@ const struct rros_key *rros_schema_find(const char *key)
 	return NULL;
 }
 
+int rros_locale_name_ok(const char *v)
+{
+	/* ll_CC.UTF-8 (es_ES.UTF-8, ast_ES.UTF-8) o C.UTF-8 */
+	size_t n = strlen(v), i = 0;
+
+	if (!strcmp(v, "C.UTF-8"))
+		return 1;
+	while (i < n && v[i] >= 'a' && v[i] <= 'z')
+		i++;
+	if (i < 2 || i > 3 || v[i] != '_')
+		return 0;
+	if (!(v[i + 1] >= 'A' && v[i + 1] <= 'Z' && v[i + 2] >= 'A' && v[i + 2] <= 'Z'))
+		return 0;
+	return !strcmp(v + i + 3, ".UTF-8");
+}
+
+int rros_timezone_name_ok(const char *v)
+{
+	/* Region/Ciudad[/Sub] con letras, cifras, _ + -; sin "..", sin rutas absolutas */
+	size_t n = strlen(v);
+
+	if (n == 0 || n > 40 || v[0] == '/' || strstr(v, "..") || v[n - 1] == '/')
+		return 0;
+	for (const char *p = v; *p; p++)
+		if (!((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') || (*p >= '0' && *p <= '9') ||
+		      *p == '_' || *p == '+' || *p == '-' || *p == '/'))
+			return 0;
+	return 1;
+}
+
 int rros_key_system_scope(const char *key)
 {
-	static const char *pre[] = { "system.", "services.", "net.", "boot.", "security." };
+	static const char *pre[] = { "system.", "services.", "net.", "boot.", "security.", "locale." };
 
 	for (size_t i = 0; i < sizeof pre / sizeof *pre; i++)
 		if (!strncmp(key, pre[i], strlen(pre[i])))
@@ -247,6 +282,14 @@ int rros_schema_check(const struct rros_key *k, const char *val, int quoted,
 		}
 		return 0;
 	default:
+		if (!strcmp(k->key, "locale.language") && !rros_locale_name_ok(val)) {
+			snprintf(err, n, "%s: usa un idioma como es_ES.UTF-8, en_US.UTF-8 o C.UTF-8", k->key);
+			return -1;
+		}
+		if (!strcmp(k->key, "locale.timezone") && !rros_timezone_name_ok(val)) {
+			snprintf(err, n, "%s: usa una zona como Europe/Madrid, America/Mexico_City o UTC", k->key);
+			return -1;
+		}
 		if (!strcmp(k->key, "security.firewall_allow")) {
 			char why[160];
 

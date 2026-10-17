@@ -45,14 +45,24 @@ live_args() {   # live_args TEST
 
 # run_serial LOG MARCA ESPERA_APAGADO qemu-args...: arranca QEMU con la consola en LOG y espera a que aparezca
 # MARCA_OK o MARCA_FAIL (o TIMEOUT); con ESPERA_APAGADO=1 deja después que el sistema se apague solo
+# Con ASK y ANSWER, cuando ASK aparece en la consola se escribe ANSWER en ella (la contraseña del disco cifrado).
 run_serial() {
-	local log=$1 mark=$2 wait_off=$3 waited=0
+	local log=$1 mark=$2 wait_off=$3 waited=0 answered=0 fifo=$out/consola.in
 	shift 3
 	: > "$log"
-	qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot "$@" > "$log" 2>&1 &
+	rm -f "$fifo"
+	mkfifo "$fifo"
+	exec 3<>"$fifo"
+	qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot "$@" < "$fifo" > "$log" 2>&1 &
 	qpid=$!
 	while kill -0 "$qpid" 2>/dev/null && [ "$waited" -lt "${TIMEOUT:-1500}" ]; do
 		grep -aq "${mark}_\(OK\|FAIL\)" "$log" && break
+		if [ -n "${ASK:-}" ] && [ "$answered" -eq 0 ] && grep -aq "$ASK" "$log"; then
+			sleep 1
+			printf '%s\r' "$ANSWER" >&3
+			answered=1
+			log "respondida la pregunta «$ASK»"
+		fi
 		sleep 5
 		waited=$((waited + 5))
 	done
@@ -65,6 +75,8 @@ run_serial() {
 	fi
 	kill "$qpid" 2>/dev/null || true
 	wait "$qpid" 2>/dev/null || true
+	exec 3>&-
+	rm -f "$fifo"
 }
 
 verdict() {   # verdict LOG MARCA QUÉ
@@ -87,18 +99,26 @@ case "$mode" in
 		;;
 	install)
 		# 1) el live instala en un disco virtual sin preguntas (rros.installtest); 2) se arranca desde el disco
-		#    (BIOS, GRUB del disco) y el sistema instalado pasa el autotest
+		#    (BIOS, GRUB del disco) y el sistema instalado pasa el autotest. CRYPT=1: cifrado con LUKS2 (la
+		#    contraseña se escribe en la consola cuando el arranque la pide)
 		need_cmd qemu-img
 		disk=$out/disco.qcow2
 		rm -f "$disk"
 		qemu-img create -f qcow2 "$disk" "${DISK_GB:-16}G" >/dev/null
-		log "instalación en un disco virtual de ${DISK_GB:-16} GB (RAM ${ram} MB)"
-		live_args rros.installtest=/dev/vda
+		test_arg=rros.installtest=/dev/vda
+		[ "${CRYPT:-0}" = 1 ] && test_arg+=" rros.installtest.cifrado"
+		log "instalación en un disco virtual de ${DISK_GB:-16} GB (RAM ${ram} MB)$([ "${CRYPT:-0}" = 1 ] && echo ', cifrada')"
+		live_args "$test_arg"
 		run_serial "$out/install.log" RROS_INSTALL 1 -kernel "$kernel" -initrd "$initrd" -append "$append" -cdrom "$iso" \
 			-drive "file=$disk,if=virtio,format=qcow2"
 		verdict "$out/install.log" RROS_INSTALL "instalación"
 		log "arranque desde el disco instalado"
-		run_serial "$out/serial.log" RROS_SELFTEST 0 -drive "file=$disk,if=virtio,format=qcow2" -boot c
+		if [ "${CRYPT:-0}" = 1 ]; then
+			ASK="passphrase for" ANSWER=prueba-rros run_serial "$out/serial.log" RROS_SELFTEST 0 \
+				-drive "file=$disk,if=virtio,format=qcow2" -boot c
+		else
+			run_serial "$out/serial.log" RROS_SELFTEST 0 -drive "file=$disk,if=virtio,format=qcow2" -boot c
+		fi
 		verdict "$out/serial.log" RROS_SELFTEST "autotest del sistema instalado"
 		;;
 	screenshot)

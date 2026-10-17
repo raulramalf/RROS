@@ -1,6 +1,6 @@
 #!/bin/sh
 # Prueba de instalación (CI): instala RROS sin preguntas en el disco de rros.installtest=DISCO (por defecto
-# /dev/vda) y deja escrito el veredicto en la consola. Después test-iso.sh arranca desde ese disco con el
+# /dev/vda), cifrado si también está rros.installtest.cifrado, y deja escrito el veredicto en la consola. Después test-iso.sh arranca desde ese disco con el
 # autotest. Lo lanza rros-installtest.service solo con rros.installtest en la línea del kernel.
 set -u
 disk=$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^rros\.installtest=//p')
@@ -9,8 +9,10 @@ echo "=== RROS installtest: $disk ==="
 pw=/run/rros-installtest.pw
 umask 077
 printf 'prueba-rros\n' > "$pw"
+set --
+grep -qw rros.installtest.cifrado /proc/cmdline && set -- --encrypt --passphrase-file "$pw"
 if rros-install --disk "$disk" --user rros --fullname "Prueba RROS" --hostname rros-prueba --password-file "$pw" \
-	--timezone Europe/Madrid --cmdline "console=ttyS0 rros.selftest" --yes; then
+	--timezone Europe/Madrid --cmdline "console=ttyS0 rros.selftest" --yes "$@"; then
 	sync
 	echo "RROS_INSTALL_OK"
 else

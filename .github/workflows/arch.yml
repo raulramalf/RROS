@@ -65,6 +65,10 @@ jobs:
         run: |
           BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-install-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" install
+      - name: Instalación cifrada (LUKS2) y arranque con la contraseña del disco
+        run: |
+          CRYPT=1 BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-cifrado-$PROFILE" \
+            scripts/test-iso.sh "$PROFILE" install
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,4 +76,5 @@ jobs:
           path: |
             build/test-arch-${{ env.PROFILE }}/serial.log
             build/test-arch-install-${{ env.PROFILE }}/*.log
+            build/test-arch-cifrado-${{ env.PROFILE }}/*.log
           if-no-files-found: ignore

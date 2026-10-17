@@ -110,6 +110,9 @@ if [ "$BASE" = arch ]; then
 		check "instalado: sin el llavero temporal del live" sh -c '! test -e /etc/systemd/system/pacman-init.service'
 		check "instalado: llavero de pacman inicializado" sh -c 'pacman-key --list-keys >/dev/null 2>&1'
 		check "instalado: kernel en /boot" test -e /boot/vmlinuz-linux
+		if [ -e /etc/crypttab.initramfs ]; then
+			check "instalado: raíz cifrada con LUKS2 y abierta en el arranque" sh -c 'cryptsetup status rros-root | grep -q "type: *LUKS2"'
+		fi
 	fi
 else
 	for app in unattended-upgrade apparmor_parser ckbcomp; do

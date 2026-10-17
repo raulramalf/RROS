@@ -11,7 +11,7 @@ DESTDIR ?=
 
 LIB_SRC := $(wildcard src/lib/*.c)
 PLAN_SRC := src/installer/plan.c
-THEME_SRC := src/theme/theme.c src/theme/palettes.c src/theme/hypr.c src/theme/wallpaper.c
+THEME_SRC := src/theme/theme.c src/theme/palettes.c src/theme/hypr.c src/theme/kde.c src/theme/wallpaper.c
 BINS := build/rros-hwdetect build/rros-config build/rros-budget build/rros-installer \
         build/rros-theme build/rros-fetch build/rros build/rros-apply build/rros-settings build/rros-apps \
         build/rros-security build/rros-devices build/rros-new

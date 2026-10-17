@@ -46,25 +46,31 @@ live_args() {   # live_args TEST
 # run_serial LOG MARCA ESPERA_APAGADO qemu-args...: arranca QEMU con la consola en LOG y espera a que aparezca
 # MARCA_OK o MARCA_FAIL (o TIMEOUT); con ESPERA_APAGADO=1 deja después que el sistema se apague solo
 # Con ASK y ANSWER, cuando ASK aparece en la consola se escribe ANSWER en ella (la contraseña del disco cifrado).
+# Cuando el autotest escribe RROS_PANTALLA_LISTA (el escritorio ya está), se guarda la pantalla en SHOT (PNG).
 run_serial() {
-	local log=$1 mark=$2 wait_off=$3 waited=0 answered=0 fifo=$out/consola.in
+	local log=$1 mark=$2 wait_off=$3 waited=0 answered=0 shot_done=0 fifo=$out/consola.in sock=$out/monitor.sock
 	shift 3
 	: > "$log"
-	rm -f "$fifo"
+	rm -f "$fifo" "$sock"
 	mkfifo "$fifo"
 	exec 3<>"$fifo"
-	qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot "$@" < "$fifo" > "$log" 2>&1 &
+	qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot -monitor "unix:$sock,server,nowait" \
+		"$@" < "$fifo" > "$log" 2>&1 &
 	qpid=$!
 	while kill -0 "$qpid" 2>/dev/null && [ "$waited" -lt "${TIMEOUT:-1500}" ]; do
 		grep -aq "${mark}_\(OK\|FAIL\)" "$log" && break
+		if [ -n "${SHOT:-}" ] && [ "$shot_done" -eq 0 ] && grep -aq RROS_PANTALLA_LISTA "$log"; then
+			python3 "$ROOT_DIR/scripts/qemu-shot.py" "$sock" "$SHOT" || log "no se pudo capturar la pantalla"
+			shot_done=1
+		fi
 		if [ -n "${ASK:-}" ] && [ "$answered" -eq 0 ] && grep -aq "$ASK" "$log"; then
 			sleep 1
 			printf '%s\r' "$ANSWER" >&3
 			answered=1
 			log "respondida la pregunta «$ASK»"
 		fi
-		sleep 5
-		waited=$((waited + 5))
+		sleep 2
+		waited=$((waited + 2))
 	done
 	if [ "$wait_off" -eq 1 ]; then   # que termine de escribir en el disco antes de cortar
 		waited=0
@@ -95,7 +101,9 @@ case "$mode" in
 	selftest)
 		log "arranque por consola serie con autotest (RAM ${ram} MB); puede tardar varios minutos sin KVM"
 		live_args rros.selftest
-		run_serial "$out/serial.log" RROS_SELFTEST 0 -kernel "$kernel" -initrd "$initrd" -append "$append" -cdrom "$iso"
+		SHOT=$out/escritorio.png run_serial "$out/serial.log" RROS_SELFTEST 0 -kernel "$kernel" -initrd "$initrd" \
+			-append "$append" -cdrom "$iso"
+		[ ! -s "$out/escritorio.png" ] || log "captura del escritorio: $out/escritorio.png"
 		verdict "$out/serial.log" RROS_SELFTEST "autotest del live"
 		;;
 	install)

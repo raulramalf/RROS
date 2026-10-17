@@ -23,6 +23,8 @@ if [ "$base" = ubuntu ]; then
 		rm -f "${root:?}/usr/share/initramfs-tools/scripts/casper-bottom/$hook"
 	done
 fi
+# Arch: aspecto de RROS para Plasma en todo el sistema (fondo, colores, barras de título, inicio de sesión)
+[ "$base" = arch ] && "$ROOT_DIR/scripts/plasma-defaults.sh" "$root" "$profile"
 "$ROOT_DIR/scripts/apply-identity.sh" "$root" "$profile" "$base"
 mkdir -p "$root/etc/rros"
 echo "$profile" > "$root/etc/rros/profile"

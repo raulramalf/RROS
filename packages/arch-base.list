@@ -61,6 +61,35 @@ pavucontrol
 playerctl
 
 # --- escritorio: Hyprland (sway si no hay aceleración gráfica) ---
+# --- escritorio: KDE Plasma (Wayland), con el aspecto de RROS (barra arriba y dock) ---
+plasma-desktop
+plasma-workspace
+kwin
+kdeplasma-addons      # widgets: papelera del dock, etc.
+plasma-nm
+plasma-pa
+plasma-systemmonitor
+powerdevil
+bluedevil
+kscreen
+breeze
+breeze-gtk
+kde-gtk-config
+xdg-desktop-portal-kde
+polkit-kde-agent
+systemsettings
+kinfocenter
+kwallet-pam
+kwalletmanager
+sddm
+sddm-kcm
+plasma-browser-integration
+appmenu-gtk-module      # menú global también para las aplicaciones GTK
+ffmpegthumbs
+kdegraphics-thumbnailers
+phonon-qt6-vlc          # sonidos del sistema
+
+# --- sesión alternativa: Hyprland (y sway sin GPU) ---
 hyprland
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
@@ -97,18 +126,18 @@ orca
 espeak-ng
 speech-dispatcher
 
-# --- aplicaciones ---
-epiphany
-thunar
-thunar-archive-plugin
-thunar-volman
-tumbler
-mousepad
-imv
-evince
+# --- aplicaciones (las de KDE, que siguen el tema de Plasma) ---
+firefox
+firefox-i18n-es-es
+dolphin
+konsole
+kate
+okular
+gwenview
+ark
+kcalc
+spectacle
 mpv
-file-roller
-galculator
 btop
 flatpak
 zip

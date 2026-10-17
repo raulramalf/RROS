@@ -1,16 +1,20 @@
 #!/bin/sh
 # Sistema live (archiso): usuario «rros» sin contraseña y con sudo sin contraseña, como en la ISO de Ubuntu.
-# Con accessibility=on en el arranque, activa el lector de pantalla.
-id rros >/dev/null 2>&1 && exit 0
-groups=""
-for g in wheel audio video input storage optical lp network rfkill users; do
-	getent group "$g" >/dev/null 2>&1 && groups="$groups,$g"
-done
-useradd -m -s /bin/bash -c "RROS" -G "${groups#,}" rros
-passwd -d rros >/dev/null
-printf 'rros ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/00-rros-live
-chmod 440 /etc/sudoers.d/00-rros-live
+# Con accessibility=on en el arranque, activa el lector de pantalla. Prepara el inicio automático en Plasma.
+if ! id rros >/dev/null 2>&1; then
+	groups=""
+	for g in wheel audio video input storage optical lp network rfkill users; do
+		getent group "$g" >/dev/null 2>&1 && groups="$groups,$g"
+	done
+	useradd -m -s /bin/bash -c "RROS" -G "${groups#,}" rros
+	passwd -d rros >/dev/null
+	printf 'rros ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/00-rros-live
+	chmod 440 /etc/sudoers.d/00-rros-live
+fi
 # «con lector de pantalla» en el menú de arranque (accessibility=on): Orca desde el primer momento
 if grep -qw accessibility=on /proc/cmdline; then
 	runuser -u rros -- env HOME=/home/rros rros-config set access.screen_reader true >/dev/null 2>&1 || true
 fi
+# entra solo en Plasma (solo en el live: el archivo vive en la capa temporal y el instalador no lo copia)
+mkdir -p /etc/sddm.conf.d
+printf '[Autologin]\nUser=rros\nSession=plasma\nRelogin=false\n' > /etc/sddm.conf.d/20-rros-live.conf

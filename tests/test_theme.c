@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <strings.h>
 
 #include "check.h"
@@ -482,5 +483,45 @@ int main(void)
 		CHECK(rros_desktop_current(&cur) == NULL);
 	}
 	rros_conf_free(&cur);
+
+	/* ---- KDE Plasma: colores, teclado y barras de título con los colores del tema ---- */
+	{
+		struct rros_palette pal;
+		char dir[] = "/tmp/rros-aurorae-XXXXXX", path[200], *svg;
+		FILE *fp;
+		long len;
+
+		from_text(&t, "");
+		s = render(rros_render_kde_colors, &t);
+		CHECK(strstr(s, "[Colors:Window]\nBackgroundNormal=20,28,56\n") != NULL);      /* superficie de Aurora */
+		CHECK(strstr(s, "[Colors:Selection]\nBackgroundNormal=124,92,255\n") != NULL);  /* el acento */
+		CHECK(strstr(s, "[WM]\nactiveBackground=20,28,56\n") != NULL);
+		free(s);
+		s = render(rros_render_kxkbrc, &t);
+		CHECK(strstr(s, "[Layout]\nLayoutList=es\nUse=true\n") != NULL);
+		free(s);
+		rros_theme_palette(&t, &pal);
+		CHECK(mkdtemp(dir) != NULL);
+		snprintf(path, sizeof path, "%s/RROS", dir);
+		CHECK(rros_write_aurorae(path, &t, &pal) == 0);
+		snprintf(path, sizeof path, "%s/RROS/decoration.svg", dir);
+		fp = fopen(path, "r");
+		CHECK(fp != NULL);
+		if (fp) {
+			fseek(fp, 0, SEEK_END);
+			len = ftell(fp);
+			rewind(fp);
+			svg = calloc(1, (size_t)len + 1);
+			CHECK(svg && fread(svg, 1, (size_t)len, fp) == (size_t)len);
+			fclose(fp);
+			CHECK(svg && strstr(svg, "id=\"decoration-topleft\"") && strstr(svg, "id=\"decoration-inactive-bottomright\"") &&
+			      strstr(svg, "fill=\"#141c38\""));
+			free(svg);
+		}
+		snprintf(path, sizeof path, "%s/RROS/close.svg", dir);
+		CHECK(access(path, R_OK) == 0);
+		snprintf(path, sizeof path, "rm -rf '%s'", dir);
+		CHECK(system(path) == 0);
+	}
 	DONE();
 }

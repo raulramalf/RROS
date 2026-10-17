@@ -55,6 +55,17 @@ jobs:
           sudo chmod a+rw /dev/kvm || true
           BASE=arch ISO="$PWD/build/rros-arch-$PROFILE.iso" OUT="$PWD/build/test-arch-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" selftest
+      # la captura real del escritorio, también en el registro (en base64, entre marcas) para poder verla sin
+      # descargar artefactos
+      - name: Captura del escritorio
+        if: always()
+        run: |
+          f=build/test-arch-$PROFILE/escritorio.png
+          if [ -s "$f" ]; then
+            echo "RROS_CAPTURA_INICIO"; base64 -w 0 "$f"; echo; echo "RROS_CAPTURA_FIN"
+          else
+            echo "no hay captura"
+          fi
       # la ISO se publica si el live pasa su autotest, aunque después falle la prueba de instalación
       - uses: actions/upload-artifact@v4
         with:
@@ -79,6 +90,7 @@ jobs:
           name: rros-arch-${{ env.PROFILE }}-selftest-log
           path: |
             build/test-arch-${{ env.PROFILE }}/serial.log
+            build/test-arch-${{ env.PROFILE }}/escritorio.png
             build/test-arch-install-${{ env.PROFILE }}/*.log
             build/test-arch-cifrado-${{ env.PROFILE }}/*.log
             build/test-arch-uefi-${{ env.PROFILE }}/*.log

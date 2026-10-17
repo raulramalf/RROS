@@ -1,0 +1,24 @@
+# KWin en RROS: barras de título con los botones a la izquierda, desenfoque y minimizar con efecto de lámpara
+[org.kde.kdecoration2]
+library=org.kde.kwin.aurorae
+theme=__aurorae__svg__RROS
+ButtonsOnLeft=XIA
+ButtonsOnRight=
+BorderSize=None
+BorderSizeAuto=false
+
+[Plugins]
+blurEnabled=true
+contrastEnabled=true
+magiclampEnabled=true
+squashEnabled=false
+wobblywindowsEnabled=false
+
+[Windows]
+BorderlessMaximizedWindows=false
+
+[Effect-overview]
+BorderActivate=9
+
+[NightColor]
+Active=false

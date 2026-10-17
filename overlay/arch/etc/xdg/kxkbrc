@@ -1,0 +1,4 @@
+# Teclado español por defecto; el instalador y rros-theme lo cambian por el elegido
+[Layout]
+LayoutList=es
+Use=true

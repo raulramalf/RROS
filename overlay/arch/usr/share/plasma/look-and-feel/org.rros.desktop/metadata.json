@@ -1,0 +1,12 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [ { "Name": "RROS" } ],
+        "Description": "Barra arriba con el menú RROS, el menú de la aplicación y el reloj; dock flotante abajo",
+        "Id": "org.rros.desktop",
+        "License": "GPL-2.0+",
+        "Name": "RROS",
+        "Version": "1.0",
+        "Website": "https://github.com/raulramalf/RROS"
+    }
+}

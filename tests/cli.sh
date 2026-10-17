@@ -365,7 +365,8 @@ PAPPS="env PATH=$T/fakebin:$PATH RROS_PKG=pacman $B/rros-apps"
 LIST=$($APPS list)
 grep -q 'mpv .*instalada' <<<"$LIST" || fail "apps: mpv debe figurar instalada"
 grep -q 'signal .*instalada' <<<"$LIST" || fail "apps: Signal (Flatpak) debe figurar instalada"
-grep -q 'firefox .* -$' <<<"$LIST" || fail "apps: Firefox sin instalar"
+grep -q 'brave .* -$' <<<"$LIST" || fail "apps: Brave sin instalar"
+grep -q 'firefox .*incluida' <<<"$LIST" || fail "apps: Firefox incluido en el perfil"
 [ "$(wc -l <<<"$LIST")" -ge 50 ] || fail "apps: catálogo con menos de 50 entradas"
 GAMES=$($APPS list --category games)
 grep -q steam <<<"$GAMES" || fail "apps: filtro por categoría"

@@ -65,10 +65,10 @@ location = false
 flatpak = true
 
 [apps]
-terminal = "foot"
-browser = "epiphany"
-files = "thunar"
-editor = "mousepad"
+terminal = "konsole"
+browser = "firefox"
+files = "dolphin"
+editor = "kate"
 
 [boot]
 splash = true

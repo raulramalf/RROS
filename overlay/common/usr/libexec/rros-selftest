@@ -35,13 +35,20 @@ if [ -r /etc/rros/identity ]; then BASE=$(sed -n 's/^RROS_BASE=//p' /etc/rros/id
 [ -n "$BASE" ] || { [ -e /etc/arch-release ] && BASE=arch || BASE=ubuntu; }
 echo "base: $BASE"
 
-for app in sway waybar foot fuzzel mako epiphany thunar mousepad evince mpv file-roller galculator btop flatpak \
-           swaylock swayidle swaybg nm-applet blueman-applet udiskie pavucontrol grim slurp cliphist \
+# aplicaciones: las de KDE en Arch (escritorio Plasma), las GTK en Ubuntu
+if [ "$BASE" = arch ]; then
+	apps="plasmashell kwin_wayland sddm firefox dolphin konsole kate okular gwenview ark kcalc spectacle"
+	desks="firefox org.kde.dolphin org.kde.konsole org.kde.kate org.kde.okular org.kde.gwenview org.kde.ark org.kde.kcalc mpv"
+else
+	apps="epiphany thunar mousepad evince file-roller galculator nm-applet blueman-applet udiskie pavucontrol"
+	desks="org.gnome.Epiphany thunar org.xfce.mousepad org.gnome.Evince mpv org.gnome.FileRoller galculator imv"
+fi
+for app in $apps sway waybar foot fuzzel mako mpv btop flatpak swaylock swayidle swaybg grim slurp cliphist \
            rros rros-config rros-theme rros-apps rros-settings rros-apply rros-security rros-devices rros-new \
            rros-lock rros-dock rros-updates rros-informe nft rfkill udisksctl xdg-user-dir; do
 	check "programa: $app" has "$app"
 done
-for desk in org.gnome.Epiphany thunar org.xfce.mousepad org.gnome.Evince mpv org.gnome.FileRoller galculator imv; do
+for desk in $desks; do
 	check "lanzador: $desk.desktop" test -e "/usr/share/applications/$desk.desktop"
 done
 
@@ -76,10 +83,35 @@ check "rros-devices: ve la tarjeta de red" sh -c 'rros-devices lista red --json 
 check "rros-new: crea un script ejecutable" as_user "cd /tmp && rm -f rros-selftest.sh && rros-new bash rros-selftest >/dev/null && test -x /tmp/rros-selftest.sh"
 check "primer inicio: carpetas en español y plantillas" as_user "rros-first-login; test -d ~/Documentos && test -f ~/Plantillas/'Script de Bash.sh'"
 check "blueman-mechanism no arranca en el boot (solo por D-Bus)" sh -c '! systemctl is-enabled --quiet blueman-mechanism'
-if [ "$LIVE" -eq 1 ]; then
+if [ "$BASE" = arch ]; then
+	# Plasma: SDDM (con inicio automático en el live) y la sesión del usuario con la distribución de RROS
+	check "pantalla de inicio de sesión (SDDM) activa" systemctl is-active --quiet sddm
+	if [ "$LIVE" -eq 1 ]; then
+		check "live: inicio automático en Plasma" grep -qs '^User=rros' /etc/sddm.conf.d/20-rros-live.conf
+		i=0
+		while ! pgrep -u rros -x plasmashell >/dev/null 2>&1 && [ "$i" -lt 150 ]; do sleep 2; i=$((i + 2)); done
+		check "sesión de Plasma arrancada (plasmashell, ${i} s)" pgrep -u rros -x plasmashell
+		check "KWin en marcha (compositor Wayland)" pgrep -u rros -x kwin_wayland
+		i=0
+		while ! grep -qs icontasks ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
+		check "Plasma usó la distribución de RROS (barra arriba y dock)" grep -qs 'org.kde.plasma.icontasks' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
+		check "menú global en la barra de arriba" grep -qs 'org.kde.plasma.appmenu' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
+		i=0
+		while ! ls ~rros/.local/share/color-schemes/RROS-*.colors >/dev/null 2>&1 && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
+		check "colores y barras de título del tema de RROS aplicados al iniciar sesión" sh -c 'ls ~rros/.local/share/color-schemes/RROS-*.colors && test -f ~rros/.local/share/aurorae/themes/RROS/decoration.svg'
+		# el escritorio está listo: test-iso.sh hace aquí la captura de pantalla por el monitor de QEMU
+		sleep 10
+		echo "RROS_PANTALLA_LISTA"
+		sleep 6
+	fi
+fi
+if [ "$LIVE" -eq 1 ] && [ "$BASE" != arch ]; then
 	check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'
-else
-	check "instalado: inicio de sesión normal en tty1 (sin el automático del live)" sh -c '! systemctl is-active --quiet rros-live && systemctl is-active --quiet getty@tty1'
+elif [ "$LIVE" -eq 0 ] && [ "$BASE" = arch ]; then
+	check "instalado: sin inicio automático (SDDM pide usuario y contraseña)" sh -c '! test -e /etc/sddm.conf.d/20-rros-live.conf'
+fi
+if [ "$LIVE" -eq 0 ]; then
+	[ "$BASE" = arch ] || check "instalado: inicio de sesión normal en tty1 (sin el automático del live)" sh -c '! systemctl is-active --quiet rros-live && systemctl is-active --quiet getty@tty1'
 	check "instalado: el usuario tiene contraseña" sh -c 'passwd -S rros | grep -q " P "'
 	check "instalado: el usuario administra (sudo)" sh -c 'id -nG rros | grep -qwE "wheel|sudo"'
 	check "instalado: la raíz está en /etc/fstab" grep -qE '^[^#[:space:]]+[[:space:]]+/[[:space:]]' /etc/fstab
@@ -91,7 +123,7 @@ else
 fi
 # shellcheck disable=SC2016
 check "catálogo de apps (54)" sh -c 'test "$(rros-apps list | wc -l)" -ge 50'
-check "mimeapps: navegador por defecto" sh -c 'grep -q Epiphany /etc/xdg/mimeapps.list'
+check "mimeapps: navegador por defecto" sh -c 'grep -qE "Epiphany|firefox" /etc/xdg/mimeapps.list'
 
 if [ "$BASE" = arch ]; then
 	for app in Hyprland hyprctl hyprlock nwg-dock-hyprland pacman arch-chroot genfstab mkinitcpio; do
@@ -104,6 +136,7 @@ if [ "$BASE" = arch ]; then
 	check "sudo: el grupo wheel administra" sh -c 'visudo -cqf /etc/sudoers.d/10-rros-wheel'
 	check "instalador: cifrado en el initramfs (hook sd-encrypt)" test -e /usr/lib/initcpio/install/sd-encrypt
 	check "zona horaria configurada (sin preguntas de systemd-firstboot)" sh -c 'test -e /etc/localtime && systemctl is-enabled systemd-firstboot.service 2>/dev/null | grep -q masked'
+	check "Plasma: aspecto de RROS (paquete, colores, barras de título, fondo)" sh -c 'test -f /usr/share/plasma/look-and-feel/org.rros.desktop/contents/layouts/org.kde.plasma.desktop-layout.js && grep -q "Colors:Window" /etc/xdg/kdeglobals && test -f /usr/share/aurorae/themes/RROS/close.svg && test -s /usr/share/wallpapers/RROS/contents/images/1920x1080.png'
 	check "AppArmor activo (lsm= en el arranque)" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
 	check "AppArmor: perfiles cargados" sh -c 'systemctl is-active --quiet apparmor && grep -q . /sys/kernel/security/apparmor/profiles'
 	check "actualizaciones: descarga diaria (rros-updates.timer)" sh -c 'command -v checkupdates >/dev/null && systemctl is-enabled --quiet rros-updates.timer'

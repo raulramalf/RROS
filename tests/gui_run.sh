@@ -8,8 +8,11 @@ T=$(mktemp -d)
 trap 'curl -s -H "X-RROS-Token: tk" -X POST "http://127.0.0.1:18769/api/quit" >/dev/null 2>&1 || true; rm -rf "${T:?}"' EXIT
 mkdir -p "$T/bin"
 # terminal falsa: anota con qué argumentos la abre la tienda
-printf '#!/bin/sh\nprintf "%%s\\n" "$@" > "%s/foot-args.txt"\n' "$T" > "$T/bin/foot"
-chmod +x "$T/bin/foot"
+# terminales falsas (la del perfil es konsole; foot en los demás escritorios): guardan sus argumentos
+for term in foot konsole; do
+	printf '#!/bin/sh\nprintf "%%s\\n" "$@" > "%s/foot-args.txt"\n' "$T" > "$T/bin/$term"
+	chmod +x "$T/bin/$term"
+done
 # dispositivos y seguridad sobre un sistema falso (RROS_ROOT), con udisksctl, rfkill y systemctl falsos
 R=$T/root
 mkdir -p "$R/sys/block" "$R/sys/devices/usb1/sdb/sdb1" "$R/proc/self" "$R/proc/sys/kernel" "$R/run/udev/data" \

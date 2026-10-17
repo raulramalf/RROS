@@ -1,5 +1,6 @@
 /* rros-theme: genera la configuración del escritorio RROS desde rros-config. */
 #include <errno.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,8 @@ static const struct target targets[] = {
 	{ "gtk-4.0/gtk.css", rros_render_gtk_css },
 	{ "hypr/hyprland.conf", rros_render_hyprland },
 	{ "hypr/hyprlock.conf", rros_render_hyprlock },
+	{ "kde/RROS.colors", rros_render_kde_colors },
+	{ "kxkbrc", rros_render_kxkbrc },
 };
 
 static void usage(void)
@@ -170,6 +173,73 @@ static void ensure_wallpaper(const struct rros_theme *t, const struct rros_palet
 	}
 }
 
+/* KDE Plasma: el esquema de colores va a ~/.local/share/color-schemes con un nombre que cambia con los colores
+ * (plasma-apply-colorscheme no recarga un esquema con el mismo nombre). Si Plasma está instalado, se aplica; en
+ * una sesión de Plasma, también el fondo. */
+static void apply_plasma(const struct rros_theme *t, const struct rros_palette *p, const struct rros_conf *c,
+			 const char *wallpaper, int quiet)
+{
+	const char *xd = getenv("XDG_DATA_HOME"), *home = getenv("HOME"), *desk = getenv("XDG_CURRENT_DESKTOP");
+	char dir[700], path[800], name[32], cmd[1200];
+	unsigned long h = 2166136261UL;
+	const char *const *col = (const char *const[]){ p->bg, p->surface, p->text, p->muted, p->accent, p->red,
+							p->green, p->yellow, p->blue, p->magenta, NULL };
+	FILE *f;
+	DIR *d;
+	struct dirent *e;
+
+	if (access("/usr/bin/plasma-apply-colorscheme", X_OK) != 0 && !getenv("RROS_PLASMA_TEST"))
+		return;
+	if (xd && *xd)
+		snprintf(dir, sizeof dir, "%s/color-schemes", xd);
+	else if (home && *home)
+		snprintf(dir, sizeof dir, "%s/.local/share/color-schemes", home);
+	else
+		return;
+	for (; *col; col++)
+		for (const char *q = *col; *q; q++)
+			h = (h ^ (unsigned char)*q) * 16777619UL;
+	snprintf(name, sizeof name, "RROS-%08lx", h & 0xffffffffUL);
+	snprintf(path, sizeof path, "%s/%s.colors", dir, name);
+	if (rros_mkdir_parents(path) || !(f = fopen(path, "w"))) {
+		fprintf(stderr, "rros-theme: no se pudo escribir %s\n", path);
+		return;
+	}
+	rros_render_kde_colors(t, p, c, f);
+	fclose(f);
+	/* fuera los esquemas de RROS anteriores */
+	if ((d = opendir(dir))) {
+		while ((e = readdir(d)))
+			if (!strncmp(e->d_name, "RROS-", 5) && strcmp(e->d_name + strlen(e->d_name) - 7, ".colors") == 0 &&
+			    strncmp(e->d_name, name, strlen(name))) {
+				char old[1100];
+
+				snprintf(old, sizeof old, "%s/%s", dir, e->d_name);
+				unlink(old);
+			}
+		closedir(d);
+	}
+	/* las barras de título, con los mismos colores (KWin lee primero las de ~/.local/share) */
+	snprintf(path, sizeof path, "%s/../aurorae/themes/RROS", dir);
+	if (rros_write_aurorae(path, t, p) != 0)
+		fputs("rros-theme: no se pudo escribir el tema de las barras de título\n", stderr);
+	if (getenv("RROS_PLASMA_TEST"))
+		return;
+	/* KWin vuelve a leer la decoración */
+	if (system("qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || "
+		   "dbus-send --session --type=method_call --dest=org.kde.KWin /KWin org.kde.KWin.reconfigure >/dev/null 2>&1") != 0 &&
+	    !quiet && desk && strstr(desk, "KDE"))
+		fputs("rros-theme: aviso: no se pudo recargar KWin\n", stderr);
+	snprintf(cmd, sizeof cmd, "plasma-apply-colorscheme %s >/dev/null 2>&1", name);
+	if (system(cmd) != 0 && !quiet)
+		fputs("rros-theme: aviso: plasma-apply-colorscheme falló\n", stderr);
+	if (desk && strstr(desk, "KDE") && wallpaper[0] && !strchr(wallpaper, '\'')) {
+		snprintf(cmd, sizeof cmd, "plasma-apply-wallpaperimage '%s' >/dev/null 2>&1", wallpaper);
+		if (system(cmd) != 0 && !quiet)
+			fputs("rros-theme: aviso: plasma-apply-wallpaperimage falló\n", stderr);
+	}
+}
+
 /* recarga lo que está en marcha: compositor, fondo, panel y notificaciones */
 static void reload_desktop(const struct rros_theme *t, const char *wallpaper, int quiet)
 {
@@ -226,8 +296,10 @@ static int cmd_apply(const char *profile, int quiet)
 	/* primero la configuración (rápido) y después el fondo, que la primera vez tarda medio segundo */
 	rc = render_all(base, &t, &c, access("/usr/bin/swayfx", X_OK) == 0);
 	ensure_wallpaper(&t, &p, wp, sizeof wp);
-	if (rc == 0)
+	if (rc == 0) {
 		reload_desktop(&t, wp, quiet);
+		apply_plasma(&t, &p, &c, wp, quiet);
+	}
 	if (rc == 0 && !quiet)
 		printf("tema aplicado: %s (%s, acento %s) en %s\n", t.theme, t.dark ? "oscuro" : "claro", p.accent, base);
 	rros_conf_free(&c);

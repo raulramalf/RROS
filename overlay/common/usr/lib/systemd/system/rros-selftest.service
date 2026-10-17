@@ -8,7 +8,7 @@ Wants=rros-apply.service
 Type=oneshot
 ExecStart=/bin/sh -c '/usr/libexec/rros-selftest 2>&1 | tee /dev/console'
 ExecStartPost=/bin/sh -c 'sleep 2; systemctl poweroff'
-TimeoutStartSec=300
+TimeoutStartSec=600
 StandardOutput=journal+console
 
 [Install]

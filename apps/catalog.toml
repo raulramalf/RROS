@@ -12,13 +12,13 @@ category = "internet"
 desc = "Navegador ligero de GNOME. Es el navegador por defecto."
 apt = "epiphany-browser"
 pacman = "epiphany"
-shipped = "lite,standard,pro"
 cmd = "epiphany"
 
 [app.firefox]
 name = "Firefox"
 category = "internet"
 desc = "El navegador de Mozilla, con sus extensiones."
+shipped = "lite,standard,pro"
 pacman = "firefox,firefox-i18n-es-es"
 flatpak = "org.mozilla.firefox"
 cmd = "firefox"
@@ -126,7 +126,6 @@ category = "office"
 desc = "Visor de PDF y documentos."
 apt = "evince"
 pacman = "evince"
-shipped = "lite,standard,pro"
 
 [app.calibre]
 name = "calibre"
@@ -211,7 +210,6 @@ category = "graphics"
 desc = "Visor de imágenes rápido."
 apt = "imv"
 pacman = "imv"
-shipped = "lite,standard,pro"
 
 [app.gimp]
 name = "GIMP"
@@ -310,7 +308,6 @@ category = "system"
 desc = "Gestor de archivos."
 apt = "thunar"
 pacman = "thunar"
-shipped = "lite,standard,pro"
 
 [app.gparted]
 name = "GParted"
@@ -407,7 +404,6 @@ category = "utility"
 desc = "Calculadora científica."
 apt = "galculator"
 pacman = "galculator"
-shipped = "lite,standard,pro"
 
 [app.flatseal]
 name = "Flatseal"

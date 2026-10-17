@@ -69,6 +69,12 @@ void rros_render_gtk_settings(const struct rros_theme *, const struct rros_palet
 void rros_render_gtk_css(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 void rros_render_hyprland(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 void rros_render_hyprlock(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
+/* KDE Plasma: esquema de colores (~/.local/share/color-schemes/RROS-*.colors) */
+void rros_render_kde_colors(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
+/* KDE Plasma: ~/.config/kxkbrc con la distribución del teclado */
+void rros_render_kxkbrc(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
+/* KDE Plasma: tema de barras de título (Aurorae) «RROS» en dir, con los colores del tema. 0 ok. */
+int rros_write_aurorae(const char *dir, const struct rros_theme *t, const struct rros_palette *p);
 
 /* Fondo de pantalla: el elegido (ui.wallpaper) o uno generado con la paleta (ui.wallpaper_style).
  * Escribe en out la ruta de la imagen, o "" si el fondo es un color liso. */

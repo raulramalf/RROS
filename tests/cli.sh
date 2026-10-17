@@ -406,7 +406,7 @@ for a in json.load(sys.stdin):
 
 # --- instalador: la parte que no toca discos (plan y validación de argumentos) ---
 INST=$PWD/overlay/common/usr/bin/rros-install
-inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 9 --bios -p lite)
+inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 12 --bios -p lite)
 case $inst_out in *rros-root*ext4*) ;; *) fail "rros-install plan" ;; esac
 if PATH=$B:$PATH "$INST" --user 'Mal Usuario' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un usuario no válido"; fi
 if PATH=$B:$PATH "$INST" --hostname 'a;b' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un nombre de equipo no válido"; fi
@@ -460,7 +460,7 @@ python3 -c '
 import json,sys
 j=json.load(sys.stdin)
 d=j["disks"][0]
-assert j["firmware"]=="uefi" and j["min_mb"]==8192, j
+assert j["firmware"]=="uefi" and j["min_mb"]==10240, j
 assert d["path"]=="/dev/nvme0n1" and d["systems"]=="Windows" and d["windows"], d
 assert d["esp"]=="nvme0n1p1" and d["free_mb"]==102400-1-117-61440, d
 assert d["wipe"]=="" and d["alongside"]=="" and d["alongside_crypt"]=="", d

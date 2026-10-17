@@ -1,9 +1,9 @@
-# Perfil Lite: equipos de 1-2 GB de RAM, CPU antiguas, sin GPU dedicada.
+# Perfil Lite: equipos de 2-4 GB de RAM, CPU antiguas, sin GPU dedicada (Plasma con pocos efectos).
 [profile]
 name = "lite"
-min_ram_mb = 1024
-max_idle_ram_mb = 512
-max_disk_gb = 6
+min_ram_mb = 2048
+max_idle_ram_mb = 1280
+max_disk_gb = 8
 
 [build]
 libc = "musl"

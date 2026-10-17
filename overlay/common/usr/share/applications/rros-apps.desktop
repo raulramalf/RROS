@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Tienda de aplicaciones
+Comment=Instala programas de Arch Linux y de Flathub con un clic
+Exec=rros-settings open tienda
+Icon=system-software-install
+Terminal=false
+Categories=System;PackageManager;
+Keywords=tienda;aplicaciones;instalar;programas;flatpak;

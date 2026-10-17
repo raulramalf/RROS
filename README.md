@@ -7,8 +7,8 @@ Sistema operativo ligero y muy personalizable sobre **Arch Linux**, con el escri
 | Objetivo | Meta |
 |---|---|
 | Perfiles de hardware | Lite / Standard / Pro (techo de diseño: 8 GB de RAM) |
-| Disco | ≤ 20 GB (Lite ≤ 6, Standard ≤ 12, Pro ≤ 20) |
-| RAM del SO en reposo | ≤ 4 GB (Lite < 512 MB, Standard < 2 GB, Pro ≤ 4 GB) |
+| Disco | ≤ 20 GB (Lite ≤ 8, Standard ≤ 12, Pro ≤ 20) |
+| RAM del SO en reposo | ≤ 4 GB (Lite < 1,3 GB con Plasma, Standard < 2 GB, Pro ≤ 4 GB) |
 | Arquitecturas | x86_64 (Intel/AMD) y ARM64 |
 | Personalización | 129 ajustes por capas, 7 temas (más los tuyos), estilos de escritorio (clásico, moderno, mosaico), fondos generados, efectos de Hyprland, atajos, reglas por aplicación y programas de inicio propios ([docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)). Escritorio, red, memoria, seguridad y servicios ya se aplican; el resto se valida |
 | Interfaz de ajustes | Ventana gráfica local (`rros settings`) con temas, tienda, seguridad, dispositivos y creación de archivos, y versión de terminal para Lite o SSH |
@@ -38,6 +38,10 @@ La ISO de Arch la construye GitHub Actions: pestaña *Actions* → workflow **Ar
 **Contenedor:** `scripts/try-docker.sh lite` abre una consola con la identidad y las herramientas de RROS (sin escritorio).
 
 ### Capturas reales del sistema
+![RROS con Plasma arrancado en QEMU: barra arriba con el menú RROS, el reloj y la bandeja; dock abajo](docs/img/rros-plasma-live.png)
+
+*Captura real del live de Arch con Plasma, tomada por la CI en QEMU (sin GPU): barra de arriba con el menú RROS, reloj y bandeja, y el dock con Archivos, Firefox, Terminal, Kate, la Tienda, RROS Ajustes y la papelera.*
+
 ![RROS Lite arrancado en QEMU: panel, terminal, calculadora, editor y archivos](docs/img/rros-lite-escritorio.png)
 
 *Captura real de la ISO Lite de la base Ubuntu arrancada en QEMU (sin KVM), tema Aurora. Es el escritorio de respaldo (sway), el que se usa sin aceleración gráfica; Hyprland, el de Arch en un PC real, todavía no tiene captura porque una máquina virtual sin GPU no lo puede mostrar.*
@@ -84,7 +88,7 @@ La ISO de Arch la construye GitHub Actions: pestaña *Actions* → workflow **Ar
 
 La GUI es una aplicación web local: necesita un navegador (Standard y Pro lo incluyen; Lite usa la TUI). No hay todavía una ventana con toolkit nativo (GTK/Qt).
 
-Medido en la ISO Lite de Arch (QEMU, 2 GB de RAM, en el autotest): ~490 MB de RAM usada en el live, con la sesión automática, y ~400 MB en el sistema instalado, en la pantalla de inicio de sesión (límite 512 MB; falta medirlo con Hyprland en un PC); el sistema instalado ocupa 4,2 GB (límite 6) y la ISO ~2,1 GB. En la de Ubuntu: 2,3 GB y ~370 MB con cuatro apps abiertas. Standard y Pro aún no se han medido; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
+Medido en la ISO Lite de Arch con Plasma (QEMU, 2 GB de RAM, en el autotest): ~950 MB de RAM usada con el escritorio Plasma arrancado y el navegador abierto con la bienvenida (límite 1,3 GB); el sistema ocupa ~5,2 GB (límite 8) y la ISO ~2,6 GB. En la de Ubuntu: 2,3 GB y ~370 MB con cuatro apps abiertas. Standard y Pro aún no se han medido; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
 
 ## Uso rápido
 

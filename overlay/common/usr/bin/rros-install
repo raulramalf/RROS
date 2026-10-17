@@ -103,6 +103,10 @@ if [ -n "$progress" ]; then
 	: > "$progress" || die "no puedo escribir en $progress"
 fi
 
+# base del sistema live: Ubuntu (casper) o Arch (archiso)
+base=ubuntu
+[ -e /etc/arch-release ] && base=arch
+
 # --- disco ---
 if [ -z "$fw" ]; then
 	if [ -d /sys/firmware/efi ]; then fw=uefi; else fw=bios; fi
@@ -182,13 +186,18 @@ fi
 # --- origen: el sistema de archivos comprimido de la ISO (limpio, sin cambios de la sesión live) ---
 step 1 "Comprobando el sistema a copiar"
 if [ -z "$src" ]; then
-	for c in /rofs /run/live/rootfs/filesystem.squashfs; do
+	for c in /rofs /run/live/rootfs/filesystem.squashfs /run/archiso/airootfs; do
 		if [ -d "$c/etc" ]; then src=$c; break; fi
 	done
 fi
 [ -d "$src/etc" ] || die "no encuentro el sistema a copiar (usa --source DIR)"
 [ -e "$src/usr/share/zoneinfo/$tz" ] || die "zona horaria desconocida: $tz"
 [ "$encrypt" -eq 0 ] || command -v cryptsetup >/dev/null || die "falta cryptsetup en este sistema"
+# archiso quita el kernel del sistema de archivos: se copia del medio de arranque
+kdir=/run/archiso/bootmnt/arch/boot/x86_64
+if [ "$base" = arch ] && [ ! -e "$src/boot/vmlinuz-linux" ]; then
+	[ -r "$kdir/vmlinuz-linux" ] || die "no encuentro el kernel en $kdir"
+fi
 
 target=$(mktemp -d /tmp/rros-target.XXXXXX)
 created=()   # particiones nuevas: junto a otro sistema se quitan si la instalación falla
@@ -322,6 +331,19 @@ tar -C "$src" --numeric-owner --xattrs --acls -cf - --checkpoint=2048 --checkpoi
 wait $! 2>/dev/null || true   # que el último porcentaje no pise el paso siguiente
 mkdir -p "$target"/{proc,sys,dev,run,tmp}
 chmod 1777 "$target/tmp"
+if [ "$base" = arch ]; then
+	# fuera lo que solo sirve en el live de archiso: su initramfs y el llavero temporal de pacman
+	rm -f "$target/etc/mkinitcpio.conf.d/archiso.conf" "$target/etc/systemd/system/pacman-init.service" \
+		"$target/etc/systemd/system/etc-pacman.d-gnupg.mount"
+	find "$target/etc/systemd/system" -type l \( -lname '*pacman-init.service' -o -lname '*etc-pacman.d-gnupg.mount' \) -delete
+	cat > "$target/etc/mkinitcpio.d/linux.preset" <<'EOF'
+# mkinitcpio preset file for the 'linux' package (rros-install)
+ALL_kver="/boot/vmlinuz-linux"
+PRESETS=('default')
+default_image="/boot/initramfs-linux.img"
+EOF
+	[ -e "$target/boot/vmlinuz-linux" ] || cp "$kdir/vmlinuz-linux" "$target/boot/vmlinuz-linux"
+fi
 
 # --- configuración del equipo ---
 step 5 "Creando tu usuario y configurando el equipo"
@@ -341,7 +363,14 @@ echo "$host" > "$target/etc/hostname"
 	[ -z "$boot" ] || echo "UUID=$(blkid -s UUID -o value "$boot") /boot ext4 defaults,noatime 0 2"
 	[ -z "$esp" ] || echo "UUID=$(blkid -s UUID -o value "$esp") /boot/efi vfat umask=0077 0 2"
 } > "$target/etc/fstab"
-if [ "$root_crypt" -eq 1 ]; then
+if [ "$root_crypt" -eq 1 ] && [ "$base" = arch ]; then
+	# sd-encrypt abre el disco en el initramfs con /etc/crypttab.initramfs; sd-vconsole pone el teclado
+	echo "rros-root UUID=$(blkid -s UUID -o value "$root") none luks,discard" > "$target/etc/crypttab.initramfs"
+	chmod 600 "$target/etc/crypttab.initramfs"
+	mkdir -p "$target/etc/mkinitcpio.conf.d"
+	echo "HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt filesystems fsck)" \
+		> "$target/etc/mkinitcpio.conf.d/rros-cifrado.conf"
+elif [ "$root_crypt" -eq 1 ]; then
 	echo "rros-root UUID=$(blkid -s UUID -o value "$root") none luks,discard,initramfs" > "$target/etc/crypttab"
 	chmod 600 "$target/etc/crypttab"
 	# que cryptsetup entre siempre en el initramfs (pide la contraseña antes de montar /)
@@ -359,7 +388,7 @@ in_target() { chroot "$target" "$@"; }
 
 # usuario con los grupos habituales de un escritorio (solo los que existen)
 groups=""
-for g in sudo adm audio video input netdev plugdev render cdrom bluetooth lpadmin dialout; do
+for g in sudo wheel adm audio video input netdev network storage optical plugdev render cdrom bluetooth lp lpadmin dialout rfkill; do
 	if grep -q "^$g:" "$target/etc/group"; then groups="$groups,$g"; fi
 done
 in_target useradd -m -s /bin/bash -c "$fullname" -G "${groups#,}" "$user"
@@ -369,19 +398,41 @@ password=""
 
 # teclado (consola, escritorio y la pantalla de la contraseña del disco, con la misma distribución XKB),
 # idioma y zona horaria
-in_target /usr/libexec/rros-vconsole --save "$keymap" || echo "aviso: no se pudo preparar el teclado de la consola" >&2
+if [ "$base" = arch ]; then
+	# Arch trae los mapas de kbd: los nombres de XKB que no coinciden se traducen
+	case $keymap in latam) kmap=la-latin1 ;; gb) kmap=uk ;; pt) kmap=pt-latin1 ;; br) kmap=br-abnt2 ;; *) kmap=$keymap ;; esac
+	printf 'KEYMAP=%s\n' "$kmap" > "$target/etc/vconsole.conf"
+else
+	in_target /usr/libexec/rros-vconsole --save "$keymap" || echo "aviso: no se pudo preparar el teclado de la consola" >&2
+fi
 in_target su - "$user" -c "rros-config set input.keymap '$keymap'" >/dev/null
 if ! in_target locale -a 2>/dev/null | grep -qix "${locale%.UTF-8}.utf8"; then
-	in_target locale-gen "$locale" >/dev/null || echo "aviso: no se pudo generar el idioma $locale" >&2
+	if [ "$base" = arch ]; then
+		sed -i "s/^#\(${locale} UTF-8\)/\1/" "$target/etc/locale.gen"
+		in_target locale-gen >/dev/null || echo "aviso: no se pudo generar el idioma $locale" >&2
+	else
+		in_target locale-gen "$locale" >/dev/null || echo "aviso: no se pudo generar el idioma $locale" >&2
+	fi
 fi
 in_target rros-config set --system locale.language "$locale" >/dev/null
 in_target rros-config set --system locale.timezone "$tz" >/dev/null
 lang=${locale%%.*}
-printf 'LANG=%s\nLANGUAGE=%s:%s\n' "$locale" "$lang" "${lang%%_*}" > "$target/etc/default/locale"
+if [ "$base" = arch ]; then
+	printf 'LANG=%s\nLANGUAGE=%s:%s\n' "$locale" "$lang" "${lang%%_*}" > "$target/etc/locale.conf"
+else
+	printf 'LANG=%s\nLANGUAGE=%s:%s\n' "$locale" "$lang" "${lang%%_*}" > "$target/etc/default/locale"
+fi
 ln -sf "/usr/share/zoneinfo/$tz" "$target/etc/localtime"
 echo "$tz" > "$target/etc/timezone"
 
-if [ "$root_crypt" -eq 1 ]; then
+if [ "$base" = arch ]; then
+	# el initramfs del live era el de archiso: se genera el del sistema instalado (con sd-encrypt si se cifra)
+	log "generando el initramfs (mkinitcpio)"
+	in_target mkinitcpio -P
+	# llavero de pacman propio (en el live era temporal)
+	{ in_target pacman-key --init && in_target pacman-key --populate archlinux; } >/dev/null 2>&1 ||
+		echo "aviso: no se pudo preparar el llavero de pacman (sudo pacman-key --init al arrancar)" >&2
+elif [ "$root_crypt" -eq 1 ]; then
 	# entran cryptsetup y el mapa de teclado de console-setup: la contraseña se teclea en la distribución elegida
 	log "regenerando el initramfs (con cryptsetup)"
 	in_target update-initramfs -u -k all
@@ -391,6 +442,22 @@ fi
 step 6 "Instalando el arranque (GRUB, $fw)"
 # la identidad de GRUB (nombre, colores y parámetros base) vive en /etc/default/grub.d/rros.cfg, que se lee
 # después de /etc/default/grub; lo propio de esta instalación va en un archivo posterior para que no se pierda
+if [ "$base" = arch ]; then
+	# Arch no lee /etc/default/grub.d: todo va en /etc/default/grub
+	{
+		echo "# Generado por rros-install. Edita y ejecuta: sudo grub-mkconfig -o /boot/grub/grub.cfg"
+		echo 'GRUB_DEFAULT=0'
+		echo 'GRUB_DISTRIBUTOR="RROS"'
+		echo "GRUB_TIMEOUT=$([ "$alongside" -eq 1 ] && echo 10 || echo 2)"
+		echo 'GRUB_TIMEOUT_STYLE=menu'
+		echo "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet loglevel=3 ${extra}\""
+		echo 'GRUB_CMDLINE_LINUX=""'
+		echo 'GRUB_DISABLE_RECOVERY=true'
+		echo 'GRUB_COLOR_NORMAL="cyan/black"'
+		echo 'GRUB_COLOR_HIGHLIGHT="black/cyan"'
+		echo "GRUB_DISABLE_OS_PROBER=$([ "$alongside" -eq 1 ] && echo false || echo true)"
+	} > "$target/etc/default/grub"
+else
 cat > "$target/etc/default/grub" <<'EOF'
 # Edita y ejecuta: sudo update-grub (los valores de RROS están en /etc/default/grub.d/)
 GRUB_DEFAULT=0
@@ -408,6 +475,7 @@ mkdir -p "$target/etc/default/grub.d"
 		echo "GRUB_TIMEOUT=10"
 	fi
 } > "$target/etc/default/grub.d/zz-rros-install.cfg"
+fi
 if [ "$fw" = uefi ]; then
 	in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=RROS --recheck ||
 		echo "aviso: no se pudo registrar la entrada en la NVRAM; se usa la ruta de arranque por defecto"
@@ -417,7 +485,11 @@ if [ "$fw" = uefi ]; then
 else
 	in_target grub-install --target=i386-pc --recheck "$disk"
 fi
-in_target update-grub
+if [ "$base" = arch ]; then
+	in_target grub-mkconfig -o /boot/grub/grub.cfg
+else
+	in_target update-grub
+fi
 others=$(grep -c "^menuentry .*osprober" "$target/boot/grub/grub.cfg" || true)
 
 sync

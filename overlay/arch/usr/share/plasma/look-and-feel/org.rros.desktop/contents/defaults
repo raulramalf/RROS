@@ -5,10 +5,10 @@ widgetStyle=Breeze
 ColorScheme=RROS
 
 [kdeglobals][Icons]
-Theme=Papirus-Dark
+Theme=breeze-dark
 
 [plasmarc][Theme]
-name=default
+name=rros
 
 [kcminputrc][Mouse]
 cursorTheme=breeze_cursors
@@ -21,3 +21,6 @@ ButtonsOnRight=
 
 [kwinrc][WindowSwitcher]
 LayoutName=org.kde.breeze.desktop
+
+[KSplash]
+Theme=org.rros.desktop

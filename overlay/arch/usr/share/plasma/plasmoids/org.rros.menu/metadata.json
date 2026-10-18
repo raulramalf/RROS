@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [ { "Name": "RROS" } ],
+        "Category": "Application Launchers",
+        "Description": "El menú de RROS: este equipo, ajustes, tienda, forzar salida, reposo, reiniciar y apagar",
+        "Icon": "rros",
+        "Id": "org.rros.menu",
+        "License": "GPL-2.0+",
+        "Name": "Menú RROS",
+        "Version": "1.0",
+        "Website": "https://github.com/raulramalf/RROS"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

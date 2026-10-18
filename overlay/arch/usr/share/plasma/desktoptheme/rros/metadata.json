@@ -1,0 +1,16 @@
+{
+  "KPlugin": {
+    "Authors": [
+      {
+        "Name": "RROS"
+      }
+    ],
+    "Description": "Barra y dock planos y translúcidos (2D)",
+    "Id": "rros",
+    "License": "GPL-2.0+",
+    "Name": "RROS",
+    "Version": "1.0",
+    "Website": "https://github.com/raulramalf/RROS"
+  },
+  "X-Plasma-API-Minimum-Version": "6.0"
+}

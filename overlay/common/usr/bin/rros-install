@@ -458,8 +458,9 @@ if [ "$base" = arch ]; then
 		# el kernel de Arch trae AppArmor pero no lo activa: hay que nombrarlo en la lista de LSM
 		echo 'GRUB_CMDLINE_LINUX="lsm=landlock,lockdown,yama,integrity,apparmor,bpf"'
 		echo 'GRUB_DISABLE_RECOVERY=true'
-		echo 'GRUB_COLOR_NORMAL="cyan/black"'
-		echo 'GRUB_COLOR_HIGHLIGHT="black/cyan"'
+		# el menú con el tema de RROS (fondo, logotipo y la entrada elegida en una píldora)
+		echo 'GRUB_GFXMODE=auto'
+		echo 'GRUB_THEME="/usr/share/grub/themes/rros/theme.txt"'
 		echo "GRUB_DISABLE_OS_PROBER=$([ "$alongside" -eq 1 ] && echo false || echo true)"
 	} > "$target/etc/default/grub"
 else

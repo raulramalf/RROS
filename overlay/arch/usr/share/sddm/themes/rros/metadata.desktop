@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=RROS
+Description=Inicio de sesión de RROS
+Author=RROS
+License=GPL-2.0+
+Type=sddm-theme
+Version=1.0
+Website=https://github.com/raulramalf/RROS
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=rros
+Theme-API=2.0
+QtVersion=6

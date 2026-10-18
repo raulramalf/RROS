@@ -69,7 +69,7 @@ make -C "$ROOT_DIR" install DESTDIR="$P/airootfs" PREFIX=/usr >/dev/null
 iso_name="rros-$profile"
 iso_label="RROS_${profile^^}"
 iso_publisher="RROS <https://github.com/raulramalf/RROS>"
-iso_application="RROS Aurora ($profile): probar e instalar"
+iso_application="RROS 1.0 ($profile): probar e instalar"
 airootfs_image_type="squashfs"
 airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '${SQUASH_LEVEL:-15}' '-b' '1M')
 file_permissions=(
@@ -81,9 +81,10 @@ EOF
 log "$(grep -c '"0:0:755"' "$P/profiledef.sh") archivos ejecutables en file_permissions"
 
 # menú de arranque, en español: RROS, «modo seguro» (sin el controlador gráfico, para pantallas negras) y
-# lector de pantalla (accessibility=on: rros-live-user activa Orca). Las entradas nuevas copian la primera de
+# lector de pantalla (accessibility=on: rros-live-user activa Orca). cow_spacesize=50%: lo que se escribe en el
+# live (aplicaciones de la Tienda incluidas) puede ocupar hasta la mitad de la RAM, no solo 256 MB. Las entradas nuevas copian la primera de
 # releng para no depender del formato de cada versión de archiso.
-seguro="RROS Aurora ($profile) - modo seguro (gráficos básicos)"
+seguro="RROS 1.0 ($profile) - modo seguro (gráficos básicos)"
 ayuda_seguro="Sin el controlador de la tarjeta gráfica: si la pantalla se queda negra o congelada."
 f=$P/syslinux/archiso_sys-linux.cfg
 if [ -f "$f" ]; then
@@ -113,7 +114,7 @@ fi
 find "$P/syslinux" "$P/efiboot" "$P/grub" -type f \( -name '*.cfg' -o -name '*.conf' \) 2>/dev/null | while read -r f; do
 	sed -i -e "s/^Boot the .* with speakup screen reader\./Arranca RROS con el lector de pantalla Orca./" \
 		-e "s/^It allows you to install .* with speech feedback\./Puedes probarlo e instalarlo con voz./" \
-		-e "s/Arch Linux install medium/RROS Aurora ($profile)/g" \
+		-e "s/Arch Linux install medium/RROS 1.0 ($profile)/g" \
 		-e "s/ with speakup screen reader/ con lector de pantalla/g" -e "s/ with ^speech/ con ^lector de pantalla/g" \
 		-e "s/ with speech$/ con lector de pantalla/" \
 		-e "s/^Boot the .*/Arranca RROS: pruébalo sin tocar el disco y, si te gusta, instálalo./" \
@@ -130,7 +131,7 @@ find "$P/syslinux" "$P/efiboot" "$P/grub" -type f \( -name '*.cfg' -o -name '*.c
 		-e "s/'UEFI Firmware Settings'/'Ajustes del firmware (UEFI)'/" \
 		-e "s/System shutting down\.\.\./Apagando.../" -e "s/System rebooting\.\.\./Reiniciando.../" \
 		-e "s/Arch Linux/RROS/g" \
-		-e "s|archisosearchuuid=%ARCHISO_UUID%|& lsm=landlock,lockdown,yama,integrity,apparmor,bpf quiet splash${extra:+ $extra}|g" "$f"
+		-e "s|archisosearchuuid=%ARCHISO_UUID%|& lsm=landlock,lockdown,yama,integrity,apparmor,bpf cow_spacesize=50% quiet splash${extra:+ $extra}|g" "$f"
 done
 # fondo del menú BIOS: el de RROS, generado con los colores del tema (vesamenu: 640x480)
 if [ -f "$P/syslinux/splash.png" ]; then

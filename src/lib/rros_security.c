@@ -241,7 +241,7 @@ static const char *const lvl_strict[] = {
 };
 
 const struct rros_seclevel rros_seclevels[] = {
-	{ "basico", "como Ubuntu: cortafuegos y poco más", lvl_basic },
+	{ "basico", "cortafuegos y poco más", lvl_basic },
 	{ "estandar", "recomendado: kernel endurecido, bloqueo tras 10 intentos, actualizaciones", lvl_standard },
 	{ "estricto", "sin USB ni cámara, sin ping ni SSH, sudo pide siempre la contraseña", lvl_strict },
 };

@@ -1,18 +1,16 @@
-# Pro: todo lo de Standard con oficina completa, edición de imagen y desarrollo.
+# Pro: todo lo de Standard con edición de imagen, vídeo, particiones y desarrollo.
 libreoffice-fresh
 libreoffice-fresh-es
-geary
-gnome-system-monitor
-gnome-disk-utility
-gparted
-audacious
+elisa
 vlc
 gimp
-simple-scan
+partitionmanager
+kdeconnect              # el móvil y el ordenador conectados
 cups
-system-config-printer
-gvfs-mtp
-gvfs-smb
+print-manager
+skanlite
+kio-extras
+kio-admin
 git
 python
 base-devel

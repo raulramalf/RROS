@@ -266,7 +266,7 @@ static void audit(const struct rros_conf *eff)
 		}
 		free(prof);
 		if (n == 0 && live) {
-			/* Ubuntu no carga los perfiles en el sistema live (apparmor.service se lo salta) */
+			/* en el sistema live no se cargan perfiles (apparmor.service se lo salta) */
 			c = add("apparmor", INFO, "AppArmor");
 			snprintf(c->detail, sizeof c->detail, "Activo en el kernel; en el sistema live no se cargan perfiles (al instalar, sí).");
 		} else if (n == 0) {
@@ -283,11 +283,10 @@ static void audit(const struct rros_conf *eff)
 	} else {
 		c = add("apparmor", WARN, "AppArmor");
 		snprintf(c->detail, sizeof c->detail, "No está activo: los programas no están confinados.");
-		snprintf(c->fix, sizeof c->fix, arch ? "sudo pacman -S apparmor y añade lsm=landlock,lockdown,yama,integrity,apparmor,bpf al arranque" :
-			 "sudo apt install apparmor && sudo reboot");
+		snprintf(c->fix, sizeof c->fix, "sudo pacman -S apparmor y añade lsm=landlock,lockdown,yama,integrity,apparmor,bpf al arranque");
 	}
 
-	/* actualizaciones: Ubuntu instala las de seguridad sola; Arch las descarga cada día (rros-updates.timer)
+	/* actualizaciones: se descargan cada día (rros-updates.timer)
 	 * y se instalan cuando tú quieras, porque en Arch actualizar sin mirar puede romper el sistema */
 	if (arch && exists("/etc/systemd/system/timers.target.wants/rros-updates.timer")) {
 		c = add("updates", OK, "Actualizaciones");
@@ -304,7 +303,7 @@ static void audit(const struct rros_conf *eff)
 	} else {
 		c = add("updates", WARN, "Actualizaciones de seguridad");
 		snprintf(c->detail, sizeof c->detail, sp.auto_updates ? "Activadas en los ajustes, pero falta aplicarlas o instalar unattended-upgrades." :
-			 "Desactivadas: tendrás que actualizar a mano (sudo apt upgrade).");
+			 "Desactivadas: tendrás que actualizar a mano (rros apps update).");
 		snprintf(c->fix, sizeof c->fix, "sudo rros-config set --system system.auto_updates true && sudo rros-apply --services");
 	}
 
@@ -340,7 +339,7 @@ static void audit(const struct rros_conf *eff)
 		else if (t > 0)
 			snprintf(c->detail, sizeof c->detail, "Recuerda la contraseña %d minuto(s).", t);
 		else
-			snprintf(c->detail, sizeof c->detail, "Valor de Ubuntu (15 minutos).");
+			snprintf(c->detail, sizeof c->detail, "Valor por defecto (15 minutos).");
 	}
 
 	/* bloqueo de pantalla */

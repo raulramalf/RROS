@@ -1,6 +1,12 @@
 #!/bin/sh
-# Primer inicio de sesión: carpetas del usuario, plantillas, marcadores, Flathub y bienvenida.
+# Inicio de sesión: la bienvenida de RROS y, la primera vez, carpetas del usuario, plantillas, marcadores y Flathub.
 flag="${XDG_CONFIG_HOME:-$HOME/.config}/rros/.primer-inicio"
+# la bienvenida (aspecto, dock y escritorio; en el live, instalar): hasta que se complete una vez, y siempre en el live
+seen="${XDG_CONFIG_HOME:-$HOME/.config}/rros/.bienvenida-vista"
+if [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ] && command -v rros-ajustes >/dev/null 2>&1 &&
+	{ [ ! -e "$seen" ] || grep -q archisobasedir= /proc/cmdline; }; then
+	(sleep 3; rros-ajustes --bienvenida >/dev/null 2>&1) &
+fi
 [ -e "$flag" ] && exit 0
 mkdir -p "$(dirname "$flag")" "$HOME/.local/bin"
 # carpetas en español (ver /etc/xdg/user-dirs.defaults)
@@ -28,7 +34,5 @@ fi
 # Flathub para la tienda de aplicaciones (necesita red; si no hay, se reintenta al instalar)
 (rros-apps setup >/dev/null 2>&1) &
 touch "$flag"
-# la bienvenida (aspecto, dock y escritorio; en el live, instalar): una vez por usuario, y siempre en el live
-if [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ] && command -v rros-ajustes >/dev/null 2>&1; then
-	(sleep 3; rros-ajustes --bienvenida >/dev/null 2>&1) &
-fi
+notify-send -i rros "Bienvenido a RROS" "Super: todas las aplicaciones · Alt+Espacio: buscar · el menú RROS, arriba a la izquierda" 2>/dev/null
+exit 0

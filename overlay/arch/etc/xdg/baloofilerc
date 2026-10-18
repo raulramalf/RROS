@@ -1,0 +1,4 @@
+# Indexador de archivos de KDE (Baloo): apagado por defecto. Al empezar recorre todo el disco y gasta procesador y
+# memoria; buscar por nombre en el gestor de archivos funciona igual. Se enciende en RROS Ajustes (services.indexer).
+[Basic Settings]
+Indexing-Enabled=false

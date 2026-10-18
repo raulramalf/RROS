@@ -12,6 +12,16 @@ check() { # check "descripción" comando...
 as_user() { su rros -c "$*"; }
 mkdir -p /tmp/xrd-selftest && chown rros /tmp/xrd-selftest && chmod 700 /tmp/xrd-selftest
 has() { command -v "$1" >/dev/null 2>&1; }
+# procesador ocupado en reposo durante 10 s (informativo): lo que gasta el sistema sin hacer nada
+cpu_idle() {
+	# shellcheck disable=SC2046  # dos números separados por un espacio
+	set -- $(awk '/^cpu / {print $2+$3+$4+$7+$8, $5+$6}' /proc/stat)
+	b1=$1 i1=$2
+	sleep 10
+	# shellcheck disable=SC2046
+	set -- $(awk '/^cpu / {print $2+$3+$4+$7+$8, $5+$6}' /proc/stat)
+	echo "info: procesador en reposo $(awk -v b="$(($1 - b1))" -v i="$(($2 - i1))" 'BEGIN { if (b + i > 0) printf "%.1f", 100 * b / (b + i); else print 0 }') % ocupado (media de 10 s, $(nproc) hilos)"
+}
 
 echo "=== RROS selftest ==="
 # shellcheck source=/dev/null
@@ -20,37 +30,38 @@ check "identidad: ID=rros ($PRETTY_NAME)" test "$ID" = rros
 check "perfil activo: $(cat /etc/rros/profile 2>/dev/null)" test -s /etc/rros/profile
 # sistema live (ISO) o instalado en un disco
 LIVE=0
-grep -qE 'boot=casper|archisobasedir=' /proc/cmdline && LIVE=1
+grep -q 'archisobasedir=' /proc/cmdline && LIVE=1
 echo "sistema: $([ "$LIVE" -eq 1 ] && echo live || echo instalado)"
 check "usuario 'rros'" id rros
-check "no existe el usuario 'ubuntu'" sh -c '! id ubuntu'
 # el nombre del equipo, del kernel (Arch no trae la orden hostname)
 host=$(cat /proc/sys/kernel/hostname)
 check "nombre de equipo: $host" sh -c "case '$host' in rros*) true ;; *) false ;; esac"
 check "kernel $(uname -r)" test -n "$(uname -r)"
 
-# base del sistema: ubuntu o arch (la escribe apply-identity.sh)
-BASE=ubuntu
-if [ -r /etc/rros/identity ]; then BASE=$(sed -n 's/^RROS_BASE=//p' /etc/rros/identity); fi
-[ -n "$BASE" ] || { [ -e /etc/arch-release ] && BASE=arch || BASE=ubuntu; }
-echo "base: $BASE"
-
-# aplicaciones: las de KDE en Arch (escritorio Plasma), las GTK en Ubuntu
-if [ "$BASE" = arch ]; then
-	apps="plasmashell kwin_wayland sddm firefox dolphin konsole kate okular gwenview ark kcalc spectacle"
-	desks="firefox org.kde.dolphin org.kde.konsole org.kde.kate org.kde.okular org.kde.gwenview org.kde.ark org.kde.kcalc mpv"
-else
-	apps="epiphany thunar mousepad evince file-roller galculator nm-applet blueman-applet udiskie pavucontrol"
-	desks="org.gnome.Epiphany thunar org.xfce.mousepad org.gnome.Evince mpv org.gnome.FileRoller galculator imv"
-fi
-for app in $apps sway waybar foot fuzzel mako mpv btop flatpak swaylock swayidle swaybg grim slurp cliphist \
-           rros rros-config rros-theme rros-apps rros-settings rros-apply rros-security rros-devices rros-new \
-           rros-lock rros-dock rros-updates rros-informe nft rfkill udisksctl xdg-user-dir; do
+BASE=arch
+apps="plasmashell kwin_wayland sddm firefox dolphin konsole kate okular gwenview ark kcalc spectacle"
+desks="firefox org.kde.dolphin org.kde.konsole org.kde.kate org.kde.okular org.kde.gwenview org.kde.ark org.kde.kcalc mpv
+       rros-settings rros-apps rros-welcome rros-updates"
+for app in $apps mpv btop flatpak rros rros-config rros-theme rros-apps rros-settings rros-ajustes rros-apply rros-security \
+           rros-devices rros-new rros-updates rros-informe nft rfkill udisksctl xdg-user-dir nmcli pactl bluetoothctl \
+           kscreen-doctor qdbus6 kwriteconfig6 kreadconfig6 pkexec powerprofilesctl; do
 	check "programa: $app" has "$app"
 done
 for desk in $desks; do
 	check "lanzador: $desk.desktop" test -e "/usr/share/applications/$desk.desktop"
 done
+# lo propio de RROS: iconos, tema de escritorio 2D y 3D, menú RROS, carga, inicio de sesión y arranque
+for icon in rros rros-symbolic rros-settings rros-apps rros-install rros-welcome rros-launchpad rros-updates; do
+	check "icono propio: $icon" test -s "/usr/share/icons/hicolor/scalable/apps/$icon.svg"
+done
+check "tema de escritorio RROS (2D)" test -s /usr/share/plasma/desktoptheme/rros/widgets/panel-background.svg
+check "tema de escritorio RROS 3D" test -s /usr/share/plasma/desktoptheme/rros-3d/solid/widgets/panel-background.svg
+check "menú RROS de la barra (plasmoide)" test -s /usr/share/plasma/plasmoids/org.rros.menu/contents/ui/main.qml
+check "pantalla de carga de RROS" test -s /usr/share/plasma/look-and-feel/org.rros.desktop/contents/splash/Splash.qml
+check "inicio de sesión de RROS (SDDM)" sh -c 'test -s /usr/share/sddm/themes/rros/Main.qml && grep -q "^Current=rros" /etc/sddm.conf.d/10-rros.conf'
+check "menú de arranque de RROS (GRUB)" test -s /usr/share/grub/themes/rros/background.png
+check "RROS Ajustes: la API responde" as_user "rros-settings api GET /api/state | grep -q '\"keys\"'"
+check "RROS Ajustes: sin servidor web" sh -c '! rros-settings web --no-open 2>/dev/null'
 
 check "NetworkManager activo" systemctl is-active --quiet NetworkManager
 check "polkit activo (o disponible)" sh -c 'systemctl is-active --quiet polkit || test -x /usr/bin/pkexec'
@@ -72,7 +83,7 @@ check "cortafuegos: tabla inet rros con política drop" sh -c 'nft list table in
 check "cortafuegos: nftables arranca con el sistema" systemctl is-enabled --quiet nftables
 check "kernel endurecido (kptr_restrict = 2)" test "$(sysctl -n kernel.kptr_restrict 2>/dev/null)" = 2
 check "kernel endurecido (protected_regular = 2)" test "$(sysctl -n fs.protected_regular 2>/dev/null)" = 2
-# el aislamiento que usan Epiphany (WebKit) y Flatpak: crear un espacio de nombres como usuario
+# el aislamiento que usa Flatpak: crear un espacio de nombres como usuario
 check "aislamiento de aplicaciones (bwrap) como usuario" as_user "bwrap --ro-bind / / --dev /dev --proc /proc true"
 check "sudo: configuración de RROS válida" sh -c 'visudo -cqf /etc/sudoers.d/rros'
 # shellcheck disable=SC2016
@@ -82,7 +93,6 @@ check "rros-security: auditoría" sh -c 'rros-security --json | grep -q "\"score
 check "rros-devices: ve la tarjeta de red" sh -c 'rros-devices lista red --json | grep -q "\"cat\":\"red\""'
 check "rros-new: crea un script ejecutable" as_user "cd /tmp && rm -f rros-selftest.sh && rros-new bash rros-selftest >/dev/null && test -x /tmp/rros-selftest.sh"
 check "primer inicio: carpetas en español y plantillas" as_user "rros-first-login; test -d ~/Documentos && test -f ~/Plantillas/'Script de Bash.sh'"
-check "blueman-mechanism no arranca en el boot (solo por D-Bus)" sh -c '! systemctl is-enabled --quiet blueman-mechanism'
 if [ "$BASE" = arch ]; then
 	# Plasma: SDDM (con inicio automático en el live) y la sesión del usuario con la distribución de RROS
 	check "pantalla de inicio de sesión (SDDM) activa" systemctl is-active --quiet sddm
@@ -106,7 +116,18 @@ if [ "$BASE" = arch ]; then
 		i=0
 		while ! grep -qs icontasks ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
 		check "Plasma usó la distribución de RROS (barra arriba y dock)" grep -qs 'org.kde.plasma.icontasks' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
+		check "menú RROS en la barra de arriba" grep -qs 'org.rros.menu' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
 		check "menú global en la barra de arriba" grep -qs 'org.kde.plasma.appmenu' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
+		check "Launchpad en el dock" grep -qs 'org.kde.plasma.kickerdash' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
+		check "tema de escritorio RROS en uso" grep -qsE '^name=rros' ~rros/.config/plasmarc
+		bus="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u rros)/bus"
+		renderer=$(su rros -c "$bus qdbus6 org.kde.KWin /KWin supportInformation" 2>/dev/null | sed -n 's/^OpenGL renderer string: //p' | head -1)
+		echo "info: KWin dibuja con: ${renderer:-desconocido}"
+		case $renderer in *llvmpipe* | *softpipe*)
+			check "sin aceleración gráfica: efectos de KWin apagados" grep -qs '^blurEnabled=false' ~rros/.config/kwinrc ;;
+		esac
+		# shellcheck disable=SC2016  # lo expande el sh de dentro
+		check "bienvenida abierta (RROS Ajustes)" sh -c 'i=0; while ! pgrep -u rros -x rros-ajustes >/dev/null && [ $i -lt 30 ]; do sleep 1; i=$((i+1)); done; pgrep -u rros -x rros-ajustes'
 		i=0
 		while ! ls ~rros/.local/share/color-schemes/RROS-*.colors >/dev/null 2>&1 && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
 		check "colores y barras de título del tema de RROS aplicados al iniciar sesión" sh -c 'ls ~rros/.local/share/color-schemes/RROS-*.colors && test -f ~rros/.local/share/aurorae/themes/RROS/decoration.svg'
@@ -114,34 +135,36 @@ if [ "$BASE" = arch ]; then
 		sleep 10
 		echo "RROS_PANTALLA_LISTA"
 		sleep 6
+		cpu_idle
 	fi
 fi
-if [ "$LIVE" -eq 1 ] && [ "$BASE" != arch ]; then
-	check "tty1: rros-live activo y getty parado en el live" sh -c 'systemctl is-active --quiet rros-live && ! systemctl is-active --quiet getty@tty1'
-elif [ "$LIVE" -eq 0 ] && [ "$BASE" = arch ]; then
+if [ "$LIVE" -eq 0 ]; then
 	check "instalado: sin inicio automático (SDDM pide usuario y contraseña)" sh -c '! test -e /etc/sddm.conf.d/20-rros-live.conf'
 fi
 if [ "$LIVE" -eq 0 ]; then
-	[ "$BASE" = arch ] || check "instalado: inicio de sesión normal en tty1 (sin el automático del live)" sh -c '! systemctl is-active --quiet rros-live && systemctl is-active --quiet getty@tty1'
 	check "instalado: el usuario tiene contraseña" sh -c 'passwd -S rros | grep -q " P "'
 	check "instalado: el usuario administra (sudo)" sh -c 'id -nG rros | grep -qwE "wheel|sudo"'
 	check "instalado: la raíz está en /etc/fstab" grep -qE '^[^#[:space:]]+[[:space:]]+/[[:space:]]' /etc/fstab
 	check "instalado: GRUB con la entrada de RROS" sh -c 'grep -q RROS /boot/grub/grub.cfg'
 	check "instalado: zona horaria de la instalación" sh -c 'readlink /etc/localtime | grep -q Europe/Madrid'
+	check "instalado: GRUB con el tema de RROS" grep -q 'GRUB_THEME=.*rros' /etc/default/grub
 	if [ -d /sys/firmware/efi ]; then
 		check "instalado: arranque UEFI (partición EFI montada, con GRUB)" sh -c 'mountpoint -q /boot/efi && test -e /boot/efi/EFI/BOOT/BOOTX64.EFI'
 	fi
 fi
 # shellcheck disable=SC2016
 check "catálogo de apps (54)" sh -c 'test "$(rros-apps list | wc -l)" -ge 50'
-check "mimeapps: navegador por defecto" sh -c 'grep -qE "Epiphany|firefox" /etc/xdg/mimeapps.list'
+check "mimeapps: navegador por defecto" grep -q firefox /etc/xdg/mimeapps.list
 
 if [ "$BASE" = arch ]; then
-	for app in Hyprland hyprctl hyprlock nwg-dock-hyprland pacman arch-chroot genfstab mkinitcpio; do
+	for app in pacman arch-chroot genfstab mkinitcpio; do
 		check "Arch: $app" has "$app"
 	done
 	check "idioma del sistema: español" grep -q '^LANG=es_ES.UTF-8' /etc/locale.conf
-	check "traducciones de GTK y NetworkManager" test -f /usr/share/locale/es/LC_MESSAGES/gtk30.mo -a -f /usr/share/locale/es/LC_MESSAGES/nm-applet.mo
+	check "traducciones de GTK y de la red de Plasma" test -f /usr/share/locale/es/LC_MESSAGES/gtk30.mo -a -f /usr/share/locale/es/LC_MESSAGES/plasma_applet_org.kde.plasma.networkmanagement.mo
+	check "Hyprland y sway ya no van en el sistema" sh -c '! command -v Hyprland && ! command -v sway && ! command -v waybar'
+	check "VirtualBox: utilidades de invitado (solo arrancan en VirtualBox)" test -e /usr/lib/systemd/system/vboxservice.service
+	check "indexador de archivos (Baloo) apagado por defecto" grep -qs 'Indexing-Enabled=false' /etc/xdg/baloofilerc
 	check "teclado de la consola: español" sh -c 'grep -q "^KEYMAP=es" /etc/vconsole.conf && ls /usr/share/kbd/keymaps/i386/qwerty/es.map*'
 	check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/system-auth
 	check "sudo: el grupo wheel administra" sh -c 'visudo -cqf /etc/sudoers.d/10-rros-wheel'
@@ -162,41 +185,19 @@ if [ "$BASE" = arch ]; then
 			check "instalado: raíz cifrada con LUKS2 y abierta en el arranque" sh -c 'cryptsetup status rros-root | grep -q "type: *LUKS2"'
 		fi
 	fi
-else
-	for app in unattended-upgrade apparmor_parser ckbcomp; do
-		check "Ubuntu: $app" has "$app"
-	done
-	check "idioma del sistema: español" grep -q '^LANG=es_ES.UTF-8' /etc/default/locale
-	check "traducciones de GTK y NetworkManager (paquetes de idioma)" test -f /usr/share/locale-langpack/es/LC_MESSAGES/gtk30.mo -a -f /usr/share/locale-langpack/es/LC_MESSAGES/nm-applet.mo
-	check "sin telemetría (apport/whoopsie)" sh -c '! systemctl is-enabled --quiet apport 2>/dev/null'
-	check "perfiles de AppArmor de Epiphany y Flatpak presentes" test -f /etc/apparmor.d/epiphany -a -f /etc/apparmor.d/flatpak
-	check "AppArmor activo" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
-	check "bloqueo tras contraseñas fallidas (pam_faillock)" grep -q pam_faillock /etc/pam.d/common-auth
-	check "actualizaciones de seguridad automáticas" grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
-	check "teclado de la consola: rros-vconsole activo" systemctl is-active --quiet rros-vconsole
-	# el mapa lo genera ckbcomp (Ubuntu no trae los de kbd): en el español, la tecla 2 lleva " con Mayús
-	check "teclado de la consola: mapa español" sh -c "zcat /etc/console-setup/cached_UTF-8_del.kmap.gz | grep -q '^keycode 3 = U+0032 U+0022'"
-	check "instalador: el initramfs puede llevar cryptsetup" test -x /usr/share/initramfs-tools/hooks/cryptroot
-	check "ISO: tamaño del sistema para el progreso de la copia" sh -c '! grep -q boot=casper /proc/cmdline || test -s /cdrom/casper/filesystem.size'
 fi
 
-# escritorio: el tema se genera (Hyprland y sway), con fondo
+# escritorio: el tema de RROS se aplica a Plasma, con fondo
 check "rros-theme apply (usuario)" as_user "rros-theme apply --quiet"
 check "fondo de pantalla generado" as_user "ls ~/.local/share/rros/fondos/*.png"
-check "waybar: configuración generada" as_user "grep -q modules-left ~/.config/waybar/config"
-check "GTK y terminal configurados" as_user "test -s ~/.config/gtk-4.0/gtk.css && test -s ~/.config/foot/foot.ini && test -s ~/.config/swaylock/config"
-check "configuración de sway válida" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sway --validate"
-# arranca sway de verdad sin pantalla: si algún comando de la configuración falla, sway lanza swaynag (la barra roja)
-check "sway arranca sin errores de configuración" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman sh -c 'timeout 5 sway -d > /tmp/sway-selftest.log 2>&1; ! grep -q \"namespace swaynag\" /tmp/sway-selftest.log'"
-if has Hyprland; then
-	check "configuración de Hyprland válida" as_user "XDG_RUNTIME_DIR=/tmp/xrd-selftest Hyprland --verify-config -c ~/.config/hypr/hyprland.conf"
-fi
+check "Plasma: efectos, entrada y energía escritos" as_user "grep -q '^blurEnabled=' ~/.config/kwinrc && grep -q RepeatDelay ~/.config/kcminputrc && test -s ~/.config/powerdevilrc"
+check "terminal: perfil y colores de RROS" as_user "test -s ~/.local/share/konsole/RROS.profile && test -s ~/.local/share/konsole/RROS.colorscheme"
 
 # medidas (informativas, no cuentan): memoria usada con el escritorio arrancado y tamaño del sistema
 echo "info: memoria usada $(awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {printf "%d MB de %d MB", (t-a)/1024, t/1024}' /proc/meminfo)"
 echo "info: sistema instalado $(du -sxm / 2>/dev/null | cut -f1) MB (sin /home ni /tmp)"
-for sfs in /run/archiso/bootmnt/arch/x86_64/airootfs.sfs /cdrom/casper/filesystem.squashfs; do
-	[ -e "$sfs" ] && echo "info: imagen comprimida del sistema $(du -m "$sfs" | cut -f1) MB"
-done
+[ "$LIVE" -eq 0 ] && cpu_idle
+sfs=/run/archiso/bootmnt/arch/x86_64/airootfs.sfs
+[ -e "$sfs" ] && echo "info: imagen comprimida del sistema $(du -m "$sfs" | cut -f1) MB"
 echo "=== resultado: $ok correctas, $bad con fallo ==="
 [ "$bad" -eq 0 ] && echo "RROS_SELFTEST_OK" || echo "RROS_SELFTEST_FAIL"

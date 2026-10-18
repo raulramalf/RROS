@@ -236,6 +236,8 @@ static void kwin(struct edits *s, const struct rros_theme *t)
 	put(s, "kwinrc", "org.kde.kdecoration2", "BorderSize", "None");
 	put(s, "kwinrc", "org.kde.kdecoration2", "BorderSizeAuto", "false");
 	put(s, "kwinrc", "Wayland", "VirtualKeyboardEnabled", "%s", tf(t->osk));
+	/* el teclado en pantalla (Maliit) solo se arranca si se usa: ahorra memoria */
+	put(s, "kwinrc", "Wayland", "InputMethod", "%s", t->osk ? "/usr/share/applications/com.github.maliit.keyboard.desktop" : "");
 	put(s, "kwinrc", "Xwayland", "Scale", "%.2f", t->scale / 100.0);
 	/* gestos del panel táctil: los de KWin, con 3 dedos para cambiar de escritorio y 4 para la vista general */
 	put(s, "kwinrc", "Effect-slide", "SlideBackground", "%s", "false");

@@ -437,7 +437,24 @@ static int flathub_setup(void)
 }
 
 /* verb: install, remove o upgrade (todo el sistema); pkgs: "a,b,c" o NULL.
- * En Arch se instala siempre con -Syu: actualizar solo una parte del sistema rompe dependencias. */
+ * En Arch se instala siempre con -Syu: actualizar solo una parte del sistema rompe dependencias. En el sistema
+ * live no: todo vive en la memoria y se pierde al apagar, y actualizar el sistema entero no cabría. */
+static int live_system(void)
+{
+	char buf[2048] = "";
+	FILE *f = fopen("/proc/cmdline", "r");
+	const char *e = getenv("RROS_LIVE");
+
+	if (e)
+		return !strcmp(e, "1");
+	if (f) {
+		if (!fgets(buf, sizeof buf, f))
+			buf[0] = '\0';
+		fclose(f);
+	}
+	return strstr(buf, "archisobasedir=") != NULL;
+}
+
 static int pkg_step(const char *verb, const char *pkgs)
 {
 	const char *p = priv();
@@ -451,7 +468,7 @@ static int pkg_step(const char *verb, const char *pkgs)
 		if (!strcmp(verb, "remove")) {
 			argv[n++] = "-Rns";
 		} else {
-			argv[n++] = "-Syu";
+			argv[n++] = pkgs && live_system() ? "-Sy" : "-Syu";
 			if (pkgs)
 				argv[n++] = "--needed";
 		}

@@ -1,0 +1,4 @@
+# Cada sesión empieza limpia (sin volver a abrir las ventanas de la vez anterior): el inicio es más rápido.
+[General]
+loginMode=emptySession
+confirmLogout=false

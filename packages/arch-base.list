@@ -23,15 +23,12 @@ thermald
 
 # --- sistema ---
 networkmanager
-network-manager-applet
 bluez
 bluez-utils
-blueman
 sudo
 polkit
-polkit-gnome
 nftables
-apparmor                # confinamiento de programas (como Ubuntu); se activa con lsm= en el arranque
+apparmor                # confinamiento de programas; se activa con lsm= en el arranque
 pacman-contrib          # checkupdates: descarga diaria de actualizaciones (rros-updates.timer)
 which
 less
@@ -46,26 +43,27 @@ kbd
 xdg-user-dirs
 xdg-utils
 udisks2
-udiskie
 gvfs
 upower
 power-profiles-daemon
 brightnessctl
+libnotify
+virtualbox-guest-utils  # en VirtualBox: pantalla que se ajusta a la ventana y portapapeles compartido
 
 # --- sonido ---
 pipewire
 pipewire-pulse
 pipewire-alsa
 wireplumber
-pavucontrol
 playerctl
+ocean-sound-theme       # sonidos del sistema de Plasma
+sound-theme-freedesktop
 
-# --- escritorio: Hyprland (sway si no hay aceleración gráfica) ---
-# --- escritorio: KDE Plasma (Wayland), con el aspecto de RROS (barra arriba y dock) ---
+# --- escritorio: KDE Plasma (Wayland) con el aspecto de RROS (barra arriba, dock 2D o 3D, menú RROS) ---
 plasma-desktop
 plasma-workspace
 kwin
-kdeplasma-addons      # widgets: papelera del dock, etc.
+kdeplasma-addons        # Launchpad (panel de aplicaciones) y la papelera del dock
 plasma-nm
 plasma-pa
 plasma-systemmonitor
@@ -78,39 +76,17 @@ kde-gtk-config
 xdg-desktop-portal-kde
 polkit-kde-agent
 systemsettings
-kinfocenter
 kwallet-pam
-kwalletmanager
 sddm
-sddm-kcm
 plasma-browser-integration
 appmenu-gtk-module      # menú global también para las aplicaciones GTK
 ffmpegthumbs
 kdegraphics-thumbnailers
-phonon-qt6-vlc          # sonidos del sistema
-
-# --- sesión alternativa: Hyprland (y sway sin GPU) ---
-hyprland
-xdg-desktop-portal-hyprland
-xdg-desktop-portal-gtk
-hyprlock
-sway                    # alternativa ligera y sin GPU (máquinas virtuales)
-swaybg
-swayidle
-swaylock
-waybar
-foot
-fuzzel
-mako
-libnotify
-grim
-slurp
-wl-clipboard
-cliphist
-kanshi
-nwg-dock-hyprland       # dock (estilo «moderno»)
-qt5-wayland
+phonon-qt6-vlc
+qt6-svg                 # RROS Ajustes: iconos SVG
 qt6-wayland
+qt5-wayland
+maliit-keyboard         # teclado en pantalla
 
 # --- fuentes, iconos y cursor ---
 noto-fonts
@@ -118,15 +94,13 @@ noto-fonts-emoji
 inter-font
 ttf-jetbrains-mono
 ttf-liberation
-adwaita-icon-theme
-papirus-icon-theme
 
 # --- accesibilidad ---
 orca
 espeak-ng
 speech-dispatcher
 
-# --- aplicaciones (las de KDE, que siguen el tema de Plasma) ---
+# --- aplicaciones (las de KDE, que siguen el tema de RROS; Firefox con su logotipo) ---
 firefox
 firefox-i18n-es-es
 dolphin

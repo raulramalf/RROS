@@ -1,0 +1,15 @@
+#!/bin/sh
+# Sistema live: lee de antemano (en segundo plano y con la prioridad más baja) las bibliotecas de Plasma, de Qt y
+# de las aplicaciones del dock. Vienen comprimidas en la ISO y la primera vez que se abre cada programa hay que
+# descomprimirlas: así, cuando el usuario abre Firefox o el gestor de archivos, ya están en memoria.
+# Solo con 3,5 GB de RAM o más (con menos, esa memoria hace más falta para las aplicaciones).
+mem=$(awk '/^MemTotal:/ {print int($2 / 1024)}' /proc/meminfo)
+[ "${mem:-0}" -ge 3500 ] || exit 0
+grep -q archisobasedir= /proc/cmdline || exit 0
+sleep 20   # que termine de arrancar el escritorio
+for d in /usr/lib/qt6 /usr/lib/firefox /usr/lib/qt6/plugins /usr/lib/x86_64-linux-gnu \
+         /usr/bin/dolphin /usr/bin/konsole /usr/bin/kate /usr/bin/rros-ajustes /usr/share/icons/breeze-dark; do
+	[ -e "$d" ] && find "$d" -type f -size -64M -print0 2>/dev/null
+done | nice -n 19 ionice -c 3 xargs -0 -r cat > /dev/null 2>&1
+find /usr/lib -maxdepth 1 -name 'libKF6*.so*' -type f -print0 | nice -n 19 ionice -c 3 xargs -0 -r cat > /dev/null 2>&1
+exit 0

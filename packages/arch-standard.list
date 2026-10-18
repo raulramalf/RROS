@@ -1,15 +1,12 @@
-# Standard: oficina ligera, correo, herramientas de sistema, impresión y vídeo acelerado.
-abiword
-gnumeric
-geary
-gnome-system-monitor
-gnome-disk-utility
-audacious
-simple-scan
+# Standard: oficina, música, impresión, móviles y carpetas de red, y vídeo acelerado.
+libreoffice-fresh
+libreoffice-fresh-es
+elisa
 cups
-system-config-printer
-gvfs-mtp                # móviles
-gvfs-smb                # carpetas de red
+print-manager           # impresoras desde los ajustes de KDE
+skanlite                # escáner
+kio-extras              # móviles (MTP) y carpetas de red en el gestor de archivos
+kio-admin
 git
 python
 gst-plugins-good

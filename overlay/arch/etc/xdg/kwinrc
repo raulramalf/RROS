@@ -1,4 +1,6 @@
-# KWin en RROS: barras de título con los botones a la izquierda, desenfoque y minimizar con efecto de lámpara
+# KWin en RROS, valores de todo el sistema hasta que rros-theme escribe los del perfil al iniciar sesión: sin los
+# efectos que cuestan GPU (desenfoque, lámpara mágica), para que el primer arranque no vaya a tirones en equipos
+# modestos ni en máquinas virtuales sin 3D. Botones de las ventanas a la izquierda, como en macOS.
 [org.kde.kdecoration2]
 library=org.kde.kwin.aurorae
 theme=__aurorae__svg__RROS
@@ -8,17 +10,17 @@ BorderSize=None
 BorderSizeAuto=false
 
 [Plugins]
-blurEnabled=true
-contrastEnabled=true
-magiclampEnabled=true
-squashEnabled=false
+blurEnabled=false
+contrastEnabled=false
+magiclampEnabled=false
+squashEnabled=true
 wobblywindowsEnabled=false
 
 [Windows]
 BorderlessMaximizedWindows=false
 
 [Effect-overview]
-BorderActivate=9
+BorderActivate=7
 
 [NightColor]
 Active=false

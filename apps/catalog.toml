@@ -9,7 +9,7 @@
 [app.epiphany]
 name = "Web (Epiphany)"
 category = "internet"
-desc = "Navegador ligero de GNOME. Es el navegador por defecto."
+desc = "Navegador ligero de GNOME."
 apt = "epiphany-browser"
 pacman = "epiphany"
 cmd = "epiphany"
@@ -50,7 +50,6 @@ category = "internet"
 desc = "Cliente de correo sencillo."
 apt = "geary"
 pacman = "geary"
-shipped = "standard,pro"
 
 [app.transmission]
 name = "Transmission"
@@ -102,7 +101,7 @@ desc = "Suite ofimática completa: Writer, Calc, Impress."
 apt = "libreoffice"
 pacman = "libreoffice-fresh,libreoffice-fresh-es"
 flatpak = "org.libreoffice.LibreOffice"
-shipped = "pro"
+shipped = "standard,pro"
 
 [app.abiword]
 name = "AbiWord"
@@ -110,7 +109,6 @@ category = "office"
 desc = "Procesador de textos ligero."
 apt = "abiword"
 pacman = "abiword"
-shipped = "standard"
 
 [app.gnumeric]
 name = "Gnumeric"
@@ -118,7 +116,6 @@ category = "office"
 desc = "Hoja de cálculo ligera."
 apt = "gnumeric"
 pacman = "gnumeric"
-shipped = "standard"
 
 [app.evince]
 name = "Documentos (Evince)"
@@ -158,13 +155,22 @@ apt = "vlc"
 pacman = "vlc"
 shipped = "pro"
 
+[app.elisa]
+name = "Elisa"
+category = "media"
+desc = "Tu música, ordenada por álbumes y artistas."
+apt = "elisa"
+pacman = "elisa"
+flatpak = "org.kde.elisa"
+cmd = "elisa"
+shipped = "standard,pro"
+
 [app.audacious]
 name = "Audacious"
 category = "media"
 desc = "Reproductor de música."
 apt = "audacious"
 pacman = "audacious"
-shipped = "standard,pro"
 
 [app.audacity]
 name = "Audacity"
@@ -309,13 +315,21 @@ desc = "Gestor de archivos."
 apt = "thunar"
 pacman = "thunar"
 
+[app.particiones]
+name = "Gestor de particiones"
+category = "system"
+desc = "Crear, borrar y cambiar el tamaño de particiones (KDE Partition Manager)."
+apt = "partitionmanager"
+pacman = "partitionmanager"
+cmd = "partitionmanager"
+shipped = "pro"
+
 [app.gparted]
 name = "GParted"
 category = "system"
 desc = "Particiones de disco."
 apt = "gparted"
 pacman = "gparted"
-shipped = "pro"
 
 [app.disks]
 name = "Discos"
@@ -323,15 +337,15 @@ category = "system"
 desc = "Estado de los discos, formateo y comprobaciones."
 apt = "gnome-disk-utility"
 pacman = "gnome-disk-utility"
-shipped = "standard,pro"
 
 [app.sysmon]
 name = "Monitor del sistema"
 category = "system"
-desc = "Procesos, memoria y red con gráficas."
-apt = "gnome-system-monitor"
-pacman = "gnome-system-monitor"
-shipped = "standard,pro"
+desc = "Procesos, memoria, red y procesador con gráficas."
+apt = "plasma-systemmonitor"
+pacman = "plasma-systemmonitor"
+cmd = "plasma-systemmonitor"
+shipped = "lite,standard,pro"
 
 [app.btop]
 name = "btop"

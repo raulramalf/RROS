@@ -1,0 +1,13 @@
+[Unit]
+Description=RROS: lee de antemano las aplicaciones del sistema live (más rápidas al abrirlas)
+ConditionKernelCommandLine=archisobasedir
+After=graphical.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/rros-live-preload
+Nice=19
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=graphical.target

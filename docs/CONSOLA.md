@@ -2,7 +2,7 @@
 
 Esta guía explica **cómo se escribe cada comando**, qué significa cada parte y qué hacer cuando algo falla. Todos los ejemplos son reales y funcionan tal cual.
 
-Abre una terminal con `Mod+Enter` (en RROS, `Mod` es la tecla Windows/Súper).
+Abre una terminal desde el dock (el icono de Konsole) o con Ctrl+Alt+T.
 
 ---
 
@@ -51,8 +51,8 @@ La terminal corta el texto por los espacios y da significado a algunos símbolos
 ```sh
 rros config set ui.accent '#22d3ee'               # correcto
 rros config set ui.accent #22d3ee                 # MAL: la terminal toma # como comentario
-rros config set keybind.nav 'Mod+Shift+b exec firefox'   # correcto
-rros config set keybind.nav Mod+Shift+b exec firefox     # MAL: son cuatro argumentos
+rros config set keybind.nav 'Mod+Shift+b firefox'   # correcto
+rros config set keybind.nav Mod+Shift+b firefox     # MAL: son tres argumentos
 ```
 
 Comillas dobles (`"..."`) también valen, pero dejan que la terminal sustituya `$VARIABLES`. Usa las simples salvo que quieras eso.
@@ -139,8 +139,8 @@ Para ver el resultado en el escritorio: `rros theme apply` (los cambios de la in
 ```sh
 rros theme list              # los temas; * marca el que usas
 rros theme use nord          # cambia de tema y lo aplica a todo
-rros theme cycle             # pasa al siguiente (atajo: Mod+Shift+T)
-rros theme toggle            # alterna oscuro/claro (atajo: Mod+T)
+rros theme cycle             # pasa al siguiente
+rros theme toggle            # alterna oscuro/claro
 rros theme palette           # los colores resultantes
 ```
 
@@ -163,54 +163,60 @@ rros theme use miotema
 
 Lo que no definas en tu tema se hereda del tema base. También puedes editar los colores con selectores en `rros settings`.
 
-### Escritorio y fondo
+### Escritorio, dock y fondo
 
-El escritorio es Hyprland (en una máquina virtual sin aceleración gráfica, sway). Tres estilos ya preparados cambian
-de golpe la barra, el modo de las ventanas y el dock:
+El escritorio es KDE Plasma con el aspecto de RROS. Tres estilos preparados cambian de golpe la barra y el dock:
 
 ```sh
 rros theme escritorio              # los estilos; * marca el que usas
-rros theme escritorio clasico      # barra abajo con «Inicio» y lista de ventanas, ventanas libres
-rros theme escritorio moderno      # barra flotante arriba y dock
-rros theme escritorio mosaico      # ventanas en mosaico y barra con escritorios
+rros theme escritorio moderno      # el de RROS: barra fina arriba con el menú RROS y dock abajo
+rros theme escritorio clasico      # barra de tareas abajo con el botón de aplicaciones, sin dock
+rros theme escritorio enfoque      # barra en píldora con el reloj en el centro y el dock escondido
+```
+
+El dock, uno a uno:
+
+```sh
+rros config set ui.dock_style 3d           # 2d (plano) o 3d (brillo, bisel y canto)
+rros config set ui.dock_icon_size 56       # de 32 a 96 px
+rros config set ui.dock_position left      # bottom, left o right
+rros config set ui.dock_hiding auto        # never, dodge (se aparta de las ventanas) o auto
+rros config set ui.dock_launchpad false    # sin el botón del Launchpad
+rros config set ui.window_buttons right    # botones de las ventanas a la derecha
+rros config set ui.global_menu false       # el menú de cada aplicación en su ventana
 ```
 
 El fondo se genera con los colores de tu tema, así que cambia solo al cambiar de tema:
 
 ```sh
-rros theme wallpaper --next                     # siguiente estilo (atajo: Mod+Alt+W)
+rros theme wallpaper --next                     # siguiente estilo
 rros config set ui.wallpaper_style ondas        # aurora, ondas, degradado, circulos o liso
 rros config set ui.wallpaper ~/Imágenes/mar.jpg # tu propia imagen
-rros config set ui.wallpaper_mode fill          # fill, fit, center o tile
 rros theme wallpaper --style circulos --size 1920x1080 --out ~/fondo.png   # guardarlo como imagen
 ```
 
-Efectos de Hyprland (todos están también en Ajustes → *Escritorio y fondo*):
+Efectos (también en Ajustes → *Escritorio y Dock*):
 
 ```sh
-rros config set ui.animation_style rebote   # suave, rapida, rebote o deslizar
-rros config set ui.blur_strength 10         # desenfoque de 1 a 20 (ui.blur true para activarlo)
-rros config set ui.border_gradient false    # borde de un solo color
-rros config set ui.dim_inactive true        # oscurece las ventanas sin foco
-rros config set ui.tiling_layout master     # mosaico: dwindle (espiral) o master (una grande y el resto en columna)
-rros config set ui.dock true                # dock con tus aplicaciones (nwg-dock-hyprland)
-rros config set input.gestures true         # tres dedos a los lados en el panel táctil: cambiar de escritorio
+rros config set ui.effects advanced        # off, basic o advanced
+rros config set ui.animation_style rebote  # suave, rapida, rebote (lámpara mágica) o deslizar
+rros config set ui.blur true               # desenfoque detrás de menús y paneles (con efectos «advanced»)
+rros config set ui.dim_inactive true       # oscurece las ventanas sin foco
+rros config set ui.hot_corners false       # sin esquina activa
 ```
 
-Lo que Hyprland permita y RROS no tenga como clave va en `~/.config/hypr/personal.conf` (se crea vacío y RROS
-no lo toca nunca).
+Sin aceleración gráfica (una máquina virtual sin 3D) los efectos se apagan solos.
 
-### El panel
+### La barra superior
 
 ```sh
-rros config set panel.left   'workspaces,window'
-rros config set panel.center 'clock'
-rros config set panel.right  'cpu,memory,disk,network,audio,battery,tray'
-rros config set panel.style  floating        # flat (por defecto), floating o pill
-rros config set ui.panel_position bottom     # top, bottom, left o right
+rros config set panel.style pill           # flat (de borde a borde), floating o pill
+rros config set ui.panel_position bottom   # top, bottom, left o right
+rros config set ui.panel_size 32
+rros config set ui.clock_24h false
 ```
 
-Los módulos se escriben separados por comas, sin espacios. Disponibles: `workspaces`, `mode`, `window`, `language`, `clock`, `profile`, `memory`, `cpu`, `network`, `audio`, `battery`, `tray`, `disk`, `temperature`, `backlight`, `idle`, `apps` (botón Inicio), `taskbar` (lista de ventanas), `power` y `updates` (actualizaciones pendientes: solo aparece si hay, y al pulsarlo se instalan). Los que no existan se ignoran.
+Cambiar la barra o el dock los rehace al momento si estás en Plasma.
 
 ---
 
@@ -220,34 +226,30 @@ Estas tres cosas son **claves dinámicas**: tú eliges el identificador (la part
 
 ### Atajos de teclado: `keybind.<id>`
 
-Formato: `COMBINACIÓN COMANDO`
+Formato: `COMBINACIÓN PROGRAMA`
 
 ```sh
-rros config set keybind.navegador 'Mod+Shift+b exec firefox'
-rros config set keybind.captura   'Mod+Shift+p exec rros-shot region'
-rros config set keybind.cinco     'Mod+5 workspace number 5'
-rros config set keybind.cerrar    'Mod+Shift+q kill'
+rros config set keybind.navegador 'Mod+Shift+b firefox'
+rros config set keybind.notas     'Ctrl+Alt+n kate ~/Documentos/notas.txt'
 ```
 
-- La combinación une teclas con `+`. `Mod` es la tecla Windows. Otras: `Shift`, `Ctrl`, `Alt`, letras, números, `Return`, `space`, `Print`, `F1`...
-- El comando debe empezar por uno de estos: `exec` (lanza un programa), `workspace`, `move`, `focus`, `kill`, `fullscreen`, `floating`, `layout`, `splith`, `splitv`, `reload`, `resize`, `scratchpad`, `sticky`, `mode`.
-- Un atajo tuyo con la misma combinación que uno de RROS lo sustituye.
+- La combinación une teclas con `+`. `Mod` es la tecla Super (la del logotipo). Otras: `Shift`, `Ctrl`, `Alt`, letras, números, `Return`, `space`, `Print`, `F1`...
+- El atajo abre el programa. Para los atajos del propio escritorio (cerrar ventanas, escritorios...), usa Ajustes → *Teclado y atajos* → *Todos los atajos de KDE*.
+- Funcionan desde el siguiente inicio de sesión.
 
 ### Reglas de ventana: `rule.<id>`
 
-Formato: `CRITERIO=VALOR ACCIÓN`
+Formato: `app=NOMBRE ACCIÓN` (o `title=TÍTULO ACCIÓN`)
 
 ```sh
-rros config set rule.ff      'app_id=firefox workspace 2'   # Firefox siempre en el escritorio 2
-rros config set rule.calc    'title=Calculadora floating'   # la calculadora flota
-rros config set rule.video   'app_id=mpv inhibit_idle'      # sin salvapantallas viendo vídeo
-rros config set rule.steam   'class=Steam border pixel 0'   # sin borde
-rros config set rule.glass   'app_id=foot opacity 0.9'      # algo transparente
+rros config set rule.video 'app=mpv above'           # siempre encima
+rros config set rule.ff    'app=firefox maximized'   # Firefox se abre maximizado
+rros config set rule.juego 'app=steam fullscreen'
+rros config set rule.glass 'app=konsole opacity 90'  # algo transparente
 ```
 
-- Criterios: `app_id` (programas Wayland), `class` (programas X11), `title`, `window_role`. El valor admite letras, números, `.`, `_` y `-`.
-- Acciones: `floating`, `sticky`, `fullscreen`, `inhibit_idle`, `workspace N` (1 a 32), `opacity X` (0 a 1), `border none`, `border pixel N` (0 a 16).
-- Para saber el `app_id` de una ventana: `swaymsg -t get_tree | grep app_id`.
+- Acciones: `above`, `maximized`, `fullscreen`, `noborder`, `skiptaskbar`, `minimized` y `opacity N` (10 a 100).
+- El nombre es la clase de la ventana (normalmente el nombre del programa); se busca como parte del nombre.
 
 ### Inicio automático: `autostart.<id>`
 
@@ -263,8 +265,7 @@ El valor es el comando tal como lo escribirías en la terminal.
 rros config unset keybind.navegador
 ```
 
-Después de cambiar atajos o reglas: `rros theme apply` (recarga Hyprland o sway). Los mismos atajos y reglas
-valen para los dos: RROS los traduce a la sintaxis de cada uno.
+Después de cambiar atajos o reglas: `rros theme apply`.
 
 ---
 
@@ -444,7 +445,7 @@ Para pruebas y scripts puedes redirigir dónde lee y escribe RROS:
 | `RROS_THEMES_DIR` | Tu carpeta de temas |
 | `RROS_TEMPLATES_DIR` | Plantillas de `rros nuevo` (por defecto `/usr/share/rros/templates`) |
 | `RROS_ROOT` | `rros seguridad` y `rros dispositivos` leen `/sys`, `/proc` y `/etc` bajo esta carpeta (pruebas) |
-| `XDG_CONFIG_HOME` | Dónde se escriben `sway`, `waybar`, `foot`... |
+| `XDG_CONFIG_HOME` | Dónde se escriben `kwinrc`, `kdeglobals`, `kcminputrc`... |
 | `NO_COLOR` | Si existe, `rros info` y `rros doctor` no usan colores |
 
 Ejemplo: probar un cambio sin tocar tus ajustes reales:
@@ -470,12 +471,12 @@ rros config get ui.gap                                      # tu valor real, int
 | Panel con módulos a mi gusto | `rros config set panel.right 'cpu,memory,battery'` |
 | Panel flotante o en píldoras | `rros config set panel.style floating` (o `pill`) |
 | Fondo de pantalla | `rros config set ui.wallpaper /ruta/foto.jpg` |
-| Un atajo | `rros config set keybind.x 'Mod+b exec firefox'` |
-| Una regla de ventana | `rros config set rule.x 'app_id=firefox workspace 2'` |
+| Un atajo | `rros config set keybind.x 'Mod+b firefox'` |
+| Una regla de ventana | `rros config set rule.x 'app=mpv above'` |
 | Iniciar un programa al entrar | `rros config set autostart.x 'comando'` |
 | Deshacer un cambio | `rros config unset CLAVE` |
 | Guardar/volver a un estado | `rros config snapshot save/restore NOMBRE` |
-| Ajustes con ventana | `rros settings` (o `Mod+,`) |
+| Ajustes con ventana | `rros settings` (o el menú RROS → Ajustes) |
 | Ajustes en la terminal | `rros settings tui` |
 | Buscar un ajuste | `rros config schema \| grep palabra` |
 | ¿Estoy protegido? | `rros seguridad` |

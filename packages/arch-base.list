@@ -86,7 +86,6 @@ phonon-qt6-vlc
 qt6-svg                 # RROS Ajustes: iconos SVG
 qt6-wayland
 qt5-wayland
-maliit-keyboard         # teclado en pantalla
 
 # --- fuentes, iconos y cursor ---
 noto-fonts

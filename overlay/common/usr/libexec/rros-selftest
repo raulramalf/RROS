@@ -119,6 +119,11 @@ if [ "$BASE" = arch ]; then
 		check "menú RROS en la barra de arriba" grep -qs 'org.rros.menu' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
 		check "menú global en la barra de arriba" grep -qs 'org.kde.plasma.appmenu' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
 		check "Launchpad en el dock" grep -qs 'org.kde.plasma.kickerdash' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
+		# shellcheck disable=SC2016  # lo expande el sh de dentro
+		check "bienvenida abierta (RROS Ajustes)" sh -c 'i=0; while ! pgrep -u rros -x rros-ajustes >/dev/null && [ $i -lt 30 ]; do sleep 1; i=$((i+1)); done; pgrep -u rros -x rros-ajustes'
+		i=0
+		while ! ls ~rros/.local/share/color-schemes/RROS-*.colors >/dev/null 2>&1 && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
+		check "colores y barras de título del tema de RROS aplicados al iniciar sesión" sh -c 'ls ~rros/.local/share/color-schemes/RROS-*.colors && test -f ~rros/.local/share/aurorae/themes/RROS/decoration.svg'
 		check "tema de escritorio RROS en uso" grep -qsE '^name=rros' ~rros/.config/plasmarc
 		bus="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u rros)/bus"
 		renderer=$(su rros -c "$bus qdbus6 org.kde.KWin /KWin supportInformation" 2>/dev/null | sed -n 's/^OpenGL renderer string: //p' | head -1)
@@ -126,11 +131,6 @@ if [ "$BASE" = arch ]; then
 		case $renderer in *llvmpipe* | *softpipe*)
 			check "sin aceleración gráfica: efectos de KWin apagados" grep -qs '^blurEnabled=false' ~rros/.config/kwinrc ;;
 		esac
-		# shellcheck disable=SC2016  # lo expande el sh de dentro
-		check "bienvenida abierta (RROS Ajustes)" sh -c 'i=0; while ! pgrep -u rros -x rros-ajustes >/dev/null && [ $i -lt 30 ]; do sleep 1; i=$((i+1)); done; pgrep -u rros -x rros-ajustes'
-		i=0
-		while ! ls ~rros/.local/share/color-schemes/RROS-*.colors >/dev/null 2>&1 && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
-		check "colores y barras de título del tema de RROS aplicados al iniciar sesión" sh -c 'ls ~rros/.local/share/color-schemes/RROS-*.colors && test -f ~rros/.local/share/aurorae/themes/RROS/decoration.svg'
 		# el escritorio está listo: test-iso.sh hace aquí la captura de pantalla por el monitor de QEMU
 		sleep 10
 		echo "RROS_PANTALLA_LISTA"

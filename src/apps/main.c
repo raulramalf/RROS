@@ -376,6 +376,7 @@ static int cmd_list(int argc, char **argv, const char *query)
 			printf(",\"pkg\":"); json_str(pkgs_of(a) ? pkgs_of(a) : "");
 			printf(",\"pkg_manager\":\"%s\"", backend_name[backend]);
 			printf(",\"flatpak\":"); json_str(a->flatpak ? a->flatpak : "");
+			printf(",\"cmd\":"); json_str(a->cmd ? a->cmd : "");
 			printf(",\"shipped\":%s,\"installed\":%s}", shipped_in(a, profile) ? "true" : "false", inst ? "true" : "false");
 		} else {
 			printf("%-14s %-26.26s %-9s %s\n", a->id, a->name, a->category,

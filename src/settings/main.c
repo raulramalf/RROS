@@ -1,4 +1,4 @@
-/* rros-settings: ajustes de RROS. Interfaz gráfica web local y versión de terminal. */
+/* rros-settings: ajustes de RROS. Abre la aplicación RROS Ajustes, la versión de terminal o responde a la API. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,29 +9,45 @@
 static void usage(FILE *out)
 {
 	fputs("uso: rros-settings [COMANDO]\n"
-	      "  open [PÁGINA]       abre la interfaz que mejor encaje (por defecto)\n"
-	      "  web [--port N] [--no-open] [--timeout S] [--page PÁGINA]   interfaz gráfica en tu navegador\n"
-	      "PÁGINA: temas, tienda, archivos, seguridad, dispositivos, copias o una categoría (p. ej. cat:ui)\n"
+	      "  open [PÁGINA]       abre RROS Ajustes (la aplicación; sin pantalla, la versión de terminal)\n"
+	      "PÁGINA: general, apariencia, escritorio, red, bluetooth, sonido, pantalla, energia, raton, teclado,\n"
+	      "        tienda, seguridad, dispositivos, actualizaciones, accesibilidad, avanzado, instalar, bienvenida\n"
 	      "  tui [--no-apply]    interfaz de terminal (ideal en Lite o por SSH)\n"
 	      "  state               estado completo en JSON (para scripts)\n"
+	      "  api MÉTODO RUTA [CUERPO]   lo que usa la aplicación (JSON por la salida estándar)\n"
 	      "\n"
-	      "La interfaz web solo escucha en 127.0.0.1 y exige un token aleatorio.\n"
 	      "Cada cambio se valida igual que con `rros-config set` y se guarda al instante.\n", out);
 }
 
-static int open_best(void)
+static int page_ok(const char *p)
+{
+	size_t n = strlen(p);
+
+	if (n == 0 || n > 31)
+		return 0;
+	for (; *p; p++)
+		if (!((*p >= 'a' && *p <= 'z') || *p == ':' || *p == '-'))
+			return 0;
+	return 1;
+}
+
+static int open_best(const char *page)
 {
 	int have_display = getenv("WAYLAND_DISPLAY") || getenv("DISPLAY");
 
-	if (have_display && web_browser_available())
-		return run_web(0, 1, NULL, 3600);
+	if (have_display) {
+		char *args[] = { "rros-ajustes", page ? "--pagina" : NULL, (char *)page, NULL };
+
+		if (spawn_detached("rros-ajustes", args) == 0)
+			return 0;
+	}
 	if (isatty(STDIN_FILENO))
 		return run_tui(1);
 	{
-		char *args[] = { "foot", "-T", "RROS Ajustes", "-e", "rros-settings", "tui", NULL };
+		char *args[] = { "konsole", "-e", "rros-settings", "tui", NULL };
 
-		if (run_tool("foot", args, 0) == 127) {
-			fputs("rros-settings: no hay navegador ni terminal; usa `rros-settings web --no-open`\n", stderr);
+		if (run_tool("konsole", args, 0) == 127) {
+			fputs("rros-settings: no está RROS Ajustes ni hay terminal; usa `rros-settings tui`\n", stderr);
 			return 1;
 		}
 		return 0;
@@ -48,11 +64,18 @@ int main(int argc, char **argv)
 		return 0;
 	}
 	if (!strcmp(cmd, "open")) {
-		if (argc > 2 && web_set_start_page(argv[2])) {
+		if (argc > 2 && !page_ok(argv[2])) {
 			fprintf(stderr, "rros-settings: página no válida '%s'\n", argv[2]);
 			return 2;
 		}
-		return open_best();
+		return open_best(argc > 2 ? argv[2] : NULL);
+	}
+	if (!strcmp(cmd, "api")) {
+		if (argc < 4 || argc > 5) {
+			usage(stderr);
+			return 2;
+		}
+		return run_api(argv[2], argv[3], argc > 4 ? argv[4] : NULL);
 	}
 	if (!strcmp(cmd, "state")) {
 		struct model m;
@@ -80,32 +103,6 @@ int main(int argc, char **argv)
 			}
 		}
 		return run_tui(apply);
-	}
-	if (!strcmp(cmd, "web")) {
-		int port = 0, open_win = 1, idle = 3600;
-		const char *token = NULL;
-
-		for (int i = 2; i < argc; i++) {
-			if (!strcmp(argv[i], "--port") && i + 1 < argc)
-				port = atoi(argv[++i]);
-			else if (!strcmp(argv[i], "--no-open"))
-				open_win = 0;
-			else if (!strcmp(argv[i], "--page") && i + 1 < argc && web_set_start_page(argv[i + 1]) == 0)
-				i++;
-			else if (!strcmp(argv[i], "--timeout") && i + 1 < argc)
-				idle = atoi(argv[++i]);
-			else if (!strcmp(argv[i], "--token") && i + 1 < argc)
-				token = argv[++i];
-			else {
-				usage(stderr);
-				return 2;
-			}
-		}
-		if (port < 0 || port > 65535) {
-			fputs("rros-settings: puerto no válido\n", stderr);
-			return 2;
-		}
-		return run_web(port, open_win, token, idle);
 	}
 	usage(stderr);
 	return 2;

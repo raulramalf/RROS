@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Bienvenida
+Comment=Deja RROS a tu gusto: aspecto, dock y escritorio
+Exec=rros-ajustes --bienvenida
+Icon=rros-welcome
+Terminal=false
+Categories=System;
+Keywords=bienvenida;inicio;primeros pasos;

@@ -21,6 +21,12 @@ SAN := -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-fr
 
 all: $(BINS)
 
+# RROS Ajustes (Qt 6 Quick): la aplicación de ajustes, tienda, bienvenida e instalador
+APP := build/app/rros-ajustes
+app:
+	cmake -S app -B build/app -DCMAKE_BUILD_TYPE=Release >/dev/null
+	cmake --build build/app -j$$(nproc)
+
 build/rros-hwdetect: src/hwdetect/main.c $(LIB_SRC)
 build/rros-config: src/config/main.c $(LIB_SRC)
 build/rros-budget: src/budget/main.c $(LIB_SRC)
@@ -53,9 +59,9 @@ install: $(BINS)
 	           $(DESTDIR)$(PREFIX)/lib/systemd/system $(DESTDIR)/etc/rros
 	install -m 755 $(BINS) $(DESTDIR)$(PREFIX)/bin/
 	install -m 644 profiles/*.toml $(DESTDIR)$(PREFIX)/share/rros/profiles/
-	install -d $(DESTDIR)$(PREFIX)/share/rros/settings $(DESTDIR)$(PREFIX)/share/rros/apps
+	install -d $(DESTDIR)$(PREFIX)/share/rros/apps
 	install -m 644 apps/catalog.toml $(DESTDIR)$(PREFIX)/share/rros/apps/catalog.toml
-	install -m 644 gui/index.html $(DESTDIR)$(PREFIX)/share/rros/settings/index.html
+	if [ -x $(APP) ]; then install -m 755 $(APP) $(DESTDIR)$(PREFIX)/bin/; fi
 	install -m 644 dist/systemd/*.service $(DESTDIR)$(PREFIX)/lib/systemd/system/
 	install -d $(DESTDIR)$(PREFIX)/share/rros/templates
 	cp -R templates/. $(DESTDIR)$(PREFIX)/share/rros/templates/
@@ -66,4 +72,4 @@ docs-schema: build/rros-config
 clean:
 	rm -rf build
 
-.PHONY: all test install docs-schema clean
+.PHONY: all app test install docs-schema clean

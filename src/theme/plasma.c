@@ -114,7 +114,9 @@ void rros_render_plasma_layout(const struct rros_theme *t, const struct rros_pal
 		if (t->dock_launchpad)
 			fputs("var pad = dock.addWidget(\"org.kde.plasma.kickerdash\");\n"
 			      "pad.currentConfigGroup = [\"General\"];\n"
-			      "pad.writeConfig(\"icon\", \"rros-launchpad\");\n", f);
+			      "pad.writeConfig(\"icon\", \"rros-launchpad\");\n"
+			      /* la tecla Super abre el lanzador que tiene Alt+F1: el Launchpad */
+			      "pad.globalShortcut = \"Alt+F1\";\n", f);
 		fputs("var dt = dock.addWidget(\"org.kde.plasma.icontasks\");\n"
 		      "dt.currentConfigGroup = [\"General\"];\n", f);
 		js_launchers(f, "dt");

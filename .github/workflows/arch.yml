@@ -26,7 +26,7 @@ jobs:
       - name: Los paquetes de las listas existen en Arch
         run: scripts/check-packages-arch.sh
       - name: Compilar y pruebas
-        run: make WERROR=1 && make test WERROR=1
+        run: make WERROR=1 && make test WERROR=1 && make app
 
   iso:
     needs: comprobar
@@ -39,8 +39,9 @@ jobs:
       - name: ISO con archiso (contenedor Arch)
         run: |
           docker run --rm --privileged -v "$PWD:/rros" -w /rros -e PROFILE archlinux:latest bash -ec '
-            pacman -Syu --noconfirm --needed archiso base-devel git python
+            pacman -Syu --noconfirm --needed archiso base-devel git python cmake qt6-base qt6-declarative
             make WERROR=1
+            make app
             scripts/build-iso-arch.sh "$PROFILE"'
           sudo chown -R "$(id -u):$(id -g)" build
       - name: Autotest de arranque en QEMU

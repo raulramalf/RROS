@@ -460,7 +460,22 @@ RROS_ROOT=$DR "$B/rros-installer" plan --disk /dev/nvme0n1 --alongside --uefi -p
 echo "/dev/nvme0n1p3 /cdrom ntfs ro 0 0" > "$DR/proc/self/mounts"
 if RROS_ROOT=$DR "$B/rros-installer" plan --disk nvme0n1 --uefi -p lite >/dev/null 2>&1; then fail "plan acepta el disco del live"; fi
 
-# --- interfaces: rros-settings (TUI en un pty y servidor web local) ---
+# --- rros-settings api: lo que usa la aplicación RROS Ajustes (sin servidor ni navegador) ---
+export RROS_NO_APPLY=1
+st=$("$B/rros-settings" api GET /api/state) || fail "api state"
+python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["keys"] and d["desktops"] and d["themes"], d.keys()' <<<"$st" || fail "api state: JSON"
+"$B/rros-settings" api POST /api/set 'key=ui.dock_style&value=3d' | gq '"ok":true' || fail "api set"
+eq "$("$B/rros-config" get ui.dock_style)" 3d
+if "$B/rros-settings" api POST /api/set 'key=ui.dock_style&value=4d' >/dev/null; then fail "api set debía rechazar 4d"; fi
+bad_out=$("$B/rros-settings" api POST /api/set 'key=ui.dock_style&value=4d' || true)
+case $bad_out in *'"error"'*) ;; *) fail "api set: mensaje de error" ;; esac
+"$B/rros-settings" api POST /api/unset 'key=ui.dock_style' | gq '"ok":true' || fail "api unset"
+"$B/rros-settings" api GET /api/apps | gq '"id":"firefox"' || fail "api apps"
+case $("$B/rros-settings" api GET /api/nada || true) in *'ruta desconocida'*) ;; *) fail "api ruta desconocida" ;; esac
+if "$B/rros-settings" api GET /api/state x y 2>/dev/null; then fail "api con argumentos de más"; fi
+unset RROS_NO_APPLY
+
+# --- interfaces: rros-settings (TUI en un pty) ---
 if command -v python3 >/dev/null 2>&1; then
 	python3 tests/tui_test.py || fail "TUI"
 fi

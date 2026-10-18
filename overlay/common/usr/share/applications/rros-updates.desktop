@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Actualizaciones
+Comment=Instala las novedades del sistema y de las aplicaciones
+Exec=rros-ajustes --pagina actualizaciones
+Icon=rros-updates
+Terminal=false
+Categories=System;
+Keywords=actualizar;actualizaciones;novedades;

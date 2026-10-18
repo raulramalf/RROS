@@ -15,6 +15,7 @@ check_profile "$profile"
 need_root
 need_cmd mkarchiso pacman
 [ -x "$RROS/rros-config" ] || die "compila primero con 'make'"
+[ -x "$ROOT_DIR/build/app/rros-ajustes" ] || die "compila RROS Ajustes con 'make app' (necesita cmake, qt6-base y qt6-declarative)"
 releng=/usr/share/archiso/configs/releng
 [ -d "$releng" ] || die "falta archiso ($releng)"
 extra=${EXTRA_CMDLINE:-}

@@ -1,4 +1,4 @@
-/* rros-settings: modelo común de la TUI y de la GUI web. */
+/* rros-settings: modelo común de la versión de terminal y de la aplicación RROS Ajustes. */
 #ifndef RROS_SETTINGS_H
 #define RROS_SETTINGS_H
 
@@ -52,8 +52,7 @@ int spawn_detached(const char *tool, char *const argv[]);               /* 0 si 
 
 /* Modos. */
 int run_tui(int auto_apply);
-int web_browser_available(void);
-int run_web(int port, int open_window, const char *token, int idle_seconds);
-int web_set_start_page(const char *page);   /* 0 si el nombre es válido */
+/* rros-settings api MÉTODO RUTA [CUERPO]: responde en JSON por la salida estándar. 0 si fue bien. */
+int run_api(const char *method, const char *target, const char *body);
 
 #endif

@@ -1,9 +1,10 @@
 [Desktop Entry]
 Type=Application
 Name=Seguridad
-Comment=Estado de la seguridad del equipo, cortafuegos y niveles de seguridad
-Exec=rros-settings open seguridad
-Icon=security-high
+Comment=Cortafuegos, nivel de seguridad y privacidad
+Exec=rros-ajustes --pagina seguridad
+Icon=rros-security
 Terminal=false
-Categories=Settings;System;Security;
-Keywords=seguridad;cortafuegos;firewall;contraseña;auditoria;
+NoDisplay=true
+Categories=Settings;Security;
+Keywords=seguridad;cortafuegos;privacidad;

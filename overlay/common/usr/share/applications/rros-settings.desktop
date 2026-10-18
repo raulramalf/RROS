@@ -1,9 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=RROS Ajustes
-Comment=Temas, atajos, reglas de ventana y todos los ajustes del sistema
-Exec=rros-settings open
-Icon=preferences-system
+Name=Ajustes
+GenericName=Ajustes del sistema
+Comment=Apariencia, dock, red, sonido, pantallas, dispositivos y todos los ajustes de RROS
+Exec=rros-ajustes
+Icon=rros-settings
 Terminal=false
+StartupWMClass=rros-ajustes
 Categories=Settings;System;
-Keywords=ajustes;tema;temas;atajos;configuracion;
+Keywords=ajustes;preferencias;configuracion;tema;red;wifi;sonido;pantalla;dock;

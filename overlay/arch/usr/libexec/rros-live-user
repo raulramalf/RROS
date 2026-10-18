@@ -18,3 +18,13 @@ fi
 # entra solo en Plasma (solo en el live: el archivo vive en la capa temporal y el instalador no lo copia)
 mkdir -p /etc/sddm.conf.d
 printf '[Autologin]\nUser=rros\nSession=plasma.desktop\nRelogin=false\n' > /etc/sddm.conf.d/20-rros-live.conf
+# Ajustes, la Tienda y el instalador piden permiso con polkit: en el live, el usuario rros no necesita contraseña
+mkdir -p /etc/polkit-1/rules.d
+cat > /etc/polkit-1/rules.d/49-rros-live.rules <<'RULES'
+// solo en el sistema live (RROS lo escribe al arrancar desde la ISO)
+polkit.addRule(function (action, subject) {
+    if (subject.user == "rros") return polkit.Result.YES;
+});
+RULES
+# «Instalar RROS» en el Launchpad y en el menú, solo en el live
+cp /usr/share/rros/live/rros-install.desktop /usr/share/applications/ 2>/dev/null || true

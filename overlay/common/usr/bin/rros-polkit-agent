@@ -1,9 +1,0 @@
-#!/bin/sh
-# Lanza el agente de contraseñas de polkit (pide la clave al instalar programas o cambiar ajustes).
-for agent in /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 \
-             /usr/libexec/polkit-gnome-authentication-agent-1 \
-             /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do
-	[ -x "$agent" ] && exec "$agent"
-done
-echo "rros-polkit-agent: no se encontró ningún agente de polkit" >&2
-exit 1

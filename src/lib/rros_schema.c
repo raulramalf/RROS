@@ -43,7 +43,6 @@ const struct rros_key rros_schema[] = {
 	S("ui.wallpaper", "Ruta del fondo de pantalla"),
 	E("ui.wallpaper_mode", "fill|fit|stretch|center|tile", "Ajuste del fondo"),
 	E("ui.wallpaper_style", "aurora|ondas|degradado|circulos|liso", "Fondo generado con los colores del tema (si no eliges una imagen)"),
-	E("ui.compositor", "hyprland|sway", "Compositor Wayland: Hyprland (animaciones y efectos) o sway (más ligero)"),
 	E("ui.effects", "off|basic|advanced", "Nivel de efectos visuales"),
 	B("ui.animations", "Animaciones de ventanas y menús"),
 	I("ui.animation_speed", 25, 400, "Velocidad de animación (%)"),
@@ -53,13 +52,15 @@ const struct rros_key rros_schema[] = {
 	I("ui.blur_strength", 1, 20, "Intensidad del desenfoque"),
 	B("ui.shadows", "Sombras de ventanas"),
 	B("ui.dim_inactive", "Oscurecer un poco las ventanas sin foco"),
-	B("ui.border_gradient", "Borde de la ventana activa en degradado (acento → magenta)"),
 	I("ui.corner_radius", 0, 32, "Radio de esquinas (px)"),
-	I("ui.gap", 0, 64, "Separación entre ventanas (px)"),
-	I("ui.border_width", 0, 16, "Grosor de borde de ventana (px)"),
-	E("ui.layout", "floating|tiling|hybrid", "Modo de gestión de ventanas"),
-	E("ui.tiling_layout", "dwindle|master", "Reparto del mosaico: en espiral (dwindle) o una ventana principal (master)"),
-	B("ui.dock", "Dock de aplicaciones abajo, como en macOS"),
+	B("ui.dock", "Dock de aplicaciones, como en macOS"),
+	E("ui.dock_style", "2d|3d", "Aspecto del dock: plano (2d) o con relieve, brillo y reflejo (3d)"),
+	I("ui.dock_icon_size", 32, 96, "Tamaño de los iconos del dock (px)"),
+	E("ui.dock_position", "bottom|left|right", "Posición del dock"),
+	E("ui.dock_hiding", "never|dodge|auto", "Dock: siempre visible, se aparta de las ventanas o se oculta solo"),
+	B("ui.dock_launchpad", "Botón Launchpad (todas las aplicaciones en pantalla completa) en el dock"),
+	E("ui.window_buttons", "left|right", "Botones de las ventanas (cerrar, minimizar, maximizar) a la izquierda o a la derecha"),
+	B("ui.global_menu", "Menú de la aplicación en la barra superior, como en macOS"),
 	E("ui.panel_position", "top|bottom|left|right", "Posición del panel"),
 	I("ui.panel_size", 16, 128, "Tamaño del panel (px)"),
 	B("ui.panel_autohide", "Ocultar panel automáticamente"),
@@ -79,11 +80,8 @@ const struct rros_key rros_schema[] = {
 	S("apps.files", "Gestor de archivos (comando)"),
 	S("apps.editor", "Editor de texto (comando)"),
 
-	/* ---- panel (waybar) ---- */
-	E("panel.style", "flat|floating|pill", "Estilo del panel"),
-	S("panel.left", "Módulos a la izquierda, separados por comas"),
-	S("panel.center", "Módulos en el centro, separados por comas"),
-	S("panel.right", "Módulos a la derecha, separados por comas"),
+	/* ---- barra superior ---- */
+	E("panel.style", "flat|floating|pill", "Estilo de la barra: de borde a borde, flotante o en píldora"),
 	B("panel.taskbar", "Mostrar las ventanas abiertas en el panel (clic: ir a ella; clic central: cerrarla)"),
 
 	/* ---- terminal ---- */
@@ -149,6 +147,10 @@ const struct rros_key rros_schema[] = {
 	/* ---- sonido ---- */
 	I("audio.volume", 0, 150, "Volumen inicial (%)"),
 	B("audio.startup_sound", "Sonido de inicio"),
+	E("audio.sound_theme", "ocean|freedesktop", "Tema de sonidos del sistema"),
+	I("audio.max_volume", 100, 150, "Volumen máximo (%): por encima de 100 amplifica"),
+	I("audio.volume_step", 1, 20, "Paso del volumen con las teclas (%)"),
+	B("audio.volume_feedback", "Sonido de aviso al cambiar el volumen"),
 	B("audio.event_sounds", "Sonidos de eventos"),
 
 	/* ---- privacidad ---- */
@@ -337,8 +339,9 @@ enum rros_family rros_family_of(const char *key)
 const char *rros_family_desc(enum rros_family f)
 {
 	switch (f) {
-	case RROS_FAM_KEYBIND:   return "Atajo: \"COMBINACION COMANDO\", p. ej. \"Mod+Shift+b exec firefox\"";
-	case RROS_FAM_RULE:      return "Regla de ventana: \"app_id=NOMBRE ACCION\", p. ej. \"app_id=firefox workspace 2\"";
+	case RROS_FAM_KEYBIND:   return "Atajo: \"COMBINACION COMANDO\", p. ej. \"Mod+Shift+b firefox\"";
+	case RROS_FAM_RULE:      return "Regla de ventana: \"app=NOMBRE ACCION\" (above, fullscreen, maximized, noborder, "
+				        "skiptaskbar, minimized u opacity N), p. ej. \"app=mpv above\"";
 	case RROS_FAM_AUTOSTART: return "Programa que se inicia con el escritorio";
 	default:                 return "";
 	}
@@ -391,22 +394,24 @@ static const char *next_token(const char *s, char *tok, size_t n)
 	return s;
 }
 
-int rros_keybind_to_sway(const char *val, char *out, size_t n)
+/* "Mod+Shift+b firefox" (también con "exec" delante, como antes) -> atajo de KDE "Meta+Shift+B" y comando */
+int rros_keybind_parse(const char *val, char *combo, size_t cn, char *cmd, size_t mn)
 {
-	static const char *cmds[] = { "exec", "workspace", "move", "focus", "kill", "fullscreen", "floating",
-				      "layout", "splith", "splitv", "reload", "resize", "scratchpad", "sticky", "mode" };
-	char combo[96], cmd[32], mapped[128] = "";
+	char raw[96], key[32] = "";
 	const char *rest, *p;
-	size_t mi = 0;
-	int ok = 0;
+	int mods[4] = { 0 };   /* Meta, Ctrl, Alt, Shift: KDE los escribe en ese orden */
+	size_t o = 0;
 
 	if (!text_ok(val, 200))
 		return -1;
-	rest = next_token(val, combo, sizeof combo);
-	if (!combo[0] || !*rest)
+	rest = next_token(val, raw, sizeof raw);
+	if (!strncmp(rest, "exec ", 5))
+		rest += 5;
+	while (*rest == ' ')
+		rest++;
+	if (!raw[0] || !*rest)
 		return -1;
-	/* combinación: tokens [A-Za-z0-9_] separados por '+'; "Mod" pasa a $mod */
-	p = combo;
+	p = raw;
 	while (*p) {
 		char part[32];
 		size_t pl = 0;
@@ -419,270 +424,97 @@ int rros_keybind_to_sway(const char *val, char *out, size_t n)
 		part[pl] = '\0';
 		if (pl == 0 || (*p && *p != '+'))
 			return -1;
-		if (mi && mi < sizeof mapped - 1)
-			mapped[mi++] = '+';
-		if (!strcmp(part, "Mod"))
-			mi += (size_t)snprintf(mapped + mi, sizeof mapped - mi, "$mod");
-		else
-			mi += (size_t)snprintf(mapped + mi, sizeof mapped - mi, "%s", part);
-		if (mi >= sizeof mapped - 1)
+		if (*p == '+' && !*++p)
 			return -1;
-		if (*p == '+') {
-			p++;
-			if (!*p)
-				return -1;
-		}
+		if (key[0])
+			return -1;   /* la tecla va al final */
+		if (!strcmp(part, "Mod") || !strcmp(part, "Mod4") || !strcasecmp(part, "Super") || !strcasecmp(part, "Meta"))
+			mods[0] = 1;
+		else if (!strcasecmp(part, "Ctrl") || !strcasecmp(part, "Control"))
+			mods[1] = 1;
+		else if (!strcasecmp(part, "Alt") || !strcmp(part, "Mod1"))
+			mods[2] = 1;
+		else if (!strcasecmp(part, "Shift"))
+			mods[3] = 1;
+		else if (*p)
+			return -1;   /* modificador desconocido */
+		else
+			snprintf(key, sizeof key, "%s", part);
 	}
-	next_token(rest, cmd, sizeof cmd);
-	for (size_t i = 0; i < sizeof cmds / sizeof *cmds; i++)
-		if (!strcmp(cmd, cmds[i]))
-			ok = 1;
-	if (!ok)
+	if (!key[0] || cn < 2)
 		return -1;
-	if ((size_t)snprintf(out, n, "bindsym %s %s", mapped, rest) >= n)
+	{
+		static const char *names[] = { "Meta", "Ctrl", "Alt", "Shift" };
+
+		combo[0] = '\0';
+		for (int i = 0; i < 4; i++)
+			if (mods[i])
+				o += (size_t)snprintf(combo + o, o < cn ? cn - o : 0, "%s+", names[i]);
+		if (o >= cn)
+			return -1;
+		/* una letra suelta va en mayúscula; Return, space, F1... con la primera en mayúscula */
+		if ((size_t)snprintf(combo + o, cn - o, "%c%s", toupper((unsigned char)key[0]), key + 1) >= cn - o)
+			return -1;
+	}
+	if ((size_t)snprintf(cmd, mn, "%s", rest) >= mn)
 		return -1;
 	return 0;
 }
 
-int rros_rule_to_sway(const char *val, char *out, size_t n)
+/* "app=firefox above" -> regla de KWin. Criterios: app (también app_id y class) o title. */
+int rros_rule_parse(const char *val, struct rros_rule *r)
 {
 	char crit[96], act[32], num[32];
 	const char *rest, *eq;
-	char key[16], value[64], who[160];
-	int w;
 
+	memset(r, 0, sizeof *r);
 	if (!text_ok(val, 200))
 		return -1;
 	rest = next_token(val, crit, sizeof crit);
 	eq = strchr(crit, '=');
 	if (!eq || !*rest)
 		return -1;
-	if ((size_t)(eq - crit) >= sizeof key)
+	if (!strncmp(crit, "app=", 4) || !strncmp(crit, "app_id=", 7) || !strncmp(crit, "class=", 6))
+		r->by_title = 0;
+	else if (!strncmp(crit, "title=", 6))
+		r->by_title = 1;
+	else
 		return -1;
-	memcpy(key, crit, (size_t)(eq - crit));
-	key[eq - crit] = '\0';
-	if (strcmp(key, "app_id") && strcmp(key, "title") && strcmp(key, "class") && strcmp(key, "window_role"))
+	snprintf(r->match, sizeof r->match, "%s", eq + 1);
+	if (!r->match[0])
 		return -1;
-	snprintf(value, sizeof value, "%s", eq + 1);
-	if (!value[0])
-		return -1;
-	for (const char *c = value; *c; c++)
+	for (const char *c = r->match; *c; c++)
 		if (!(isalnum((unsigned char)*c) || *c == '.' || *c == '_' || *c == '-'))
 			return -1;
-	snprintf(who, sizeof who, "[%s=\"%s\"]", key, value);
 	rest = next_token(rest, act, sizeof act);
-
-	if (!strcmp(act, "floating") && !*rest)
-		w = snprintf(out, n, "for_window %s floating enable", who);
-	else if (!strcmp(act, "sticky") && !*rest)
-		w = snprintf(out, n, "for_window %s sticky enable", who);
-	else if (!strcmp(act, "fullscreen") && !*rest)
-		w = snprintf(out, n, "for_window %s fullscreen enable", who);
-	else if (!strcmp(act, "inhibit_idle") && !*rest)
-		w = snprintf(out, n, "for_window %s inhibit_idle fullscreen", who);
-	else if (!strcmp(act, "workspace")) {
-		char *end;
-		long x;
-
-		next_token(rest, num, sizeof num);
-		x = strtol(num, &end, 10);
-		if (!num[0] || *end || x < 1 || x > 32)
-			return -1;
-		w = snprintf(out, n, "assign %s workspace number %ld", who, x);
-	} else if (!strcmp(act, "opacity")) {
-		char *end;
-		double x;
-
-		next_token(rest, num, sizeof num);
-		x = strtod(num, &end);
-		if (!num[0] || *end || x < 0.0 || x > 1.0)
-			return -1;
-		w = snprintf(out, n, "for_window %s opacity %.2f", who, x);
-	} else if (!strcmp(act, "border")) {
-		char kind[16];
-		const char *r2 = next_token(rest, kind, sizeof kind);
-
-		if (!strcmp(kind, "none") && !*r2) {
-			w = snprintf(out, n, "for_window %s border none", who);
-		} else if (!strcmp(kind, "pixel")) {
-			char *end;
-			long x;
-
-			next_token(r2, num, sizeof num);
-			x = strtol(num, &end, 10);
-			if (!num[0] || *end || x < 0 || x > 16)
-				return -1;
-			w = snprintf(out, n, "for_window %s border pixel %ld", who, x);
-		} else {
-			return -1;
-		}
-	} else {
+	rest = next_token(rest, num, sizeof num);
+	if (*rest)
 		return -1;
-	}
-	return (w < 0 || (size_t)w >= n) ? -1 : 0;
-}
+	if (!strcmp(act, "opacity")) {
+		char *end;
+		double x = strtod(num, &end);
 
-int rros_autostart_to_sway(const char *val, char *out, size_t n)
-{
-	if (!text_ok(val, 200))
-		return -1;
-	return (size_t)snprintf(out, n, "exec %s", val) >= n ? -1 : 0;
-}
-
-/* ---- Hyprland: la misma entrada, otra sintaxis ---- */
-
-/* copia s duplicando '#' (en la configuración de Hyprland '#' empieza un comentario) */
-static int hypr_escape(const char *s, char *out, size_t n)
-{
-	size_t o = 0;
-
-	for (; *s; s++) {
-		if (o + 3 >= n)
+		if (!num[0] || *end || x <= 0 || x > 100)
 			return -1;
-		if (*s == '#')
-			out[o++] = '#';
-		out[o++] = *s;
+		r->opacity = x <= 1.0 ? (int)(x * 100 + .5) : (int)x;
+		if (r->opacity < 10)
+			return -1;
+		snprintf(r->action, sizeof r->action, "opacity");
+		return 0;
 	}
-	out[o] = '\0';
+	if (num[0])
+		return -1;
+	/* «floating» e «inhibit_idle» venían de sway: en Plasma las ventanas ya son libres */
+	if (strcmp(act, "above") && strcmp(act, "fullscreen") && strcmp(act, "maximized") && strcmp(act, "noborder") &&
+	    strcmp(act, "skiptaskbar") && strcmp(act, "minimized"))
+		return -1;
+	snprintf(r->action, sizeof r->action, "%s", act);
 	return 0;
 }
 
-static const char *hypr_dir(const char *w)
+static int autostart_ok(const char *val)
 {
-	return !strcmp(w, "left") ? "l" : !strcmp(w, "right") ? "r" : !strcmp(w, "up") ? "u" :
-	       !strcmp(w, "down") ? "d" : NULL;
-}
-
-/* "Mod+Shift+b exec firefox" -> "SUPER SHIFT, b, exec, firefox" */
-int rros_keybind_to_hypr(const char *val, char *out, size_t n)
-{
-	char tmp[512], combo[96], mods[64] = "", key[40] = "", cmd[32], a1[40], a2[40], a3[40], a4[40], esc[420];
-	const char *rest, *r, *disp = NULL, *arg = "";
-	char *tok, *save = NULL, *parts[8];
-	int np = 0, w;
-
-	if (rros_keybind_to_sway(val, tmp, sizeof tmp))
-		return -1;
-	rest = next_token(val, combo, sizeof combo);
-	for (tok = strtok_r(combo, "+", &save); tok && np < 8; tok = strtok_r(NULL, "+", &save))
-		parts[np++] = tok;
-	if (np == 0 || tok)
-		return -1;
-	for (int i = 0; i < np - 1; i++) {
-		const char *m = !strcmp(parts[i], "Mod") || !strcmp(parts[i], "Mod4") || !strcasecmp(parts[i], "Super") ? "SUPER" :
-				!strcasecmp(parts[i], "Shift") ? "SHIFT" :
-				!strcasecmp(parts[i], "Ctrl") || !strcasecmp(parts[i], "Control") ? "CTRL" :
-				!strcasecmp(parts[i], "Alt") || !strcmp(parts[i], "Mod1") ? "ALT" : NULL;
-
-		if (!m || strlen(mods) + strlen(m) + 2 >= sizeof mods)
-			return -1;
-		if (*mods)
-			strcat(mods, " ");
-		strcat(mods, m);
-	}
-	snprintf(key, sizeof key, "%s", parts[np - 1]);
-
-	r = next_token(rest, cmd, sizeof cmd);
-	r = next_token(r, a1, sizeof a1);
-	r = next_token(r, a2, sizeof a2);
-	r = next_token(r, a3, sizeof a3);
-	r = next_token(r, a4, sizeof a4);
-	if (!strcmp(cmd, "exec")) {
-		if (hypr_escape(rest + 5, esc, sizeof esc))
-			return -1;
-		disp = "exec";
-		arg = esc;
-	} else if (!strcmp(cmd, "kill") && !*a1) {
-		disp = "killactive";
-	} else if (!strcmp(cmd, "fullscreen")) {
-		disp = "fullscreen";
-		arg = "0";
-	} else if ((!strcmp(cmd, "floating") || !strcmp(cmd, "sticky")) && (!strcmp(a1, "toggle") || !strcmp(a1, "enable"))) {
-		disp = !strcmp(cmd, "floating") ? "togglefloating" : "pin";
-	} else if (!strcmp(cmd, "workspace")) {
-		const char *num = !strcmp(a1, "number") ? a2 : a1;
-
-		disp = "workspace";
-		arg = !strcmp(num, "next") ? "e+1" : !strcmp(num, "prev") ? "e-1" : num;
-		if (!*arg || strspn(arg, "0123456789+-e") != strlen(arg))
-			return -1;
-	} else if (!strcmp(cmd, "move") && hypr_dir(a1) && !*a2) {
-		disp = "movewindow";
-		arg = hypr_dir(a1);
-	} else if (!strcmp(cmd, "move") && (!strcmp(a1, "scratchpad") || (!strcmp(a1, "container") && !strcmp(a3, "scratchpad")))) {
-		disp = "movetoworkspacesilent";
-		arg = "special";
-	} else if (!strcmp(cmd, "move")) {
-		/* move [container] to workspace [number] N */
-		const char *v[4] = { a1, a2, a3, a4 };
-		int i = !strcmp(v[0], "container") ? 1 : 0;
-
-		if (strcmp(v[i], "to") || strcmp(v[i + 1], "workspace"))
-			return -1;
-		arg = !strcmp(v[i + 2], "number") ? (i + 3 < 4 ? v[i + 3] : r) : v[i + 2];
-		if (!*arg || strspn(arg, "0123456789") != strlen(arg))
-			return -1;
-		disp = "movetoworkspace";
-	} else if (!strcmp(cmd, "focus") && hypr_dir(a1)) {
-		disp = "movefocus";
-		arg = hypr_dir(a1);
-	} else if (!strcmp(cmd, "layout") && (!strcmp(a1, "tabbed") || !strcmp(a1, "stacking"))) {
-		disp = "togglegroup";
-	} else if ((!strcmp(cmd, "layout") && !strcmp(a1, "toggle")) || !strcmp(cmd, "splith") || !strcmp(cmd, "splitv")) {
-		disp = "layoutmsg";
-		arg = "togglesplit";
-	} else if (!strcmp(cmd, "reload")) {
-		disp = "exec";
-		arg = "hyprctl reload";
-	} else if (!strcmp(cmd, "scratchpad") && !strcmp(a1, "show")) {
-		disp = "togglespecialworkspace";
-	}
-	if (!disp)
-		return -1;   /* resize, mode...: sin equivalente directo */
-	w = snprintf(out, n, "%s, %s, %s, %s", mods, key, disp, arg);
-	return (w < 0 || (size_t)w >= n) ? -1 : 0;
-}
-
-/* "app_id=firefox workspace 2" -> "workspace 2, match:class ^(firefox)$" (sin la palabra windowrule;
- * sintaxis de reglas de Hyprland 0.53 y posteriores) */
-int rros_rule_to_hypr(const char *val, char *out, size_t n)
-{
-	char tmp[512], crit[96], act[32], a1[32], a2[32], match[120];
-	const char *rest, *eq;
-	int w;
-
-	if (rros_rule_to_sway(val, tmp, sizeof tmp))
-		return -1;
-	rest = next_token(val, crit, sizeof crit);
-	eq = strchr(crit, '=');
-	if (!strncmp(crit, "app_id=", 7) || !strncmp(crit, "class=", 6))
-		snprintf(match, sizeof match, "match:class ^(%s)$", eq + 1);
-	else if (!strncmp(crit, "title=", 6))
-		snprintf(match, sizeof match, "match:title ^(%s)$", eq + 1);
-	else
-		return -1;   /* window_role: Hyprland no lo tiene */
-	rest = next_token(rest, act, sizeof act);
-	rest = next_token(rest, a1, sizeof a1);
-	next_token(rest, a2, sizeof a2);
-	if (!strcmp(act, "floating"))
-		w = snprintf(out, n, "float on, %s", match);
-	else if (!strcmp(act, "sticky"))
-		w = snprintf(out, n, "pin on, %s", match);
-	else if (!strcmp(act, "fullscreen"))
-		w = snprintf(out, n, "fullscreen on, %s", match);
-	else if (!strcmp(act, "inhibit_idle"))
-		w = snprintf(out, n, "idle_inhibit fullscreen, %s", match);
-	else if (!strcmp(act, "workspace"))
-		w = snprintf(out, n, "workspace %s, %s", a1, match);
-	else if (!strcmp(act, "opacity"))
-		w = snprintf(out, n, "opacity %s, %s", a1, match);
-	else if (!strcmp(act, "border") && !strcmp(a1, "none"))
-		w = snprintf(out, n, "border_size 0, %s", match);
-	else if (!strcmp(act, "border"))
-		w = snprintf(out, n, "border_size %s, %s", a2, match);
-	else
-		return -1;
-	return (w < 0 || (size_t)w >= n) ? -1 : 0;
+	return text_ok(val, 200) ? 0 : -1;
 }
 
 int rros_dynamic_check(const char *key, const char *val, char *err, size_t n)
@@ -697,9 +529,17 @@ int rros_dynamic_check(const char *key, const char *val, char *err, size_t n)
 		snprintf(err, n, "%s: el identificador debe ser a-z, 0-9, _ o - (máx. 32)", key);
 		return -1;
 	}
-	rc = f == RROS_FAM_KEYBIND ? rros_keybind_to_sway(val, tmp, sizeof tmp) :
-	     f == RROS_FAM_RULE ? rros_rule_to_sway(val, tmp, sizeof tmp) :
-	     rros_autostart_to_sway(val, tmp, sizeof tmp);
+	if (f == RROS_FAM_KEYBIND) {
+		char cmd[256];
+
+		rc = rros_keybind_parse(val, tmp, sizeof tmp, cmd, sizeof cmd);
+	} else if (f == RROS_FAM_RULE) {
+		struct rros_rule r;
+
+		rc = rros_rule_parse(val, &r);
+	} else {
+		rc = autostart_ok(val);
+	}
 	if (rc) {
 		snprintf(err, n, "%s: valor no válido. %s", key, rros_family_desc(f));
 		return -1;

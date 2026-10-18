@@ -20,7 +20,6 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.wallpaper` | texto |  | Ruta del fondo de pantalla |
 | `ui.wallpaper_mode` | opción | fill|fit|stretch|center|tile | Ajuste del fondo |
 | `ui.wallpaper_style` | opción | aurora|ondas|degradado|circulos|liso | Fondo generado con los colores del tema (si no eliges una imagen) |
-| `ui.compositor` | opción | hyprland|sway | Compositor Wayland: Hyprland (animaciones y efectos) o sway (más ligero) |
 | `ui.effects` | opción | off|basic|advanced | Nivel de efectos visuales |
 | `ui.animations` | booleano | true / false | Animaciones de ventanas y menús |
 | `ui.animation_speed` | entero | 25 – 400 | Velocidad de animación (%) |
@@ -30,13 +29,15 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.blur_strength` | entero | 1 – 20 | Intensidad del desenfoque |
 | `ui.shadows` | booleano | true / false | Sombras de ventanas |
 | `ui.dim_inactive` | booleano | true / false | Oscurecer un poco las ventanas sin foco |
-| `ui.border_gradient` | booleano | true / false | Borde de la ventana activa en degradado (acento → magenta) |
 | `ui.corner_radius` | entero | 0 – 32 | Radio de esquinas (px) |
-| `ui.gap` | entero | 0 – 64 | Separación entre ventanas (px) |
-| `ui.border_width` | entero | 0 – 16 | Grosor de borde de ventana (px) |
-| `ui.layout` | opción | floating|tiling|hybrid | Modo de gestión de ventanas |
-| `ui.tiling_layout` | opción | dwindle|master | Reparto del mosaico: en espiral (dwindle) o una ventana principal (master) |
-| `ui.dock` | booleano | true / false | Dock de aplicaciones abajo, como en macOS |
+| `ui.dock` | booleano | true / false | Dock de aplicaciones, como en macOS |
+| `ui.dock_style` | opción | 2d|3d | Aspecto del dock: plano (2d) o con relieve, brillo y reflejo (3d) |
+| `ui.dock_icon_size` | entero | 32 – 96 | Tamaño de los iconos del dock (px) |
+| `ui.dock_position` | opción | bottom|left|right | Posición del dock |
+| `ui.dock_hiding` | opción | never|dodge|auto | Dock: siempre visible, se aparta de las ventanas o se oculta solo |
+| `ui.dock_launchpad` | booleano | true / false | Botón Launchpad (todas las aplicaciones en pantalla completa) en el dock |
+| `ui.window_buttons` | opción | left|right | Botones de las ventanas (cerrar, minimizar, maximizar) a la izquierda o a la derecha |
+| `ui.global_menu` | booleano | true / false | Menú de la aplicación en la barra superior, como en macOS |
 | `ui.panel_position` | opción | top|bottom|left|right | Posición del panel |
 | `ui.panel_size` | entero | 16 – 128 | Tamaño del panel (px) |
 | `ui.panel_autohide` | booleano | true / false | Ocultar panel automáticamente |
@@ -53,10 +54,7 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `apps.browser` | texto |  | Navegador (comando) |
 | `apps.files` | texto |  | Gestor de archivos (comando) |
 | `apps.editor` | texto |  | Editor de texto (comando) |
-| `panel.style` | opción | flat|floating|pill | Estilo del panel |
-| `panel.left` | texto |  | Módulos a la izquierda, separados por comas |
-| `panel.center` | texto |  | Módulos en el centro, separados por comas |
-| `panel.right` | texto |  | Módulos a la derecha, separados por comas |
+| `panel.style` | opción | flat|floating|pill | Estilo de la barra: de borde a borde, flotante o en píldora |
 | `panel.taskbar` | booleano | true / false | Mostrar las ventanas abiertas en el panel (clic: ir a ella; clic central: cerrarla) |
 | `term.scrollback` | entero | 0 – 100000 | Líneas de historial de la terminal |
 | `term.cursor` | opción | block|beam|underline | Forma del cursor de la terminal |
@@ -104,6 +102,10 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `locale.units` | opción | metric|imperial | Sistema de unidades |
 | `audio.volume` | entero | 0 – 150 | Volumen inicial (%) |
 | `audio.startup_sound` | booleano | true / false | Sonido de inicio |
+| `audio.sound_theme` | opción | ocean|freedesktop | Tema de sonidos del sistema |
+| `audio.max_volume` | entero | 100 – 150 | Volumen máximo (%): por encima de 100 amplifica |
+| `audio.volume_step` | entero | 1 – 20 | Paso del volumen con las teclas (%) |
+| `audio.volume_feedback` | booleano | true / false | Sonido de aviso al cambiar el volumen |
 | `audio.event_sounds` | booleano | true / false | Sonidos de eventos |
 | `privacy.telemetry` | booleano | true / false | Telemetría (desactivada por defecto) |
 | `privacy.crash_reports` | booleano | true / false | Informes de fallos |
@@ -123,6 +125,6 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `boot.timeout_seconds` | entero | 0 – 60 | Tiempo del menú de arranque |
 | `boot.splash` | booleano | true / false | Pantalla de arranque gráfica |
 | `boot.quiet` | booleano | true / false | Arranque silencioso |
-| `keybind.<id>` | texto | libre, validado | Atajo: "COMBINACION COMANDO", p. ej. "Mod+Shift+b exec firefox" |
-| `rule.<id>` | texto | libre, validado | Regla de ventana: "app_id=NOMBRE ACCION", p. ej. "app_id=firefox workspace 2" |
+| `keybind.<id>` | texto | libre, validado | Atajo: "COMBINACION COMANDO", p. ej. "Mod+Shift+b firefox" |
+| `rule.<id>` | texto | libre, validado | Regla de ventana: "app=NOMBRE ACCION" (above, fullscreen, maximized, noborder, skiptaskbar, minimized u opacity N), p. ej. "app=mpv above" |
 | `autostart.<id>` | texto | libre, validado | Programa que se inicia con el escritorio |

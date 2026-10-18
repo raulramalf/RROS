@@ -31,9 +31,5 @@ jobs:
           awk '/^<script>$/{f=1;next} /^<\/script>$/{f=0} f' gui/index.html > /tmp/gui.js
           node --check /tmp/gui.js
           node --check gui/mock.js
-      - name: Todos los paquetes de las listas existen en Ubuntu 24.04
-        run: |
-          sudo apt-get update
-          scripts/check-packages.sh
       - name: ShellCheck
-        run: shellcheck -x -P SCRIPTDIR scripts/*.sh tests/cli.sh overlay/common/usr/bin/* overlay/common/usr/libexec/* overlay/ubuntu/usr/libexec/* overlay/arch/usr/libexec/*
+        run: shellcheck -x -P SCRIPTDIR scripts/*.sh tests/cli.sh overlay/common/usr/bin/* overlay/common/usr/libexec/* overlay/arch/usr/libexec/*

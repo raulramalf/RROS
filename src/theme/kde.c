@@ -231,11 +231,3 @@ int rros_write_aurorae(const char *dir, const struct rros_theme *t, const struct
 		return -1;
 	return 0;
 }
-
-/* KDE Plasma: distribución del teclado (input.keymap), la misma que en la consola y en Hyprland */
-void rros_render_kxkbrc(const struct rros_theme *t, const struct rros_palette *p, const struct rros_conf *c, FILE *f)
-{
-	(void)p; (void)c;
-	fprintf(f, "# %s (input.keymap). Cámbialo con «rros config set input.keymap ...» o en RROS Ajustes.\n"
-		   "[Layout]\nLayoutList=%s\nUse=true\n", RROS_GENERATED, t->keymap);
-}

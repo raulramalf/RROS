@@ -1,12 +1,13 @@
-# Perfil Lite: equipos de 2-4 GB de RAM, CPU antiguas, sin GPU dedicada (Plasma con pocos efectos).
+# Perfil Lite: equipos con 2-4 GB de RAM y 2 núcleos (64 bits), sin GPU dedicada. Plasma sin efectos
+# (todo aparece al instante), dock plano y lo justo instalado.
 [profile]
 name = "lite"
 min_ram_mb = 2048
 max_idle_ram_mb = 1280
-max_disk_gb = 8
+max_disk_gb = 10
 
 [build]
-libc = "musl"
+libc = "glibc"
 kernel = "lite"
 multilib = false
 
@@ -15,35 +16,41 @@ theme = "aurora"
 color_scheme = "dark"
 font = "Inter"
 font_mono = "JetBrains Mono"
-gap = 4
-border_width = 2
-panel_position = "top"
-panel_size = 30
-compositor = "hyprland"
-wallpaper_style = "degradado"
-animation_style = "rapida"
-border_gradient = false
-dock = true
+font_size = 10
+scale = 100
+wallpaper_style = "aurora"
 effects = "off"
 animations = false
+animation_style = "rapida"
 blur = false
-shadows = false
-transparency = 0
-scale = 100
-font_size = 10
-layout = "floating"
-workspaces = 4
-tiling_layout = "dwindle"
 blur_strength = 4
+shadows = true
+transparency = 0
 dim_inactive = false
+corner_radius = 10
+workspaces = 1
+hot_corners = true
+# estilo «moderno» (rros theme escritorio): barra fina arriba y dock abajo, como en macOS
+panel_position = "top"
+panel_size = 28
+dock = true
+dock_style = "2d"
+dock_icon_size = 44
+dock_position = "bottom"
+dock_hiding = "dodge"
+dock_launchpad = true
+window_buttons = "left"
+global_menu = true
 
 [panel]
-# estilo «moderno»: barra fina arriba y dock abajo, como en macOS (rros theme escritorio)
-style = "floating"
-left = "apps,workspaces"
-center = "clock"
-right = "updates,tray,network,audio,battery,power"
+style = "flat"
 taskbar = false
+
+[audio]
+sound_theme = "ocean"
+volume_step = 5
+volume_feedback = true
+max_volume = 100
 
 [input]
 gestures = true

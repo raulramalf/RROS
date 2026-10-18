@@ -1,8 +1,9 @@
-# Perfil Pro: equipos de 8 GB de RAM, gama alta con GPU.
+# Perfil Pro: equipos con 8 GB de RAM, 4 núcleos y GPU (integrada moderna o dedicada). Todos los efectos:
+# desenfoque, lámpara mágica, transparencias y el dock en 3D.
 [profile]
 name = "pro"
 min_ram_mb = 6144
-max_idle_ram_mb = 4096
+max_idle_ram_mb = 3072
 max_disk_gb = 20
 
 [build]
@@ -15,37 +16,42 @@ theme = "aurora"
 color_scheme = "dark"
 font = "Inter"
 font_mono = "JetBrains Mono"
-gap = 10
-border_width = 3
-panel_position = "top"
-panel_size = 32
-compositor = "hyprland"
+font_size = 10
+scale = 100
 wallpaper_style = "ondas"
-animation_style = "suave"
-border_gradient = true
-blur_strength = 8
-dim_inactive = true
-dock = false
 effects = "advanced"
 animations = true
 animation_speed = 100
+animation_style = "suave"
 blur = true
+blur_strength = 8
 shadows = true
-transparency = 20
-scale = 100
-font_size = 11
+transparency = 10
+dim_inactive = false
 corner_radius = 12
-layout = "tiling"
-workspaces = 6
-tiling_layout = "dwindle"
+workspaces = 4
+hot_corners = true
+# estilo «moderno» (rros theme escritorio) con el dock en 3D
+panel_position = "top"
+panel_size = 28
+dock = true
+dock_style = "3d"
+dock_icon_size = 52
+dock_position = "bottom"
+dock_hiding = "dodge"
+dock_launchpad = true
+window_buttons = "left"
+global_menu = true
 
 [panel]
-# estilo «mosaico»: al estilo Hyprland (rros theme escritorio)
-style = "pill"
-left = "apps,workspaces,window"
-center = "clock"
-right = "updates,memory,cpu,network,audio,battery,tray,power"
+style = "flat"
 taskbar = false
+
+[audio]
+sound_theme = "ocean"
+volume_step = 5
+volume_feedback = true
+max_volume = 100
 
 [input]
 gestures = true

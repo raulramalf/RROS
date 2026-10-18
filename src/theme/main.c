@@ -1,6 +1,7 @@
 /* rros-theme: genera la configuración del escritorio RROS desde rros-config. */
 #include <errno.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <sys/wait.h>
 #include <stdlib.h>
@@ -17,23 +18,10 @@ struct target {
 	rros_render_fn fn;
 };
 
+/* archivos enteros que escribe RROS (relativos a ~/.local/share, o a la carpeta de «render») */
 static const struct target targets[] = {
-	{ "sway/config", rros_render_sway },
-	{ "sway/rros-effects.conf", rros_render_effects },
-	{ "waybar/config", rros_render_waybar },
-	{ "waybar/style.css", rros_render_waybar_css },
-	{ "foot/foot.ini", rros_render_foot },
-	{ "mako/config", rros_render_mako },
-	{ "fuzzel/fuzzel.ini", rros_render_fuzzel },
-	{ "swaylock/config", rros_render_swaylock },
-	{ "gtk-3.0/settings.ini", rros_render_gtk_settings },
-	{ "gtk-3.0/gtk.css", rros_render_gtk_css },
-	{ "gtk-4.0/settings.ini", rros_render_gtk_settings },
-	{ "gtk-4.0/gtk.css", rros_render_gtk_css },
-	{ "hypr/hyprland.conf", rros_render_hyprland },
-	{ "hypr/hyprlock.conf", rros_render_hyprlock },
-	{ "kde/RROS.colors", rros_render_kde_colors },
-	{ "kxkbrc", rros_render_kxkbrc },
+	{ "konsole/RROS.profile", rros_render_konsole_profile },
+	{ "konsole/RROS.colorscheme", rros_render_konsole_colors },
 };
 
 static void usage(void)
@@ -44,11 +32,11 @@ static void usage(void)
 	      "  cycle                  pasa al siguiente tema\n"
 	      "  toggle                 alterna oscuro/claro\n"
 	      "  new NOMBRE [--base T]  crea un tema propio para editar\n"
-	      "  apply [--quiet]        escribe ~/.config/{hypr,sway,waybar,foot,mako,fuzzel,gtk-*} y recarga\n"
-	      "  escritorio [ESTILO]    estilos de escritorio (clasico, moderno, mosaico); con ESTILO lo aplica\n"
+	      "  apply [--quiet]        aplica la configuración a Plasma (colores, dock, efectos, entrada...)\n"
+	      "  escritorio [ESTILO]    estilos de escritorio (moderno, clasico, enfoque); con ESTILO lo aplica\n"
 	      "  wallpaper [--next | --style S] [--out F] [--size AxB]   genera el fondo con los colores del tema\n"
 	      "  palette                muestra la paleta calculada\n"
-	      "  render --out DIR [--swayfx]   escribe en DIR (pruebas)\n", stderr);
+	      "  render --out DIR       escribe en DIR todo lo que se generaría (pruebas)\n", stderr);
 }
 
 static int has_marker(const char *path)
@@ -66,7 +54,7 @@ static int has_marker(const char *path)
 }
 
 static int write_target(const char *base, const struct target *tg, const struct rros_theme *t,
-			const struct rros_palette *p, const struct rros_conf *conf, int effects_enabled)
+			const struct rros_palette *p, const struct rros_conf *conf)
 {
 	char path[1100], tmp[1110], bak[1110];
 	struct stat st;
@@ -93,10 +81,7 @@ static int write_target(const char *base, const struct target *tg, const struct 
 		fprintf(stderr, "rros-theme: %s: %s\n", tmp, strerror(errno));
 		return -1;
 	}
-	if (tg->fn == rros_render_effects && !effects_enabled)
-		fprintf(f, "# %s (sin SwayFX instalado: sin efectos).\n", RROS_GENERATED);
-	else
-		tg->fn(t, p, conf, f);
+	tg->fn(t, p, conf, f);
 	if (fclose(f) != 0 || rename(tmp, path) != 0) {
 		remove(tmp);
 		return -1;
@@ -104,15 +89,35 @@ static int write_target(const char *base, const struct target *tg, const struct 
 	return 0;
 }
 
-static int render_all(const char *base, const struct rros_theme *t, const struct rros_conf *conf, int swayfx)
+/* archivos propios (Konsole) en data y ediciones de los archivos de KDE en cfg */
+static int render_all(const char *cfg, const char *data, const struct rros_theme *t, const struct rros_conf *conf)
 {
+	static struct rros_ini_edit ed[RROS_MAX_EDITS];
 	struct rros_palette p;
+	size_t ne;
 	int bad = 0;
 
 	if (rros_theme_palette(t, &p))
 		fprintf(stderr, "rros-theme: el tema '%s' no existe; se usa 'aurora' (rros-theme list)\n", t->theme);
 	for (size_t i = 0; i < sizeof targets / sizeof *targets; i++)
-		bad |= write_target(base, &targets[i], t, &p, conf, swayfx) != 0;
+		bad |= write_target(data, &targets[i], t, &p, conf) != 0;
+	ne = rros_plasma_edits(t, &p, conf, ed, RROS_MAX_EDITS);
+	for (const char *const *f = rros_kde_files; *f; f++) {
+		char path[1100];
+
+		snprintf(path, sizeof path, "%s/%s", cfg, *f);
+		if (rros_ini_apply(path, *f, ed, ne)) {
+			fprintf(stderr, "rros-theme: no se pudo escribir %s\n", path);
+			bad = 1;
+		}
+	}
+	{
+		char apps[1100], autos[1100];
+
+		snprintf(apps, sizeof apps, "%s/applications", data);
+		snprintf(autos, sizeof autos, "%s/autostart", cfg);
+		bad |= rros_write_launchers(conf, apps, autos) != 0;
+	}
 	return bad ? 1 : 0;
 }
 
@@ -146,19 +151,6 @@ static int load_theme(struct rros_theme *t, struct rros_conf *c, const char *pro
 		rros_conf_free(c);
 		return rc;
 	}
-	/* el compositor que de verdad corre (rros-session cae a sway si no hay aceleración gráfica) */
-	{
-		const char *sess = getenv("RROS_SESSION");
-
-		if (sess && !strcmp(sess, "sway"))
-			t->hyprland = 0;
-		else if (sess && !strcmp(sess, "hyprland"))
-			t->hyprland = 1;
-		else if (getenv("HYPRLAND_INSTANCE_SIGNATURE"))
-			t->hyprland = 1;
-		else if (getenv("SWAYSOCK"))
-			t->hyprland = 0;
-	}
 	return 0;
 }
 
@@ -174,14 +166,156 @@ static void ensure_wallpaper(const struct rros_theme *t, const struct rros_palet
 	}
 }
 
-/* KDE Plasma: el esquema de colores va a ~/.local/share/color-schemes con un nombre que cambia con los colores
- * (plasma-apply-colorscheme no recarga un esquema con el mismo nombre). Si Plasma está instalado, se aplica; en
- * una sesión de Plasma, también el fondo. */
-static void apply_plasma(const struct rros_theme *t, const struct rros_palette *p, const struct rros_conf *c,
-			 const char *wallpaper, int quiet)
+static int data_home(char *buf, size_t n)
 {
-	const char *xd = getenv("XDG_DATA_HOME"), *home = getenv("HOME"), *desk = getenv("XDG_CURRENT_DESKTOP");
-	char dir[700], path[800], name[32], cmd[1200];
+	const char *x = getenv("XDG_DATA_HOME"), *h = getenv("HOME");
+	int len;
+
+	if (x && *x)
+		len = snprintf(buf, n, "%s", x);
+	else if (h && *h)
+		len = snprintf(buf, n, "%s/.local/share", h);
+	else
+		return -1;
+	return (len < 0 || (size_t)len >= n) ? -1 : 0;
+}
+
+static int state_home(char *buf, size_t n)
+{
+	const char *x = getenv("XDG_STATE_HOME"), *h = getenv("HOME");
+	int len;
+
+	if (x && *x)
+		len = snprintf(buf, n, "%s/rros", x);
+	else if (h && *h)
+		len = snprintf(buf, n, "%s/.local/state/rros", h);
+	else
+		return -1;
+	return (len < 0 || (size_t)len >= n) ? -1 : 0;
+}
+
+static int in_plasma(void)
+{
+	const char *desk = getenv("XDG_CURRENT_DESKTOP");
+
+	return desk && strstr(desk, "KDE") && !getenv("RROS_PLASMA_TEST");
+}
+
+/* lanza un programa sin shell y espera; con out, guarda su salida (hasta n bytes). Devuelve el código de salida. */
+static int run(char *const argv[], char *out, size_t n)
+{
+	int fd[2] = { -1, -1 }, st;
+	pid_t pid;
+
+	if (out && pipe(fd))
+		return -1;
+	pid = fork();
+	if (pid == 0) {
+		int nul = open("/dev/null", O_RDWR);
+
+		if (nul >= 0) {
+			dup2(nul, 0);
+			dup2(out ? fd[1] : nul, 1);
+			dup2(nul, 2);
+		}
+		if (out) {
+			close(fd[0]);
+			close(fd[1]);
+		}
+		execvp(argv[0], argv);
+		_exit(127);
+	}
+	if (out) {
+		size_t got = 0;
+		ssize_t k;
+
+		close(fd[1]);
+		while (pid > 0 && (k = read(fd[0], out + got, n - 1 - got > 0 ? n - 1 - got : 0)) > 0)
+			got += (size_t)k;
+		/* lo que no cabe, se descarta */
+		while (pid > 0 && got >= n - 1 && read(fd[0], (char[512]){ 0 }, 512) > 0)
+			;
+		out[got] = '\0';
+		close(fd[0]);
+	}
+	if (pid < 0 || waitpid(pid, &st, 0) < 0)
+		return -1;
+	return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+/* Sin aceleración gráfica (máquina virtual sin 3D), KWin dibuja con la CPU (llvmpipe): con efectos, todo va a
+ * tirones. RROS_SOFT_RENDER=1|0 lo fuerza (pruebas). */
+static int soft_render(void)
+{
+	const char *e = getenv("RROS_SOFT_RENDER");
+	static char info[65536];
+	char *argv[] = { "qdbus6", "org.kde.KWin", "/KWin", "supportInformation", NULL };
+
+	if (e)
+		return !strcmp(e, "1");
+	if (!in_plasma() || run(argv, info, sizeof info) != 0)
+		return 0;
+	return strstr(info, "llvmpipe") || strstr(info, "softpipe") || strstr(info, "QPainter");
+}
+
+static int read_file(const char *path, char *buf, size_t n)
+{
+	FILE *f = fopen(path, "r");
+	size_t k;
+
+	buf[0] = '\0';
+	if (!f)
+		return -1;
+	k = fread(buf, 1, n - 1, f);
+	buf[k] = '\0';
+	fclose(f);
+	return 0;
+}
+
+static int write_text(const char *path, const char *text)
+{
+	FILE *f;
+
+	if (rros_mkdir_parents(path) || !(f = fopen(path, "w")))
+		return -1;
+	fputs(text, f);
+	return fclose(f);
+}
+
+/* El guion de paneles se ejecuta en plasmashell solo si cambió (rehace la barra y el dock). La copia de la
+ * última vez queda en ~/.local/state/rros; la ISO trae la del perfil, así el primer inicio no rehace nada. */
+static void plasma_layout(const struct rros_theme *t, const struct rros_palette *p, const struct rros_conf *c, int force)
+{
+	static char script[65536], prev[65536];
+	char st[900], path[1000];
+	FILE *f = fmemopen(script, sizeof script, "w");
+	char *argv[] = { "qdbus6", "org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell.evaluateScript", script, NULL };
+
+	if (!f)
+		return;
+	rros_render_plasma_layout(t, p, c, f);
+	fclose(f);
+	if (state_home(st, sizeof st))
+		return;
+	snprintf(path, sizeof path, "%s/plasma-layout.js", st);
+	read_file(path, prev, sizeof prev);
+	if (!force && !strcmp(prev, script))
+		return;
+	if (!in_plasma())
+		return;
+	if (run(argv, NULL, 0) != 0) {
+		fputs("rros-theme: aviso: Plasma no pudo cambiar la barra y el dock\n", stderr);
+		return;
+	}
+	write_text(path, script);
+}
+
+/* KDE Plasma: el esquema de colores va a ~/.local/share/color-schemes con un nombre que cambia con los colores
+ * (plasma-apply-colorscheme no recarga un esquema con el mismo nombre); las barras de título, a aurorae. */
+static void plasma_colors(const struct rros_theme *t, const struct rros_palette *p, const struct rros_conf *c,
+			  const char *data, const char *cfg, int quiet)
+{
+	char dir[1100], path[1200], name[32], cur[64], kg[1100];
 	unsigned long h = 2166136261UL;
 	const char *const *col = (const char *const[]){ p->bg, p->surface, p->text, p->muted, p->accent, p->red,
 							p->green, p->yellow, p->blue, p->magenta, NULL };
@@ -189,14 +323,7 @@ static void apply_plasma(const struct rros_theme *t, const struct rros_palette *
 	DIR *d;
 	struct dirent *e;
 
-	if (access("/usr/bin/plasma-apply-colorscheme", X_OK) != 0 && !getenv("RROS_PLASMA_TEST"))
-		return;
-	if (xd && *xd)
-		snprintf(dir, sizeof dir, "%s/color-schemes", xd);
-	else if (home && *home)
-		snprintf(dir, sizeof dir, "%s/.local/share/color-schemes", home);
-	else
-		return;
+	snprintf(dir, sizeof dir, "%s/color-schemes", data);
 	for (; *col; col++)
 		for (const char *q = *col; *q; q++)
 			h = (h ^ (unsigned char)*q) * 16777619UL;
@@ -211,100 +338,97 @@ static void apply_plasma(const struct rros_theme *t, const struct rros_palette *
 	/* fuera los esquemas de RROS anteriores */
 	if ((d = opendir(dir))) {
 		while ((e = readdir(d)))
-			if (!strncmp(e->d_name, "RROS-", 5) && strcmp(e->d_name + strlen(e->d_name) - 7, ".colors") == 0 &&
-			    strncmp(e->d_name, name, strlen(name))) {
-				char old[1100];
+			if (!strncmp(e->d_name, "RROS-", 5) && strlen(e->d_name) > 7 &&
+			    !strcmp(e->d_name + strlen(e->d_name) - 7, ".colors") && strncmp(e->d_name, name, strlen(name))) {
+				char old[1400];
 
 				snprintf(old, sizeof old, "%s/%s", dir, e->d_name);
 				unlink(old);
 			}
 		closedir(d);
 	}
-	/* las barras de título, con los mismos colores (KWin lee primero las de ~/.local/share) */
-	snprintf(path, sizeof path, "%s/../aurorae/themes/RROS", dir);
+	snprintf(path, sizeof path, "%s/aurorae/themes/RROS", data);
 	if (rros_write_aurorae(path, t, p) != 0)
 		fputs("rros-theme: no se pudo escribir el tema de las barras de título\n", stderr);
-	if (getenv("RROS_PLASMA_TEST"))
-		return;
-	/* KWin vuelve a leer la decoración */
-	if (system("qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || "
-		   "dbus-send --session --type=method_call --dest=org.kde.KWin /KWin org.kde.KWin.reconfigure >/dev/null 2>&1") != 0 &&
-	    !quiet && desk && strstr(desk, "KDE"))
-		fputs("rros-theme: aviso: no se pudo recargar KWin\n", stderr);
-	snprintf(cmd, sizeof cmd, "plasma-apply-colorscheme %s >/dev/null 2>&1", name);
-	if (system(cmd) != 0 && !quiet)
-		fputs("rros-theme: aviso: plasma-apply-colorscheme falló\n", stderr);
-	if (desk && strstr(desk, "KDE") && wallpaper[0] && !strchr(wallpaper, '\'')) {
-		snprintf(cmd, sizeof cmd, "plasma-apply-wallpaperimage '%s' >/dev/null 2>&1", wallpaper);
-		if (system(cmd) != 0 && !quiet)
-			fputs("rros-theme: aviso: plasma-apply-wallpaperimage falló\n", stderr);
+	snprintf(kg, sizeof kg, "%s/kdeglobals", cfg);
+	rros_ini_get(kg, "General", "ColorScheme", cur, sizeof cur);
+	if (in_plasma() && strcmp(cur, name)) {
+		char *argv[] = { "plasma-apply-colorscheme", name, NULL };
+
+		if (run(argv, NULL, 0) != 0 && !quiet)
+			fputs("rros-theme: aviso: plasma-apply-colorscheme falló\n", stderr);
 	}
 }
 
-/* recarga lo que está en marcha: compositor, fondo, panel y notificaciones */
-static void reload_desktop(const struct rros_theme *t, const char *wallpaper, int quiet)
+/* Plasma vuelve a leer lo que ha cambiado */
+static void plasma_reload(const struct rros_theme *t, const char *old_theme, const char *wallpaper, const char *st)
 {
-	int bad = 0;
+	char *kwin[] = { "qdbus6", "org.kde.KWin", "/KWin", "reconfigure", NULL };
+	char *glob[] = { "dbus-send", "--session", "--type=signal", "/KGlobalSettings", "org.kde.KGlobalSettings.notifyChange",
+			 "int32:2", "int32:0", NULL };
+	char *kbd[] = { "dbus-send", "--session", "--type=signal", "/Layouts", "org.kde.keyboard.reloadConfig", NULL };
+	char *lock[] = { "qdbus6", "org.kde.screensaver", "/ScreenSaver", "configure", NULL };
+	char *pw[] = { "qdbus6", "org.kde.Solid.PowerManagement", "/org/kde/Solid/PowerManagement", "reparseConfiguration", NULL };
+	char wpfile[1100], prev[400];
 
-	if (getenv("HYPRLAND_INSTANCE_SIGNATURE")) {
-		char cmd[700];
-
-		bad |= system("hyprctl reload >/dev/null 2>&1") != 0;
-		if (wallpaper[0])
-			snprintf(cmd, sizeof cmd, "pkill -x swaybg; setsid swaybg -i '%s' -m %s >/dev/null 2>&1 &", wallpaper,
-				 t->wallpaper[0] ? t->wallpaper_mode : "fill");
-		else
-			snprintf(cmd, sizeof cmd, "pkill -x swaybg; setsid swaybg -c '#000000' >/dev/null 2>&1 &");
-		bad |= system(cmd) != 0;
-	} else if (getenv("SWAYSOCK")) {
-		bad |= system("swaymsg -q reload >/dev/null 2>&1") != 0;
-	} else {
+	if (!in_plasma())
 		return;
+	run(kwin, NULL, 0);
+	run(glob, NULL, 0);
+	run(kbd, NULL, 0);
+	run(lock, NULL, 0);
+	run(pw, NULL, 0);
+	if (strcmp(old_theme, rros_desktoptheme(t))) {
+		char *dt[] = { "plasma-apply-desktoptheme", (char *)rros_desktoptheme(t), NULL };
+
+		run(dt, NULL, 0);
 	}
-	if (system("pkill -SIGUSR2 waybar >/dev/null 2>&1; makoctl reload >/dev/null 2>&1 || pkill -SIGUSR2 mako >/dev/null 2>&1") != 0)
-		bad = 1;
-	if (bad && !quiet)
-		fputs("rros-theme: aviso: no se pudo recargar todo el escritorio\n", stderr);
+	/* el fondo, solo si es otro */
+	snprintf(wpfile, sizeof wpfile, "%s/wallpaper", st);
+	read_file(wpfile, prev, sizeof prev);
+	if (wallpaper[0] && strcmp(prev, wallpaper)) {
+		char *wp[] = { "plasma-apply-wallpaperimage", (char *)wallpaper, NULL };
+
+		if (run(wp, NULL, 0) == 0)
+			write_text(wpfile, wallpaper);
+	}
 }
 
-static int cmd_apply(const char *profile, int quiet)
+static int cmd_apply_ex(const char *profile, int quiet, int force_layout)
 {
 	struct rros_theme t;
 	struct rros_conf c;
 	struct rros_palette p;
-	char base[1024], wp[300];
+	char cfg[1024], data[1024], st[1024], wp[300], old_theme[64], prc[1100];
 	int rc;
 
 	if (load_theme(&t, &c, profile))
 		return 1;
-	if (config_home(base, sizeof base)) {
+	if (config_home(cfg, sizeof cfg) || data_home(data, sizeof data) || state_home(st, sizeof st)) {
 		fputs("rros-theme: no se pudo determinar ~/.config\n", stderr);
 		rros_conf_free(&c);
 		return 1;
 	}
+	t.soft_render = soft_render();
 	rros_theme_palette(&t, &p);
-	{
-		/* el archivo propio del usuario para Hyprland: existe siempre, así `source` no falla */
-		char personal[1100];
-		FILE *pf;
-
-		snprintf(personal, sizeof personal, "%s/hypr/personal.conf", base);
-		if (access(personal, F_OK) != 0 && rros_mkdir_parents(personal) == 0 && (pf = fopen(personal, "w"))) {
-			fputs("# Tus líneas para Hyprland (https://wiki.hypr.land). RROS no toca este archivo.\n", pf);
-			fclose(pf);
-		}
-	}
+	snprintf(prc, sizeof prc, "%s/plasmarc", cfg);
+	rros_ini_get(prc, "Theme", "name", old_theme, sizeof old_theme);
 	/* primero la configuración (rápido) y después el fondo, que la primera vez tarda medio segundo */
-	rc = render_all(base, &t, &c, access("/usr/bin/swayfx", X_OK) == 0);
+	rc = render_all(cfg, data, &t, &c);
 	ensure_wallpaper(&t, &p, wp, sizeof wp);
-	if (rc == 0) {
-		reload_desktop(&t, wp, quiet);
-		apply_plasma(&t, &p, &c, wp, quiet);
-	}
+	plasma_colors(&t, &p, &c, data, cfg, quiet);
+	plasma_layout(&t, &p, &c, force_layout);
+	plasma_reload(&t, old_theme, wp, st);
 	if (rc == 0 && !quiet)
-		printf("tema aplicado: %s (%s, acento %s) en %s\n", t.theme, t.dark ? "oscuro" : "claro", p.accent, base);
+		printf("tema aplicado: %s (%s, acento %s, dock %s%s)\n", t.theme, t.dark ? "oscuro" : "claro", p.accent,
+		       t.dock_3d ? "3D" : "2D", t.soft_render ? ", sin aceleración gráfica: efectos apagados" : "");
 	rros_conf_free(&c);
 	return rc;
+}
+
+static int cmd_apply(const char *profile, int quiet)
+{
+	return cmd_apply_ex(profile, quiet, 0);
 }
 
 static int cmd_toggle(const char *profile)
@@ -366,43 +490,6 @@ static int cmd_list(const char *profile)
 	return 0;
 }
 
-/* En una sesión de Plasma, el estilo cambia también los paneles: plasmashell ejecuta el guion del estilo
- * (/usr/share/rros/plasma/ESTILO.js) por D-Bus, sin shell de por medio. */
-static void plasma_layout(const char *id)
-{
-	const char *desk = getenv("XDG_CURRENT_DESKTOP"), *dir = getenv("RROS_PLASMA_LAYOUTS");
-	char path[600], *script;
-	FILE *f;
-	long len;
-	pid_t pid;
-	int st;
-
-	if (!desk || !strstr(desk, "KDE"))
-		return;
-	snprintf(path, sizeof path, "%s/%s.js", dir && *dir ? dir : "/usr/share/rros/plasma", id);
-	if (!(f = fopen(path, "r")))
-		return;
-	fseek(f, 0, SEEK_END);
-	len = ftell(f);
-	rewind(f);
-	script = len > 0 && len < 65536 ? calloc(1, (size_t)len + 1) : NULL;
-	if (!script || fread(script, 1, (size_t)len, f) != (size_t)len) {
-		fclose(f);
-		free(script);
-		return;
-	}
-	fclose(f);
-	pid = fork();
-	if (pid == 0) {
-		execlp("qdbus6", "qdbus6", "org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell.evaluateScript",
-		       script, (char *)NULL);
-		_exit(127);
-	}
-	if (pid < 0 || waitpid(pid, &st, 0) < 0 || !WIFEXITED(st) || WEXITSTATUS(st) != 0)
-		fputs("rros-theme: aviso: Plasma no pudo cambiar los paneles\n", stderr);
-	free(script);
-}
-
 static int cmd_desktop(const char *profile, const char *name)
 {
 	struct rros_theme t;
@@ -425,17 +512,16 @@ static int cmd_desktop(const char *profile, const char *name)
 	}
 	d = rros_desktop_find(name);
 	if (!d) {
-		fprintf(stderr, "rros-theme: no hay ningún estilo de escritorio '%s' (clasico, moderno, mosaico)\n", name);
+		fprintf(stderr, "rros-theme: no hay ningún estilo de escritorio '%s' (moderno, clasico, enfoque)\n", name);
 		return 1;
 	}
-	for (size_t k = 0; k < 12 && d->keys[k][0]; k++)
+	for (size_t k = 0; k < 14 && d->keys[k][0]; k++)
 		if (rros_user_set(d->keys[k][0], d->keys[k][1], 0, err, sizeof err)) {
 			fprintf(stderr, "rros-theme: %s\n", err);
 			return 1;
 		}
 	printf("escritorio: %s\n", d->label);
-	plasma_layout(d->id);
-	return cmd_apply(profile, 1);
+	return cmd_apply_ex(profile, 1, 1);
 }
 
 static int cmd_wallpaper(const char *profile, int argc, char **argv, int i)
@@ -591,13 +677,13 @@ int main(int argc, char **argv)
 	}
 	if (!strcmp(cmd, "render")) {
 		const char *out = NULL;
-		int swayfx = 0;
+		char path[1100];
+		struct rros_palette p;
+		FILE *f;
 
 		for (; i < argc; i++) {
 			if (!strcmp(argv[i], "--out") && i + 1 < argc)
 				out = argv[++i];
-			else if (!strcmp(argv[i], "--swayfx"))
-				swayfx = 1;
 			else {
 				usage();
 				return 2;
@@ -609,7 +695,29 @@ int main(int argc, char **argv)
 		}
 		if (load_theme(&t, &conf, profile))
 			return 1;
-		i = render_all(out, &t, &conf, swayfx);
+		{
+			const char *sr = getenv("RROS_SOFT_RENDER");
+
+			t.soft_render = sr && !strcmp(sr, "1");
+		}
+		i = render_all(out, out, &t, &conf);
+		rros_theme_palette(&t, &p);
+		snprintf(path, sizeof path, "%s/plasma/layout.js", out);
+		if (rros_mkdir_parents(path) == 0 && (f = fopen(path, "w"))) {
+			rros_render_plasma_layout(&t, &p, &conf, f);
+			fclose(f);
+		} else {
+			i = 1;
+		}
+		snprintf(path, sizeof path, "%s/kde/RROS.colors", out);
+		if (rros_mkdir_parents(path) == 0 && (f = fopen(path, "w"))) {
+			rros_render_kde_colors(&t, &p, &conf, f);
+			fclose(f);
+		} else {
+			i = 1;
+		}
+		snprintf(path, sizeof path, "%s/aurorae/RROS", out);
+		i |= rros_write_aurorae(path, &t, &p) != 0;
 		rros_conf_free(&conf);
 		return i;
 	}

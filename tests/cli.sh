@@ -56,7 +56,7 @@ if "$B/rros-config" validate "$T/sint.toml" 2>/dev/null; then fail "validate sin
 
 # -f lee un único archivo (usado por scripts de build)
 eq "$("$B/rros-config" -f profiles/pro.toml get build.libc)" glibc
-eq "$("$B/rros-config" -f profiles/lite.toml get build.libc)" musl
+eq "$("$B/rros-config" -f profiles/lite.toml get ui.effects)" off
 
 # budget
 mkdir "$T/rootfs" && head -c 3000000 /dev/zero > "$T/rootfs/f"
@@ -71,25 +71,30 @@ eq "$("$B/rros-hwdetect" --root "$T/fakeroot" --profile)" standard
 "$B/rros-hwdetect" --json | gq '"profile"' || fail "json"
 # --- escritorio propio: rros-theme, rros-fetch, rros ---
 export XDG_CONFIG_HOME=$T/xdg
+export XDG_DATA_HOME=$T/xdgdata XDG_STATE_HOME=$T/xdgstate
 "$B/rros-theme" -p lite apply --quiet
-for f in sway/config sway/rros-effects.conf waybar/config waybar/style.css foot/foot.ini; do
+for f in kwinrc kdeglobals kcminputrc kxkbrc powerdevilrc plasmarc; do
 	[ -s "$XDG_CONFIG_HOME/$f" ] || fail "rros-theme no generó $f"
 done
-grep -q 'gaps inner 4' "$XDG_CONFIG_HOME/sway/config" || fail "gap de Lite"
-sed 1d "$XDG_CONFIG_HOME/waybar/config" | python3 -m json.tool >/dev/null || fail "waybar JSON inválido"
-"$B/rros-config" -p lite set ui.gap 20
+for f in konsole/RROS.profile konsole/RROS.colorscheme aurorae/themes/RROS/decoration.svg; do
+	[ -s "$XDG_DATA_HOME/$f" ] || fail "rros-theme no generó $f"
+done
+ls "$XDG_DATA_HOME"/color-schemes/RROS-*.colors >/dev/null || fail "esquema de colores de Plasma"
+grep -q 'blurEnabled=false' "$XDG_CONFIG_HOME/kwinrc" || fail "Lite sin desenfoque"
+grep -q 'AnimationDurationFactor=0' "$XDG_CONFIG_HOME/kdeglobals" || fail "Lite sin animaciones"
+"$B/rros-config" -p lite set ui.dock_style 3d
 "$B/rros-theme" -p lite apply --quiet
-grep -q 'gaps inner 20' "$XDG_CONFIG_HOME/sway/config" || fail "el ajuste no llega al escritorio"
+grep -q 'name=rros-3d' "$XDG_CONFIG_HOME/plasmarc" || fail "el dock 3D no llega a Plasma"
+# lo que el usuario cambie en las Preferencias de KDE se respeta
+printf '\n[Mio]\nclave=1\n' >> "$XDG_CONFIG_HOME/kwinrc"
+"$B/rros-theme" -p lite apply --quiet
+grep -q '^clave=1' "$XDG_CONFIG_HOME/kwinrc" || fail "rros-theme borró ajustes propios de kwinrc"
 # alternar oscuro/claro
 "$B/rros-theme" -p lite toggle >/dev/null
 eq "$("$B/rros-config" -p lite get ui.color_scheme)" light
-grep -q 'background=f5f7ff' "$XDG_CONFIG_HOME/foot/foot.ini" || fail "tema claro"
+grep -q 'Color=245,247,255' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "tema claro"
 "$B/rros-theme" -p lite toggle >/dev/null
 eq "$("$B/rros-config" -p lite get ui.color_scheme)" dark
-# no pisa archivos manuales: hace copia
-echo "# mio" > "$XDG_CONFIG_HOME/foot/foot.ini"
-"$B/rros-theme" -p lite apply --quiet 2>/dev/null
-[ "$(cat "$XDG_CONFIG_HOME/foot/foot.ini.bak-rros")" = "# mio" ] || fail "copia del archivo manual"
 # ficha y diagnóstico
 "$B/rros-fetch" --plain | gq 'Perfil' || fail "rros-fetch"
 "$B/rros-fetch" --plain | gq 'SO\|Sistema' || fail "rros-fetch sistema"
@@ -295,9 +300,7 @@ export RROS_THEMES_DIR=$T/themes
 "$B/rros-theme" -p standard list | gq '^\* aurora' || fail "tema por defecto"
 "$B/rros-theme" -p standard use nord >/dev/null
 "$B/rros-theme" -p standard list | gq '^\* nord' || fail "rros-theme use"
-grep -q 'background=2e3440' "$XDG_CONFIG_HOME/foot/foot.ini" || fail "el tema llega a foot"
-grep -q 'window_bg_color #2e3440' "$XDG_CONFIG_HOME/gtk-4.0/gtk.css" || fail "el tema llega a GTK"
-grep -q 'background-color=#2e3440' "$XDG_CONFIG_HOME/mako/config" || fail "el tema llega a mako"
+grep -q 'Color=46,52,64' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "el tema llega a la terminal"
 if "$B/rros-theme" use no-existe 2>/dev/null; then fail "tema inexistente debía fallar"; fi
 "$B/rros-theme" -p standard cycle >/dev/null
 "$B/rros-theme" -p standard list | gq '^\* dracula' || fail "rros-theme cycle"
@@ -306,18 +309,18 @@ if "$B/rros-theme" new miotema 2>/dev/null; then fail "new debía negarse a pisa
 if "$B/rros-theme" new nord 2>/dev/null; then fail "new debía negarse con nombre incluido"; fi
 sed -i 's/^bg = "#2e3440"/bg = "#101820"/' "$RROS_THEMES_DIR/miotema.toml"
 "$B/rros-theme" -p standard use miotema >/dev/null
-grep -q 'background=101820' "$XDG_CONFIG_HOME/foot/foot.ini" || fail "tema propio aplicado"
+grep -q 'Color=16,24,32' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "tema propio aplicado"
 "$B/rros-theme" -p standard list | gq 'miotema *propio' || fail "tema propio en la lista"
 
-"$B/rros-config" set keybind.nav 'Mod+Shift+b exec firefox'
-"$B/rros-config" set rule.ff 'app_id=firefox workspace 2'
+"$B/rros-config" set keybind.nav 'Mod+Shift+b firefox'
+"$B/rros-config" set rule.ff 'app=firefox maximized'
 "$B/rros-config" set autostart.sync 'syncthing -no-browser'
 "$B/rros-theme" -p standard apply --quiet
-# shellcheck disable=SC2016
-grep -q 'bindsym $mod+Shift+b exec firefox' "$XDG_CONFIG_HOME/sway/config" || fail "atajo en sway"
-grep -q 'assign \[app_id="firefox"\] workspace number 2' "$XDG_CONFIG_HOME/sway/config" || fail "regla en sway"
-grep -q 'exec syncthing -no-browser' "$XDG_CONFIG_HOME/sway/config" || fail "autostart en sway"
-for bad in "keybind.x Mod+b rm" "rule.x app_id=a vuela" "keybind.MAL Mod+b exec x" "autostart.x"; do
+grep -q '_launch=Meta+Shift+B' "$XDG_CONFIG_HOME/kglobalshortcutsrc" || fail "atajo en KDE"
+grep -q 'Exec=firefox' "$XDG_DATA_HOME/applications/rros-kb-nav.desktop" || fail "lanzador del atajo"
+grep -q 'wmclass=firefox' "$XDG_CONFIG_HOME/kwinrulesrc" || fail "regla en KWin"
+grep -q 'Exec=syncthing -no-browser' "$XDG_CONFIG_HOME/autostart/rros-auto-sync.desktop" || fail "programa de inicio"
+for bad in "keybind.x Mod+b" "rule.x app=a vuela" "keybind.MAL Mod+b x" "autostart.x"; do
 	# shellcheck disable=SC2086
 	if "$B/rros-config" set $bad 2>/dev/null; then fail "debía fallar: $bad"; fi
 done
@@ -327,16 +330,16 @@ done
 "$B/rros-config" export > "$T/export.toml"
 grep -q 'ui.theme\|theme = "miotema"' "$T/export.toml" || fail "export"
 "$B/rros-config" snapshot save base
-"$B/rros-config" set ui.gap 30
+"$B/rros-config" set ui.dock_icon_size 64
 "$B/rros-config" snapshot list | gq -x base || fail "snapshot list"
 "$B/rros-config" snapshot restore base
-eq "$("$B/rros-config" -p standard get ui.gap)" 20  # el valor que había al guardar la instantánea
+eq "$("$B/rros-config" -p standard get ui.dock_icon_size)" 48  # el valor que había al guardar la instantánea
 if "$B/rros-config" snapshot restore ../x 2>/dev/null; then fail "nombre de snapshot inválido"; fi
 "$B/rros-config" import "$T/export.toml"
 if "$B/rros-config" reset 2>/dev/null; then fail "reset sin --yes debía fallar"; fi
 "$B/rros-config" reset --yes
 eq "$("$B/rros-config" -p standard get ui.theme)" aurora
-printf '[ui]\ngap = 9999\n' > "$T/mal-import.toml"
+printf '[ui]\ndock_icon_size = 9999\n' > "$T/mal-import.toml"
 if "$B/rros-config" import "$T/mal-import.toml" 2>/dev/null; then fail "import inválido debía fallar"; fi
 "$B/rros-config" help | gq 'keybind' || fail "ayuda con ejemplos"
 # --- comando rros: subcomandos y extensiones ---
@@ -406,7 +409,7 @@ for a in json.load(sys.stdin):
 
 # --- instalador: la parte que no toca discos (plan y validación de argumentos) ---
 INST=$PWD/overlay/common/usr/bin/rros-install
-inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 12 --bios -p lite)
+inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 14 --bios -p lite)
 case $inst_out in *rros-root*ext4*) ;; *) fail "rros-install plan" ;; esac
 if PATH=$B:$PATH "$INST" --user 'Mal Usuario' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un usuario no válido"; fi
 if PATH=$B:$PATH "$INST" --hostname 'a;b' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un nombre de equipo no válido"; fi
@@ -415,26 +418,6 @@ if PATH=$B:$PATH "$INST" --cmdline 'x$(id)' --disk /dev/null --dry-run 2>/dev/nu
 if PATH=$B:$PATH "$INST" --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un dispositivo que no es un disco"; fi
 if PATH=$B:$PATH "$INST" --locale 'es;ES' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un idioma no válido"; fi
 if PATH=$B:$PATH "$INST" --fullname 'Ana:0:0' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un nombre completo con ':'"; fi
-
-# teclado de la consola: /etc/vconsole.conf es un enlace a /etc/default/keyboard (como en Ubuntu)
-VC=$T/vc
-mkdir -p "$VC/etc/default" "$VC/xkb/symbols" "$VC/bin"
-touch "$VC/xkb/symbols/es" "$VC/xkb/symbols/latam"
-printf 'KEYMAP=es\nXKBLAYOUT="es"\n' > "$VC/etc/default/keyboard"
-ln -s default/keyboard "$VC/etc/vconsole.conf"
-# shellcheck disable=SC2016  # ckbcomp falso: escribe la distribución que le piden
-printf '#!/bin/sh\necho "keymap $4"\n' > "$VC/bin/ckbcomp"
-chmod +x "$VC/bin/ckbcomp"
-VCON=$PWD/overlay/ubuntu/usr/libexec/rros-vconsole
-PATH=$VC/bin:$PATH RROS_ETC=$VC/etc RROS_XKB=$VC/xkb "$VCON" --save latam || fail "rros-vconsole --save latam"
-grep -qx 'KEYMAP=latam' "$VC/etc/vconsole.conf" || fail "rros-vconsole: KEYMAP en /etc/vconsole.conf"
-grep -qx 'XKBLAYOUT="latam"' "$VC/etc/default/keyboard" || fail "rros-vconsole: XKBLAYOUT en /etc/default/keyboard"
-[ -L "$VC/etc/vconsole.conf" ] || fail "rros-vconsole rompe el enlace /etc/vconsole.conf"
-zcat "$VC/etc/console-setup/cached_UTF-8_del.kmap.gz" | gq -x 'keymap latam' || fail "rros-vconsole: mapa de la consola"
-printf 'KEYMAP=la-latin1\n' > "$VC/etc/default/keyboard"
-PATH=$VC/bin:$PATH RROS_ETC=$VC/etc RROS_XKB=$VC/xkb "$VCON" --save || fail "rros-vconsole --save (la-latin1)"
-grep -qx 'XKBLAYOUT="latam"' "$VC/etc/default/keyboard" || fail "rros-vconsole: nombre de kbd (la-latin1)"
-if PATH=$VC/bin:$PATH RROS_ETC=$VC/etc RROS_XKB=$VC/xkb "$VCON" --save 'es;x' 2>/dev/null; then fail "rros-vconsole acepta un mapa no válido"; fi
 
 # discos para el instalador sobre un /sys falso: NVMe con Windows (ESP, MSR, NTFS) y 40 GiB libres
 DR=$T/disks
@@ -460,7 +443,7 @@ python3 -c '
 import json,sys
 j=json.load(sys.stdin)
 d=j["disks"][0]
-assert j["firmware"]=="uefi" and j["min_mb"]==10240, j
+assert j["firmware"]=="uefi" and j["min_mb"]==12288, j
 assert d["path"]=="/dev/nvme0n1" and d["systems"]=="Windows" and d["windows"], d
 assert d["esp"]=="nvme0n1p1" and d["free_mb"]==102400-1-117-61440, d
 assert d["wipe"]=="" and d["alongside"]=="" and d["alongside_crypt"]=="", d

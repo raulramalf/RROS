@@ -37,12 +37,15 @@ enum rros_family rros_family_of(const char *key);
 const char *rros_family_desc(enum rros_family f);
 /* 1 si `key` no es dinámica; 0 si es válida; <0 con mensaje en err. */
 int rros_dynamic_check(const char *key, const char *val, char *err, size_t n);
-/* Traducción a comandos de sway (misma lógica que valida). 0 ok, -1 inválido. */
-int rros_keybind_to_sway(const char *val, char *out, size_t n);
-int rros_rule_to_sway(const char *val, char *out, size_t n);
-int rros_autostart_to_sway(const char *val, char *out, size_t n);
-/* Lo mismo para Hyprland: "MODS, TECLA, dispatcher, args" y "ACCIÓN, criterio" (sin la palabra clave). */
-int rros_keybind_to_hypr(const char *val, char *out, size_t n);
-int rros_rule_to_hypr(const char *val, char *out, size_t n);
+/* Atajo "Mod+Shift+b comando" -> combinación de KDE ("Meta+Shift+B") y comando. 0 ok, -1 inválido. */
+int rros_keybind_parse(const char *val, char *combo, size_t cn, char *cmd, size_t mn);
+/* Regla de ventana "app=NOMBRE ACCIÓN [N]" para KWin. 0 ok, -1 inválida. */
+struct rros_rule {
+	char match[64];   /* clase de la ventana o título */
+	int by_title;
+	char action[32];  /* above, fullscreen, maximized, noborder, skiptaskbar, minimized, opacity */
+	int opacity;      /* 10-100 */
+};
+int rros_rule_parse(const char *val, struct rros_rule *r);
 
 #endif

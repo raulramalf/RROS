@@ -122,6 +122,18 @@ int rros_user_unset(const char *key, int system, char *err, size_t en)
 	return 0;
 }
 
+/* claves de versiones anteriores (Hyprland, sway, waybar): se ignoran en vez de dar error */
+static int retired_key(const char *k)
+{
+	static const char *const old[] = { "ui.compositor", "ui.border_gradient", "ui.gap", "ui.border_width", "ui.layout",
+					   "ui.tiling_layout", "panel.left", "panel.center", "panel.right", NULL };
+
+	for (const char *const *o = old; *o; o++)
+		if (!strcmp(k, *o))
+			return 1;
+	return 0;
+}
+
 int rros_conf_validate(const struct rros_conf *c, int profile_file, FILE *out, const char *name)
 {
 	char err[256];
@@ -132,6 +144,8 @@ int rros_conf_validate(const struct rros_conf *c, int profile_file, FILE *out, c
 		const struct rros_key *k = rros_schema_find(kv->key);
 		int dyn;
 
+		if (!k && retired_key(kv->key))
+			continue;
 		if (!k) {
 			dyn = rros_dynamic_check(kv->key, kv->val, err, sizeof err);
 			if (dyn > 0)

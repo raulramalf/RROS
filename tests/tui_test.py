@@ -71,28 +71,28 @@ pump(0.6)
 check(b"RROS Ajustes" in screen, "cabecera visible")
 check("Interfaz".encode() in screen, "categoría Interfaz visible")
 
-# buscar una clave y cambiarla con las flechas: gap del perfil standard = 8
+# buscar una clave y cambiarla con las flechas: iconos del dock del perfil standard = 48
 send("/")
-send("ui.gap")
+send("ui.dock_icon_size")
 send("\r")
 send("\x1b[C")
 send("\x1b[C")
-check(wait_conf('gap = 10'), "flecha derecha sube el entero (8 -> 10)")
+check(wait_conf('dock_icon_size = 50'), "flecha derecha sube el entero (48 -> 50)")
 send("\x1b[D")
-check(wait_conf('gap = 9'), "flecha izquierda lo baja")
-send("-")
-check(wait_conf('gap = 0') or wait_conf('gap = 1', timeout=0.5), "- resta 10 con tope en el mínimo")
+check(wait_conf('dock_icon_size = 49'), "flecha izquierda lo baja")
+send("-"); send("-")
+check(wait_conf('dock_icon_size = 32'), "- resta 10 con tope en el mínimo")
 
 # un valor que no se puede pasar del máximo
 send("+"); send("+"); send("+"); send("+"); send("+"); send("+"); send("+")
-check(wait_conf('gap = 64'), "el entero se detiene en el máximo (64)")
+check(wait_conf('dock_icon_size = 96'), "el entero se detiene en el máximo (96)")
 
 # bool: alternar con Enter
 send("/"); send("ui.hot_corners"); send("\r")
 send("\r")
-check(wait_conf('hot_corners = true'), "Enter alterna un booleano")
+check(wait_conf('hot_corners = false'), "Enter alterna un booleano")
 send("\r")
-check(wait_conf('hot_corners = false'), "y lo vuelve a alternar")
+check(wait_conf('hot_corners = true'), "y lo vuelve a alternar")
 
 # enum: ciclar con la flecha derecha
 send("/"); send("ui.panel_position"); send("\r")
@@ -124,12 +124,12 @@ for _ in range(ncats):
 send("\r")
 send("nav")
 send("\r")
-send("Mod+b exec firefox")
+send("Mod+b firefox")
 send("\r")
-check(wait_conf('nav = "Mod+b exec firefox"'), "añadir un atajo desde la TUI")
+check(wait_conf('nav = "Mod+b firefox"'), "añadir un atajo desde la TUI")
 # atajo inválido
 send("\x1b[B")      # baja a "+ añadir" (ahora hay 1 atajo)
-send("\r"); send("mal"); send("\r"); send("Mod+x borra todo"); send("\r")
+send("\r"); send("mal"); send("\r"); send("Mod+x"); send("\r")
 check('mal' not in userconf(), "un atajo inválido no se guarda")
 
 # salir

@@ -1,3 +1,0 @@
-#!/bin/sh
-# Historial del portapapeles: elige una entrada anterior y vuelve a copiarla.
-cliphist list | fuzzel --dmenu --prompt 'Portapapeles > ' | cliphist decode | wl-copy

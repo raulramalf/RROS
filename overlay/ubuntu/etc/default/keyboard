@@ -1,8 +1,0 @@
-# Teclado de la consola y de la pantalla de la contraseña del disco (console-setup). En Ubuntu
-# /etc/vconsole.conf es un enlace a este archivo. Lo reescribe rros-vconsole; el del escritorio es input.keymap.
-KEYMAP=es
-XKBMODEL="pc105"
-XKBLAYOUT="es"
-XKBVARIANT=""
-XKBOPTIONS=""
-BACKSPACE="guess"

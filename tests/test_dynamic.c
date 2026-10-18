@@ -3,78 +3,80 @@
 #include "check.h"
 #include "rros_schema.h"
 
-static int kb(const char *v, char *out)
+static char combo[96], cmd[256];
+
+static int kb(const char *v)
 {
-	return rros_keybind_to_sway(v, out, 512);
+	return rros_keybind_parse(v, combo, sizeof combo, cmd, sizeof cmd);
 }
 
 int main(void)
 {
-	char out[512], err[256];
+	char err[256];
+	struct rros_rule r;
 
-	/* atajos */
-	CHECK(kb("Mod+Shift+b exec firefox", out) == 0);
-	CHECK_STR(out, "bindsym $mod+Shift+b exec firefox");
-	CHECK(kb("Ctrl+Alt+Delete exec systemctl reboot", out) == 0);
-	CHECK_STR(out, "bindsym Ctrl+Alt+Delete exec systemctl reboot");
-	CHECK(kb("Mod+1 workspace number 1", out) == 0);
-	CHECK(kb("Print exec rros-shot", out) == 0);
-	CHECK(kb("Mod+x", out) == -1);                    /* sin comando */
-	CHECK(kb("exec firefox", out) == -1);             /* "exec" sería la tecla y "firefox" no es comando */
-	CHECK(kb("Mod+x rm -rf /", out) == -1);           /* comando no permitido */
-	CHECK(kb("Mod++b exec x", out) == -1);
-	CHECK(kb("Mod+ exec x", out) == -1);
-	CHECK(kb("Mod+b; exec x", out) == -1);
-	CHECK(kb("Mod+b exec {evil}", out) == -1);
-	CHECK(kb("Mod+b exec x\nbindsym y exec z", out) == -1); /* sin inyección de líneas */
-	CHECK(kb("", out) == -1);
-	CHECK(rros_keybind_to_sway("Mod+b exec " "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", out, sizeof out) == -1);
-	CHECK(rros_keybind_to_sway("Mod+b exec firefox", out, 8) == -1); /* búfer pequeño */
+	/* atajos: combinación de KDE y comando */
+	CHECK(kb("Mod+Shift+b firefox") == 0);
+	CHECK_STR(combo, "Meta+Shift+B");
+	CHECK_STR(cmd, "firefox");
+	CHECK(kb("Mod+Shift+b exec firefox") == 0);       /* «exec» de antes, se quita */
+	CHECK_STR(cmd, "firefox");
+	CHECK(kb("Shift+Ctrl+Alt+Delete systemctl reboot") == 0);
+	CHECK_STR(combo, "Ctrl+Alt+Shift+Delete");          /* en el orden de KDE */
+	CHECK_STR(cmd, "systemctl reboot");
+	CHECK(kb("Super+Return konsole") == 0);
+	CHECK_STR(combo, "Meta+Return");
+	CHECK(kb("Print spectacle") == 0);
+	CHECK_STR(combo, "Print");
+	CHECK(kb("Mod+x") == -1);                    /* sin comando */
+	CHECK(kb("Mod+Hyper+x firefox") == -1);      /* modificador desconocido */
+	CHECK(kb("Mod++b x") == -1);
+	CHECK(kb("Mod+ x") == -1);
+	CHECK(kb("Mod+b; x") == -1);
+	CHECK(kb("Mod+b {evil}") == -1);
+	CHECK(kb("Mod+b x\nExec=y") == -1);          /* sin inyección de líneas en el lanzador */
+	CHECK(kb("") == -1);
+	CHECK(rros_keybind_parse("Mod+b firefox", combo, 4, cmd, sizeof cmd) == -1);   /* búfer pequeño */
 
-	/* reglas */
-	CHECK(rros_rule_to_sway("app_id=firefox workspace 2", out, sizeof out) == 0);
-	CHECK_STR(out, "assign [app_id=\"firefox\"] workspace number 2");
-	CHECK(rros_rule_to_sway("class=Steam floating", out, sizeof out) == 0);
-	CHECK_STR(out, "for_window [class=\"Steam\"] floating enable");
-	CHECK(rros_rule_to_sway("title=Video opacity 0.85", out, sizeof out) == 0);
-	CHECK_STR(out, "for_window [title=\"Video\"] opacity 0.85");
-	CHECK(rros_rule_to_sway("app_id=mpv border none", out, sizeof out) == 0);
-	CHECK(rros_rule_to_sway("app_id=mpv border pixel 4", out, sizeof out) == 0);
-	CHECK(rros_rule_to_sway("app_id=mpv inhibit_idle", out, sizeof out) == 0);
-	CHECK(rros_rule_to_sway("app_id=mpv sticky", out, sizeof out) == 0);
-	CHECK(rros_rule_to_sway("app_id=mpv fullscreen", out, sizeof out) == 0);
-	CHECK(rros_rule_to_sway("app_id=x workspace 0", out, sizeof out) == -1);
-	CHECK(rros_rule_to_sway("app_id=x workspace 33", out, sizeof out) == -1);
-	CHECK(rros_rule_to_sway("app_id=x workspace dos", out, sizeof out) == -1);
-	CHECK(rros_rule_to_sway("app_id=x opacity 1.5", out, sizeof out) == -1);
-	CHECK(rros_rule_to_sway("app_id=x opacity", out, sizeof out) == -1);
-	CHECK(rros_rule_to_sway("app_id=x border pixel 99", out, sizeof out) == -1);
-	CHECK(rros_rule_to_sway("app_id=x floating extra", out, sizeof out) == -1);
-	CHECK(rros_rule_to_sway("color=x floating", out, sizeof out) == -1);       /* criterio no permitido */
-	CHECK(rros_rule_to_sway("app_id=a\"b floating", out, sizeof out) == -1);   /* comillas */
-	CHECK(rros_rule_to_sway("app_id= floating", out, sizeof out) == -1);
-	CHECK(rros_rule_to_sway("firefox floating", out, sizeof out) == -1);
-
-	/* autostart */
-	CHECK(rros_autostart_to_sway("syncthing -no-browser", out, sizeof out) == 0);
-	CHECK_STR(out, "exec syncthing -no-browser");
-	CHECK(rros_autostart_to_sway("", out, sizeof out) == -1);
-	CHECK(rros_autostart_to_sway("a\nexec b", out, sizeof out) == -1);
-	CHECK(rros_autostart_to_sway("x {", out, sizeof out) == -1);
+	/* reglas de ventanas de KWin */
+	CHECK(rros_rule_parse("app=mpv above", &r) == 0);
+	CHECK_STR(r.match, "mpv");
+	CHECK_STR(r.action, "above");
+	CHECK(r.by_title == 0);
+	CHECK(rros_rule_parse("app_id=firefox maximized", &r) == 0);
+	CHECK(rros_rule_parse("class=Steam fullscreen", &r) == 0);
+	CHECK(rros_rule_parse("title=Video opacity 0.85", &r) == 0);
+	CHECK(r.by_title == 1 && r.opacity == 85);
+	CHECK(rros_rule_parse("app=mpv opacity 70", &r) == 0);
+	CHECK(r.opacity == 70);
+	CHECK(rros_rule_parse("app=mpv noborder", &r) == 0);
+	CHECK(rros_rule_parse("app=mpv skiptaskbar", &r) == 0);
+	CHECK(rros_rule_parse("app=mpv minimized", &r) == 0);
+	CHECK(rros_rule_parse("app=x opacity 5", &r) == -1);
+	CHECK(rros_rule_parse("app=x opacity", &r) == -1);
+	CHECK(rros_rule_parse("app=x above extra", &r) == -1);
+	CHECK(rros_rule_parse("app=x workspace 2", &r) == -1);   /* no se puede con KWin */
+	CHECK(rros_rule_parse("color=x above", &r) == -1);       /* criterio no permitido */
+	CHECK(rros_rule_parse("app=a\"b above", &r) == -1);      /* comillas */
+	CHECK(rros_rule_parse("app= above", &r) == -1);
+	CHECK(rros_rule_parse("firefox above", &r) == -1);
 
 	/* familias e identificadores */
 	CHECK(rros_family_of("keybind.nav") == RROS_FAM_KEYBIND);
 	CHECK(rros_family_of("rule.ff") == RROS_FAM_RULE);
 	CHECK(rros_family_of("autostart.x") == RROS_FAM_AUTOSTART);
-	CHECK(rros_family_of("ui.gap") == RROS_FAM_NONE);
-	CHECK(rros_dynamic_check("ui.gap", "5", err, sizeof err) == 1);
-	CHECK(rros_dynamic_check("keybind.nav", "Mod+b exec firefox", err, sizeof err) == 0);
-	CHECK(rros_dynamic_check("keybind.Nav", "Mod+b exec firefox", err, sizeof err) < 0);   /* mayúsculas */
-	CHECK(rros_dynamic_check("keybind.", "Mod+b exec firefox", err, sizeof err) < 0);      /* sin id */
-	CHECK(rros_dynamic_check("keybind.a.b", "Mod+b exec firefox", err, sizeof err) < 0);   /* con punto */
+	CHECK(rros_family_of("ui.dock") == RROS_FAM_NONE);
+	CHECK(rros_dynamic_check("ui.dock", "true", err, sizeof err) == 1);
+	CHECK(rros_dynamic_check("keybind.nav", "Mod+b firefox", err, sizeof err) == 0);
+	CHECK(rros_dynamic_check("keybind.Nav", "Mod+b firefox", err, sizeof err) < 0);   /* mayúsculas */
+	CHECK(rros_dynamic_check("keybind.", "Mod+b firefox", err, sizeof err) < 0);      /* sin id */
+	CHECK(rros_dynamic_check("keybind.a.b", "Mod+b firefox", err, sizeof err) < 0);   /* con punto */
 	CHECK(rros_dynamic_check("rule.ff", "mal", err, sizeof err) < 0);
 	CHECK(strstr(err, "rule.ff") != NULL);
+	CHECK(rros_dynamic_check("autostart.sync", "syncthing -no-browser", err, sizeof err) == 0);
+	CHECK(rros_dynamic_check("autostart.x", "a\nb", err, sizeof err) < 0);
 	CHECK(rros_schema_find("panel.style") != NULL);
-	CHECK(rros_schema_find("term.scrollback") != NULL);
+	CHECK(rros_schema_find("ui.dock_style") != NULL);
+	CHECK(rros_schema_find("ui.compositor") == NULL);
 	DONE();
 }

@@ -45,37 +45,37 @@ int main(void)
 	snprintf(sys, sizeof sys, "%s/system.toml", dir);
 
 	/* set válido: tipos y comillas */
-	CHECK(rros_user_set("ui.gap", "12", 0, err, sizeof err) == 0);
+	CHECK(rros_user_set("ui.dock_icon_size", "52", 0, err, sizeof err) == 0);
 	CHECK(rros_user_set("ui.theme", "nord", 0, err, sizeof err) == 0);
 	CHECK(rros_user_set("ui.blur", "true", 0, err, sizeof err) == 0);
 	CHECK(rros_user_set("keybind.nav", "Mod+b exec firefox", 0, err, sizeof err) == 0);
-	CHECK_STR(val(user, "ui.gap"), "12");
+	CHECK_STR(val(user, "ui.dock_icon_size"), "52");
 	CHECK_STR(val(user, "ui.theme"), "nord");
 	CHECK_STR(val(user, "keybind.nav"), "Mod+b exec firefox");
 
 	/* rechazos con mensaje */
-	CHECK(rros_user_set("ui.gap", "999", 0, err, sizeof err) < 0);
+	CHECK(rros_user_set("ui.dock_icon_size", "999", 0, err, sizeof err) < 0);
 	CHECK(strstr(err, "fuera de rango") != NULL);
 	CHECK(rros_user_set("ui.nope", "1", 0, err, sizeof err) < 0);
 	CHECK(strstr(err, "desconocida") != NULL);
 	CHECK(rros_user_set("profile.name", "x", 0, err, sizeof err) < 0);
 	CHECK(strstr(err, "perfil") != NULL);
-	CHECK(rros_user_set("keybind.x", "Mod+b rm -rf /", 0, err, sizeof err) < 0);
-	CHECK_STR(val(user, "ui.gap"), "12"); /* un fallo no toca el archivo */
+	CHECK(rros_user_set("keybind.x", "Mod+b", 0, err, sizeof err) < 0);   /* sin comando */
+	CHECK_STR(val(user, "ui.dock_icon_size"), "52"); /* un fallo no toca el archivo */
 
 	/* capa del sistema aparte */
-	CHECK(rros_user_set("ui.gap", "3", 1, err, sizeof err) == 0);
-	CHECK_STR(val(sys, "ui.gap"), "3");
-	CHECK_STR(val(user, "ui.gap"), "12");
+	CHECK(rros_user_set("ui.dock_icon_size", "40", 1, err, sizeof err) == 0);
+	CHECK_STR(val(sys, "ui.dock_icon_size"), "40");
+	CHECK_STR(val(user, "ui.dock_icon_size"), "52");
 
 	/* unset */
-	CHECK(rros_user_unset("ui.gap", 0, err, sizeof err) == 0);
-	CHECK(val(user, "ui.gap") == NULL);
+	CHECK(rros_user_unset("ui.dock_icon_size", 0, err, sizeof err) == 0);
+	CHECK(val(user, "ui.dock_icon_size") == NULL);
 	CHECK(rros_user_unset("ui.nope", 0, err, sizeof err) < 0);
 
 	/* validación de un archivo con claves dinámicas */
 	rros_conf_init(&c);
-	CHECK(rros_conf_parse(&c, "[ui]\ngap = 5\n[rule]\nok = \"app_id=x floating\"\nbad = \"app_id=x vuela\"\n[ui]\nzzz = 1\n", NULL) == 0);
+	CHECK(rros_conf_parse(&c, "[ui]\ndock_icon_size = 50\ngap = 5\n[rule]\nok = \"app=x above\"\nbad = \"app=x vuela\"\n[ui]\nzzz = 1\n", NULL) == 0);
 	CHECK(rros_conf_validate(&c, 0, NULL, "t") == 2);
 	rros_conf_free(&c);
 
@@ -118,7 +118,7 @@ int main(void)
 	{
 		FILE *f = fopen(cmd, "w");
 
-		fputs("[ui]\ngap = 99999\n", f);
+		fputs("[ui]\ndock_icon_size = 99999\n", f);
 		fclose(f);
 	}
 	CHECK(rros_user_import(cmd, err, sizeof err) < 0);

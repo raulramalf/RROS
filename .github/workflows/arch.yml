@@ -1,8 +1,8 @@
 name: Arch
 
-# RROS sobre Arch Linux con Hyprland.
-#  - comprobar: en cada cambio, en un contenedor Arch: los paquetes existen, compila, pasan las pruebas y
-#    la configuración de Hyprland que genera rros-theme la acepta el Hyprland de verdad.
+# RROS sobre Arch Linux con KDE Plasma.
+#  - comprobar: en cada cambio, en un contenedor Arch: los paquetes existen, compila (también RROS Ajustes, en
+#    Qt) y pasan las pruebas.
 #  - iso: construye la ISO con archiso y la arranca en QEMU con el autotest. A mano (Run workflow) o con
 #    «[iso-arch]» en el mensaje del commit.
 on:
@@ -20,18 +20,13 @@ jobs:
     runs-on: ubuntu-24.04
     container: archlinux:latest
     steps:
-      - name: Paquetes de compilación y Hyprland
-        run: pacman -Syu --noconfirm --needed base-devel git python hyprland sway
+      - name: Paquetes de compilación
+        run: pacman -Syu --noconfirm --needed base-devel git python cmake qt6-base qt6-declarative
       - uses: actions/checkout@v4
       - name: Los paquetes de las listas existen en Arch
         run: scripts/check-packages-arch.sh
       - name: Compilar y pruebas
         run: make WERROR=1 && make test WERROR=1
-      - name: Configuración de Hyprland válida
-        run: |
-          useradd -m prueba
-          chown -R prueba .
-          su prueba -c 'scripts/check-hyprland.sh'
 
   iso:
     needs: comprobar

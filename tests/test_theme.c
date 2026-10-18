@@ -9,6 +9,7 @@
 #include "rros_schema.h"
 
 static struct rros_conf cur;
+static struct rros_ini_edit ed[RROS_MAX_EDITS];
 
 /* Renderiza a una cadena (open_memstream). El llamador libera. */
 static char *render(rros_render_fn fn, const struct rros_theme *t)
@@ -32,96 +33,79 @@ static void from_text(struct rros_theme *t, const char *text)
 	rros_theme_from_conf(t, &cur);
 }
 
+static size_t edits(const struct rros_theme *t)
+{
+	struct rros_palette p;
+
+	rros_theme_palette(t, &p);
+	return rros_plasma_edits(t, &p, &cur, ed, RROS_MAX_EDITS);
+}
+
+/* valor de una edición ("" si no está) */
+static const char *ev(size_t n, const char *file, const char *group, const char *key)
+{
+	for (size_t i = 0; i < n; i++)
+		if (!ed[i].del_group && !strcmp(ed[i].file, file) && !strcmp(ed[i].group, group) && ed[i].key &&
+		    !strcmp(ed[i].key, key))
+			return ed[i].value;
+	return "";
+}
+
+static char *slurp(const char *path)
+{
+	FILE *f = fopen(path, "r");
+	char *s;
+	long len;
+
+	if (!f)
+		return NULL;
+	fseek(f, 0, SEEK_END);
+	len = ftell(f);
+	rewind(f);
+	s = calloc(1, (size_t)len + 1);
+	if (s && fread(s, 1, (size_t)len, f) != (size_t)len) {
+		free(s);
+		s = NULL;
+	}
+	fclose(f);
+	return s;
+}
+
 int main(void)
 {
 	struct rros_theme t;
 	char *s;
+	size_t n;
 
-	/* valores por defecto */
+	/* valores por defecto: tipo macOS, dock plano, botones a la izquierda */
 	from_text(&t, "");
 	CHECK(t.dark == 1);
 	CHECK_STR(t.accent, "");
 	CHECK_STR(t.theme, "aurora");
-	CHECK(t.gap == 8 && t.border == 2);
-	CHECK_STR(t.panel_pos, "top");
+	CHECK(t.dock == 1 && t.dock_3d == 0 && t.buttons_left == 1 && t.global_menu == 1);
+	CHECK_STR(t.dock_pos, "bottom");
+	CHECK_STR(rros_desktoptheme(&t), "rros");
 
-	/* los ajustes llegan al sway generado */
-	from_text(&t, "[ui]\naccent = \"#FF8800\"\ngap = 14\nborder_width = 4\nscale = 150\n"
-		      "layout = \"floating\"\nworkspaces = 3\n[input]\nkeymap = \"latam\"\npointer_speed = -50\n");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "gaps inner 14") != NULL);
-	CHECK(strstr(s, "gaps outer 7") != NULL);
-	CHECK(strstr(s, "default_border normal 4") != NULL);   /* ventanas libres: con barra de título */
-	CHECK(strstr(s, "#ff8800 #ff8800 #0b1020") != NULL);
-	CHECK(strstr(s, "output * scale 1.50") != NULL);
-	CHECK(strstr(s, "xkb_layout latam") != NULL);
-	CHECK(strstr(s, "pointer_accel -0.50") != NULL);
-	CHECK(strstr(s, "floating enable") != NULL);
-	CHECK(strstr(s, "workspace number 3") != NULL);
-	CHECK(strstr(s, "workspace number 4") == NULL);
-	CHECK(strstr(s, RROS_GENERATED) != NULL);
-	free(s);
-
-	/* valores peligrosos se descartan: no se puede inyectar comandos en sway */
-	from_text(&t, "[ui]\naccent = \"red; exec evil\"\nfont = \"Inter\\nexec evil\"\n[input]\nkeymap = \"es\\nexec x\"\n");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "evil") == NULL);
-	CHECK(strstr(s, "exec x") == NULL);
-	CHECK(strstr(s, "#7c5cff") != NULL); /* acento del tema Aurora */
-	CHECK(strstr(s, "font pango:Inter 11") != NULL);
-	free(s);
-
-	/* valores fuera de rango se acotan */
-	from_text(&t, "[ui]\ngap = 99999\nfont_size = 1\n");
-	CHECK(t.gap == 64);
-	CHECK(t.font_size == 6);
-
-	/* esquema claro */
-	from_text(&t, "[ui]\ncolor_scheme = \"light\"\n");
-	s = render(rros_render_foot, &t);
-	CHECK(strstr(s, "background=f5f7ff") != NULL);
-	free(s);
-
-	/* waybar: posición, reloj y transparencia */
-	from_text(&t, "[ui]\npanel_position = \"left\"\npanel_size = 48\nclock_24h = false\ntransparency = 40\n");
-	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"position\": \"left\"") != NULL);
-	CHECK(strstr(s, "\"width\": 48") != NULL);
-	CHECK(strstr(s, "%I:%M %p") != NULL);
-	free(s);
-	s = render(rros_render_waybar_css, &t);
-	CHECK(strstr(s, "rgba(11, 16, 32, 0.60)") != NULL);
-	CHECK(strstr(s, "border-right: 2px solid") != NULL);
-	free(s);
-
-	/* efectos de SwayFX (sway con efectos): no en off */
-	from_text(&t, "[ui]\ncompositor = \"sway\"\nblur = true\nshadows = true\neffects = \"advanced\"\ncorner_radius = 12\n");
-	CHECK(t.hyprland == 0);
-	s = render(rros_render_effects, &t);
-	CHECK(strstr(s, "corner_radius 12") != NULL);
-	CHECK(strstr(s, "blur enable") != NULL);
-	CHECK(strstr(s, "blur_passes 3") != NULL);
-	CHECK(strstr(s, "shadows enable") != NULL);
-	free(s);
-	from_text(&t, "[ui]\ncompositor = \"sway\"\neffects = \"off\"\nblur = true\n");
-	s = render(rros_render_effects, &t);
-	CHECK(strstr(s, "blur") == NULL);
-	free(s);
+	/* valores peligrosos se descartan; fuera de rango se acotan */
+	from_text(&t, "[ui]\nfont = \"Inter\\nExec=x\"\ncursor_theme = \"a;b\"\ndock_icon_size = 500\npanel_size = 1\n");
+	CHECK_STR(t.font, "Inter");
+	CHECK_STR(t.cursor_theme, "breeze_cursors");
+	CHECK(t.dock_icon == 96 && t.panel_size == 16);
 
 	/* ---- temas incluidos ---- */
 	from_text(&t, "[ui]\ntheme = \"nord\"\n");
-	s = render(rros_render_foot, &t);
-	CHECK(strstr(s, "background=2e3440") != NULL);
-	CHECK(strstr(s, "selection-background=88c0d0") != NULL); /* acento propio de Nord */
+	s = render(rros_render_konsole_colors, &t);
+	CHECK(strstr(s, "[Background]\nColor=46,52,64\n") != NULL);   /* fondo de Nord */
 	free(s);
 	from_text(&t, "[ui]\ntheme = \"nord\"\naccent = \"#ff0000\"\n");
-	s = render(rros_render_foot, &t);
-	CHECK(strstr(s, "selection-background=ff0000") != NULL); /* el usuario manda */
-	free(s);
+	n = edits(&t);
+	CHECK_STR(ev(n, "kdeglobals", "General", "AccentColor"), "255,0,0");   /* el usuario manda */
 	from_text(&t, "[ui]\ntheme = \"gruvbox\"\ncolor_scheme = \"light\"\n");
-	s = render(rros_render_foot, &t);
-	CHECK(strstr(s, "background=fbf1c7") != NULL);
+	s = render(rros_render_konsole_colors, &t);
+	CHECK(strstr(s, "[Background]\nColor=251,241,199\n") != NULL);
 	free(s);
+	n = edits(&t);
+	CHECK_STR(ev(n, "kdeglobals", "Icons", "Theme"), "breeze");          /* modo claro: iconos claros */
 	{
 		struct rros_palette p;
 
@@ -133,340 +117,180 @@ int main(void)
 	}
 	{
 		struct rros_theme_info list[64];
-		size_t n = rros_theme_list(list, 64);
+		size_t k = rros_theme_list(list, 64);
 
-		CHECK(n >= 7);
+		CHECK(k >= 7);
 		CHECK(list[0].builtin == 1);
 	}
 
-	/* ---- panel configurable ---- */
-	from_text(&t, "[panel]\nstyle = \"floating\"\nleft = \"workspaces,window\"\nright = \"cpu,hackme,battery\"\n");
-	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"modules-left\": [\"hyprland/workspaces\", \"hyprland/window\", \"wlr/taskbar\"]") != NULL);
-	CHECK(strstr(s, "\"modules-right\": [\"cpu\", \"battery\"]") != NULL); /* módulo desconocido, descartado */
-	CHECK(strstr(s, "hackme") == NULL);
-	CHECK(strstr(s, "\"margin\": \"6 8 0 8\"") != NULL);
+	/* ---- efectos: avanzado, básico y sin aceleración gráfica ---- */
+	from_text(&t, "[ui]\neffects = \"advanced\"\nblur = true\nblur_strength = 9\nanimation_style = \"suave\"\n");
+	n = edits(&t);
+	CHECK_STR(ev(n, "kwinrc", "Plugins", "blurEnabled"), "true");
+	CHECK_STR(ev(n, "kwinrc", "Plugins", "magiclampEnabled"), "true");
+	CHECK_STR(ev(n, "kwinrc", "Effect-blur", "BlurStrength"), "9");
+	CHECK_STR(ev(n, "kdeglobals", "KDE", "AnimationDurationFactor"), "0.7");
+	from_text(&t, "[ui]\neffects = \"basic\"\nblur = true\nanimation_speed = 200\n");
+	n = edits(&t);
+	CHECK_STR(ev(n, "kwinrc", "Plugins", "blurEnabled"), "false");       /* el básico no desenfoca */
+	CHECK_STR(ev(n, "kwinrc", "Plugins", "squashEnabled"), "true");
+	CHECK_STR(ev(n, "kdeglobals", "KDE", "AnimationDurationFactor"), "0.35");
+	from_text(&t, "[ui]\neffects = \"advanced\"\nblur = true\n");
+	t.soft_render = 1;   /* máquina virtual sin 3D */
+	n = edits(&t);
+	CHECK_STR(ev(n, "kwinrc", "Plugins", "blurEnabled"), "false");
+	CHECK_STR(ev(n, "kwinrc", "Plugins", "scaleEnabled"), "false");
+	CHECK_STR(ev(n, "kdeglobals", "KDE", "AnimationDurationFactor"), "0");
+	from_text(&t, "[ui]\nreduce_motion = true\n");
+	n = edits(&t);
+	CHECK_STR(ev(n, "kdeglobals", "KDE", "AnimationDurationFactor"), "0");
+	CHECK_STR(ev(n, "kwinrc", "Plugins", "slideEnabled"), "false");
+
+	/* ---- ventanas, escritorios, luz nocturna ---- */
+	from_text(&t, "[ui]\nwindow_buttons = \"right\"\nworkspaces = 3\nnight_light = \"on\"\nnight_light_temp = 3500\n"
+		      "hot_corners = false\n");
+	n = edits(&t);
+	CHECK_STR(ev(n, "kwinrc", "org.kde.kdecoration2", "ButtonsOnRight"), "IAX");
+	CHECK_STR(ev(n, "kwinrc", "org.kde.kdecoration2", "ButtonsOnLeft"), "M");
+	CHECK_STR(ev(n, "kwinrc", "Desktops", "Number"), "3");
+	CHECK_STR(ev(n, "kwinrc", "NightColor", "Mode"), "Constant");
+	CHECK_STR(ev(n, "kwinrc", "NightColor", "NightTemperature"), "3500");
+	CHECK_STR(ev(n, "kwinrc", "Effect-overview", "BorderActivate"), "9");
+
+	/* ---- fuentes, entrada, energía, bloqueo, sonido, indexador ---- */
+	from_text(&t, "[ui]\nfont = \"Noto Sans\"\nfont_size = 12\n[input]\nkeymap = \"latam\"\nrepeat_delay_ms = 250\n"
+		      "natural_scroll = false\npointer_speed = 50\nnumlock_on_boot = false\n"
+		      "[power]\nscreen_off_minutes = 20\nsuspend_minutes = 0\nlid_action = \"ignore\"\n"
+		      "[privacy]\nlock_minutes = 0\n[audio]\nmax_volume = 150\nevent_sounds = false\n"
+		      "[services]\nindexer = true\n");
+	n = edits(&t);
+	CHECK_STR(ev(n, "kdeglobals", "General", "font"), "Noto Sans,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1");
+	CHECK_STR(ev(n, "kxkbrc", "Layout", "LayoutList"), "latam");
+	CHECK_STR(ev(n, "kcminputrc", "Keyboard", "RepeatDelay"), "250");
+	CHECK_STR(ev(n, "kcminputrc", "Keyboard", "NumLock"), "1");
+	CHECK_STR(ev(n, "kcminputrc", "Libinput][Defaults][Touchpad", "NaturalScroll"), "false");
+	CHECK_STR(ev(n, "kcminputrc", "Libinput][Defaults][Pointer", "PointerAcceleration"), "0.50");
+	CHECK_STR(ev(n, "powerdevilrc", "AC][Display", "TurnOffDisplayIdleTimeoutSec"), "1200");
+	CHECK_STR(ev(n, "powerdevilrc", "Battery][Display", "TurnOffDisplayIdleTimeoutSec"), "600");   /* con batería, antes */
+	CHECK_STR(ev(n, "powerdevilrc", "AC][SuspendAndShutdown", "AutoSuspendAction"), "0");
+	CHECK_STR(ev(n, "powerdevilrc", "AC][SuspendAndShutdown", "LidAction"), "0");
+	CHECK_STR(ev(n, "kscreenlockerrc", "Daemon", "Autolock"), "false");
+	CHECK_STR(ev(n, "plasmaparc", "General", "RaiseMaximumVolume"), "true");
+	CHECK_STR(ev(n, "kdeglobals", "Sounds", "Enable"), "false");
+	CHECK_STR(ev(n, "baloofilerc", "Basic Settings", "Indexing-Enabled"), "true");
+	CHECK_STR(ev(n, "ksmserverrc", "General", "loginMode"), "emptySession");
+
+	/* ---- dock 2D / 3D ---- */
+	from_text(&t, "[ui]\ndock_style = \"3d\"\ndock_icon_size = 56\ndock_position = \"left\"\ndock_hiding = \"auto\"\n");
+	CHECK_STR(rros_desktoptheme(&t), "rros-3d");
+	n = edits(&t);
+	CHECK_STR(ev(n, "plasmarc", "Theme", "name"), "rros-3d");
+	s = render(rros_render_plasma_layout, &t);
+	CHECK(strstr(s, "dock.location = \"left\";") && strstr(s, "dock.height = 78;") &&
+	      strstr(s, "dock.hiding = \"autohide\";"));
+	CHECK(strstr(s, "org.kde.plasma.kickerdash") && strstr(s, "rros-launchpad") && strstr(s, "org.kde.plasma.trash"));
+	CHECK(strstr(s, "bar.addWidget(\"org.rros.menu\")") && strstr(s, "org.kde.plasma.appmenu"));
+	CHECK(strstr(s, "applications:rros-apps.desktop") && strstr(s, "applications:rros-settings.desktop"));
 	free(s);
-	s = render(rros_render_waybar_css, &t);
-	CHECK(strstr(s, ".modules-left, .modules-center, .modules-right") != NULL);
+	/* clásico: barra de tareas abajo y sin dock */
+	from_text(&t, "[ui]\npanel_position = \"bottom\"\npanel_size = 44\ndock = false\nclock_24h = false\n[panel]\ntaskbar = true\n");
+	s = render(rros_render_plasma_layout, &t);
+	CHECK(strstr(s, "bar.location = \"bottom\";") && strstr(s, "org.kde.plasma.taskmanager") &&
+	      strstr(s, "org.kde.plasma.kickoff") && !strstr(s, "var dock") && strstr(s, "\"use24hFormat\", 0"));
 	free(s);
+	/* enfoque: barra en píldora con el reloj en el centro */
 	from_text(&t, "[panel]\nstyle = \"pill\"\n");
-	s = render(rros_render_waybar_css, &t);
-	CHECK(strstr(s, "border-radius: 999px") != NULL);
-	free(s);
-
-	/* ---- atajos, reglas y programas de inicio del usuario ---- */
-	from_text(&t, "[keybind]\nnav = \"Mod+Shift+b exec firefox\"\nmal = \"Mod+x rm -rf\"\n"
-		      "[rule]\nff = \"app_id=firefox workspace 2\"\nfloat = \"title=Calculadora floating\"\n"
-		      "[autostart]\nsync = \"syncthing -no-browser\"\n");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "bindsym $mod+Shift+b exec firefox") != NULL);
-	CHECK(strstr(s, "# ignorado (no válido): keybind.mal") != NULL);
-	CHECK(strstr(s, "assign [app_id=\"firefox\"] workspace number 2") != NULL);
-	CHECK(strstr(s, "for_window [title=\"Calculadora\"] floating enable") != NULL);
-	CHECK(strstr(s, "exec syncthing -no-browser") != NULL);
-	CHECK(strstr(s, "rm -rf") == NULL);
-	free(s);
-
-	/* ---- GTK, mako, fuzzel ---- */
-	from_text(&t, "[ui]\ntheme = \"dracula\"\ncolor_scheme = \"dark\"\nfont_size = 13\n");
-	s = render(rros_render_gtk_css, &t);
-	CHECK(strstr(s, "@define-color window_bg_color #282a36;") != NULL);
-	CHECK(strstr(s, "@define-color accent_bg_color #bd93f9;") != NULL);
-	CHECK(strstr(s, "@define-color theme_bg_color #282a36;") != NULL);
-	free(s);
-	s = render(rros_render_gtk_settings, &t);
-	CHECK(strstr(s, "gtk-application-prefer-dark-theme=1") != NULL);
-	CHECK(strstr(s, "gtk-font-name=Inter 13") != NULL);
-	free(s);
-	s = render(rros_render_mako, &t);
-	CHECK(strstr(s, "background-color=#282a36ff") != NULL);
-	CHECK(strstr(s, "border-color=#bd93f9") != NULL);
-	free(s);
-	s = render(rros_render_fuzzel, &t);
-	CHECK(strstr(s, "background=282a36ff") != NULL);
+	s = render(rros_render_plasma_layout, &t);
+	CHECK(strstr(s, "bar.lengthMode = \"fit\";") && !strstr(s, "appmenu"));
 	free(s);
 
 	/* ---- terminal ---- */
-	from_text(&t, "[term]\nscrollback = 20000\ncursor = \"beam\"\npadding = 20\n");
-	s = render(rros_render_foot, &t);
-	CHECK(strstr(s, "lines=20000") != NULL);
-	CHECK(strstr(s, "style=beam") != NULL);
-	CHECK(strstr(s, "pad=20x16") != NULL);
+	from_text(&t, "[term]\nscrollback = 20000\ncursor = \"beam\"\npadding = 4\n");
+	s = render(rros_render_konsole_profile, &t);
+	CHECK(strstr(s, "HistorySize=20000") && strstr(s, "CursorShape=1") && strstr(s, "TerminalMargin=4") &&
+	      strstr(s, "ColorScheme=RROS"));
 	free(s);
 
-	/* ---- esenciales de un sistema usable ---- */
-	from_text(&t, "");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY") != NULL);
-	CHECK(strstr(s, "exec rros-polkit-agent") != NULL);
-	CHECK(strstr(s, "exec nm-applet --indicator") != NULL);
-	CHECK(strstr(s, "exec blueman-applet") != NULL);
-	CHECK(strstr(s, "exec udiskie") != NULL);
-	CHECK(strstr(s, "exec wl-paste --watch cliphist store") != NULL);
-	CHECK(strstr(s, "bindsym $mod+b exec epiphany") != NULL);
-	CHECK(strstr(s, "bindsym $mod+e exec thunar") != NULL);
-	CHECK(strstr(s, "bindsym $mod+Shift+e exec rros-power") != NULL);
-	CHECK(strstr(s, "bindsym $mod+Escape exec swaylock -f") != NULL);
-	CHECK(strstr(s, "set $term foot") != NULL);
-	/* bloqueo a los 10 min, pantalla a los 15, suspensión a los 30 */
-	CHECK(strstr(s, "timeout 600 'swaylock -f'") != NULL);
-	CHECK(strstr(s, "timeout 900 'swaymsg \"output * power off\"'") != NULL);
-	CHECK(strstr(s, "timeout 1800 'systemctl suspend'") != NULL);
-	free(s);
+	/* ---- atajos y reglas del usuario ---- */
+	from_text(&t, "[keybind]\nnav = \"Mod+Shift+b firefox\"\nmal = \"Mod+b\"\n[rule]\nmpv = \"app=mpv above\"\n"
+		      "vid = \"title=Video opacity 0.8\"\n");
+	n = edits(&t);
+	CHECK_STR(ev(n, "kglobalshortcutsrc", "services][rros-kb-nav.desktop", "_launch"), "Meta+Shift+B");
+	CHECK_STR(ev(n, "kglobalshortcutsrc", "services][rros-kb-mal.desktop", "_launch"), "");   /* inválido: fuera */
+	CHECK_STR(ev(n, "kwinrulesrc", "rros-mpv", "wmclass"), "mpv");
+	CHECK_STR(ev(n, "kwinrulesrc", "rros-mpv", "aboverule"), "2");
+	CHECK_STR(ev(n, "kwinrulesrc", "rros-vid", "opacityactive"), "80");
+	CHECK_STR(ev(n, "kwinrulesrc", "General", "rules"), "rros-mpv,rros-vid");
 
-	/* aplicaciones por defecto cambiables, y saneadas */
-	from_text(&t, "[apps]\nbrowser = \"firefox\"\nterminal = \"kitty\"\neditor = \"vim; rm -rf /\"\n");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "bindsym $mod+b exec firefox") != NULL);
-	CHECK(strstr(s, "set $term kitty") != NULL);
-	CHECK(strstr(s, "rm -rf") == NULL);                      /* nada de inyección */
-	CHECK(strstr(s, "bindsym $mod+Shift+n exec mousepad") != NULL); /* cae al valor por defecto */
-	free(s);
-
-	/* bloqueo e inactividad configurables; 0 los desactiva */
-	from_text(&t, "[privacy]\nlock_minutes = 0\n[power]\nscreen_off_minutes = 5\nsuspend_minutes = 0\n");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "swaylock -f'") != NULL);                /* before-sleep sigue bloqueando */
-	CHECK(strstr(s, "timeout 300 'swaymsg") != NULL);
-	CHECK(strstr(s, "systemctl suspend") == NULL);
-	CHECK(strstr(s, "timeout 600") == NULL);
-	free(s);
-	from_text(&t, "[privacy]\nlock_minutes = 0\n[power]\nscreen_off_minutes = 0\nsuspend_minutes = 0\n");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "exec swayidle") == NULL);
-	free(s);
-
-	/* pantalla de bloqueo con la paleta del tema */
-	from_text(&t, "[ui]\ntheme = \"nord\"\n");
-	s = render(rros_render_swaylock, &t);
-	CHECK(strstr(s, "color=2e3440") != NULL);
-	CHECK(strstr(s, "key-hl-color=88c0d0") != NULL);
-	free(s);
-
-	/* el panel lo lanza rros-panel; no hay bloque bar (sway lo arrancaba antes de tener el bus de sesión) */
-	from_text(&t, "");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "exec rros-panel") != NULL);
-	CHECK(strstr(s, "swaybar_command") == NULL);
-	free(s);
-
-	/* panel con botón de aplicaciones y de energía */
-	from_text(&t, "");
-	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"modules-left\": [\"custom/apps\", \"hyprland/workspaces\", \"hyprland/submap\", \"wlr/taskbar\"]") != NULL);
-	CHECK(strstr(s, "\"custom/power\"]") != NULL);
-	CHECK(strstr(s, "\"on-click\": \"pavucontrol\"") != NULL);
-	free(s);
-	/* actualizaciones pendientes en el panel (se oculta si no hay) */
-	from_text(&t, "[panel]\nright = \"updates,clock\"\n");
-	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"modules-right\": [\"custom/updates\", \"clock\"]") != NULL);
-	CHECK(strstr(s, "\"exec\": \"rros-updates\"") != NULL && strstr(s, "foot --hold rros-apps update") != NULL);
-	free(s);
-
-	/* ---- sway rechaza combinaciones repetidas: nunca debe haber dos iguales ---- */
+	/* ---- archivos INI de KDE: se mezclan sin perder lo del usuario ---- */
 	{
-		static const char *confs[] = {
-			"",
-			"[keybind]\na = \"Mod+e exec foo\"\nb = \"Mod+B exec bar\"\nc = \"Mod+Shift+e exec baz\"\n"
-			"d = \"Mod+r exec nada\"\ne = \"Mod+1 workspace number 7\"\n",
-			"[ui]\nworkspaces = 10\n[keybind]\nx = \"Print exec otra\"\n",
-		};
+		char dir[] = "/tmp/rros-ini-XXXXXX", path[300], val[64], *txt;
+		FILE *f;
 
-		for (size_t k = 0; k < sizeof confs / sizeof *confs; k++) {
-			char *line, *save = NULL, *seen[200];
-			int n = 0, dup = 0;
-
-			from_text(&t, confs[k]);
-			s = render(rros_render_sway, &t);
-			for (line = strtok_r(s, "\n", &save); line; line = strtok_r(NULL, "\n", &save)) {
-				char *sp;
-
-				if (strncmp(line, "bindsym ", 8) != 0)
-					continue;           /* los de dentro de un modo van con sangría */
-				sp = strchr(line + 8, ' ');
-				if (!sp)
-					continue;
-				*sp = '\0';
-				for (int q = 0; q < n; q++)
-					if (strcasecmp(seen[q], line + 8) == 0)
-						dup++;
-				if (n < 200)
-					seen[n++] = line + 8;
-			}
-			CHECK(dup == 0);
-			CHECK(n > 30);
-			free(s);
-		}
-		/* el atajo del usuario sustituye al de RROS, no se suma */
-		from_text(&t, "[keybind]\na = \"Mod+e exec foo\"\n");
-		s = render(rros_render_sway, &t);
-		CHECK(strstr(s, "bindsym $mod+e exec foo") != NULL);
-		CHECK(strstr(s, "bindsym $mod+e exec thunar") == NULL);
-		CHECK(strstr(s, "bindsym $mod+b exec epiphany") != NULL); /* el resto se mantiene */
-		free(s);
-	}
-
-	rros_conf_free(&cur);
-	/* ---- accesibilidad ---- */
-	{
-		struct rros_palette pal;
-		char *gtk;
-
-		from_text(&t, "[ui]\nhigh_contrast = true\nborder_width = 1\n");
-		rros_theme_palette(&t, &pal);
-		CHECK(!strcmp(pal.bg, "#000000") && !strcmp(pal.text, "#ffffff"));
-		CHECK(t.border >= 3);
-		gtk = render(rros_render_gtk_settings, &t);
-		CHECK(strstr(gtk, "gtk-theme-name=HighContrast") != NULL);
-		free(gtk);
-		from_text(&t, "[ui]\nhigh_contrast = true\ncolor_scheme = \"light\"\n");
-		rros_theme_palette(&t, &pal);
-		CHECK(!strcmp(pal.bg, "#ffffff") && !strcmp(pal.text, "#000000"));
-
-		from_text(&t, "[ui]\nreduce_motion = true\n");
-		gtk = render(rros_render_gtk_settings, &t);
-		CHECK(strstr(gtk, "gtk-enable-animations=false") != NULL);
-		CHECK(strstr(gtk, "HighContrast") == NULL);
-		free(gtk);
-
+		CHECK(mkdtemp(dir) != NULL);
+		snprintf(path, sizeof path, "%s/kwinrulesrc", dir);
+		f = fopen(path, "w");
+		fputs("[General]\ncount=2\nrules=mia,rros-viejo\n\n[mia]\nwmclass=gimp\n\n[rros-viejo]\nwmclass=x\n", f);
+		fclose(f);
+		CHECK(rros_ini_apply(path, "kwinrulesrc", ed, n) == 0);
+		txt = slurp(path);
+		CHECK(txt && strstr(txt, "rules=mia,rros-mpv,rros-vid") && strstr(txt, "count=3") && strstr(txt, "[mia]") &&
+		      !strstr(txt, "rros-viejo") && strstr(txt, "[rros-mpv]\nDescription=RROS: mpv"));
+		free(txt);
+		/* las claves que ya están se cambian en su sitio; las demás, al final de su grupo */
+		snprintf(path, sizeof path, "%s/kwinrc", dir);
+		f = fopen(path, "w");
+		fputs("[Plugins]\nblurEnabled=true\nmio=1\n\n[Otro]\na=b\n", f);
+		fclose(f);
 		from_text(&t, "");
-		s = render(rros_render_sway, &t);
-		CHECK(strstr(s, "bindsym $mod+Alt+s exec rros-a11y lector") != NULL);
-		CHECK(strstr(s, "bindsym $mod+Alt+k exec rros-a11y teclado") != NULL);
-		CHECK(strstr(s, "exec rros-a11y lector on") == NULL);
-		free(s);
-		from_text(&t, "[access]\nscreen_reader = true\nonscreen_keyboard = true\n");
-		s = render(rros_render_sway, &t);
-		CHECK(strstr(s, "exec rros-a11y lector on") != NULL && strstr(s, "exec rros-a11y teclado on") != NULL);
-		free(s);
-		/* el usuario puede quitarse el atajo del lector sin que sway se queje de duplicados */
-		from_text(&t, "[keybind]\nmio = \"Mod+Alt+s exec foot\"\n");
-		s = render(rros_render_sway, &t);
-		CHECK(strstr(s, "rros-a11y lector") == NULL);
-		free(s);
-	}
-	/* ---- facilidad: lista de ventanas, barras de título y clic para enfocar ---- */
-	from_text(&t, "");
-	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"wlr/taskbar\"]") != NULL || strstr(s, "\"wlr/taskbar\",") != NULL);
-	CHECK(strstr(s, "\"on-click-middle\": \"close\"") != NULL);
-	free(s);
-	from_text(&t, "[panel]\ntaskbar = false\n");
-	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "[\"wlr/taskbar\"") == NULL && strstr(s, ", \"wlr/taskbar\"") == NULL);
-	free(s);
-	from_text(&t, "[ui]\nlayout = \"floating\"\n");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "default_floating_border normal") != NULL && strstr(s, "focus_follows_mouse no") != NULL);
-	free(s);
-	from_text(&t, "[ui]\nlayout = \"tiling\"\n");
-	s = render(rros_render_sway, &t);
-	CHECK(strstr(s, "default_border pixel") != NULL && strstr(s, "focus_follows_mouse yes") != NULL);
-	CHECK(strstr(s, "bindsym $mod+F1 exec rros-settings open bienvenida") != NULL);
-	free(s);
+		n = edits(&t);
+		CHECK(rros_ini_apply(path, "kwinrc", ed, n) == 0);
+		CHECK(rros_ini_get(path, "Plugins", "blurEnabled", val, sizeof val) == 0);
+		CHECK_STR(val, "false");
+		CHECK(rros_ini_get(path, "Plugins", "mio", val, sizeof val) == 0);
+		CHECK_STR(val, "1");
+		CHECK(rros_ini_get(path, "Otro", "a", val, sizeof val) == 0);
+		CHECK(rros_ini_get(path, "Desktops", "Number", val, sizeof val) == 0);
+		CHECK_STR(val, "1");
+		CHECK(rros_ini_get(path, "Nada", "x", val, sizeof val) == -1 && val[0] == '\0');
+		/* dos veces da lo mismo */
+		txt = slurp(path);
+		CHECK(rros_ini_apply(path, "kwinrc", ed, n) == 0);
+		{
+			char *again = slurp(path);
 
-	/* ---- Hyprland ---- */
-	from_text(&t, "");
-	CHECK(t.hyprland == 1);   /* por defecto */
-	CHECK_STR(t.wallpaper_style, "aurora");
-	setenv("HOME", "/inexistente", 1);
-	unsetenv("XDG_DATA_HOME");
-	from_text(&t, "[ui]\naccent = \"#FF8800\"\ngap = 14\nborder_width = 3\ncorner_radius = 12\nscale = 125\n"
-		      "layout = \"floating\"\nblur = true\nblur_strength = 9\nshadows = true\neffects = \"advanced\"\n"
-		      "transparency = 20\nanimation_style = \"rebote\"\nanimation_speed = 200\ntiling_layout = \"master\"\n"
-		      "dock = true\nworkspaces = 2\n[input]\nkeymap = \"latam\"\npointer_speed = 50\nnatural_scroll = false\n");
-	s = render(rros_render_hyprland, &t);
-	CHECK(strstr(s, RROS_GENERATED) != NULL);
-	CHECK(strstr(s, "monitor = , preferred, auto, 1.25") != NULL);
-	CHECK(strstr(s, "kb_layout = latam") != NULL);
-	CHECK(strstr(s, "sensitivity = 0.50") != NULL);
-	CHECK(strstr(s, "natural_scroll = false") != NULL);
-	CHECK(strstr(s, "follow_mouse = 2") != NULL);                 /* ventanas libres: clic para enfocar */
-	CHECK(strstr(s, "gaps_in = 7\n") != NULL && strstr(s, "gaps_out = 14\n") != NULL);
-	CHECK(strstr(s, "border_size = 3") != NULL);
-	CHECK(strstr(s, "col.active_border = rgba(ff8800ff) rgba(") != NULL);   /* degradado por defecto */
-	CHECK(strstr(s, "layout = master") != NULL);
-	CHECK(strstr(s, "rounding = 12") != NULL);
-	CHECK(strstr(s, "inactive_opacity = 0.90") != NULL);
-	CHECK(strstr(s, "dim_inactive = true") != NULL);              /* efectos avanzados */
-	CHECK(strstr(s, "    blur {\n        enabled = true\n        size = 9\n        passes = 3") != NULL);
-	CHECK(strstr(s, "    shadow {\n        enabled = true") != NULL);
-	CHECK(strstr(s, "bezier = rros, 0.68, -0.55, 0.265, 1.55") != NULL);   /* rebote */
-	CHECK(strstr(s, "animation = windows, 1, 4, rros, popin 80%") != NULL);  /* 7 al 200 %: 4 décimas */
-	CHECK(strstr(s, "windowrule = float on, match:class .*") != NULL);
-	CHECK(strstr(s, "windowrulev2") == NULL && strstr(s, "pseudotile") == NULL);
-	CHECK(strstr(s, "bind = SUPER, G, layoutmsg, togglesplit") != NULL);
-	CHECK(strstr(s, "\ngesture = 3, horizontal, workspace\n") != NULL && strstr(s, "workspace_swipe") == NULL);
-	CHECK(strstr(s, "exec-once = rros-dock") != NULL);
-	CHECK(strstr(s, "exec-once = swaybg -i /inexistente/.local/share/rros/fondos/aurora-") != NULL);
-	CHECK(strstr(s, "bind = SUPER, 2, workspace, 2") != NULL && strstr(s, "workspace, 3") == NULL);
-	CHECK(strstr(s, "bind = SUPER, Q, killactive,") != NULL);
-	CHECK(strstr(s, "bindm = SUPER, mouse:272, movewindow") != NULL);
-	CHECK(strstr(s, "source = ~/.config/hypr/personal.conf") != NULL);
-	free(s);
-	/* sin efectos ni animaciones; mosaico; fondo liso */
-	from_text(&t, "[ui]\neffects = \"off\"\nblur = true\nanimations = false\nlayout = \"tiling\"\nborder_gradient = false\n"
-		      "wallpaper_style = \"liso\"\n[input]\ngestures = false\n");
-	s = render(rros_render_hyprland, &t);
-	CHECK(strstr(s, "    blur {\n        enabled = false") != NULL);
-	CHECK(strstr(s, "    shadow {\n        enabled = false") != NULL);
-	CHECK(strstr(s, "animations {\n    enabled = false") != NULL);
-	CHECK(strstr(s, "follow_mouse = 1") != NULL);
-	CHECK(strstr(s, "float on, match:class .*") == NULL);
-	CHECK(strstr(s, "gesture") == NULL);
-	CHECK(strstr(s, "col.active_border = rgba(7c5cffff)\n") != NULL);
-	CHECK(strstr(s, "exec-once = swaybg -c '#0b1020'") != NULL);
-	free(s);
-	/* pestañas (hybrid): grupos */
-	from_text(&t, "[ui]\nlayout = \"hybrid\"\n");
-	s = render(rros_render_hyprland, &t);
-	CHECK(strstr(s, "windowrule = group set, match:class .*") != NULL && strstr(s, "groupbar {") != NULL);
-	free(s);
-	/* atajos, reglas e inicio del usuario: traducidos; el atajo propio sustituye al de RROS */
-	from_text(&t, "[keybind]\nweb = \"Mod+Shift+b exec firefox #x\"\nmv = \"Mod+F2 move container to workspace number 3\"\n"
-		      "q = \"Mod+q exec foot\"\nres = \"Mod+y resize grow width 10px\"\n"
-		      "[rule]\ncalc = \"app_id=galculator floating\"\nrol = \"window_role=pop-up floating\"\nop = \"title=Notas opacity 0.8\"\n"
-		      "[autostart]\nnube = \"nextcloud --background\"\n");
-	s = render(rros_render_hyprland, &t);
-	CHECK(strstr(s, "bind = SUPER SHIFT, b, exec, firefox ##x") != NULL);
-	CHECK(strstr(s, "bind = SUPER, F2, movetoworkspace, 3") != NULL);
-	CHECK(strstr(s, "bind = SUPER, q, exec, foot") != NULL);
-	CHECK(strstr(s, "killactive") == NULL);                       /* Super+Q es del usuario */
-	CHECK(strstr(s, "# ignorado (no tiene equivalente en Hyprland): keybind.res") != NULL);
-	CHECK(strstr(s, "windowrule = float on, match:class ^(galculator)$") != NULL);
-	CHECK(strstr(s, "windowrule = opacity 0.8, match:title ^(Notas)$") != NULL);
-	CHECK(strstr(s, "# ignorada (no válida en Hyprland): rule.rol") != NULL);
-	CHECK(strstr(s, "exec-once = nextcloud --background") != NULL);
-	free(s);
-	/* waybar con módulos de Hyprland o de sway según el compositor */
-	from_text(&t, "[ui]\npanel_position = \"bottom\"\n[panel]\nleft = \"apps,workspaces,window\"\ncenter = \"none\"\n");
-	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"hyprland/workspaces\", \"hyprland/window\"") != NULL);
-	CHECK(strstr(s, "\"modules-center\": []") != NULL);
-	CHECK(strstr(s, "Inicio") != NULL && strstr(s, "{:%d/%m/%Y}") != NULL);   /* barra abajo: botón Inicio y fecha */
-	free(s);
-	from_text(&t, "[ui]\ncompositor = \"sway\"\n[panel]\nleft = \"workspaces,window\"\n");
-	s = render(rros_render_waybar, &t);
-	CHECK(strstr(s, "\"sway/workspaces\", \"sway/window\"") != NULL && strstr(s, "hyprland/") == NULL);
-	free(s);
-	/* hyprlock: colores y fondo del tema */
-	from_text(&t, "[ui]\naccent = \"#22d3ee\"\n");
-	s = render(rros_render_hyprlock, &t);
-	CHECK(strstr(s, "outer_color = rgba(22d3eeff)") != NULL);
-	CHECK(strstr(s, "path = /inexistente/.local/share/rros/fondos/aurora-") != NULL);
-	CHECK(strstr(s, "placeholder_text = Contraseña") != NULL);
-	free(s);
+			CHECK(txt && again && !strcmp(txt, again));
+			free(again);
+		}
+		free(txt);
+		/* lanzadores de atajos y de inicio */
+		from_text(&t, "[keybind]\nnav = \"Mod+b firefox --private-window\"\n[autostart]\nsync = \"syncthing\"\n");
+		snprintf(path, sizeof path, "%s/apps", dir);
+		{
+			char autos[220];
+
+			snprintf(autos, sizeof autos, "%s/auto", dir);
+			CHECK(rros_write_launchers(&cur, path, autos) == 0);
+			snprintf(path, sizeof path, "%s/apps/rros-kb-nav.desktop", dir);
+			txt = slurp(path);
+			CHECK(txt && strstr(txt, "Exec=firefox --private-window\n") && strstr(txt, "NoDisplay=true"));
+			free(txt);
+			snprintf(path, sizeof path, "%s/rros-auto-sync.desktop", autos);
+			CHECK(access(path, R_OK) == 0);
+		}
+		snprintf(path, sizeof path, "rm -rf '%s'", dir);
+		CHECK(system(path) == 0);
+	}
 
 	/* ---- estilos de escritorio ---- */
 	{
 		const struct rros_desktop_preset *d = rros_desktop_find("clasico");
 
-		CHECK(d != NULL && rros_desktop_find("nada") == NULL && rros_desktop_presets_len == 3);
+		CHECK(d != NULL && rros_desktop_find("mosaico") == NULL && rros_desktop_presets_len == 3);
+		CHECK(rros_desktop_find("moderno") && rros_desktop_find("enfoque"));
 		/* todas sus claves pasan la validación del esquema */
 		for (size_t i = 0; i < rros_desktop_presets_len; i++)
-			for (size_t k = 0; k < 12 && rros_desktop_presets[i].keys[k][0]; k++) {
+			for (size_t k = 0; k < 14 && rros_desktop_presets[i].keys[k][0]; k++) {
 				const struct rros_key *key = rros_schema_find(rros_desktop_presets[i].keys[k][0]);
 				char err[200];
 
@@ -475,21 +299,17 @@ int main(void)
 					CHECK(rros_schema_check(key, rros_desktop_presets[i].keys[k][1],
 								key->type == RROS_T_STR || key->type == RROS_T_ENUM, err, sizeof err) == 0);
 			}
-		from_text(&t, "[ui]\npanel_position = \"bottom\"\npanel_size = 40\nlayout = \"floating\"\ndock = false\n"
-			      "[panel]\nstyle = \"flat\"\nleft = \"apps,taskbar\"\ncenter = \"none\"\n"
-			      "right = \"updates,tray,network,audio,battery,clock,power\"\ntaskbar = true\n");
+		from_text(&t, "[ui]\npanel_position = \"bottom\"\npanel_size = 44\ndock = false\nglobal_menu = false\n"
+			      "panel_autohide = false\n[panel]\nstyle = \"flat\"\ntaskbar = true\n");
 		CHECK(rros_desktop_current(&cur) == d);
 		from_text(&t, "[ui]\npanel_position = \"top\"\n");
 		CHECK(rros_desktop_current(&cur) == NULL);
 	}
-	rros_conf_free(&cur);
 
-	/* ---- KDE Plasma: colores, teclado y barras de título con los colores del tema ---- */
+	/* ---- KDE Plasma: colores y barras de título con los colores del tema ---- */
 	{
 		struct rros_palette pal;
 		char dir[] = "/tmp/rros-aurorae-XXXXXX", path[200], *svg;
-		FILE *fp;
-		long len;
 
 		from_text(&t, "");
 		s = render(rros_render_kde_colors, &t);
@@ -497,31 +317,20 @@ int main(void)
 		CHECK(strstr(s, "[Colors:Selection]\nBackgroundNormal=124,92,255\n") != NULL);  /* el acento */
 		CHECK(strstr(s, "[WM]\nactiveBackground=20,28,56\n") != NULL);
 		free(s);
-		s = render(rros_render_kxkbrc, &t);
-		CHECK(strstr(s, "[Layout]\nLayoutList=es\nUse=true\n") != NULL);
-		free(s);
 		rros_theme_palette(&t, &pal);
 		CHECK(mkdtemp(dir) != NULL);
 		snprintf(path, sizeof path, "%s/RROS", dir);
 		CHECK(rros_write_aurorae(path, &t, &pal) == 0);
 		snprintf(path, sizeof path, "%s/RROS/decoration.svg", dir);
-		fp = fopen(path, "r");
-		CHECK(fp != NULL);
-		if (fp) {
-			fseek(fp, 0, SEEK_END);
-			len = ftell(fp);
-			rewind(fp);
-			svg = calloc(1, (size_t)len + 1);
-			CHECK(svg && fread(svg, 1, (size_t)len, fp) == (size_t)len);
-			fclose(fp);
-			CHECK(svg && strstr(svg, "id=\"decoration-topleft\"") && strstr(svg, "id=\"decoration-inactive-bottomright\"") &&
-			      strstr(svg, "fill=\"#141c38\""));
-			free(svg);
-		}
+		svg = slurp(path);
+		CHECK(svg && strstr(svg, "id=\"decoration-topleft\"") && strstr(svg, "id=\"decoration-inactive-bottomright\"") &&
+		      strstr(svg, "fill=\"#141c38\""));
+		free(svg);
 		snprintf(path, sizeof path, "%s/RROS/close.svg", dir);
 		CHECK(access(path, R_OK) == 0);
 		snprintf(path, sizeof path, "rm -rf '%s'", dir);
 		CHECK(system(path) == 0);
 	}
+	rros_conf_free(&cur);
 	DONE();
 }

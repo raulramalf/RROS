@@ -1,9 +1,9 @@
-# Perfil Standard: equipos de 4 GB de RAM, gama media.
+# Perfil Standard: equipos con 4-8 GB de RAM y 4 hilos. Animaciones rápidas, sin desenfoque, dock plano.
 [profile]
 name = "standard"
-min_ram_mb = 3072
+min_ram_mb = 4096
 max_idle_ram_mb = 2048
-max_disk_gb = 12
+max_disk_gb = 14
 
 [build]
 libc = "glibc"
@@ -15,37 +15,42 @@ theme = "aurora"
 color_scheme = "dark"
 font = "Inter"
 font_mono = "JetBrains Mono"
-gap = 8
-border_width = 2
-panel_position = "top"
-panel_size = 30
-compositor = "hyprland"
+font_size = 10
+scale = 100
 wallpaper_style = "aurora"
-animation_style = "suave"
-border_gradient = true
-blur_strength = 6
-dock = true
 effects = "basic"
 animations = true
-animation_speed = 100
-blur = true
+animation_speed = 125
+animation_style = "suave"
+blur = false
+blur_strength = 6
 shadows = true
-transparency = 10
-scale = 100
-font_size = 11
-corner_radius = 8
-layout = "floating"
-workspaces = 4
-tiling_layout = "dwindle"
+transparency = 0
 dim_inactive = false
+corner_radius = 10
+workspaces = 2
+hot_corners = true
+# estilo «moderno» (rros theme escritorio): barra fina arriba y dock abajo, como en macOS
+panel_position = "top"
+panel_size = 28
+dock = true
+dock_style = "2d"
+dock_icon_size = 48
+dock_position = "bottom"
+dock_hiding = "dodge"
+dock_launchpad = true
+window_buttons = "left"
+global_menu = true
 
 [panel]
-# estilo «moderno»: barra fina arriba y dock abajo, como en macOS (rros theme escritorio)
-style = "floating"
-left = "apps,workspaces"
-center = "clock"
-right = "updates,tray,network,audio,battery,power"
+style = "flat"
 taskbar = false
+
+[audio]
+sound_theme = "ocean"
+volume_step = 5
+volume_feedback = true
+max_volume = 100
 
 [input]
 gestures = true

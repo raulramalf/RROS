@@ -18,31 +18,22 @@ Rectangle {
         id: logo
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -30
-        source: "images/rros.svg"
-        sourceSize.width: 112
-        sourceSize.height: 112
+        source: "images/rros.png"
+        width: 128; height: 128
+        smooth: true; mipmap: true
         opacity: 0
         Component.onCompleted: opacity = 1
         Behavior on opacity { NumberAnimation { duration: 400 } }
     }
-    Text {
-        anchors { top: logo.bottom; topMargin: 22; horizontalCenter: parent.horizontalCenter }
-        text: "RROS"
-        color: "#e6ecff"
-        font.family: "Inter"
-        font.pixelSize: 26
-        font.weight: Font.Black
-        font.letterSpacing: 4
-    }
     Rectangle {
         id: track
-        anchors { top: logo.bottom; topMargin: 76; horizontalCenter: parent.horizontalCenter }
+        anchors { top: logo.bottom; topMargin: 40; horizontalCenter: parent.horizontalCenter }
         width: 180; height: 4; radius: 2
         color: "#26305a"
         Rectangle {
             width: parent.width * Math.min(1, root.stage / 6)
             height: parent.height; radius: 2
-            color: "#7c5cff"
+            color: "#e9d3b4"
             Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         }
     }

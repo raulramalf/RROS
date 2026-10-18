@@ -45,7 +45,7 @@ Item {
         BarButton {
             id: logo
             onClicked: Ux.toggle("menu", bar.anchorX(logo), bar.menuY())
-            Image { anchors.centerIn: parent; source: "qrc:/icons/app-rros.svg"; sourceSize: Qt.size(36, 36); width: 18; height: 18 }
+            Image { anchors.centerIn: parent; source: "qrc:/icons/app-rros-mono.svg"; sourceSize: Qt.size(44, 44); width: 22; height: 22 }
         }
         // ---- la aplicación activa (en negrita, como el nombre de la app en macOS) ----
         Txt {

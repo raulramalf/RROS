@@ -169,7 +169,7 @@ Rectangle {
     Row {
         anchors { bottom: parent.bottom; left: parent.left; margins: 24 }
         spacing: 10
-        Image { source: "rros.svg"; sourceSize.width: 30; sourceSize.height: 30 }
+        Image { source: "rros.png"; width: 30; height: 30; smooth: true; mipmap: true }
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: "RROS"

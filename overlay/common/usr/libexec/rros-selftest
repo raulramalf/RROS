@@ -51,7 +51,9 @@ for desk in $desks; do
 	check "lanzador: $desk.desktop" test -e "/usr/share/applications/$desk.desktop"
 done
 # lo propio de RROS: iconos, tema de escritorio 2D y 3D, menú RROS, carga, inicio de sesión y arranque
-for icon in rros rros-symbolic rros-settings rros-apps rros-install rros-welcome rros-launchpad rros-updates; do
+check "logotipo de RROS (PNG)" test -s /usr/share/icons/hicolor/256x256/apps/rros.png
+check "logotipo de RROS para la barra" test -s /usr/share/icons/hicolor/scalable/apps/rros-symbolic.svg
+for icon in rros-settings rros-apps rros-install rros-welcome rros-launchpad rros-updates; do
 	check "icono propio: $icon" test -s "/usr/share/icons/hicolor/scalable/apps/$icon.svg"
 done
 check "tema de escritorio RROS (2D)" test -s /usr/share/plasma/desktoptheme/rros/widgets/panel-background.svg

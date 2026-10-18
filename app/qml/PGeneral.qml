@@ -55,7 +55,7 @@ RPage {
         RowLayout {
             anchors { fill: parent; margins: 24 }
             spacing: 22
-            Image { source: "qrc:/icons/app-rros.svg"; sourceSize: Qt.size(96, 96) }
+            Image { source: "qrc:/icons/app-rros.png"; sourceSize: Qt.size(96, 96) }
             ColumnLayout {
                 spacing: 4
                 Txt { text: "RROS"; color: "#ffffff"; font.pixelSize: 30; font.weight: Font.Black }

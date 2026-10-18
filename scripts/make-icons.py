@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Iconos propios de RROS (SVG): el logotipo, las aplicaciones del sistema y las secciones de RROS Ajustes.
+"""Iconos propios de RROS (SVG): las aplicaciones del sistema y las secciones de RROS Ajustes.
+El logotipo (rros, rros-symbolic y app-rros) sale de docs/brand/rros-logo.svg con make-logo.py.
 
 Todas siguen el mismo dibujo: un cuadrado redondeado con un degradado, un brillo arriba y el símbolo en blanco.
 Las aplicaciones que no son de RROS (Firefox, Dolphin...) usan su propio logotipo: aquí no se dibujan.
@@ -27,12 +28,6 @@ def gear(cx=50, cy=50, r1=27, r2=20, teeth=8, hole=9):
     return f'<path fill-rule="evenodd" {W} d="M{" L".join(pts)}Z {ring}"/>'
 
 
-def rros_mark(color="#fff", extra=""):
-    # una «R» geométrica con la pata en curva, como una aurora
-    return (f'<path fill="{color}" {extra} d="M30 76V24h21c11 0 18 6.4 18 15.6 0 7-3.8 12-10.2 14.2L71 76H59.6L49.4 '
-            f'55.4H40.2V76z M40.2 46.8h10.2c5.1 0 8.1-2.6 8.1-6.9s-3-6.9-8.1-6.9H40.2z"/>')
-
-
 GLYPHS = {
     # --- aplicaciones de RROS ---
     "ajustes": gear(),
@@ -54,7 +49,6 @@ GLYPHS = {
                   f'<path {W} d="M67 78V63H52z"/>',
     "monitor": f'<rect x="22" y="26" width="56" height="38" rx="6" {S}/><path {S} d="M40 76h20M50 64v12"/>',
     "generica": f'<rect x="28" y="28" width="44" height="44" rx="10" {S}/>',
-    "rros": rros_mark(),
     # --- secciones de Ajustes ---
     "general": f'<circle cx="50" cy="30" r="5.5" fill="#fff"/><path {S} d="M50 44v30"/>',
     "apariencia": f'<path {W} d="M50 22a28 28 0 1 0 0 56c4 0 6-2.6 6-5.6 0-4.6-4-6-4-10 0-3.4 2.6-5.4 6-5.4h6c8 0 14-5 14-13C78 31 66 22 50 22z"/>'
@@ -85,7 +79,7 @@ COLORS = {
     "ajustes": ("#4c5675", "#1d2236"), "tienda": ("#8b6dff", "#4f7dff"), "instalar": ("#2fd6f0", "#3b6cf6"),
     "bienvenida": ("#ff7ab6", "#7c5cff"), "launchpad": ("#3b4256", "#141824"), "seguridad": ("#3ee0a4", "#0b8f63"),
     "dispositivos": ("#ffc53d", "#f9731a"), "nuevo": ("#6db1ff", "#2b67e8"), "actualizar": ("#5ee2a0", "#139a74"),
-    "monitor": ("#9aa4ff", "#5b4de0"), "generica": ("#9aa3b5", "#5d6578"), "rros": ("#7c5cff", "#16c6e6"),
+    "monitor": ("#9aa4ff", "#5b4de0"), "generica": ("#9aa3b5", "#5d6578"), 
     "general": ("#a1a7b6", "#636a7c"), "apariencia": ("#c17bff", "#7c3aed"), "escritorio": ("#4da3ff", "#1d5fe0"),
     "red": ("#3b9bff", "#0a5fe0"), "bluetooth": ("#4b8dff", "#1f4fd8"), "sonido": ("#ff6584", "#e11d48"),
     "pantalla": ("#7d7bff", "#4338ca"), "energia": ("#4be08a", "#15a34a"), "raton": ("#a3a9b8", "#5e6577"),
@@ -115,18 +109,8 @@ def squircle(name, glyph, shadow=True):
 '''
 
 
-def symbolic_mark():
-    # el logotipo para la barra superior: una sola tinta que Plasma pinta del color del texto
-    return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="16" height="16">
-  <style id="current-color-scheme">.ColorScheme-Text { color:#e6ecff; }</style>
-  <path class="ColorScheme-Text" fill="currentColor" fill-rule="evenodd" d="M24 4h52a20 20 0 0 1 20 20v52a20 20 0 0 1-20 20H24A20 20 0 0 1 4 76V24A20 20 0 0 1 24 4z
-     M30 76h10.2V55.4h9.2L59.6 76H71L58.8 53.8C65.2 51.6 69 46.6 69 39.6 69 30.4 62 24 51 24H30z M40.2 46.8V33h10.2c5.1 0 8.1 2.6 8.1 6.9s-3 6.9-8.1 6.9z"/>
-</svg>
-'''
-
-
 APPS = {  # nombre del icono en el sistema -> dibujo
-    "rros": "rros", "rros-settings": "ajustes", "rros-apps": "tienda", "rros-install": "instalar",
+    "rros-settings": "ajustes", "rros-apps": "tienda", "rros-install": "instalar",
     "rros-welcome": "bienvenida", "rros-launchpad": "launchpad", "rros-security": "seguridad",
     "rros-devices": "dispositivos", "rros-new": "nuevo", "rros-updates": "actualizar",
 }
@@ -138,8 +122,6 @@ def main():
     for icon, g in APPS.items():
         with open(os.path.join(HICOLOR, icon + ".svg"), "w") as f:
             f.write(squircle(g, GLYPHS[g]))
-    with open(os.path.join(HICOLOR, "rros-symbolic.svg"), "w") as f:
-        f.write(symbolic_mark())
     for g in GLYPHS:
         with open(os.path.join(APPICONS, ("app-" if g in APPS.values() else "sec-") + g + ".svg"), "w") as f:
             f.write(squircle(g, GLYPHS[g], shadow=g in APPS.values()))

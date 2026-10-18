@@ -76,8 +76,8 @@ overlay/        lo que se añade al sistema: common y arch (tema de escritorio, 
 profiles/       lite.toml, standard.toml, pro.toml
 packages/       paquetes de Arch por edición
 apps/           catálogo de la Tienda (pacman y Flathub)
-scripts/        ISO (archiso), QEMU, iconos y tema de escritorio (make-icons.py, make-desktoptheme.py)
+scripts/        ISO (archiso), QEMU, logotipo, iconos y tema de escritorio (make-logo.py, make-icons.py, make-desktoptheme.py)
 site/           demostración en el navegador
 tests/          unitarios en C, integración (cli.sh) y TUI
-docs/           consola, personalización, seguridad, ediciones, construir, probar en un PC
+docs/           logotipo (brand/), consola, personalización, seguridad, ediciones, construir, probar en un PC
 ```

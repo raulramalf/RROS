@@ -37,7 +37,7 @@ Rectangle {
                 visible: w.step === 0
                 spacing: 14
                 Image {
-                    source: "qrc:/icons/app-rros.svg"; sourceSize: Qt.size(132, 132); Layout.alignment: Qt.AlignHCenter
+                    source: "qrc:/icons/app-rros.png"; sourceSize: Qt.size(132, 132); Layout.alignment: Qt.AlignHCenter
                     NumberAnimation on scale { from: 0.85; to: 1; duration: 600; easing.type: Easing.OutBack; running: w.step === 0 }
                 }
                 Txt { text: "Bienvenido a RROS"; font.pixelSize: 34; font.weight: Font.Black; Layout.alignment: Qt.AlignHCenter }

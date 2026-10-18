@@ -89,7 +89,7 @@ ApplicationWindow {
                 RowLayout {
                     spacing: 10
                     Layout.leftMargin: 6
-                    Image { source: "qrc:/icons/app-rros.svg"; sourceSize: Qt.size(30, 30) }
+                    Image { source: "qrc:/icons/app-rros.png"; sourceSize: Qt.size(30, 30) }
                     ColumnLayout {
                         spacing: 0
                         Txt { text: "RROS Ajustes"; font.weight: Font.Bold; font.pixelSize: 15 }

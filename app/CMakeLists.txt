@@ -8,7 +8,7 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 DBus)
 
-file(GLOB UI_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} qml/*.qml qml/qmldir icons/*.svg)
+file(GLOB UI_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} qml/*.qml qml/qmldir icons/*.svg icons/*.png)
 add_executable(rros-ajustes main.cpp backend.cpp backend.h)
 qt_add_resources(rros-ajustes ui PREFIX "/" FILES ${UI_FILES})
 target_compile_options(rros-ajustes PRIVATE -Wall -Wextra)

@@ -17,15 +17,6 @@ terminal-height: "80%"
 	file = "logo.png"
 }
 
-+ label {
-	left = 0
-	top = 16%+108
-	width = 100%
-	align = "center"
-	text = "RROS"
-	color = "#e6ecff"
-	font = "Unifont Regular 16"
-}
 
 + boot_menu {
 	left = 32%

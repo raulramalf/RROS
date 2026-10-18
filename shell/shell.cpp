@@ -312,7 +312,8 @@ QPixmap IconProvider::requestPixmap(const QString &id, QSize *size, const QSize 
 							  { QStringLiteral("rros-install"), QStringLiteral("app-instalar") },
 							  { QStringLiteral("rros-welcome"), QStringLiteral("app-bienvenida") },
 							  { QStringLiteral("rros-updates"), QStringLiteral("app-actualizar") } };
-		const QString f = QStringLiteral(":/icons/") + own.value(id, QStringLiteral("sec-generica")) + QStringLiteral(".svg");
+		const QString n = own.value(id, QStringLiteral("sec-generica"));
+		const QString f = QStringLiteral(":/icons/") + n + (n == QLatin1String("app-rros") ? QStringLiteral(".png") : QStringLiteral(".svg"));
 		icon = QIcon(f);
 	}
 	if (size)

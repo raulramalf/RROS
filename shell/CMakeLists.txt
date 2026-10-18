@@ -21,7 +21,7 @@ find_package(KF6WindowSystem ${KDE_DEP})
 find_package(KF6GlobalAccel ${KDE_DEP})
 
 file(GLOB UI_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} qml/*.qml qml/qmldir)
-file(GLOB ICON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ../app/icons/*.svg)
+file(GLOB ICON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ../app/icons/*.svg ../app/icons/*.png)
 add_executable(rros-shell main.cpp shell.cpp shell.h apps.cpp apps.h notifications.cpp notifications.h)
 qt_add_resources(rros-shell ui PREFIX "/" FILES ${UI_FILES})
 foreach(icon ${ICON_FILES})

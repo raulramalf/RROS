@@ -201,6 +201,17 @@ static int in_plasma(void)
 	return desk && strstr(desk, "KDE") && !getenv("RROS_PLASMA_TEST");
 }
 
+/* RROS Shell (barra, dock, Launchpad...) en lugar de plasmashell: lee la configuración y el fondo por su cuenta.
+ * RROS_SHELL=0|1 lo fuerza (pruebas). */
+static int rros_shell(void)
+{
+	const char *e = getenv("RROS_SHELL");
+
+	if (e)
+		return !strcmp(e, "1");
+	return access("/usr/bin/rros-shell", X_OK) == 0;
+}
+
 /* lanza un programa sin shell y espera; con out, guarda su salida (hasta n bytes). Devuelve el código de salida. */
 static int run(char *const argv[], char *out, size_t n)
 {
@@ -291,6 +302,11 @@ static void plasma_layout(const struct rros_theme *t, const struct rros_palette 
 	FILE *f = fmemopen(script, sizeof script, "w");
 	char *argv[] = { "qdbus6", "org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell.evaluateScript", script, NULL };
 
+	if (rros_shell()) {
+		if (f)
+			fclose(f);
+		return;
+	}
 	if (!f)
 		return;
 	rros_render_plasma_layout(t, p, c, f);
@@ -369,8 +385,16 @@ static void plasma_reload(const struct rros_theme *t, const char *old_theme, con
 	char *kbd[] = { "dbus-send", "--session", "--type=signal", "/Layouts", "org.kde.keyboard.reloadConfig", NULL };
 	char *lock[] = { "qdbus6", "org.kde.screensaver", "/ScreenSaver", "configure", NULL };
 	char *pw[] = { "qdbus6", "org.kde.Solid.PowerManagement", "/org/kde/Solid/PowerManagement", "reparseConfiguration", NULL };
+	char *shell[] = { "qdbus6", "org.rros.Shell", "/Shell", "org.rros.Shell.reload", NULL };
 	char wpfile[1100], prev[400];
 
+	snprintf(wpfile, sizeof wpfile, "%s/wallpaper", st);
+	/* RROS Shell vigila este archivo: el fondo cambia en cuanto se escribe */
+	if (rros_shell() && wallpaper[0]) {
+		read_file(wpfile, prev, sizeof prev);
+		if (strcmp(prev, wallpaper))
+			write_text(wpfile, wallpaper);
+	}
 	if (!in_plasma())
 		return;
 	run(kwin, NULL, 0);
@@ -383,8 +407,11 @@ static void plasma_reload(const struct rros_theme *t, const char *old_theme, con
 
 		run(dt, NULL, 0);
 	}
+	if (rros_shell()) {
+		run(shell, NULL, 0);
+		return;
+	}
 	/* el fondo, solo si es otro */
-	snprintf(wpfile, sizeof wpfile, "%s/wallpaper", st);
 	read_file(wpfile, prev, sizeof prev);
 	if (wallpaper[0] && strcmp(prev, wallpaper)) {
 		char *wp[] = { "plasma-apply-wallpaperimage", (char *)wallpaper, NULL };

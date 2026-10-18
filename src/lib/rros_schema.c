@@ -58,6 +58,7 @@ const struct rros_key rros_schema[] = {
 	I("ui.dock_icon_size", 32, 96, "Tamaño de los iconos del dock (px)"),
 	E("ui.dock_position", "bottom|left|right", "Posición del dock"),
 	E("ui.dock_hiding", "never|dodge|auto", "Dock: siempre visible, se aparta de las ventanas o se oculta solo"),
+	S("ui.dock_apps", "Dock: aplicaciones fijadas, en orden (ids de .desktop separados por comas)"),
 	B("ui.dock_launchpad", "Botón Launchpad (todas las aplicaciones en pantalla completa) en el dock"),
 	E("ui.window_buttons", "left|right", "Botones de las ventanas (cerrar, minimizar, maximizar) a la izquierda o a la derecha"),
 	B("ui.global_menu", "Menú de la aplicación en la barra superior, como en macOS"),

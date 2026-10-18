@@ -35,6 +35,7 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.dock_icon_size` | entero | 32 – 96 | Tamaño de los iconos del dock (px) |
 | `ui.dock_position` | opción | bottom|left|right | Posición del dock |
 | `ui.dock_hiding` | opción | never|dodge|auto | Dock: siempre visible, se aparta de las ventanas o se oculta solo |
+| `ui.dock_apps` | texto |  | Dock: aplicaciones fijadas, en orden (ids de .desktop separados por comas) |
 | `ui.dock_launchpad` | booleano | true / false | Botón Launchpad (todas las aplicaciones en pantalla completa) en el dock |
 | `ui.window_buttons` | opción | left|right | Botones de las ventanas (cerrar, minimizar, maximizar) a la izquierda o a la derecha |
 | `ui.global_menu` | booleano | true / false | Menú de la aplicación en la barra superior, como en macOS |

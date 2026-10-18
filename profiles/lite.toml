@@ -39,6 +39,7 @@ dock_icon_size = 44
 dock_position = "bottom"
 dock_hiding = "dodge"
 dock_launchpad = true
+dock_apps = "org.kde.dolphin,firefox,rros-apps,org.kde.konsole,org.kde.kate,rros-settings"
 window_buttons = "left"
 global_menu = true
 

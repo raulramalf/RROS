@@ -27,6 +27,14 @@ app:
 	cmake -S app -B build/app -DCMAKE_BUILD_TYPE=Release >/dev/null
 	cmake --build build/app -j$$(nproc)
 
+# RROS Shell (Qt 6 Quick): el escritorio (barra, dock, Launchpad, centro de control, avisos). SHELL_FULL=ON exige
+# LayerShellQt, KWindowSystem y KGlobalAccel (la ISO); sin ellas solo sirve el modo --demo
+SHELL_BIN := build/shell/rros-shell
+SHELL_FULL ?= OFF
+shell:
+	cmake -S shell -B build/shell -DCMAKE_BUILD_TYPE=Release -DRROS_SHELL_FULL=$(SHELL_FULL) >/dev/null
+	cmake --build build/shell -j$$(nproc)
+
 build/rros-hwdetect: src/hwdetect/main.c $(LIB_SRC)
 build/rros-config: src/config/main.c $(LIB_SRC)
 build/rros-budget: src/budget/main.c $(LIB_SRC)
@@ -62,6 +70,7 @@ install: $(BINS)
 	install -d $(DESTDIR)$(PREFIX)/share/rros/apps
 	install -m 644 apps/catalog.toml $(DESTDIR)$(PREFIX)/share/rros/apps/catalog.toml
 	if [ -x $(APP) ]; then install -m 755 $(APP) $(DESTDIR)$(PREFIX)/bin/; fi
+	if [ -x $(SHELL_BIN) ]; then install -m 755 $(SHELL_BIN) $(DESTDIR)$(PREFIX)/bin/; fi
 	install -m 644 dist/systemd/*.service $(DESTDIR)$(PREFIX)/lib/systemd/system/
 	install -d $(DESTDIR)$(PREFIX)/share/rros/templates
 	cp -R templates/. $(DESTDIR)$(PREFIX)/share/rros/templates/
@@ -72,4 +81,4 @@ docs-schema: build/rros-config
 clean:
 	rm -rf build
 
-.PHONY: all app test install docs-schema clean
+.PHONY: all app shell test install docs-schema clean

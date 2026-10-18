@@ -21,12 +21,12 @@ jobs:
     container: archlinux:latest
     steps:
       - name: Paquetes de compilación
-        run: pacman -Syu --noconfirm --needed base-devel git python cmake qt6-base qt6-declarative
+        run: pacman -Syu --noconfirm --needed base-devel git python cmake qt6-base qt6-declarative qt6-svg qt6-wayland extra-cmake-modules layer-shell-qt kwindowsystem kglobalaccel
       - uses: actions/checkout@v4
       - name: Los paquetes de las listas existen en Arch
         run: scripts/check-packages-arch.sh
       - name: Compilar y pruebas
-        run: make WERROR=1 && make test WERROR=1 && make app
+        run: make WERROR=1 && make test WERROR=1 && make app && make shell SHELL_FULL=ON
 
   iso:
     needs: comprobar
@@ -39,9 +39,10 @@ jobs:
       - name: ISO con archiso (contenedor Arch)
         run: |
           docker run --rm --privileged -v "$PWD:/rros" -w /rros -e PROFILE archlinux:latest bash -ec '
-            pacman -Syu --noconfirm --needed archiso base-devel git python cmake qt6-base qt6-declarative
+            pacman -Syu --noconfirm --needed archiso base-devel git python cmake qt6-base qt6-declarative qt6-svg qt6-wayland extra-cmake-modules layer-shell-qt kwindowsystem kglobalaccel
             make WERROR=1
             make app
+            make shell SHELL_FULL=ON
             scripts/build-iso-arch.sh "$PROFILE"'
           sudo chown -R "$(id -u):$(id -g)" build
       - name: Autotest de arranque en QEMU

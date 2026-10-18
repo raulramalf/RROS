@@ -1,6 +1,6 @@
 # RROS 1.0 «Boreal»
 
-Sistema operativo ligero, en español y con diseño propio, sobre **Arch Linux** y **KDE Plasma** (Wayland). Se parece a macOS en lo que importa: barra fina arriba con el **menú RROS**, el menú de la aplicación y el reloj, y un **dock en 2D o en 3D** con el Launchpad. Lo demás es suyo: la aplicación **RROS Ajustes** (nativa, sin navegador), la Tienda, la bienvenida, el instalador, los iconos de sus aplicaciones, la pantalla de carga, el inicio de sesión y el menú de arranque. Los componentes propios están escritos en **C** y la aplicación de ajustes en **Qt/QML**.
+Sistema operativo ligero, en español y con diseño propio, sobre **Arch Linux** (Wayland). El escritorio es **RROS Shell**, escrito desde cero en Qt Quick: barra fina arriba con el **menú RROS**, la aplicación activa, el estado y el reloj; un **dock en 2D o en 3D** con lupa al pasar el ratón; **Launchpad**, **centro de control**, avisos y fondo. De KDE Plasma solo queda por debajo KWin, que gestiona las ventanas; no se ve nada de Plasma. Los ajustes se hacen en **RROS Ajustes**, una aplicación del sistema (sin navegador), que trae también la Tienda, la bienvenida y el instalador. Los componentes propios están escritos en **C** y en **Qt/QML**.
 
 ## Ediciones: elige la de tu equipo
 
@@ -31,6 +31,7 @@ La carpeta [`site/`](site/) es una web estática (se publica en Vercel tal cual:
 
 ## Qué trae
 
+- **RROS Shell** (`shell/`), el escritorio: barra superior (menú RROS, aplicación activa, Wi-Fi, sonido, batería, centro de control y reloj con calendario), dock 2D o 3D con lupa, rebote al abrir, puntos de las apps abiertas, apps fijadas (`ui.dock_apps`) y papelera; Launchpad a pantalla completa con buscador (también con la tecla Windows/Cmd); centro de control (Wi-Fi, Bluetooth, modo oscuro, no molestar, luz nocturna, captura, brillo y volumen); avisos de las aplicaciones y del volumen y el brillo. Cada pieza va en su capa de Wayland sobre KWin.
 - **RROS Ajustes**, una aplicación nativa (Qt Quick) con barra lateral, como las preferencias de macOS: General (este equipo y las ediciones), Apariencia, Escritorio y Dock, Red e Internet (Wi-Fi, redes ocultas, IP manual, DNS, MTU, MAC aleatoria, datos limitados, VPN, punto de acceso, proxy), Bluetooth, Sonido (salida y entrada, volumen, balance, conector, perfil de la tarjeta y volumen de cada aplicación), Pantallas (resolución, frecuencia, escala, giro, brillo, luz nocturna), Ratón y panel táctil (cada aparato), Teclado y atajos (y reglas de ventanas y programas de inicio), Batería y energía, Dispositivos, Fecha e idioma, Accesibilidad, Seguridad y privacidad, **Tienda**, Actualizaciones, Avanzado (los más de 130 ajustes uno a uno, copias y restablecer) e **Instalar RROS**.
 - **Diseño propio**: tema de escritorio RROS en 2D (plano y translúcido) o 3D (brillo, bisel y canto, como un estante de cristal), barras de título con los botones de semáforo, menú RROS, iconos SVG propios para las aplicaciones de RROS (las demás llevan su logotipo de siempre), pantalla de carga, inicio de sesión y menú de arranque de RROS, y fondos generados con los colores de tu tema.
 - **Tres estilos de escritorio**: Moderno (el de RROS), Clásico (barra de tareas abajo, como Windows) y Enfoque (dock escondido, escritorio limpio).
@@ -44,6 +45,7 @@ La carpeta [`site/`](site/) es una web estática (se publica en Vercel tal cual:
 |---|---|
 | Herramientas en C (`rros-config`, `rros-theme`, `rros-apply`, `rros-apps`, `rros-security`, `rros-devices`, `rros-installer`, `rros-settings`…) | ✅ con pruebas automáticas (ASan + UBSan) |
 | `rros-theme` para Plasma: barra y dock, efectos, entrada, energía, sonido, terminal, atajos, reglas e inicio; mezcla sus claves con las de KDE sin borrar las del usuario | ✅ probado |
+| RROS Shell (Qt/QML) | ✅ compila; barra, dock 2D/3D, Launchpad, centro de control, calendario y avisos revisados con capturas (`rros-shell --demo`); en la sesión real, ver la CI |
 | RROS Ajustes (Qt/QML) | ✅ compila en la CI de Arch; todas las páginas abren sin errores (probado con Qt 6.4); red, sonido, Bluetooth y pantallas necesitan el sistema real |
 | Tema 2D/3D, menú RROS, carga, inicio de sesión (SDDM), GRUB | ✅ tema y SDDM revisados con capturas fuera de Plasma; en el sistema, ver la CI |
 | ISO Lite: arranque, autotest, instalación BIOS, UEFI y cifrada | ver la última ejecución del workflow **Arch** |
@@ -54,6 +56,8 @@ La carpeta [`site/`](site/) es una web estática (se publica en Vercel tal cual:
 ```
 make                 # herramientas en C (build/)
 make app             # RROS Ajustes (necesita cmake, qt6-base y qt6-declarative)
+make shell           # RROS Shell (SHELL_FULL=ON exige layer-shell-qt, kwindowsystem y kglobalaccel)
+build/shell/rros-shell --demo        # el escritorio en una ventana, para probarlo
 make test            # pruebas unitarias e integración
 rros config set ui.dock_style 3d     # el dock en 3D
 rros theme escritorio clasico        # estilo clásico
@@ -67,6 +71,7 @@ Sin instalar, desde el repositorio: `build/rros-config ...` con `RROS_PROFILE_DI
 ```
 src/            herramientas en C: lib (configuración, esquema, hardware), theme (Plasma), settings (API y TUI)...
 app/            RROS Ajustes: aplicación Qt Quick (main.cpp, backend.cpp, qml/, icons/)
+shell/          RROS Shell: el escritorio (barra, dock, Launchpad, centro de control, avisos, fondo)
 overlay/        lo que se añade al sistema: common y arch (tema de escritorio, menú RROS, SDDM, GRUB, iconos)
 profiles/       lite.toml, standard.toml, pro.toml
 packages/       paquetes de Arch por edición

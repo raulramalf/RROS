@@ -83,7 +83,10 @@ appmenu-gtk-module      # menú global también para las aplicaciones GTK
 ffmpegthumbs
 kdegraphics-thumbnailers
 phonon-qt6-vlc
-qt6-svg                 # RROS Ajustes: iconos SVG
+qt6-svg                 # RROS Ajustes y RROS Shell: iconos SVG
+layer-shell-qt          # RROS Shell: barra, dock y avisos en sus capas de Wayland
+kwindowsystem
+kglobalaccel
 qt6-wayland
 qt5-wayland
 

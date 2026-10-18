@@ -39,7 +39,7 @@ check "nombre de equipo: $host" sh -c "case '$host' in rros*) true ;; *) false ;
 check "kernel $(uname -r)" test -n "$(uname -r)"
 
 BASE=arch
-apps="plasmashell kwin_wayland sddm firefox dolphin konsole kate okular gwenview ark kcalc spectacle"
+apps="rros-shell kwin_wayland sddm firefox dolphin konsole kate okular gwenview ark kcalc spectacle"
 desks="firefox org.kde.dolphin org.kde.konsole org.kde.kate org.kde.okular org.kde.gwenview org.kde.ark org.kde.kcalc mpv
        rros-settings rros-apps rros-welcome rros-updates"
 for app in $apps mpv btop flatpak rros rros-config rros-theme rros-apps rros-settings rros-ajustes rros-apply rros-security \
@@ -99,10 +99,18 @@ if [ "$BASE" = arch ]; then
 	if [ "$LIVE" -eq 1 ]; then
 		check "live: inicio automático en Plasma" grep -qs '^User=rros' /etc/sddm.conf.d/20-rros-live.conf
 		i=0
-		while ! pgrep -u rros -x plasmashell >/dev/null 2>&1 && [ "$i" -lt 150 ]; do sleep 2; i=$((i + 2)); done
-		check "sesión de Plasma arrancada (plasmashell, ${i} s)" pgrep -u rros -x plasmashell
+		while ! pgrep -u rros -x rros-shell >/dev/null 2>&1 && [ "$i" -lt 150 ]; do sleep 2; i=$((i + 2)); done
+		check "escritorio de RROS arrancado (RROS Shell, ${i} s)" pgrep -u rros -x rros-shell
 		check "KWin en marcha (compositor Wayland)" pgrep -u rros -x kwin_wayland
-		if ! pgrep -u rros -x plasmashell >/dev/null 2>&1; then   # para saber por qué: sesión y registro de SDDM
+		check "plasmashell no se usa" sh -c '! pgrep -u rros -x plasmashell'
+		bus="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u rros)/bus"
+		sleep 4
+		owners=$(su rros -c "$bus qdbus6" 2>/dev/null)
+		check "RROS Shell en el bus de la sesión (org.rros.Shell)" sh -c "echo '$owners' | grep -qx ' *org.rros.Shell'"
+		check "avisos de las aplicaciones en RROS Shell" sh -c "su rros -c '$bus qdbus6 org.freedesktop.Notifications /org/freedesktop/Notifications org.freedesktop.Notifications.GetServerInformation' | grep -q 'RROS'"
+		# lo que dijo el shell (errores de QML, avisos de Wayland), para el registro de la CI
+		journalctl -b _UID="$(id -u rros)" --no-pager 2>/dev/null | grep -E 'rros-shell' | grep -iE 'qml|warn|error|wayland|layer' | tail -n 25 | sed 's/^/diag: /'
+		if ! pgrep -u rros -x rros-shell >/dev/null 2>&1; then   # para saber por qué: sesión y registro de SDDM
 			{
 				echo "--- sesiones ---"; loginctl list-sessions --no-legend 2>&1 | head -5
 				for sid in $(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}'); do
@@ -113,19 +121,12 @@ if [ "$BASE" = arch ]; then
 				journalctl -b _UID="$(id -u rros)" --no-pager 2>&1 | grep -iE 'plasma|kwin|error|fail' | tail -n 30
 			} | sed 's/^/diag: /'   # test-iso.sh muestra estas líneas
 		fi
-		i=0
-		while ! grep -qs icontasks ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
-		check "Plasma usó la distribución de RROS (barra arriba y dock)" grep -qs 'org.kde.plasma.icontasks' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
-		check "menú RROS en la barra de arriba" grep -qs 'org.rros.menu' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
-		check "menú global en la barra de arriba" grep -qs 'org.kde.plasma.appmenu' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
-		check "Launchpad en el dock" grep -qs 'org.kde.plasma.kickerdash' ~rros/.config/plasma-org.kde.plasma.desktop-appletsrc
 		# shellcheck disable=SC2016  # lo expande el sh de dentro
 		check "bienvenida abierta (RROS Ajustes)" sh -c 'i=0; while ! pgrep -u rros -x rros-ajustes >/dev/null && [ $i -lt 30 ]; do sleep 1; i=$((i+1)); done; pgrep -u rros -x rros-ajustes'
 		i=0
 		while ! ls ~rros/.local/share/color-schemes/RROS-*.colors >/dev/null 2>&1 && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
 		check "colores y barras de título del tema de RROS aplicados al iniciar sesión" sh -c 'ls ~rros/.local/share/color-schemes/RROS-*.colors && test -f ~rros/.local/share/aurorae/themes/RROS/decoration.svg'
 		check "tema de escritorio RROS en uso" grep -qsE '^name=rros' ~rros/.config/plasmarc
-		bus="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u rros)/bus"
 		renderer=$(su rros -c "$bus qdbus6 org.kde.KWin /KWin supportInformation" 2>/dev/null | sed -n 's/^OpenGL renderer string: //p' | head -1)
 		echo "info: KWin dibuja con: ${renderer:-desconocido}"
 		case $renderer in *llvmpipe* | *softpipe*)

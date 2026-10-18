@@ -24,3 +24,7 @@ BorderActivate=7
 
 [NightColor]
 Active=false
+
+# la tecla Windows/Cmd sola abre el Launchpad de RROS Shell
+[ModifierOnlyShortcuts]
+Meta=org.rros.Shell,/Shell,org.rros.Shell,toggleLaunchpad

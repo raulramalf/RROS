@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=RROS Shell
+Comment=La barra, el dock, el Launchpad y el centro de control de RROS
+Exec=/usr/bin/rros-shell
+Icon=rros
+NoDisplay=true
+OnlyShowIn=KDE;
+X-KDE-Wayland-Interfaces=org_kde_plasma_window_management,org_kde_kwin_keystate,org_kde_plasma_activation_feedback,org_kde_kwin_fake_input,kde_lockscreen_overlay_v1

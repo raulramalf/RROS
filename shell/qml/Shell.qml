@@ -1,10 +1,14 @@
 // El escritorio de RROS: cada pieza en su capa de Wayland (fondo, barra, dock, lo que se abre encima, avisos).
+import QtQml
 import QtQuick
 import QtQuick.Window
 import "."
 
-Item {
+QtObject {
     id: root
+    // las ventanas van en una lista y no dentro de un Item: un Window dentro de un Item toma ese Item como padre
+    // y Qt no lo muestra hasta que el padre tenga ventana (aquí nunca la tendría)
+    property list<QtObject> partes: [
 
     // ---- fondo ----
     Window {
@@ -14,7 +18,7 @@ Item {
         width: Screen.width; height: Screen.height
         Wallpaper { anchors.fill: parent }
         Component.onCompleted: { Sh.layer(wall, { layer: "background", anchors: "top,bottom,left,right", exclusive: -1, scope: "rros-fondo" }); visible = true }
-    }
+    },
 
     // ---- barra ----
     Window {
@@ -31,7 +35,7 @@ Item {
         Component.onCompleted: { place(); visible = true }
         Connections { target: Th; function onBarTopChanged() { barWin.visible = false; barWin.place(); barWin.visible = true } }
         onHeightChanged: Sh.setExclusive(barWin, height)
-    }
+    },
 
     // ---- dock ----
     Window {
@@ -81,7 +85,7 @@ Item {
             function onDockHidingChanged() { dockWin.place() }
             function onDockIconChanged() { Sh.setExclusive(dockWin, dockWin.autoHide ? 0 : dock.base + 8) }
         }
-    }
+    },
 
     // ---- lo que se abre encima (menús, centro de control, Launchpad) ----
     Window {
@@ -101,7 +105,7 @@ Item {
                 overWin.requestActivate()
             }
         }
-    }
+    },
 
     // ---- avisos ----
     Window {
@@ -111,7 +115,7 @@ Item {
         width: banners.width; height: Math.max(1, banners.implicitHeight)
         Banners { id: banners }
         Component.onCompleted: Sh.layer(notifWin, { layer: "overlay", anchors: "top,right", exclusive: -1, margins: [Th.barH + 10, 10, 0, 0], scope: "rros-avisos" })
-    }
+    },
     Window {
         id: osdWin
         visible: osd.visible
@@ -119,11 +123,12 @@ Item {
         width: osd.width; height: osd.height
         Osd { id: osd }
         Component.onCompleted: Sh.layer(osdWin, { layer: "overlay", anchors: "bottom", exclusive: -1, margins: [0, 0, 140, 0], scope: "rros-osd" })
-    }
+    },
 
     Connections {
         target: Sh
         function onLaunchpadRequested() { Ux.toggle("launchpad") }
         function onControlCenterRequested() { Ux.toggle("control", wall.width - 60, Th.barH + 4) }
     }
+    ]
 }

@@ -59,8 +59,20 @@ void Shell::layer(QObject *obj, const QVariantMap &o)
 {
 #ifdef HAVE_LAYERSHELL
 	auto *win = qobject_cast<QWindow *>(obj);
-	if (!win || !layerShell())
+	if (!win || !layerShell()) {
+		qInfo("rros-shell: %s sin capa de Wayland (plataforma %s)", qPrintable(o.value(QStringLiteral("scope")).toString()),
+		      qPrintable(QGuiApplication::platformName()));
 		return;
+	}
+	// en el registro: qué capa se pide y cuándo se dibuja por primera vez (el autotest de la ISO lo muestra)
+	const QString what = o.value(QStringLiteral("scope")).toString() + QLatin1Char('/') + o.value(QStringLiteral("layer")).toString();
+	qInfo("rros-shell: capa %s %dx%d", qPrintable(what), win->width(), win->height());
+	if (auto *qw = qobject_cast<QQuickWindow *>(win); qw && !qw->property("rrosLogged").toBool()) {
+		qw->setProperty("rrosLogged", true);
+		connect(qw, &QQuickWindow::frameSwapped, this,
+			[qw, what]() { qInfo("rros-shell: capa %s dibujada %dx%d", qPrintable(what), qw->width(), qw->height()); },
+			Qt::ConnectionType(Qt::QueuedConnection | Qt::SingleShotConnection));
+	}
 	auto *lw = LayerShellQt::Window::get(win);
 	const QString l = o.value(QStringLiteral("layer")).toString();
 	lw->setLayer(l == QLatin1String("background") ? LayerShellQt::Window::LayerBackground

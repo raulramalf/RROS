@@ -59,6 +59,8 @@ int main(int argc, char *argv[])
 	engine.rootContext()->setContextProperty(QStringLiteral("demoMode"), cli.isSet(demo));
 	engine.rootContext()->setContextProperty(QStringLiteral("shotPath"), cli.value(shot));
 	engine.rootContext()->setContextProperty(QStringLiteral("openWhat"), cli.value(open));
+	if (!cli.isSet(demo))
+		qInfo("rros-shell: plataforma %s, WAYLAND_DISPLAY=%s", qPrintable(QGuiApplication::platformName()), qgetenv("WAYLAND_DISPLAY").constData());
 	engine.load(QUrl(cli.isSet(demo) ? QStringLiteral("qrc:/qml/Demo.qml") : QStringLiteral("qrc:/qml/Shell.qml")));
 	if (engine.rootObjects().isEmpty())
 		return 1;

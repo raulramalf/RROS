@@ -109,7 +109,15 @@ if [ "$BASE" = arch ]; then
 		check "RROS Shell en el bus de la sesión (org.rros.Shell)" sh -c "echo '$owners' | grep -qx ' *org.rros.Shell'"
 		check "avisos de las aplicaciones en RROS Shell" sh -c "su rros -c '$bus qdbus6 org.freedesktop.Notifications /org/freedesktop/Notifications org.freedesktop.Notifications.GetServerInformation' | grep -q 'RROS'"
 		# lo que dijo el shell (errores de QML, avisos de Wayland), para el registro de la CI
-		journalctl -b _UID="$(id -u rros)" --no-pager 2>/dev/null | grep -E 'rros-shell' | grep -iE 'qml|warn|error|wayland|layer' | tail -n 25 | sed 's/^/diag: /'
+		journalctl -b _UID="$(id -u rros)" --no-pager 2>/dev/null | grep -E 'rros-shell' | grep -viE 'MESA' | tail -n 30 | sed 's/^/diag: /'
+		# las ventanas que ve KWin (capas del shell incluidas), con un guion de KWin que escribe en el registro
+		printf '%s\n' 'for (const w of workspace.stackingOrder) print("ventana:", w.resourceClass, "|", w.caption, "| capa", w.layer, "|", w.frameGeometry.x, w.frameGeometry.y, w.frameGeometry.width, w.frameGeometry.height, w.hidden ? "oculta" : "visible", w.opacity);' > /tmp/rros-ventanas.js
+		chmod 644 /tmp/rros-ventanas.js
+		sid=$(su rros -c "$bus qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript /tmp/rros-ventanas.js rros-ventanas" 2>/dev/null)
+		[ -n "$sid" ] && su rros -c "$bus qdbus6 org.kde.KWin /Scripting/Script$sid org.kde.kwin.Script.run" >/dev/null 2>&1
+		sleep 1
+		journalctl -b _UID="$(id -u rros)" --no-pager 2>/dev/null | grep -F 'ventana:' | tail -n 20 | sed 's/^/diag: /'
+		check "RROS Shell dibuja el fondo, la barra y el dock" sh -c "j=\$(journalctl -b _UID=$(id -u rros) --no-pager 2>/dev/null); for c in rros-fondo rros-barra rros-dock; do echo \"\$j\" | grep -q \"capa \$c/[a-z]* dibujada\" || exit 1; done"
 		if ! pgrep -u rros -x rros-shell >/dev/null 2>&1; then   # para saber por qué: sesión y registro de SDDM
 			{
 				echo "--- sesiones ---"; loginctl list-sessions --no-legend 2>&1 | head -5

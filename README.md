@@ -1,135 +1,78 @@
-# RROS
+# RROS 1.0 «Boreal»
 
-Sistema operativo ligero y muy personalizable sobre **Arch Linux**, con el escritorio **Hyprland**: fondo generado con los colores de tu tema, barra de tareas con botón Inicio, dock, animaciones y desenfoque, y tres estilos de escritorio que se cambian con un clic. Los componentes propios de RROS están escritos en **C**. (La primera base fue Ubuntu 24.04 y sigue disponible como base secundaria.)
+Sistema operativo ligero, en español y con diseño propio, sobre **Arch Linux** y **KDE Plasma** (Wayland). Se parece a macOS en lo que importa: barra fina arriba con el **menú RROS**, el menú de la aplicación y el reloj, y un **dock en 2D o en 3D** con el Launchpad. Lo demás es suyo: la aplicación **RROS Ajustes** (nativa, sin navegador), la Tienda, la bienvenida, el instalador, los iconos de sus aplicaciones, la pantalla de carga, el inicio de sesión y el menú de arranque. Los componentes propios están escritos en **C** y la aplicación de ajustes en **Qt/QML**.
 
-## Objetivos
+## Ediciones: elige la de tu equipo
 
-| Objetivo | Meta |
-|---|---|
-| Perfiles de hardware | Lite / Standard / Pro (techo de diseño: 8 GB de RAM) |
-| Disco | ≤ 20 GB (Lite ≤ 8, Standard ≤ 12, Pro ≤ 20) |
-| RAM del SO en reposo | ≤ 4 GB (Lite < 1,3 GB con Plasma, Standard < 2 GB, Pro ≤ 4 GB) |
-| Arquitecturas | x86_64 (Intel/AMD) y ARM64 |
-| Personalización | 129 ajustes por capas, 7 temas (más los tuyos), estilos de escritorio (clásico, moderno, mosaico), fondos generados, efectos de Hyprland, atajos, reglas por aplicación y programas de inicio propios ([docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md)). Escritorio, red, memoria, seguridad y servicios ya se aplican; el resto se valida |
-| Interfaz de ajustes | Ventana gráfica local (`rros settings`) con temas, tienda, seguridad, dispositivos y creación de archivos, y versión de terminal para Lite o SSH |
-| Móvil | Android en modelos concretos; iPhone no viable ([docs/MOBILE.md](docs/MOBILE.md)) |
+| | Lite | Standard | Pro |
+|---|---|---|---|
+| RAM del equipo | 2–4 GB | 4–8 GB | 8 GB |
+| Procesador | 2 núcleos de 64 bits | 4 hilos | 4 núcleos (8 hilos) y GPU |
+| Disco que ocupa | ≤ 10 GB | ≤ 14 GB | ≤ 20 GB |
+| RAM del sistema en reposo (tope) | 1,3 GB | 2 GB | 3 GB |
+| Efectos | ninguno: todo aparece al instante | animaciones rápidas | todos: desenfoque, lámpara mágica, transparencias |
+| Dock | 2D | 2D | 3D |
+| Aplicaciones | Firefox, archivos, terminal, editor, visores, música y vídeo | + LibreOffice, Elisa, impresoras y escáner, móviles | + GIMP, VLC, particiones, KDE Connect, desarrollo |
+
+Todo se puede cambiar después en RROS Ajustes (efectos, dock 2D/3D, estilo del escritorio...). Sin aceleración gráfica (una máquina virtual sin 3D), RROS apaga solo los efectos para que vaya fluido. Las medidas reales están en [Estado](#estado).
 
 ## Probarlo
 
-### En el navegador (sin instalar nada)
-La carpeta [`site/`](site/) es una web estática de demostración:
-
-- **`escritorio.html`**: el escritorio de RROS funcionando en el navegador, con el aspecto del de Plasma: barra de menús arriba, dock abajo, ventanas que se abren, arrastran, redimensionan, minimizan, maximizan y cierran, buscador (Ctrl + Espacio) y aplicaciones que funcionan (terminal con órdenes, archivos, editor que guarda, calculadora, navegador, tienda, preferencias con temas y fondos, y RROS Ajustes). Los archivos y preferencias se guardan en el navegador.
-- **`ajustes.html`**: la ventana real de RROS Ajustes (temas, escritorio y fondo, tienda, seguridad, accesibilidad, instalador) con un servidor simulado.
-
-En tu equipo: `python3 -m http.server -d site` y abre <http://localhost:8000>. Para regenerarla después de cambiar el código: `make && scripts/build-site.sh`.
-
-**Publicarla en Vercel:** importa el repositorio en [vercel.com/new](https://vercel.com/new) y despliega; `vercel.json` ya indica que se sirve la carpeta `site/` tal cual, sin compilar nada. También vale Netlify o GitHub Pages apuntando a `site/`.
-
-Lo que **no** se puede ver en Vercel (ni en ningún navegador): el sistema operativo de verdad. El kernel, Hyprland, el instalador o las aplicaciones necesitan arrancar la ISO en una máquina virtual o en un PC.
-
-![Demo del escritorio en el navegador: estilo clásico con el fondo aurora, terminal, archivos y RROS Ajustes](docs/img/rros-escritorio-demo.png)
-
-*Escritorio web (`site/escritorio.html`), no una captura del sistema: los fondos sí son los que genera `rros-theme`.*
-
 ### En una máquina virtual o en un PC (el sistema completo)
-La ISO de Arch la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → *Run workflow* (o `[iso-arch]` en el mensaje de un commit). Al terminar, descarga el artefacto `rros-arch-lite-iso`. Arranca en QEMU, VirtualBox o GNOME Boxes, o grábala en una memoria USB para un PC (hay que desactivar Secure Boot). También se construye en un Arch con `scripts/build-iso-arch.sh lite`. Más en [docs/TRY.md](docs/TRY.md) y [docs/PROBAR-EN-PC.md](docs/PROBAR-EN-PC.md).
+La ISO la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → la última ejecución en verde → *Artifacts* → `rros-arch-lite-iso` (un .zip con la ISO dentro). Para otra edición: *Run workflow* y elige `standard` o `pro`.
 
-**Contenedor:** `scripts/try-docker.sh lite` abre una consola con la identidad y las herramientas de RROS (sin escritorio).
+- **VirtualBox:** tipo Linux / Arch Linux (64-bit), 4 GB de RAM (mínimo 2), 2 procesadores o más, 20 GB de disco. En *Pantalla*: controlador **VMSVGA**, 128 MB de vídeo y **Habilitar aceleración 3D** (sin ella, RROS va bien pero sin efectos). Si sale *AMD-V/VT-x is disabled*, activa la virtualización en la BIOS del PC ([docs/TRY.md](docs/TRY.md)).
+- **PC real:** grábala en una memoria USB con balenaEtcher o Rufus (modo DD) y desactiva Secure Boot. Guía: [docs/PROBAR-EN-PC.md](docs/PROBAR-EN-PC.md).
 
-### Capturas reales del sistema
-![RROS con Plasma arrancado en QEMU: barra arriba con el menú RROS, el reloj y la bandeja; dock abajo](docs/img/rros-plasma-live.png)
+Arranca en el escritorio sin tocar el disco y abre la **bienvenida**; desde ahí (o desde el menú RROS) se instala: junto a Windows en el espacio libre o en todo el disco, con cifrado si quieres.
 
-*Captura real del live de Arch con Plasma, tomada por la CI en QEMU (sin GPU): barra de arriba con el menú RROS, reloj y bandeja, y el dock con Archivos, Firefox, Terminal, Kate, la Tienda, RROS Ajustes y la papelera.*
+### En el navegador (solo una demostración)
+La carpeta [`site/`](site/) es una web estática (se publica en Vercel tal cual: `vercel.json` sirve `site/`). `escritorio.html` imita el escritorio con ventanas que se abren, arrastran y cierran. No es el sistema: el sistema de verdad es la ISO.
 
-![RROS Lite arrancado en QEMU: panel, terminal, calculadora, editor y archivos](docs/img/rros-lite-escritorio.png)
+## Qué trae
 
-*Captura real de la ISO Lite de la base Ubuntu arrancada en QEMU (sin KVM), tema Aurora. Es el escritorio de respaldo (sway), el que se usa sin aceleración gráfica; Hyprland, el de Arch en un PC real, todavía no tiene captura porque una máquina virtual sin GPU no lo puede mostrar.*
-
-![RROS instalado en disco: terminal y RROS Ajustes en Epiphany](docs/img/rros-lite-instalado-ajustes.png)
-
-*Captura real del sistema ya instalado en un disco virtual con `rros-install`: inicio de sesión en tty1, escritorio, red por cable y la ventana de Ajustes.*
-
-![RROS Ajustes en la página de Seguridad, dentro del sistema live](docs/img/rros-seguridad.png)
-
-*Captura real: `rros settings open seguridad` en la ISO Lite (QEMU). Auditoría con puntuación, cortafuegos activo y kernel endurecido.*
-
-![RROS Ajustes en la página de Dispositivos, dentro del sistema live](docs/img/rros-dispositivos.png)
-
-*Captura real: `rros settings open dispositivos`. El CD del sistema live no ofrece «Expulsar» porque está en uso.*
-
-![Thunar mostrando ~/Plantillas y las carpetas del usuario en español](docs/img/rros-plantillas.png)
-
-*Captura real: las plantillas de `rros nuevo` en `~/Plantillas` (el menú «Crear documento» del gestor de archivos) y las carpetas del usuario en español. Los menús de las aplicaciones siguen en inglés: faltan los paquetes de idioma.*
+- **RROS Ajustes**, una aplicación nativa (Qt Quick) con barra lateral, como las preferencias de macOS: General (este equipo y las ediciones), Apariencia, Escritorio y Dock, Red e Internet (Wi-Fi, redes ocultas, IP manual, DNS, MTU, MAC aleatoria, datos limitados, VPN, punto de acceso, proxy), Bluetooth, Sonido (salida y entrada, volumen, balance, conector, perfil de la tarjeta y volumen de cada aplicación), Pantallas (resolución, frecuencia, escala, giro, brillo, luz nocturna), Ratón y panel táctil (cada aparato), Teclado y atajos (y reglas de ventanas y programas de inicio), Batería y energía, Dispositivos, Fecha e idioma, Accesibilidad, Seguridad y privacidad, **Tienda**, Actualizaciones, Avanzado (los más de 130 ajustes uno a uno, copias y restablecer) e **Instalar RROS**.
+- **Diseño propio**: tema de escritorio RROS en 2D (plano y translúcido) o 3D (brillo, bisel y canto, como un estante de cristal), barras de título con los botones de semáforo, menú RROS, iconos SVG propios para las aplicaciones de RROS (las demás llevan su logotipo de siempre), pantalla de carga, inicio de sesión y menú de arranque de RROS, y fondos generados con los colores de tu tema.
+- **Tres estilos de escritorio**: Moderno (el de RROS), Clásico (barra de tareas abajo, como Windows) y Enfoque (dock escondido, escritorio limpio).
+- **Rendimiento**: efectos según la edición y la gráfica, el indexador de archivos apagado, sesiones que empiezan limpias, zram, y en el live las aplicaciones se precargan con 3,5 GB o más.
+- **Seguridad**: cortafuegos, kernel endurecido, AppArmor, bloqueo tras contraseñas fallidas y auditoría con puntuación ([docs/SEGURIDAD.md](docs/SEGURIDAD.md)).
+- **Consola**: el comando `rros` hace lo mismo que Ajustes ([docs/CONSOLA.md](docs/CONSOLA.md)).
 
 ## Estado
 
 | Pieza | Estado |
 |---|---|
-| `rros-hwdetect`, `rros-config`, `rros-budget`, `rros-installer plan` | ✅ hechas y probadas |
-| `rros-theme` – 7 temas y temas propios; Hyprland, hyprlock, sway, waybar, foot, mako, fuzzel y GTK | ✅ hecha y probada |
-| Hyprland: configuración generada (efectos, animaciones, mosaico, gestos, atajos y reglas traducidos) | ✅ validada con el Hyprland real de Arch (`Hyprland --verify-config`, 28 combinaciones de perfil, estilo y modo); sin ver en pantalla: hace falta GPU |
-| Escritorio: estilos clásico/moderno/mosaico, fondos generados con los colores del tema, barra de tareas con Inicio, dock, actualizaciones en el panel | ✅ hecho y probado (fondos PNG validados; página «Escritorio y fondo» en Ajustes) |
-| Base Arch: paquetes, ISO con archiso, live, menú en español con modo seguro y lector de pantalla | ✅ todos los paquetes comprobados en Arch; la ISO se construye en GitHub Actions, arranca en QEMU y pasa el autotest (116 comprobaciones) |
-| Arch: instalador (mkinitcpio, sd-encrypt, GRUB con os-prober), tienda con pacman, seguridad (faillock, AppArmor, descarga diaria de actualizaciones) | ✅ probado en la CI de principio a fin: instala en un disco virtual, arranca desde él y pasa el autotest (125 comprobaciones), en **BIOS y UEFI** y también **cifrado con LUKS2** escribiendo la contraseña al arrancar |
-| `rros-settings` – ventana gráfica web local (con token) y TUI | ✅ probadas (TUI en un pty, GUI con navegador) |
-| Atajos, reglas por aplicación y autostart (`keybind.*`, `rule.*`, `autostart.*`) | ✅ validados igual que se generan; probados |
-| Instantáneas, exportar e importar ajustes | ✅ hechas y probadas |
-| `rros-apply` – aplica perfil a zram, swap, disco, red y servicios | ✅ hecha y probada (con raíz alternativa) |
-| `rros-fetch`, `rros` (`doctor`, `info`, …) | ✅ hechas y probadas |
-| Overlay de identidad (sin snap, sin telemetría, tty1 directo) | ✅ aplicado y comprobado sobre un directorio |
-| ISO Lite de la base Ubuntu 24.04: GRUB, casper live, Secure Boot, autotest | ✅ construida y arrancada en QEMU (BIOS, UEFI y Secure Boot): autotest de arranque, escritorio con panel y apps (captura arriba) |
-| Aplicaciones incluidas (navegador, archivos, editor, visores, multimedia, red, Bluetooth, USB, bloqueo, energía) y tienda `rros-apps` | ✅ paquetes verificados en Arch (y en Ubuntu noble); probadas las que se abrieron en la VM (terminal, calculadora, editor, archivos); el resto, sin abrir aún |
-| Seguridad: cortafuegos, kernel endurecido, bloqueo por intentos, sudo, USB/cámara, actualizaciones; `rros seguridad` (auditoría y niveles) | ✅ probado con pruebas automáticas y en QEMU, incluido el bloqueo tras contraseñas fallidas ([docs/SEGURIDAD.md](docs/SEGURIDAD.md)) |
-| Dispositivos: `rros dispositivos` (discos, USB, red, radios, sonido, pantallas, batería; montar, expulsar, Wi-Fi/Bluetooth) | ✅ probado con un /sys simulado y en QEMU (inventario real de la VM) |
-| Creación de archivos: `rros nuevo` (plantillas, proyectos, lanzadores), «Crear documento» en Thunar, carpetas en español | ✅ probado |
-| `rros-install` – instalador de texto a disco (BIOS, Lite/ext4) | ✅ probado en QEMU: instala, arranca desde el disco, login y escritorio |
-| Hardware real, Hyprland en pantalla, Secure Boot en la base Arch, kernel por perfil, repositorio propio, móvil | ⏳ pendiente / sin probar |
-
-La GUI es una aplicación web local: necesita un navegador (Standard y Pro lo incluyen; Lite usa la TUI). No hay todavía una ventana con toolkit nativo (GTK/Qt).
-
-Medido por la CI en QEMU (2 GB de RAM), perfil Lite con Plasma: ~920 MB de RAM usada en el live con el escritorio arrancado y el navegador abierto con la bienvenida, y ~670 MB en el sistema instalado en la pantalla de inicio de sesión (límite 1,3 GB); el sistema instalado ocupa ~5,8 GB (límite 8) y la ISO ~2,6 GB. La CI instala en BIOS, en UEFI y cifrado, arranca cada instalación y pasa el autotest (130 comprobaciones). En la de Ubuntu: 2,3 GB y ~370 MB con cuatro apps abiertas. Standard y Pro aún no se han medido; los IDs de Flatpak de la tienda no se han podido comprobar (Flathub no es alcanzable desde donde se construyó). Diferencias con Ubuntu: [docs/DIFFERENCES.md](docs/DIFFERENCES.md).
+| Herramientas en C (`rros-config`, `rros-theme`, `rros-apply`, `rros-apps`, `rros-security`, `rros-devices`, `rros-installer`, `rros-settings`…) | ✅ con pruebas automáticas (ASan + UBSan) |
+| `rros-theme` para Plasma: barra y dock, efectos, entrada, energía, sonido, terminal, atajos, reglas e inicio; mezcla sus claves con las de KDE sin borrar las del usuario | ✅ probado |
+| RROS Ajustes (Qt/QML) | ✅ compila en la CI de Arch; todas las páginas abren sin errores (probado con Qt 6.4); red, sonido, Bluetooth y pantallas necesitan el sistema real |
+| Tema 2D/3D, menú RROS, carga, inicio de sesión (SDDM), GRUB | ✅ tema y SDDM revisados con capturas fuera de Plasma; en el sistema, ver la CI |
+| ISO Lite: arranque, autotest, instalación BIOS, UEFI y cifrada | ver la última ejecución del workflow **Arch** |
+| Hardware real, Secure Boot, ediciones Standard y Pro medidas | ⏳ pendiente |
 
 ## Uso rápido
 
 ```
-make                 # compila las herramientas (build/)
-make test            # tests unitarios (ASan+UBSan) e integración
-build/rros-hwdetect  # hardware detectado y perfil recomendado
-build/rros-installer plan --disk-gb 64 --uefi -p standard
+make                 # herramientas en C (build/)
+make app             # RROS Ajustes (necesita cmake, qt6-base y qt6-declarative)
+make test            # pruebas unitarias e integración
+rros config set ui.dock_style 3d     # el dock en 3D
+rros theme escritorio clasico        # estilo clásico
+rros settings                        # abre RROS Ajustes
 ```
 
-Personalizar (por usuario o `--system`). La guía completa de comandos, explicada paso a paso, está en [docs/CONSOLA.md](docs/CONSOLA.md):
-
-```
-rros config set ui.accent '#22d3ee'
-rros theme use nord
-rros config set keybind.nav 'Mod+Shift+b exec firefox'
-rros settings              # ventana de ajustes (o `rros settings tui` en la terminal)
-```
-
-Sin instalar el sistema, desde el repositorio: `build/rros-config ...` con `RROS_PROFILE_DIR=profiles`.
-
-Construir una ISO: la de Arch en un Arch o en GitHub Actions; la de Ubuntu, en Ubuntu (ver [docs/BUILD.md](docs/BUILD.md)).
+Sin instalar, desde el repositorio: `build/rros-config ...` con `RROS_PROFILE_DIR=profiles`. Construir la ISO: [docs/BUILD.md](docs/BUILD.md).
 
 ## Estructura
 
 ```
-src/lib/        conf (parser TOML), hw (detección), perfiles, esquema
-src/hwdetect/   rros-hwdetect        src/config/   rros-config
-src/budget/     rros-budget          src/installer/ rros-installer
-src/theme/      rros-theme           src/apply/    rros-apply
-src/fetch/      rros-fetch           src/rros/     rros
-src/settings/   rros-settings (TUI y servidor web)    gui/   interfaz web (index.html, mock.js de la demo)
-overlay/        archivos que dan identidad al sistema (common, arch, ubuntu)
-site/           web de demostración para el navegador (Vercel): escritorio y RROS Ajustes
-preview/        demo antigua del escritorio (sway)
+src/            herramientas en C: lib (configuración, esquema, hardware), theme (Plasma), settings (API y TUI)...
+app/            RROS Ajustes: aplicación Qt Quick (main.cpp, backend.cpp, qml/, icons/)
+overlay/        lo que se añade al sistema: common y arch (tema de escritorio, menú RROS, SDDM, GRUB, iconos)
 profiles/       lite.toml, standard.toml, pro.toml
-kernel/         fragmentos de configuración del kernel por perfil
-packages/       listas de paquetes (Arch y Ubuntu) por perfil
-apps/           catálogo de la tienda (pacman, apt y Flatpak)
-scripts/        rootfs, kernel, ISO, QEMU
-dist/systemd/   rros-firstboot.service (elige el perfil en el primer arranque)
-tests/          unitarios en C + integración (cli.sh)
-docs/           arquitectura, perfiles, build, personalización, móvil, hoja de ruta
+packages/       paquetes de Arch por edición
+apps/           catálogo de la Tienda (pacman y Flathub)
+scripts/        ISO (archiso), QEMU, iconos y tema de escritorio (make-icons.py, make-desktoptheme.py)
+site/           demostración en el navegador
+tests/          unitarios en C, integración (cli.sh) y TUI
+docs/           consola, personalización, seguridad, ediciones, construir, probar en un PC
 ```

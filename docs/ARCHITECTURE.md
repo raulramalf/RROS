@@ -1,30 +1,25 @@
 # Arquitectura
 
-## Decisión clave: "desde cero en C" vs. "basado en Ubuntu/Arch"
-Escribir un kernel propio supone años de trabajo en drivers (Intel, AMD, NVIDIA, Wi-Fi...). RROS usa el **kernel Linux** (ya en C) y escribe en C todo lo que le da identidad:
+RROS usa el **kernel Linux**, los paquetes de **Arch Linux** y el escritorio **KDE Plasma** (Wayland), y escribe
+lo que le da identidad: las herramientas en C, la aplicación de ajustes en Qt/QML y el diseño.
 
 | Capa | Origen |
 |---|---|
-| Kernel | Linux LTS, configuración recortada por perfil |
-| Base | Mínima, estilo Arch (rolling) con empaquetado/pruebas estilo Ubuntu (LTS) |
-| Init | Opción A: systemd recortado. Opción B: init propio en C (fase avanzada) |
-| libc | glibc (compatibilidad) en Standard/Pro; musl en Lite |
-| Gráficos | Wayland. Lite: compositor mínimo; Pro: efectos y aceleración |
-| **rros-hwdetect** | **C, propio.** Detecta RAM/CPU/GPU/UEFI y elige perfil (CPU y GPU solo pueden bajarlo) |
-| **rros-config** | **C, propio.** Capas perfil < sistema < usuario, validadas con un esquema |
-| **rros-budget** | **C, propio.** Mide disco/RAM frente al presupuesto del perfil (CI) |
-| **rros-theme** | **C, propio.** 7 temas más los del usuario; genera sway, waybar, foot, mako, fuzzel y GTK |
-| **rros-settings** | **C, propio.** Interfaz de ajustes: servidor web local con token (GUI en `gui/`) y TUI |
-| **rros-installer** | **C, propio.** Calcula el plan de particiones (no escribe en disco) |
-| **rros-install** | **Shell, propio.** Instalador de texto: usa el plan, formatea, copia el sistema live, crea el usuario e instala GRUB (probado en QEMU con BIOS) |
+| Kernel y paquetes | Arch Linux (rolling): kernel `linux`, firmware, pacman |
+| Escritorio | KDE Plasma 6 (Wayland) con el aspecto de RROS: tema de escritorio 2D/3D, barras de título, menú RROS, colores, iconos, carga, inicio de sesión y GRUB |
+| **rros-config** | **C.** Ajustes por capas: perfil < sistema (`/etc/rros/rros.toml`) < usuario (`~/.config/rros/rros.toml`), validados con un esquema |
+| **rros-theme** | **C.** Traduce los ajustes a Plasma: escribe sus claves en `kwinrc`, `kdeglobals`, `kcminputrc`, `powerdevilrc`... sin borrar las demás, genera la barra y el dock (guion de plasmashell), colores, barras de título, Konsole, atajos, reglas de ventanas y fondos |
+| **rros-apply** | **C.** Lo que es de root: zram, red, cortafuegos, kernel, servicios, idioma |
+| **rros-settings** | **C.** API en JSON (`rros-settings api`) que usa RROS Ajustes, y versión de terminal (TUI) |
+| **RROS Ajustes** (`rros-ajustes`) | **C++/QML.** Ajustes, Tienda, bienvenida e instalador. Llama a la API y a las herramientas del sistema (nmcli, pactl, bluetoothctl, kscreen-doctor, KWin por D-Bus); lo de root pasa por pkexec |
+| **rros-apps** | **C.** Tienda: pacman o Flathub |
+| **rros-security**, **rros-devices**, **rros-new**, **rros-hwdetect**, **rros-budget** | **C.** Seguridad, dispositivos, plantillas, hardware y presupuestos |
+| **rros-installer** / **rros-install** | **C** (plan de particiones) y **shell** (instalación: particiones, cifrado, copia, GRUB) |
 
 ## Presupuesto de recursos
-- Disco: imagen base ≤ 6 GB, perfil Pro completo ≤ 20 GB.
-- RAM SO en reposo: Lite < 512 MB, Standard < 2 GB, Pro ≤ 4 GB.
-- CI mide ambos en cada build y falla si se superan.
-
-## Personalización "al detalle"
-Todo ajuste vive en archivos TOML: `/usr/share/rros/profiles/<perfil>.toml` (valores por defecto) < `/etc/rros/rros.toml` (sistema) < `~/.config/rros/rros.toml` (usuario). `rros-config` valida cada valor (tipo, rango, opciones). Las claves disponibles están en [CUSTOMIZATION.md](CUSTOMIZATION.md). Aplicar los ajustes a compositor y servicios llegará con la interfaz propia.
+Disco ≤ 20 GB (Lite 10, Standard 14, Pro 20) y RAM del sistema en reposo (Lite 1,3 GB, Standard 2 GB, Pro 3 GB).
+El autotest mide la RAM, el disco y el procesador en reposo en cada ISO.
 
 ## Compatibilidad de hardware
-Soporte amplio mediante el kernel Linux + firmware empaquetado (`linux-firmware`). Intel, AMD y ARM64 desde el inicio. NVIDIA: driver abierto `nouveau`/`nvidia-open` opcional.
+La del kernel Linux y `linux-firmware`: Intel y AMD (x86-64). NVIDIA con el controlador libre; el propietario se
+instala aparte. Secure Boot no está soportado (Arch no firma su arranque).

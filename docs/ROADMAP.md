@@ -1,10 +1,9 @@
 # Hoja de ruta
 
-1. **Fase 0 – Cimientos** ✅ repo, docs, `rros-hwdetect`, `rros-config`, `rros-budget`, plan de instalador, tests y CI.
-2. **Fase 1 – ISO Lite** ✅ construida (2,3 GB de 6) y arrancada en QEMU con BIOS: autotest, escritorio, panel y apps. Falta UEFI, hardware real y medir RAM en reposo con KVM.
-3. **Fase 2 – Perfiles** primera ISO Standard y Pro; el aplicado de `rros-config` a servicios y compositor (hoy solo guarda y valida los ajustes).
-4. **Fase 3 – Instalador real**: ejecutar el plan (`sfdisk`, `mkfs`, GRUB), cifrado LUKS opcional.
-5. **Fase 4 – Hardware real**: Intel, AMD, ARM64, drivers, firmware, suspensión.
-6. **Fase 5 – Repositorio propio** y actualizaciones atómicas con rollback.
-7. **Fase 6 – Interfaz propia** y herramienta gráfica de personalización.
-8. **Fase 7 – Android** (modelos soportados).
+1. ✅ Herramientas en C, perfiles, instalador, seguridad, tienda, dispositivos.
+2. ✅ ISO sobre Arch con Plasma, probada en la CI: live, instalación BIOS, UEFI y cifrada.
+3. ✅ 1.0 «Boreal»: RROS Ajustes nativa, diseño propio (dock 2D/3D, menú RROS, carga, inicio de sesión, GRUB),
+   rendimiento según el equipo y la Tienda instalando de verdad.
+4. Hardware real: portátiles Intel y AMD, Wi-Fi, suspensión, NVIDIA. Medir Standard y Pro.
+5. Secure Boot (firmando con claves propias) y repositorio de paquetes de RROS.
+6. Actualizaciones con vuelta atrás (instantáneas de Btrfs).

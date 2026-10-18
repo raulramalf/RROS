@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Aspecto de RROS para Plasma en todo el sistema (sobre una raíz ya preparada): fondo, esquema de colores, barras
 # de título, la barra y el dock de la primera vez y el fondo del menú de arranque, generados por rros-theme con el
-# tema Aurora oscuro.
+# tema Lirio oscuro (los colores del logotipo).
 # Así el primer arranque ya se ve como RROS; al iniciar sesión, rros-theme lo rehace con el tema de cada usuario.
 # uso: plasma-defaults.sh RAIZ PERFIL
 # shellcheck source=common.sh
@@ -19,7 +19,7 @@ mkdir -p "$wp/contents/images" "$root/usr/share/color-schemes" "$root/usr/share/
 	"$root/usr/share/grub/themes/rros"
 run "$RROS/rros-theme" -p "$profile" wallpaper --style aurora --size 1920x1080 --out "$wp/contents/images/1920x1080.png" >/dev/null
 cat > "$wp/metadata.json" <<'JSON'
-{ "KPlugin": { "Id": "RROS", "Name": "RROS Aurora", "Authors": [ { "Name": "RROS" } ], "License": "CC-BY-SA-4.0" } }
+{ "KPlugin": { "Id": "RROS", "Name": "RROS", "Authors": [ { "Name": "RROS" } ], "License": "CC-BY-SA-4.0" } }
 JSON
 run "$RROS/rros-theme" -p "$profile" apply --quiet
 cp "$tmp"/data/color-schemes/RROS-*.colors "$root/usr/share/color-schemes/RROS.colors"

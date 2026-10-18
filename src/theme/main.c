@@ -98,7 +98,7 @@ static int render_all(const char *cfg, const char *data, const struct rros_theme
 	int bad = 0;
 
 	if (rros_theme_palette(t, &p))
-		fprintf(stderr, "rros-theme: el tema '%s' no existe; se usa 'aurora' (rros-theme list)\n", t->theme);
+		fprintf(stderr, "rros-theme: el tema '%s' no existe; se usa 'lirio' (rros-theme list)\n", t->theme);
 	for (size_t i = 0; i < sizeof targets / sizeof *targets; i++)
 		bad |= write_target(data, &targets[i], t, &p, conf) != 0;
 	ne = rros_plasma_edits(t, &p, conf, ed, RROS_MAX_EDITS);
@@ -666,7 +666,7 @@ int main(int argc, char **argv)
 	if (!strcmp(cmd, "use") && i + 1 == argc)
 		return cmd_use(profile, argv[i]);
 	if (!strcmp(cmd, "new") && i < argc) {
-		const char *name = argv[i], *base = "aurora";
+		const char *name = argv[i], *base = "lirio";
 		char err[300];
 
 		for (i++; i < argc; i++) {

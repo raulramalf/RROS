@@ -55,7 +55,7 @@ Rectangle {
                     spacing: 22
                     Layout.alignment: Qt.AlignHCenter
                     Repeater {
-                        model: [["light", "Claro", "#eef1f8", "#ffffff"], ["dark", "Oscuro", "#0b1020", "#1b2342"]]
+                        model: [["light", "Claro", "#f6efe7", "#ffffff"], ["dark", "Oscuro", "#140609", "#2a1018"]]
                         ColumnLayout {
                             spacing: 8
                             Rectangle {
@@ -74,7 +74,7 @@ Rectangle {
                     spacing: 10
                     Layout.alignment: Qt.AlignHCenter
                     Repeater {
-                        model: ["#7c5cff", "#0a84ff", "#22c3e6", "#30d158", "#ffb020", "#ff6b3d", "#ff375f", "#bf5af2"]
+                        model: ["#c8243c", "#d9b98f", "#7c5cff", "#0a84ff", "#22c3e6", "#30d158", "#ffb020", "#ff6b3d", "#ff375f", "#bf5af2"]
                         Rectangle {
                             width: 30; height: 30; radius: 15; color: modelData
                             border.width: Ui.v("ui.accent").toLowerCase() === modelData ? 3 : 0

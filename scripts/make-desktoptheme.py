@@ -18,9 +18,9 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 OUT = os.path.join(ROOT, "overlay/arch/usr/share/plasma/desktoptheme")
 
 STYLE = """<style type="text/css" id="current-color-scheme">
-  .ColorScheme-Background { color:#141c38; }
-  .ColorScheme-Text { color:#e6ecff; }
-  .ColorScheme-Highlight { color:#7c5cff; }
+  .ColorScheme-Background { color:#220d13; }
+  .ColorScheme-Text { color:#f6ecdf; }
+  .ColorScheme-Highlight { color:#c8243c; }
 </style>"""
 
 L = 10          # largo de los bordes y del centro (Plasma los estira)

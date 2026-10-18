@@ -15,6 +15,10 @@ struct pal { const char *bg, *surface, *text, *muted, *border, *red, *green, *ye
 struct def { const char *name; struct pal dark, light; };
 
 static const struct def builtin[] = {
+	/* lirio: los colores del logotipo (vino, rojo lirio y champán) */
+	{ "lirio",
+	  { "#140609", "#220d13", "#f6ecdf", "#b49c92", "#3d1a22", "#ff5a6e", "#7cc79a", "#e9c48a", "#8fb3e0", "#e0567a", "#efc9a6", "#c8243c" },
+	  { "#faf5ef", "#ffffff", "#2a0f16", "#7d6460", "#ead8cf", "#c0283e", "#2f7d4f", "#9a6b1f", "#3b6ea8", "#a8325a", "#a8754a", "#a51d33" } },
 	{ "aurora",
 	  { "#0b1020", "#141c38", "#e6ecff", "#8a96bd", "#26305a", "#ff6b81", "#4ade80", "#fbbf24", "#60a5fa", "#c084fc", "#22d3ee", "#7c5cff" },
 	  { "#f5f7ff", "#ffffff", "#141a33", "#5b6489", "#d5dbf5", "#d6334f", "#16a34a", "#b7791f", "#2563eb", "#9333ea", "#0891b2", "#5b3df5" } },
@@ -174,7 +178,7 @@ int rros_theme_palette(const struct rros_theme *t, struct rros_palette *p)
 	int miss = load_palette(t->theme, t->dark, p, 0);
 
 	if (miss)
-		load_palette("aurora", t->dark, p, 0);
+		load_palette("lirio", t->dark, p, 0);
 	if (t->accent[0])
 		put(p->accent, t->accent);
 	if (t->high_contrast) {

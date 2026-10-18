@@ -6,8 +6,8 @@ Rectangle {
     id: root
     width: 1280
     height: 800
-    color: "#0b1020"
-    property color accent: config.accent ? config.accent : "#7c5cff"
+    color: "#140609"
+    property color accent: config.accent ? config.accent : "#c8243c"
     property int userIndex: userModel.lastIndex >= 0 ? userModel.lastIndex : 0
     property int sessionIndex: sessionModel.lastIndex >= 0 ? sessionModel.lastIndex : 0
     property string userName: ""
@@ -47,7 +47,7 @@ Rectangle {
         Text {
             id: date
             anchors.horizontalCenter: parent.horizontalCenter
-            color: "#e6ecff"
+            color: "#f6ecdf"
             font.family: "Inter"
             font.pixelSize: 20
             text: new Date().toLocaleDateString(Qt.locale("es_ES"), "dddd, d 'de' MMMM")
@@ -114,7 +114,7 @@ Rectangle {
                 echoMode: TextInput.Password
                 placeholderText: "Contraseña"
                 color: "#ffffff"
-                placeholderTextColor: "#c9d1f5"
+                placeholderTextColor: "#e6d6c6"
                 font.family: "Inter"
                 font.pixelSize: 15
                 leftPadding: 16

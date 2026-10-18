@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
 <style type="text/css" id="current-color-scheme">
-  .ColorScheme-Background { color:#141c38; }
-  .ColorScheme-Text { color:#e6ecff; }
-  .ColorScheme-Highlight { color:#7c5cff; }
+  .ColorScheme-Background { color:#220d13; }
+  .ColorScheme-Text { color:#f6ecdf; }
+  .ColorScheme-Highlight { color:#c8243c; }
 </style>
 <defs>
   <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">

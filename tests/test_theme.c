@@ -81,7 +81,7 @@ int main(void)
 	from_text(&t, "");
 	CHECK(t.dark == 1);
 	CHECK_STR(t.accent, "");
-	CHECK_STR(t.theme, "aurora");
+	CHECK_STR(t.theme, "lirio");
 	CHECK(t.dock == 1 && t.dock_3d == 0 && t.buttons_left == 1 && t.global_menu == 1);
 	CHECK_STR(t.dock_pos, "bottom");
 	CHECK_STR(rros_desktoptheme(&t), "rros");
@@ -110,10 +110,10 @@ int main(void)
 		struct rros_palette p;
 
 		from_text(&t, "[ui]\ntheme = \"no-existe\"\n");
-		CHECK(rros_theme_palette(&t, &p) == 1); /* cae a aurora */
-		CHECK_STR(p.bg, "#0b1020");
+		CHECK(rros_theme_palette(&t, &p) == 1); /* cae a lirio */
+		CHECK_STR(p.bg, "#140609");
 		from_text(&t, "[ui]\ntheme = \"../../etc/passwd\"\n");
-		CHECK_STR(t.theme, "aurora"); /* nombre inválido: nunca se usa como ruta */
+		CHECK_STR(t.theme, "lirio"); /* nombre inválido: nunca se usa como ruta */
 	}
 	{
 		struct rros_theme_info list[64];
@@ -313,9 +313,9 @@ int main(void)
 
 		from_text(&t, "");
 		s = render(rros_render_kde_colors, &t);
-		CHECK(strstr(s, "[Colors:Window]\nBackgroundNormal=20,28,56\n") != NULL);      /* superficie de Aurora */
-		CHECK(strstr(s, "[Colors:Selection]\nBackgroundNormal=124,92,255\n") != NULL);  /* el acento */
-		CHECK(strstr(s, "[WM]\nactiveBackground=20,28,56\n") != NULL);
+		CHECK(strstr(s, "[Colors:Window]\nBackgroundNormal=34,13,19\n") != NULL);      /* superficie de Lirio */
+		CHECK(strstr(s, "[Colors:Selection]\nBackgroundNormal=200,36,60\n") != NULL);  /* el acento */
+		CHECK(strstr(s, "[WM]\nactiveBackground=34,13,19\n") != NULL);
 		free(s);
 		rros_theme_palette(&t, &pal);
 		CHECK(mkdtemp(dir) != NULL);
@@ -324,7 +324,7 @@ int main(void)
 		snprintf(path, sizeof path, "%s/RROS/decoration.svg", dir);
 		svg = slurp(path);
 		CHECK(svg && strstr(svg, "id=\"decoration-topleft\"") && strstr(svg, "id=\"decoration-inactive-bottomright\"") &&
-		      strstr(svg, "fill=\"#141c38\""));
+		      strstr(svg, "fill=\"#220d13\""));
 		free(svg);
 		snprintf(path, sizeof path, "%s/RROS/close.svg", dir);
 		CHECK(access(path, R_OK) == 0);

@@ -7,9 +7,9 @@ QtObject {
     id: t
     property var st: null
     property bool dark: st ? st.current.scheme !== "light" : true
-    readonly property var fallback: ({ bg: "#0b1020", surface: "#141c38", text: "#e6ecff", muted: "#8a96bd",
-                                       border: "#26305a", accent: "#7c5cff", red: "#ff6b81", green: "#4ade80",
-                                       yellow: "#fbbf24", blue: "#60a5fa", cyan: "#22d3ee", magenta: "#c084fc" })
+    readonly property var fallback: ({ bg: "#140609", surface: "#220d13", text: "#f6ecdf", muted: "#b49c92",
+                                       border: "#3d1a22", accent: "#c8243c", red: "#ff5a6e", green: "#7cc79a",
+                                       yellow: "#e9c48a", blue: "#8fb3e0", cyan: "#efc9a6", magenta: "#e0567a" })
     property var pal: st ? st.current.palette : fallback
 
     // cristal: el color del tema, translúcido

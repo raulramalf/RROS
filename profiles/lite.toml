@@ -12,7 +12,7 @@ kernel = "lite"
 multilib = false
 
 [ui]
-theme = "aurora"
+theme = "lirio"
 color_scheme = "dark"
 font = "Inter"
 font_mono = "JetBrains Mono"

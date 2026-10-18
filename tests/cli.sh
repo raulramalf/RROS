@@ -92,7 +92,7 @@ grep -q '^clave=1' "$XDG_CONFIG_HOME/kwinrc" || fail "rros-theme borró ajustes 
 # alternar oscuro/claro
 "$B/rros-theme" -p lite toggle >/dev/null
 eq "$("$B/rros-config" -p lite get ui.color_scheme)" light
-grep -q 'Color=245,247,255' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "tema claro"
+grep -q 'Color=250,245,239' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "tema claro"
 "$B/rros-theme" -p lite toggle >/dev/null
 eq "$("$B/rros-config" -p lite get ui.color_scheme)" dark
 # ficha y diagnóstico
@@ -297,7 +297,7 @@ if new texto -x 2>/dev/null; then fail "nombre que empieza por guion aceptado"; 
 if new noexiste algo 2>/dev/null; then fail "plantilla inexistente aceptada"; fi
 # --- temas, atajos, reglas, instantáneas (consola) ---
 export RROS_THEMES_DIR=$T/themes
-"$B/rros-theme" -p standard list | gq '^\* aurora' || fail "tema por defecto"
+"$B/rros-theme" -p standard list | gq '^\* lirio' || fail "tema por defecto"
 "$B/rros-theme" -p standard use nord >/dev/null
 "$B/rros-theme" -p standard list | gq '^\* nord' || fail "rros-theme use"
 grep -q 'Color=46,52,64' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "el tema llega a la terminal"
@@ -338,7 +338,7 @@ if "$B/rros-config" snapshot restore ../x 2>/dev/null; then fail "nombre de snap
 "$B/rros-config" import "$T/export.toml"
 if "$B/rros-config" reset 2>/dev/null; then fail "reset sin --yes debía fallar"; fi
 "$B/rros-config" reset --yes
-eq "$("$B/rros-config" -p standard get ui.theme)" aurora
+eq "$("$B/rros-config" -p standard get ui.theme)" lirio
 printf '[ui]\ndock_icon_size = 9999\n' > "$T/mal-import.toml"
 if "$B/rros-config" import "$T/mal-import.toml" 2>/dev/null; then fail "import inválido debía fallar"; fi
 "$B/rros-config" help | gq 'keybind' || fail "ayuda con ejemplos"

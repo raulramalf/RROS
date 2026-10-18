@@ -35,7 +35,7 @@ RPage {
             RowLayout {
                 spacing: 14
                 Repeater {
-                    model: [["light", "Claro", "#f4f6fb", "#ffffff", "#1d2030"], ["dark", "Oscuro", "#0b1020", "#1b2342", "#e6ecff"]]
+                    model: [["light", "Claro", "#f6efe7", "#ffffff", "#2a0f16"], ["dark", "Oscuro", "#140609", "#2a1018", "#f6ecdf"]]
                     ColumnLayout {
                         spacing: 6
                         Rectangle {
@@ -64,7 +64,7 @@ RPage {
             RowLayout {
                 spacing: 8
                 Repeater {
-                    model: ["", "#7c5cff", "#0a84ff", "#22c3e6", "#30d158", "#ffb020", "#ff6b3d", "#ff375f", "#bf5af2"]
+                    model: ["", "#c8243c", "#d9b98f", "#7c5cff", "#0a84ff", "#22c3e6", "#30d158", "#ffb020", "#ff6b3d", "#ff375f", "#bf5af2"]
                     Rectangle {
                         property bool on: modelData === "" ? Ui.v("ui.accent") === "" : Ui.v("ui.accent").toLowerCase() === modelData
                         width: 24; height: 24; radius: 12

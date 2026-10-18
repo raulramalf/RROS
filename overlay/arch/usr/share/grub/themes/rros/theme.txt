@@ -2,7 +2,7 @@
 # El fondo (background.png) lo genera rros-theme al construir la ISO.
 title-text: ""
 desktop-image: "background.png"
-desktop-color: "#0b1020"
+desktop-color: "#140609"
 terminal-font: "Unifont Regular 16"
 terminal-left: "10%"
 terminal-top: "10%"
@@ -24,7 +24,7 @@ terminal-height: "80%"
 	width = 36%
 	height = 34%
 	item_font = "Unifont Regular 16"
-	item_color = "#c9d1f5"
+	item_color = "#e6d6c6"
 	selected_item_font = "Unifont Regular 16"
 	selected_item_color = "#ffffff"
 	item_height = 36
@@ -43,6 +43,6 @@ terminal-height: "80%"
 	align = "center"
 	id = "__timeout__"
 	text = "Arranca solo en %d s · ↑ ↓ para elegir · Intro para entrar"
-	color = "#8a96bd"
+	color = "#b49c92"
 	font = "Unifont Regular 16"
 }

@@ -468,7 +468,7 @@ static int handle(int fd, struct req *rp)
 	} else if (!strcmp(r.path, "/api/theme_new")) {
 		form_get(r.body, "name", a, sizeof a);
 		form_get(r.body, "base", b, sizeof b);
-		if (rros_theme_new(a, b[0] ? b : "aurora", err, sizeof err))
+		if (rros_theme_new(a, b[0] ? b : "lirio", err, sizeof err))
 			respond_ok(fd, 0, err);
 		else
 			respond_ok(fd, 1, "");

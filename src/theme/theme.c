@@ -82,9 +82,9 @@ void rros_theme_from_conf(struct rros_theme *t, const struct rros_conf *c)
 		for (char *p = t->accent; *p; p++)
 			*p = (char)tolower((unsigned char)*p);
 	}
-	cfg_str(c, "ui.theme", "aurora", "_-", t->theme, sizeof t->theme);
+	cfg_str(c, "ui.theme", "lirio", "_-", t->theme, sizeof t->theme);
 	if (!rros_valid_profile_name(t->theme))
-		snprintf(t->theme, sizeof t->theme, "aurora");
+		snprintf(t->theme, sizeof t->theme, "lirio");
 	cfg_enum(c, "ui.color_scheme", "dark", scheme, sizeof scheme);
 	t->dark = strcmp(scheme, "light") != 0;
 	cfg_str(c, "ui.font", "Inter", " ._-", t->font, sizeof t->font);

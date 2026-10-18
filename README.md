@@ -48,7 +48,7 @@ La carpeta [`site/`](site/) es una web estática (se publica en Vercel tal cual:
 | RROS Shell (Qt/QML) | ✅ en la ISO: sustituye a plasmashell y dibuja fondo, barra y dock (captura real en QEMU: [docs/img/rros-shell-live.png](docs/img/rros-shell-live.png)); Launchpad, centro de control, calendario y avisos revisados con `rros-shell --demo` |
 | RROS Ajustes (Qt/QML) | ✅ compila en la CI de Arch; todas las páginas abren sin errores (probado con Qt 6.4); red, sonido, Bluetooth y pantallas necesitan el sistema real |
 | Tema 2D/3D, menú RROS, carga, inicio de sesión (SDDM), GRUB | ✅ tema y SDDM revisados con capturas fuera de Plasma; en el sistema, ver la CI |
-| ISO Lite: arranque, autotest, instalación BIOS, UEFI y cifrada | ✅ (142–143 comprobaciones). Medido en QEMU con 2 GB y 2 hilos: live 920 MB de RAM y 0,9 % de CPU en reposo; instalado 570–600 MB y 2,3–2,7 %; ocupa 5,2 GB |
+| ISO Lite: arranque, autotest, instalación BIOS, UEFI y cifrada | ✅ (142–143 comprobaciones). Medido en QEMU con 2 GB y 2 hilos: live 950 MB de RAM y 1 % de CPU en reposo; instalado 560–600 MB y 3,6–4 %; ocupa 5,2 GB |
 | Hardware real, Secure Boot, ediciones Standard y Pro medidas | ⏳ pendiente |
 
 ## Uso rápido

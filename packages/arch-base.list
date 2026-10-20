@@ -96,6 +96,15 @@ noto-fonts-emoji
 inter-font
 ttf-jetbrains-mono
 ttf-liberation
+ttf-roboto              # más letras para elegir en Apariencia
+ttf-ubuntu-font-family
+ttf-fira-sans
+ttf-fira-code
+ttf-opensans
+ttf-ibm-plex
+cantarell-fonts
+ttf-dejavu
+capitaine-cursors       # otro puntero, además de los de RROS (Lirio, Marfil, Grafito) y Breeze
 
 # --- accesibilidad ---
 orca

@@ -402,6 +402,12 @@ static void plasma_reload(const struct rros_theme *t, const char *old_theme, con
 	run(kbd, NULL, 0);
 	run(lock, NULL, 0);
 	run(pw, NULL, 0);
+	/* el puntero: KWin lo cambia al momento con plasma-apply-cursortheme (leer kcminputrc no basta en Wayland) */
+	{
+		char *cur[] = { "plasma-apply-cursortheme", (char *)t->cursor_theme, NULL };
+
+		run(cur, NULL, 0);
+	}
 	if (strcmp(old_theme, rros_desktoptheme(t))) {
 		char *dt[] = { "plasma-apply-desktoptheme", (char *)rros_desktoptheme(t), NULL };
 

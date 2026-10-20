@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    property string open: ""          // "", "menu", "control", "calendar", "launchpad", "dockmenu", "desktopmenu"
+    property string open: ""          // "", "menu", "control", "calendar", "launchpad", "start", "dockmenu", "desktopmenu"
     property real ax: 0               // punto de anclaje del menú abierto
     property real ay: 0
     property var data: null           // lo que necesite el menú (la app del dock, etc.)

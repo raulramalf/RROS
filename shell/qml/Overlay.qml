@@ -6,7 +6,9 @@ import "."
 Item {
     id: ov
     function clampX(x, w) { return Math.max(8, Math.min(x, width - w - 8)) }
-    function menuTop(h) { return Ux.ay >= 0 ? Ux.ay : height - h - Th.barH - 10 }
+    // con la barra abajo los menús se abren encima de ella; con la barra lateral, a su derecha
+    function menuTop(h) { return Ux.ay >= 0 ? Math.min(Ux.ay, height - h - 8) : height - h - Th.tbReserve - 8 }
+    function menuX(w, right) { return Th.vertical ? Ux.ax : clampX(right ? Ux.ax - w : Ux.ax, w) }
 
     MouseArea {
         anchors.fill: parent
@@ -15,6 +17,10 @@ Item {
         onClicked: Ux.close()
     }
     Launchpad { anchors.fill: parent; visible: Ux.open === "launchpad" }
+    StartMenu {
+        visible: Ux.open === "start"
+        x: ov.menuX(width, false); y: ov.menuTop(height)
+    }
 
     MenuList {
         id: rmenu
@@ -31,21 +37,21 @@ Item {
     }
     ControlCenter {
         visible: Ux.open === "control"
-        x: ov.clampX(Ux.ax - width + 40, width); y: ov.menuTop(height)
+        x: ov.menuX(width, true); y: ov.menuTop(height)
     }
     CalendarPop {
         visible: Ux.open === "calendar"
-        x: ov.clampX(Ux.ax - width + 120, width); y: ov.menuTop(height)
+        x: ov.menuX(width, true); y: ov.menuTop(height)
     }
     MenuList {
         id: dmenu
         visible: Ux.open === "dockmenu"
         property var it: Ux.data || ({})
         property var wins: it.id ? Tk.windowsOf(it.id) : []
-        x: ov.clampX(Ux.ax - width / 2, width); y: Ux.ay - height - 14
+        x: Th.vertical ? Ux.ax : ov.clampX(Ux.ax - width / 2, width); y: Th.vertical ? Ux.ay : Ux.ay - height - 14
         entries: it.kind === "trash" ? [["Abrir la papelera", "open"], ["Vaciar la papelera", "empty"]]
                : it.kind === "launchpad" ? [["Abrir el Launchpad", "open"]]
-               : [[wins.length ? "Nueva ventana" : "Abrir", "new"], [it.pinned ? "Quitar del dock" : "Mantener en el dock", "pin"]]
+               : [[wins.length ? "Nueva ventana" : "Abrir", "new"], [it.pinned ? (Th.dock ? "Quitar del dock" : "Desanclar de la barra") : (Th.dock ? "Mantener en el dock" : "Anclar a la barra"), "pin"]]
                  .concat(wins.length ? [["-"], ["Cerrar", "close"]] : [])
         onPicked: function (a) {
             if (a === "open" && it.kind === "launchpad") Ux.toggle("launchpad")
@@ -63,7 +69,7 @@ Item {
     MenuList {
         visible: Ux.open === "desktopmenu"
         x: ov.clampX(Ux.ax, width); y: Math.min(Ux.ay, ov.height - height - 8)
-        entries: [["Cambiar el fondo…", "rros-ajustes --pagina apariencia"], ["Escritorio y Dock…", "rros-ajustes --pagina escritorio"],
+        entries: [["Cambiar el fondo…", "rros-ajustes --pagina apariencia"], ["Barra de tareas y escritorio…", "rros-ajustes --pagina escritorio"],
                   ["Pantallas…", "rros-ajustes --pagina pantalla"], ["-"], ["Abrir una terminal", "konsole"], ["Archivos", "dolphin"]]
         onPicked: function (a) { Sh.detached(a.split(" ")) }
     }

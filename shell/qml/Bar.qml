@@ -1,5 +1,6 @@
-// Barra superior de RROS: el menú RROS, la aplicación activa, el estado del sistema, el centro de control y la hora.
-// Con «panel.taskbar» (estilo Clásico) es una barra de tareas abajo con las ventanas abiertas.
+// Barra superior de RROS (estilos Dock y Doble): el menú RROS, la aplicación activa, la bandeja y la fecha y hora.
+// Pensada como la de un ordenador: fondo sólido del color de las ventanas, iconos de la bandeja agrupados (un clic
+// abre los ajustes rápidos), avisos con su contador y el reloj con la fecha completa.
 import QtQuick
 import QtQuick.Layouts
 import "."
@@ -7,125 +8,108 @@ import "."
 Item {
     id: bar
     property var hostWindow: null
-    implicitHeight: Th.barH + (Th.barStyle === "flat" ? 0 : 6)
+    implicitHeight: Th.barH
     property string now: ""
+    property string today: ""
     // dónde se abren los menús, en coordenadas de la pantalla
     function anchorX(item) { var p = item.mapToItem(null, 0, 0); return p.x }
+    function anchorR(item) { var p = item.mapToItem(null, item.width, 0); return p.x }
     function menuY() { return Th.barTop ? bar.implicitHeight + 4 : -1 }
 
     Timer {
         interval: 1000; running: true; repeat: true; triggeredOnStart: true
-        onTriggered: bar.now = new Date().toLocaleString(Qt.locale("es_ES"), Th.clock24 ? "ddd d MMM  HH:mm" : "ddd d MMM  h:mm AP")
+        onTriggered: {
+            var d = new Date(), es = Qt.locale("es_ES")
+            bar.now = d.toLocaleString(es, Th.clock24 ? "HH:mm" : "h:mm AP")
+            bar.today = d.toLocaleString(es, "ddd d 'de' MMMM")
+        }
     }
 
-    Glass {
-        id: bg
+    Rectangle {
         anchors.fill: parent
-        anchors.topMargin: Th.barStyle === "flat" ? 0 : (Th.barTop ? 6 : 0)
-        anchors.bottomMargin: Th.barStyle === "flat" ? 0 : (Th.barTop ? 0 : 6)
-        anchors.leftMargin: Th.barStyle === "pill" ? (parent.width - row.implicitWidth - 40) / 2 : Th.barStyle === "floating" ? 8 : 0
-        anchors.rightMargin: anchors.leftMargin
-        radius: Th.barStyle === "flat" ? 0 : height / 2
-        border.width: Th.barStyle === "flat" ? 0 : 1
-        Rectangle {   // línea fina abajo (o arriba) en la barra de borde a borde
-            visible: Th.barStyle === "flat"
-            anchors { left: parent.left; right: parent.right }
-            y: Th.barTop ? parent.height - 1 : 0
-            height: 1
-            color: Th.edge
-        }
+        color: Th.barColor
+        Rectangle { anchors { left: parent.left; right: parent.right } y: Th.barTop ? parent.height - 1 : 0; height: 1; color: Th.edge }
     }
 
     RowLayout {
-        id: row
-        anchors { fill: bg; leftMargin: 10; rightMargin: 12 }
-        spacing: 4
+        anchors { fill: parent; leftMargin: 6; rightMargin: 6 }
+        spacing: 2
 
-        // ---- menú RROS ----
         BarButton {
             id: logo
+            implicitWidth: 34
             onClicked: Ux.toggle("menu", bar.anchorX(logo), bar.menuY())
-            Image { anchors.centerIn: parent; source: "qrc:/icons/app-rros-mono.svg"; sourceSize: Qt.size(44, 44); width: 22; height: 22 }
+            Image { anchors.centerIn: parent; source: Th.dark ? "qrc:/icons/app-rros-mono.svg" : "qrc:/icons/app-rros-mono-dark.svg"; sourceSize: Qt.size(44, 44); width: 20; height: 20 }
         }
-        // ---- la aplicación activa (en negrita, como el nombre de la app en macOS) ----
         Txt {
-            visible: !Th.taskbar
             Layout.leftMargin: 6
-            text: Tk.active ? (Apps.forWindow(Tk.active.appId).name || Tk.active.name || "Aplicación") : "RROS"
-            font.weight: Font.Bold
-            Layout.maximumWidth: 260
+            text: Tk.active ? (Apps.forWindow(Tk.active.appId).name || Tk.active.name || "Aplicación") : "Escritorio"
+            font.weight: Font.DemiBold
+            Layout.maximumWidth: 240
         }
         Txt {
-            visible: !Th.taskbar && Tk.active !== null && Tk.active.title !== ""
-            text: Tk.active ? Tk.active.title : ""
+            visible: Tk.active !== null && Tk.active.title !== ""
+            text: Tk.active ? "— " + Tk.active.title : ""
             color: Th.muted
-            Layout.maximumWidth: 380
-            Layout.leftMargin: 10
-        }
-        // ---- barra de tareas (Clásico) ----
-        Repeater {
-            model: Th.taskbar ? Tk.list : []
-            Rectangle {
-                Layout.preferredWidth: Math.min(200, tl.implicitWidth + 44)
-                Layout.preferredHeight: Th.barH - 8
-                radius: 6
-                color: modelData.active ? Qt.rgba(Qt.color(Th.accent).r, Qt.color(Th.accent).g, Qt.color(Th.accent).b, 0.35) : (tm.containsMouse ? Th.hover : "transparent")
-                Ico { x: 6; anchors.verticalCenter: parent.verticalCenter; size: 18; name: Apps.forWindow(modelData.appId).icon || modelData.appId }
-                Txt { id: tl; x: 30; width: parent.width - 36; anchors.verticalCenter: parent.verticalCenter; text: modelData.title || modelData.name; font.pixelSize: 12 }
-                MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; onClicked: modelData.active ? Tk.toggleMinimized(modelData.row) : Tk.activate(modelData.row) }
-            }
+            Layout.maximumWidth: 420
+            Layout.leftMargin: 6
         }
         Item { Layout.fillWidth: true }
 
-        // ---- estado ----
+        // ---- bandeja: red, sonido y batería juntos (como en Windows 11: un clic, ajustes rápidos) ----
         BarButton {
-            visible: Sy.battery >= 0
-            implicitWidth: bat.width + (Th.batteryPct ? pct.implicitWidth + 6 : 0) + 12
-            onClicked: Sh.detached(["rros-ajustes", "--pagina", "energia"])
+            id: tray
+            implicitWidth: trayRow.implicitWidth + 18
+            onClicked: Ux.toggle("control", bar.anchorR(tray), bar.menuY())
             Row {
+                id: trayRow
                 anchors.centerIn: parent
-                spacing: 4
-                Txt { id: pct; visible: Th.batteryPct; text: Sy.battery + " %"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
-                Glyph { id: bat; name: "battery"; width: 22; height: 16; level: Sy.battery / 100; flag: Sy.charging; anchors.verticalCenter: parent.verticalCenter }
+                spacing: 12
+                Glyph { anchors.verticalCenter: parent.verticalCenter; name: Sy.netType === "ethernet" ? "ethernet" : (Sy.netType === "wifi" ? "wifi" : "wifi-off"); level: Sy.wifiSignal / 100 }
+                Glyph { anchors.verticalCenter: parent.verticalCenter; name: "volume"; level: Sy.volume / 100; flag: Sy.muted || Sy.volume === 0 }
+                Row {
+                    visible: Sy.battery >= 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 4
+                    Glyph { name: "battery"; width: 22; height: 16; level: Sy.battery / 100; flag: Sy.charging; anchors.verticalCenter: parent.verticalCenter }
+                    Txt { visible: Th.batteryPct; text: Sy.battery + " %"; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+                }
             }
         }
         BarButton {
-            id: net
-            onClicked: Ux.toggle("control", bar.anchorX(net), bar.menuY())
-            Glyph { anchors.centerIn: parent; name: Sy.netType === "ethernet" ? "ethernet" : (Sy.netType === "wifi" ? "wifi" : "wifi-off"); level: Sy.wifiSignal / 100 }
-        }
-        BarButton {
-            id: vol
-            onClicked: Ux.toggle("control", bar.anchorX(vol), bar.menuY())
-            Glyph { anchors.centerIn: parent; name: "volume"; level: Sy.volume / 100; flag: Sy.muted || Sy.volume === 0 }
-        }
-        BarButton {
-            id: cc
-            onClicked: Ux.toggle("control", bar.anchorX(cc), bar.menuY())
-            Glyph { anchors.centerIn: parent; name: "control" }
-            Rectangle {   // avisos sin leer
+            id: bell
+            onClicked: Ux.toggle("calendar", bar.anchorR(bell), bar.menuY())
+            Glyph { anchors.centerIn: parent; name: "bell" }
+            Rectangle {
                 visible: Notifs.count > 0
-                width: 7; height: 7; radius: 3.5
+                width: Math.max(16, nb.implicitWidth + 8); height: 16; radius: 8
                 color: Th.accent
-                anchors { right: parent.right; top: parent.top; rightMargin: 3; topMargin: 3 }
+                anchors { right: parent.right; top: parent.top; rightMargin: -2; topMargin: 0 }
+                Txt { id: nb; anchors.centerIn: parent; text: Notifs.count; color: Th.onAccent; font.pixelSize: 10; font.weight: Font.Bold }
             }
         }
         BarButton {
             id: clock
-            implicitWidth: ct.implicitWidth + 16
-            onClicked: Ux.toggle("calendar", bar.anchorX(clock), bar.menuY())
-            Txt { id: ct; anchors.centerIn: parent; text: bar.now; font.weight: Font.DemiBold }
+            implicitWidth: clockRow.implicitWidth + 18
+            onClicked: Ux.toggle("calendar", bar.anchorR(clock), bar.menuY())
+            Row {
+                id: clockRow
+                anchors.centerIn: parent
+                spacing: 10
+                Txt { text: bar.today; color: Th.muted; anchors.verticalCenter: parent.verticalCenter }
+                Txt { text: bar.now; font.weight: Font.DemiBold; anchors.verticalCenter: parent.verticalCenter }
+            }
         }
     }
 
     component BarButton: Rectangle {
         signal clicked()
         default property alias content: inner.data
-        implicitWidth: 30
+        implicitWidth: 32
         implicitHeight: Th.barH - 6
         Layout.alignment: Qt.AlignVCenter
-        radius: 6
-        color: ma.containsMouse || ma.pressed ? Th.hover : "transparent"
+        radius: 5
+        color: ma.pressed ? Th.pressed : ma.containsMouse ? Th.hover : "transparent"
         Item { id: inner; anchors.fill: parent }
         MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; onClicked: parent.clicked() }
     }

@@ -1,12 +1,12 @@
-// Escritorio y Dock: estilo del escritorio, dock 2D o 3D, barra superior y ventanas
+// Barra de tareas y escritorio: el diseño de la barra (seis estilos), sus opciones, el dock, la barra superior y las ventanas
 import QtQuick
 import QtQuick.Layouts
 import "."
 
 RPage {
     id: p
-    title: "Escritorio y Dock"
-    subtitle: "Cómo se colocan la barra, el dock y las ventanas"
+    title: "Barra de tareas y escritorio"
+    subtitle: "El diseño de la barra de tareas, el dock y las ventanas"
     icon: "qrc:/icons/sec-escritorio.svg"
 
     function desktop(id) {
@@ -16,8 +16,9 @@ RPage {
         })
     }
 
-    Section { text: "Estilo" }
-    RowLayout {
+    Section { text: "Diseño" }
+    Flow {
+        Layout.fillWidth: true
         spacing: 14
         Repeater {
             model: Ui.st ? Ui.st.desktops : []
@@ -39,7 +40,20 @@ RPage {
         }
     }
 
-    Section { text: "Dock" }
+    Section { text: "Barra de tareas" }
+    Card {
+        KeyRow { k: "ui.taskbar_style"; title: "Estilo"; combo: true
+                 labels: { "rros": "Fusión", "clasica": "Clásica", "isla": "Isla", "dock": "Dock", "doble": "Doble", "lateral": "Lateral" } }
+        KeyRow { k: "ui.taskbar_align"; title: "Aplicaciones"; labels: { "auto": "Según el estilo", "centro": "En el centro", "izquierda": "A la izquierda" }
+                 enabled2: Ui.v("ui.taskbar_style") !== "dock" }
+        KeyRow { k: "ui.taskbar_size"; title: "Alto"; subtitle: "Siempre visible: las ventanas maximizadas llegan justo hasta ella"; unit: " px"; step: 4
+                 enabled2: Ui.v("ui.taskbar_style") !== "dock" }
+        KeyRow { k: "ui.taskbar_labels"; title: "Nombre de cada ventana junto a su icono"; enabled2: Ui.v("ui.taskbar_style") !== "dock" }
+        KeyRow { k: "ui.taskbar_search"; title: "Buscador en la barra"; subtitle: "Con las aplicaciones a la izquierda"; separator: false
+                 enabled2: Ui.v("ui.taskbar_style") !== "dock" }
+    }
+
+    Section { text: "Dock (estilo Dock)" }
     Card {
         KeyRow { k: "ui.dock"; title: "Mostrar el dock"; subtitle: "Tus aplicaciones, las abiertas, el Launchpad y la papelera" }
         SRow {
@@ -73,13 +87,11 @@ RPage {
         KeyRow { k: "ui.dock_launchpad"; title: "Launchpad"; subtitle: "Botón con todas las aplicaciones en pantalla completa"; separator: false; enabled2: Ui.b("ui.dock") }
     }
 
-    Section { text: "Barra superior" }
+    Section { text: "Barra superior (estilos Dock y Doble)" }
     Card {
         KeyRow { k: "panel.style"; title: "Forma"; labels: { "flat": "De borde a borde", "floating": "Flotante", "pill": "Píldora" } }
         KeyRow { k: "ui.panel_position"; title: "Posición"; labels: { "top": "Arriba", "bottom": "Abajo", "left": "Izq.", "right": "Der." } }
         KeyRow { k: "ui.panel_size"; title: "Altura"; unit: " px"; step: 2 }
-        KeyRow { k: "ui.global_menu"; title: "Menú de la aplicación en la barra"; subtitle: "Archivo, Editar, Ver… arriba, como en macOS" }
-        KeyRow { k: "ui.panel_autohide"; title: "Ocultar la barra automáticamente" }
         KeyRow { k: "ui.clock_24h"; title: "Reloj de 24 horas" }
         KeyRow { k: "ui.show_battery_percent"; title: "Porcentaje de batería"; separator: false }
     }

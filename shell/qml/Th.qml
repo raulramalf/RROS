@@ -12,15 +12,20 @@ QtObject {
                                        yellow: "#e9c48a", blue: "#8fb3e0", cyan: "#efc9a6", magenta: "#e0567a" })
     property var pal: st ? st.current.palette : fallback
 
-    // cristal: el color del tema, translúcido
-    property color glass: dark ? Qt.rgba(0.07, 0.08, 0.14, 0.62) : Qt.rgba(0.97, 0.97, 1.0, 0.62)
-    property color glassStrong: dark ? Qt.rgba(0.08, 0.09, 0.16, 0.86) : Qt.rgba(0.98, 0.98, 1.0, 0.88)
-    property color edge: dark ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(0, 0, 0, 0.10)
-    property color hover: dark ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(0, 0, 0, 0.07)
-    property color text: dark ? "#f2f4ff" : "#14172a"
-    property color muted: dark ? Qt.rgba(1, 1, 1, 0.62) : Qt.rgba(0, 0, 0, 0.55)
+    // superficies: salen de la paleta del tema (en claro y en oscuro), no de colores fijos
+    function rgba(c, a) { var q = Qt.color(c); return Qt.rgba(q.r, q.g, q.b, a) }
+    property color glass: rgba(pal.surface, dark ? 0.80 : 0.86)
+    property color glassStrong: rgba(pal.surface, dark ? 0.94 : 0.97)
+    property color barColor: rgba(pal.surface, dark ? 0.90 : 0.92)
+    property color edge: dark ? Qt.rgba(1, 1, 1, 0.12) : rgba(pal.text, 0.16)
+    property color hover: rgba(pal.text, dark ? 0.10 : 0.08)
+    property color pressed: rgba(pal.text, dark ? 0.16 : 0.13)
+    property color text: pal.text
+    property color muted: pal.muted
     property color accent: pal.accent
-    property color tile: dark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.05)
+    property color onAccent: Qt.color(pal.accent).hslLightness > 0.6 ? "#1a1a1a" : "#ffffff"
+    property color tile: rgba(pal.text, dark ? 0.07 : 0.05)
+    property color shadow: dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.18)
     property string font: "Inter"
 
     // ajustes
@@ -33,7 +38,19 @@ QtObject {
     function b(k, def) { var x = v(k, def ? "true" : "false"); return x === "true" }
     function n(k, def) { var x = parseInt(v(k, String(def))); return isNaN(x) ? def : x }
 
-    property bool dock: b("ui.dock", true) && !taskbar
+    // diseño de la barra de tareas
+    property string layout: v("ui.taskbar_style", "rros")
+    property bool topBar: layout === "dock" || layout === "doble"
+    property bool taskbarOn: layout !== "dock"
+    property bool vertical: layout === "lateral"
+    property bool island: layout === "isla"
+    property int tbH: Math.max(36, n("ui.taskbar_size", 48))
+    property bool tbCenter: v("ui.taskbar_align", "auto") === "auto" ? (layout === "rros" || layout === "isla") : v("ui.taskbar_align", "auto") === "centro"
+    property bool tbLabels: b("ui.taskbar_labels", false) || layout === "clasica"
+    property bool tbSearch: b("ui.taskbar_search", true) && !vertical
+    // lo que la barra de tareas quita al borde de la pantalla (las ventanas maximizadas llegan justo hasta ella)
+    property int tbReserve: !taskbarOn ? 0 : (island ? tbH + 10 : tbH)
+    property bool dock: b("ui.dock", true) && layout === "dock"
     property bool dock3d: v("ui.dock_style", "2d") === "3d"
     property int dockIcon: n("ui.dock_icon_size", 48)
     property string dockPos: v("ui.dock_position", "bottom")
@@ -45,9 +62,9 @@ QtObject {
                  : ["org.kde.dolphin", "firefox", "rros-apps", "org.kde.konsole", "org.kde.kate", "rros-settings"]
     }
     property bool barTop: v("ui.panel_position", "top") !== "bottom"
-    property int barH: Math.max(24, n("ui.panel_size", 28))
+    property int barH: Math.max(28, n("ui.panel_size", 30))
     property string barStyle: v("panel.style", "flat")
-    property bool taskbar: b("panel.taskbar", false)
+    property bool taskbar: false
     property bool clock24: b("ui.clock_24h", true)
     property bool batteryPct: b("ui.show_battery_percent", true)
     property bool animations: b("ui.animations", true) && v("ui.effects", "basic") !== "off"

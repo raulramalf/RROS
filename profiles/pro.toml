@@ -33,6 +33,7 @@ workspaces = 4
 hot_corners = true
 # estilo «rros» (Fusión): barra de tareas abajo de borde a borde, siempre visible, con inicio, buscador,
 # las aplicaciones en el centro, la bandeja y el reloj (el dock 3D, en el estilo Dock)
+cursor_theme = "RROS-Lirio"
 taskbar_style = "rros"
 taskbar_align = "auto"
 taskbar_size = 52

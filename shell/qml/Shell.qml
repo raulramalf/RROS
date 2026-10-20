@@ -32,9 +32,35 @@ QtObject {
             Sh.layer(barWin, { layer: "top", anchors: Th.barTop ? "top,left,right" : "bottom,left,right", exclusive: bar.implicitHeight, scope: "rros-barra" })
             Sh.blurBehind(barWin, true, [])
         }
-        Component.onCompleted: { place(); visible = true }
-        Connections { target: Th; function onBarTopChanged() { barWin.visible = false; barWin.place(); barWin.visible = true } }
+        Component.onCompleted: { place(); visible = Th.topBar }
+        Connections {
+            target: Th
+            function onBarTopChanged() { barWin.visible = false; barWin.place(); barWin.visible = Th.topBar }
+            function onTopBarChanged() { barWin.visible = Th.topBar }
+        }
         onHeightChanged: Sh.setExclusive(barWin, height)
+    },
+
+    // ---- barra de tareas (abajo de borde a borde, isla flotante o lateral): siempre visible y con su franja
+    // reservada, así las ventanas maximizadas llegan justo hasta ella y nada queda debajo ----
+    Window {
+        id: tbWin
+        visible: false
+        color: "transparent"
+        width: Th.vertical ? taskbar.implicitWidth : Screen.width
+        height: Th.vertical ? Screen.height : taskbar.implicitHeight
+        Taskbar { id: taskbar; anchors.fill: parent }
+        function place() {
+            Sh.layer(tbWin, { layer: "top", anchors: Th.vertical ? "left,top,bottom" : "bottom,left,right",
+                              exclusive: Th.vertical ? Th.tbH : Th.tbReserve, scope: "rros-tareas" })
+            Sh.blurBehind(tbWin, true, [])
+        }
+        Component.onCompleted: { place(); visible = Th.taskbarOn }
+        Connections {
+            target: Th
+            function onLayoutChanged() { tbWin.visible = false; tbWin.place(); tbWin.visible = Th.taskbarOn }
+            function onTbReserveChanged() { Sh.setExclusive(tbWin, Th.vertical ? Th.tbH : Th.tbReserve) }
+        }
     },
 
     // ---- dock ----
@@ -80,7 +106,7 @@ QtObject {
         Connections { target: hov; function onHoveredChanged() { dockWin.updateInput() } }
         Connections {
             target: Th
-            function onDockChanged() { dockWin.visible = Th.dock }
+            function onDockChanged() { dockWin.place(); dockWin.visible = Th.dock }
             function onDockPosChanged() { dockWin.visible = false; dockWin.place(); dockWin.visible = Th.dock }
             function onDockHidingChanged() { dockWin.place() }
             function onDockIconChanged() { Sh.setExclusive(dockWin, dockWin.autoHide ? 0 : dock.base + 8) }
@@ -114,7 +140,7 @@ QtObject {
         color: "transparent"
         width: banners.width; height: Math.max(1, banners.implicitHeight)
         Banners { id: banners }
-        Component.onCompleted: Sh.layer(notifWin, { layer: "overlay", anchors: "top,right", exclusive: -1, margins: [Th.barH + 10, 10, 0, 0], scope: "rros-avisos" })
+        Component.onCompleted: Sh.layer(notifWin, { layer: "overlay", anchors: "top,right", exclusive: -1, margins: [Th.topBar ? Th.barH + 10 : 10, 10, 0, 0], scope: "rros-avisos" })
     },
     Window {
         id: osdWin
@@ -127,7 +153,8 @@ QtObject {
 
     Connections {
         target: Sh
-        function onLaunchpadRequested() { Ux.toggle("launchpad") }
+        // la tecla Windows: el Launchpad con el dock; el menú de inicio con la barra de tareas
+        function onLaunchpadRequested() { if (Th.dock) Ux.toggle("launchpad"); else Ux.toggle("start", Th.vertical ? Th.tbH + 8 : 6, Th.vertical ? 8 : -1) }
         function onControlCenterRequested() { Ux.toggle("control", wall.width - 60, Th.barH + 4) }
     }
     ]

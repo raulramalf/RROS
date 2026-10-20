@@ -10,7 +10,14 @@ Window {
     color: "black"
     title: "RROS Shell (demo)"
     Wallpaper { anchors.fill: parent }
-    Bar { id: bar; anchors { left: parent.left; right: parent.right } y: Th.barTop ? 0 : parent.height - height; height: implicitHeight }
+    Bar { id: bar; visible: Th.topBar; anchors { left: parent.left; right: parent.right } y: Th.barTop ? 0 : parent.height - height; height: implicitHeight }
+    Taskbar {
+        id: taskbar
+        visible: Th.taskbarOn
+        x: 0; y: Th.vertical ? 0 : parent.height - height
+        width: Th.vertical ? implicitWidth : parent.width
+        height: Th.vertical ? parent.height : implicitHeight
+    }
     Dock {
         id: dock
         visible: Th.dock
@@ -20,7 +27,7 @@ Window {
         y: vertical ? (parent.height - height) / 2 : parent.height - height
     }
     Overlay { anchors.fill: parent }
-    Banners { id: banners; anchors { right: parent.right; top: parent.top; topMargin: Th.barH + 10; rightMargin: 10 } }
+    Banners { id: banners; anchors { right: parent.right; top: parent.top; topMargin: Th.topBar ? Th.barH + 10 : 10; rightMargin: 10 } }
     Osd { anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 140 } }
 
     Timer {
@@ -31,9 +38,10 @@ Window {
                        { row: 1, appId: "firefox", name: "Firefox", title: "RROS", active: false, minimized: false }]
             Tk.active = Tk.list[0]
             if (openWhat === "launchpad") Ux.toggle("launchpad")
-            else if (openWhat === "control") Ux.toggle("control", w.width - 120, Th.barH + 4)
+            else if (openWhat === "start") Ux.toggle("start", Th.vertical ? Th.tbH + 8 : 6, Th.vertical ? 8 : -1)
+            else if (openWhat === "control") Ux.toggle("control", w.width - 90, Th.topBar ? Th.barH + 4 : -1)
             else if (openWhat === "menu") Ux.toggle("menu", 8, Th.barH + 4)
-            else if (openWhat === "calendar") Ux.toggle("calendar", w.width - 90, Th.barH + 4)
+            else if (openWhat === "calendar") Ux.toggle("calendar", Th.vertical ? Th.tbH + 8 : w.width - 10, Th.topBar ? Th.barH + 4 : -1)
             else if (openWhat === "aviso") Notifs.Notify("Tienda", 0, "rros-apps", "VLC instalada", "Ya la tienes en el Launchpad.", [], {}, 0)
             else if (openWhat === "zoom") dock.hoverPos = dock.restCenter(3)
             if (shotPath !== "") shot.start()

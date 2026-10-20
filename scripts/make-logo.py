@@ -75,6 +75,8 @@ def main():
         render(LOGO, 96, os.path.join(ARCH, "grub/themes/rros/logo.png"), tmp)
     with open(os.path.join(ROOT, "app/icons/app-rros-mono.svg"), "w") as f:
         f.write(mono("#f4ead9"))
+    with open(os.path.join(ROOT, "app/icons/app-rros-mono-dark.svg"), "w") as f:   # para los temas claros
+        f.write(mono("#2a0f16"))
     with open(os.path.join(HICOLOR, "scalable/apps/rros-symbolic.svg"), "w") as f:
         f.write(mono(None, symbolic=True))
     # el SVG con la foto no se instala como icono: se usarían los PNG

@@ -163,11 +163,68 @@ RPage {
         onAccepted: Ui.setKey("ui.wallpaper", decodeURIComponent(String(selectedFile).replace("file://", "")))
     }
 
-    Section { text: "Letra e iconos" }
+    // letras instaladas (las de símbolos y emoji fuera) y temas de puntero (los que tienen carpeta «cursors»)
+    property var fonts: Qt.fontFamilies().filter(function (f) { return !/emoji|symbol|unifont|opensymbol|^dejavu math|^noto (sans|serif) (?!mono)[a-z]+ ?[a-z]*$/i.test(f) || /^noto (sans|serif)$/i.test(f) })
+    property var monoFonts: Qt.fontFamilies().filter(function (f) { return /mono|code|courier|consol|hack|fira code|jetbrains/i.test(f) })
+    property var cursors: []
+    Component.onCompleted: Sys.run(["sh", "-c", "for d in /usr/share/icons/*/cursors \"$HOME\"/.local/share/icons/*/cursors; do [ -d \"$d\" ] && t=${d%/cursors} && n=$(sed -n 's/^Name=//p' \"$t/index.theme\" 2>/dev/null | head -1) && p=$(ls \"$t\"/preview*.png 2>/dev/null | head -1) && echo \"${t##*/}|${n:-${t##*/}}|$p\"; done"], function (r) {
+        p.cursors = r.out.split("\n").filter(function (l) { return l !== "" }).map(function (l) { var x = l.split("|"); return { id: x[0], name: x[1], preview: x[2] || "" } })
+    })
+
+    Section { text: "Letra" }
     Card {
-        KeyRow { k: "ui.font"; title: "Letra de la interfaz"; combo: true }
+        SRow {
+            title: "Letra de la interfaz"
+            subtitle: "Menús, ventanas, barra de tareas y aplicaciones"
+            Combo {
+                implicitWidth: 260
+                options: p.fonts.map(function (f) { return [f, f] })
+                value: Ui.v("ui.font")
+                onPicked: function (v) { Ui.setKey("ui.font", v) }
+            }
+        }
         KeyRow { k: "ui.font_size"; title: "Tamaño de la letra"; unit: " pt" }
-        KeyRow { k: "ui.font_mono"; title: "Letra de la terminal y el código" }
+        SRow {
+            title: "Letra de la terminal y el código"
+            Combo {
+                implicitWidth: 260
+                options: p.monoFonts.map(function (f) { return [f, f] })
+                value: Ui.v("ui.font_mono")
+                onPicked: function (v) { Ui.setKey("ui.font_mono", v) }
+            }
+        }
+        SRow {
+            title: "Vista previa"
+            separator: false
+            Txt { text: "El veloz murciélago hindú comía feliz cardillo y kiwi. 0123456789"; font.family: Ui.v("ui.font"); font.pixelSize: 15 }
+        }
+    }
+
+    Section { text: "Puntero del ratón" }
+    Flow {
+        Layout.fillWidth: true
+        spacing: 12
+        Repeater {
+            model: p.cursors
+            Rectangle {
+                property bool on: Ui.v("ui.cursor_theme") === modelData.id
+                width: 150; height: 112; radius: 12
+                color: Ui.card
+                border.width: on ? 3 : 1
+                border.color: on ? Ui.accent : Ui.line
+                Image {
+                    anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 14 }
+                    width: 48; height: 48; fillMode: Image.PreserveAspectFit
+                    source: modelData.preview !== "" ? "file://" + modelData.preview : ""
+                    visible: modelData.preview !== ""
+                }
+                Txt { anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 12 }
+                      text: modelData.name; font.weight: Font.DemiBold; font.pixelSize: Ui.fs - 1 }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Ui.setKey("ui.cursor_theme", modelData.id) }
+            }
+        }
+    }
+    Card {
         KeyRow { k: "ui.cursor_size"; title: "Tamaño del puntero"; unit: " px"; step: 4 }
         KeyRow { k: "ui.transparency"; title: "Transparencia de menús y ventanas sin foco"; unit: " %"; step: 5; separator: false }
     }

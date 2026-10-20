@@ -20,7 +20,7 @@ ApplicationWindow {
     readonly property var sections: [
         ["general", "General", "sec-general", "PGeneral.qml", 0],
         ["apariencia", "Apariencia", "sec-apariencia", "PApariencia.qml", 0],
-        ["escritorio", "Escritorio y Dock", "sec-escritorio", "PEscritorio.qml", 0],
+        ["escritorio", "Barra de tareas", "sec-escritorio", "PEscritorio.qml", 0],
         ["red", "Red e Internet", "sec-red", "PRed.qml", 1],
         ["bluetooth", "Bluetooth", "sec-bluetooth", "PBluetooth.qml", 1],
         ["sonido", "Sonido", "sec-sonido", "PSonido.qml", 1],

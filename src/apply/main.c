@@ -134,6 +134,13 @@ static void apply_security(const struct rros_secpol *sp, int live, int *bad)
 	if (!arch)
 		*bad |= write_rendered("/etc/apt/apt.conf.d/20auto-upgrades", rros_render_autoupdates, sp, 0) != 0;
 	*bad |= write_rendered("/etc/security/limits.d/90-rros-core.conf", rros_render_corelimit, sp, 0) != 0;
+	*bad |= write_rendered("/etc/rros/antivirus.conf", rros_render_avpolicy, sp, 0) != 0;
+	*bad |= write_rendered("/etc/security/pwquality.conf.d/rros.conf", rros_render_pwquality, sp, 0) != 0;
+	*bad |= write_rendered("/etc/systemd/system/tmp.mount.d/rros.conf", rros_render_tmpmount, sp, 0) != 0;
+	if (arch) {
+		*bad |= write_rendered("/etc/clamav/clamd.conf", rros_render_clamd, sp, 0) != 0;
+		*bad |= write_rendered("/etc/systemd/system/rros-antivirus.timer.d/rros.conf", rros_render_avtimer, sp, 0) != 0;
+	}
 
 	if (!live) {
 		printf("%-22s %s (simulado)\n", "cortafuegos", sp->firewall ? "se activaría" : "se desactivaría");
@@ -167,6 +174,43 @@ static void apply_security(const struct rros_secpol *sp, int live, int *bad)
 
 			printf("%-22s %s\n", "actualizaciones", run_cmd(sp->auto_updates ? up_on : up_off) != 0 ? "falló" :
 			       sp->auto_updates ? "se descargan solas cada día" : "a mano");
+		}
+		/* antivirus: firmas, tiempo real (clamd + clamonacc) y análisis programado */
+		if (arch && unit_exists("clamav-daemon.service")) {
+			static const struct { const char *unit; int on; } av[] = {
+				{ "clamav-freshclam.service", 0 }, { "clamav-daemon.service", 0 }, { "clamav-clamonacc.service", 0 },
+				{ "rros-antivirus.timer", 0 },
+			};
+			int want[4] = { sp->av_updates, sp->av_realtime, sp->av_realtime, strcmp(sp->av_schedule, "off") != 0 };
+			const char *rl[] = { "systemctl", "daemon-reload", NULL };
+
+			run_cmd(rl);
+			for (int i = 0; i < 4; i++) {
+				const char *on[] = { "systemctl", "enable", "--now", av[i].unit, NULL };
+				const char *off[] = { "systemctl", "disable", "--now", av[i].unit, NULL };
+
+				if (unit_exists(av[i].unit))
+					run_cmd(want[i] ? on : off);
+			}
+			printf("%-22s %s\n", "antivirus", sp->av_realtime ? "en tiempo real y programado" :
+			       strcmp(sp->av_schedule, "off") ? "análisis programado" : "solo a mano");
+		}
+		/* USBGuard: la primera vez, la lista de permitidos son los USB conectados ahora (el teclado y el ratón) */
+		if (arch && unit_exists("usbguard.service")) {
+			const char *on[] = { "systemctl", "enable", "--now", "usbguard.service", NULL };
+			const char *off[] = { "systemctl", "disable", "--now", "usbguard.service", NULL };
+
+			if (sp->usb_guard && access("/etc/usbguard/rules.conf", F_OK) == 0) {
+				struct stat st;
+
+				if (stat("/etc/usbguard/rules.conf", &st) == 0 && st.st_size == 0) {
+					const char *gen[] = { "sh", "-c", "usbguard generate-policy > /etc/usbguard/rules.conf && chmod 600 /etc/usbguard/rules.conf", NULL };
+
+					run_cmd(gen);
+				}
+			}
+			printf("%-22s %s\n", "USB nuevos", run_cmd(sp->usb_guard ? on : off) != 0 ? "falló" :
+			       sp->usb_guard ? "bloqueados hasta autorizarlos" : "permitidos");
 		}
 		/* los módulos ya cargados se quitan si nadie los usa; si no, el bloqueo vale al reiniciar */
 		if (!sp->usb_storage)

@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# rros-antivirus: el antivirus de RROS sobre ClamAV. Lo usan RROS Ajustes (Seguridad) y el análisis programado.
+#   rros-antivirus estado [--json]              protección, firmas, último análisis, cuarentena
+#   rros-antivirus analizar rapido|completo|RUTA  analiza; escribe «PROGRESO n», «AMENAZA ruta|nombre» y al final
+#                                               «RESULTADO {json}»
+#   rros-antivirus cuarentena [--json]          lo que está en cuarentena
+#   rros-antivirus restaurar ID | borrar ID     saca un archivo de la cuarentena o lo borra para siempre
+#   rros-antivirus actualizar                   descarga las firmas nuevas (root)
+#   rros-antivirus historial [--json]           amenazas encontradas
+# Como root la cuarentena es /var/lib/rros/cuarentena; como usuario, ~/.local/share/rros/cuarentena (solo tus archivos).
+set -u
+LC_ALL=C.UTF-8
+POL=/etc/rros/antivirus.conf
+ACCION=cuarentena; MAX_MB=100
+# shellcheck disable=SC1090
+[ -r "$POL" ] && . "$POL"
+if [ "$(id -u)" -eq 0 ]; then
+	Q=/var/lib/rros/cuarentena; STATE=/var/lib/rros/antivirus
+else
+	Q=${XDG_DATA_HOME:-$HOME/.local/share}/rros/cuarentena; STATE=${XDG_STATE_HOME:-$HOME/.local/state}/rros/antivirus
+fi
+LOG=/var/log/rros-antivirus.log
+mkdir -p "$Q" "$STATE" 2>/dev/null
+chmod 700 "$Q" 2>/dev/null
+
+js() { local s=${1//\\/\\\\}; s=${s//\"/\\\"}; s=${s//$'\n'/ }; s=${s//$'\t'/ }; printf '"%s"' "$s"; }
+active() { systemctl is-active --quiet "$1" 2>/dev/null; }
+
+firmas() {   # versión y fecha de las firmas, o vacío si no hay
+	local f
+	for f in /var/lib/clamav/daily.cld /var/lib/clamav/daily.cvd; do
+		[ -r "$f" ] && { sigtool --info "$f" 2>/dev/null | awk -F': ' '/^Version/{v=$2} /^Build time/{t=$2} END{print v"|"t}'; return; }
+	done
+	# firmas propias o de terceros (.hdb, .ndb...) sin la base oficial
+	compgen -G '/var/lib/clamav/*.[chn]db' >/dev/null || compgen -G '/var/lib/clamav/*.c[lv]d' >/dev/null && echo "local|"
+}
+
+estado() {
+	local rt prog last q db v t
+	rt=false; active clamav-clamonacc.service && active clamav-daemon.service && rt=true
+	prog=$(systemctl is-enabled rros-antivirus.timer 2>/dev/null || echo disabled)
+	db=$(firmas); v=${db%%|*}; t=${db#*|}
+	last=$(cat "$STATE/ultimo.json" 2>/dev/null || echo null)
+	q=$(find "$Q" /var/lib/rros/cuarentena -maxdepth 1 -name '*.json' 2>/dev/null | sort -u | wc -l)
+	if [ "${1:-}" = --json ]; then
+		printf '{"motor":%s,"tiempo_real":%s,"programado":%s,"firmas":%s,"firmas_fecha":%s,"actualizacion":%s,"ultimo":%s,"cuarentena":%d,"accion":%s}\n' \
+			"$(command -v clamscan >/dev/null && echo true || echo false)" "$rt" \
+			"$([ "$prog" = enabled ] && echo true || echo false)" "$(js "$v")" "$(js "$t")" \
+			"$(systemctl is-enabled clamav-freshclam.service >/dev/null 2>&1 && echo true || echo false)" "$last" "$q" "$(js "$ACCION")"
+	else
+		echo "motor:           $(command -v clamscan >/dev/null && echo ClamAV || echo 'no instalado')"
+		echo "tiempo real:     $rt"
+		echo "programado:      $prog"
+		echo "firmas:          ${v:-ninguna (rros-antivirus actualizar)} ${t}"
+		echo "en cuarentena:   $q"
+	fi
+}
+
+poner_en_cuarentena() {   # ruta nombre
+	local id
+	id=$(date +%s)-$RANDOM
+	if mv -f -- "$1" "$Q/$id.bin" 2>/dev/null; then
+		chmod 000 "$Q/$id.bin"
+		printf '{"id":"%s","ruta":%s,"amenaza":%s,"fecha":"%s"}\n' "$id" "$(js "$1")" "$(js "$2")" "$(date -Iseconds)" > "$Q/$id.json"
+		return 0
+	fi
+	return 1
+}
+
+analizar() {
+	local modo=${1:-rapido} dirs=() total=0 n=0 encontrados=0 aislados=0 ini fin out tmp
+	case $modo in
+		rapido)   for d in "$HOME/Descargas" "$HOME/Escritorio" "$HOME/Documentos" /tmp; do [ -d "$d" ] && dirs+=("$d"); done ;;
+		completo) if [ "$(id -u)" -eq 0 ]; then dirs=(/home /root /opt /usr/local /tmp /srv); else dirs=("$HOME" /tmp); fi ;;
+		*)        [ -e "$modo" ] || { echo "rros-antivirus: no existe $modo" >&2; return 2; }; dirs=("$modo") ;;
+	esac
+	if [ -z "$(firmas)" ]; then
+		echo "RESULTADO {\"ok\":false,\"error\":\"No hay firmas de virus: actualízalas primero (hace falta Internet).\"}"
+		return 3
+	fi
+	ini=$(date +%s)
+	total=$(find "${dirs[@]}" -xdev -type f -size -"${MAX_MB}"M 2>/dev/null | wc -l)
+	echo "TOTAL $total"
+	tmp=$(mktemp)
+	# clamdscan (con el demonio) es mucho más rápido; sin él, clamscan carga las firmas cada vez
+	if active clamav-daemon.service && command -v clamdscan >/dev/null; then
+		out=(clamdscan --multiscan --fdpass --no-summary)
+	else
+		out=(clamscan -r --no-summary --max-filesize="${MAX_MB}M" --max-scansize="$((MAX_MB * 4))M" --cross-fs=no)
+	fi
+	"${out[@]}" "${dirs[@]}" 2>/dev/null | while IFS= read -r line; do
+		n=$((n + 1))
+		[ $((n % 50)) -eq 0 ] && echo "PROGRESO $n"
+		case $line in
+			*": "*" FOUND") f=${line%%: *}; v=${line#*: }; v=${v% FOUND}
+				echo "AMENAZA $f|$v"; echo "$f|$v" >> "$tmp"
+				echo "$(date -Iseconds) $f $v ($modo)" >> "$LOG" 2>/dev/null ;;
+		esac
+	done
+	encontrados=$(wc -l < "$tmp")
+	if [ "$ACCION" = cuarentena ]; then
+		while IFS='|' read -r f v; do poner_en_cuarentena "$f" "$v" && aislados=$((aislados + 1)); done < "$tmp"
+	fi
+	rm -f "$tmp"
+	fin=$(date +%s)
+	printf '{"modo":%s,"fecha":"%s","segundos":%d,"archivos":%d,"amenazas":%d,"en_cuarentena":%d}\n' \
+		"$(js "$modo")" "$(date -Iseconds)" "$((fin - ini))" "$total" "$encontrados" "$aislados" > "$STATE/ultimo.json"
+	echo "RESULTADO $(cat "$STATE/ultimo.json")"
+}
+
+lista() {
+	local first=1 f
+	[ "${1:-}" = --json ] && printf '['
+	for f in "$Q"/*.json; do
+		[ -e "$f" ] || continue
+		if [ "${1:-}" = --json ]; then [ $first -eq 1 ] || printf ','; cat "$f" | tr -d '\n'; first=0
+		else cat "$f"; fi
+	done
+	[ "${1:-}" = --json ] && printf ']\n'
+}
+
+restaurar() {
+	local id=$1 ruta
+	[[ $id =~ ^[0-9]+-[0-9]+$ ]] || { echo "rros-antivirus: id no válido" >&2; return 2; }
+	[ -e "$Q/$id.json" ] || { echo "rros-antivirus: no está en cuarentena" >&2; return 1; }
+	ruta=$(sed -n 's/.*"ruta":"\(.*\)","amenaza".*/\1/p' "$Q/$id.json")
+	[ -n "$ruta" ] || return 1
+	chmod 600 "$Q/$id.bin" && mkdir -p "$(dirname "$ruta")" && mv -n "$Q/$id.bin" "$ruta" && rm -f "$Q/$id.json"
+}
+
+borrar() {
+	local id=$1
+	[[ $id =~ ^[0-9]+-[0-9]+$ ]] || { echo "rros-antivirus: id no válido" >&2; return 2; }
+	rm -f "$Q/$id.bin" "$Q/$id.json"
+}
+
+case ${1:-estado} in
+	estado|status) estado "${2:-}" ;;
+	analizar|scan) analizar "${2:-rapido}" ;;
+	cuarentena|quarantine) lista "${2:-}" ;;
+	restaurar|restore) restaurar "${2:?falta el id}" ;;
+	borrar|delete) borrar "${2:?falta el id}" ;;
+	actualizar|update) [ "$(id -u)" -eq 0 ] || { echo "rros-antivirus: actualizar necesita ser administrador" >&2; exit 1; }
+		freshclam --stdout 2>&1 | tail -n 5 ;;
+	historial|log) if [ "${2:-}" = --json ]; then printf '['; tail -n 50 "$LOG" 2>/dev/null | awk 'BEGIN{f=1}{d=$1;fl=$2;$1="";$2="";gsub(/\\/,"\\\\");gsub(/"/,"\\\"");gsub(/\\/,"\\\\",fl);gsub(/"/,"\\\"",fl);if(!f)printf ",";printf "{\"fecha\":\"%s\",\"ruta\":\"%s\",\"detalle\":\"%s\"}",d,fl,substr($0,3);f=0}'; printf ']\n'
+		else tail -n 50 "$LOG" 2>/dev/null; fi ;;
+	*) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

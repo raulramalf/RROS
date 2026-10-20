@@ -1,0 +1,22 @@
+#!/bin/sh
+# Lo llama clamd (VirusEvent) cuando la protección en tiempo real encuentra algo: lo apunta en el registro, lo pone
+# en cuarentena si así lo dice la directiva y avisa en el escritorio de la persona dueña del archivo.
+f=$CLAM_VIRUSEVENT_FILENAME; v=$CLAM_VIRUSEVENT_VIRUSNAME
+[ -n "$f" ] || exit 0
+echo "$(date -Iseconds) $f $v (tiempo real)" >> /var/log/rros-antivirus.log
+ACCION=cuarentena
+[ -r /etc/rros/antivirus.conf ] && . /etc/rros/antivirus.conf
+owner=$(stat -c %U "$f" 2>/dev/null)
+if [ "$ACCION" = cuarentena ]; then
+	id=$(date +%s)-$$
+	mkdir -p /var/lib/rros/cuarentena && chmod 700 /var/lib/rros/cuarentena
+	mv -f "$f" "/var/lib/rros/cuarentena/$id.bin" && chmod 000 "/var/lib/rros/cuarentena/$id.bin" &&
+		printf '{"id":"%s","ruta":"%s","amenaza":"%s","fecha":"%s"}\n' "$id" "$f" "$v" "$(date -Iseconds)" > "/var/lib/rros/cuarentena/$id.json"
+	msg="«$(basename "$f")» tenía $v y se ha puesto en cuarentena."
+else
+	msg="«$(basename "$f")» tiene $v. Revísalo en Ajustes → Seguridad."
+fi
+uid=$(id -u "$owner" 2>/dev/null) || exit 0
+[ -S "/run/user/$uid/bus" ] && runuser -u "$owner" -- env DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+	notify-send -a "Antivirus" -i rros-security -u critical "Amenaza encontrada" "$msg" 2>/dev/null
+exit 0

@@ -59,6 +59,12 @@ playerctl
 ocean-sound-theme       # sonidos del sistema de Plasma
 sound-theme-freedesktop
 
+# --- antivirus y directivas de seguridad ---
+clamav                  # motor antivirus (rros-antivirus): análisis, tiempo real con clamonacc y firmas con freshclam
+usbguard                # directiva: bloquear USB nuevos
+libpwquality            # directiva: contraseñas
+libnotify               # avisos del antivirus en el escritorio (notify-send)
+
 # --- escritorio: KDE Plasma (Wayland) con el aspecto de RROS (barra arriba, dock 2D o 3D, menú RROS) ---
 plasma-desktop
 plasma-workspace

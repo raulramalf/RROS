@@ -21,6 +21,21 @@ void rros_secpol_from_conf(struct rros_secpol *p, const struct rros_conf *c)
 	p->auto_updates = rros_conf_get_bool(c, "system.auto_updates", 0);
 	p->ssh = rros_conf_get_bool(c, "services.ssh", 0);
 	p->printing = rros_conf_get_bool(c, "services.printing", 0);
+	p->av_realtime = rros_conf_get_bool(c, "security.av_realtime", 0);
+	snprintf(p->av_schedule, sizeof p->av_schedule, "%s", rros_conf_get(c, "security.av_schedule") ? rros_conf_get(c, "security.av_schedule") : "semanal");
+	if (strcmp(p->av_schedule, "off") && strcmp(p->av_schedule, "diario") && strcmp(p->av_schedule, "semanal"))
+		snprintf(p->av_schedule, sizeof p->av_schedule, "semanal");
+	p->av_quarantine = !rros_conf_get(c, "security.av_action") || strcmp(rros_conf_get(c, "security.av_action"), "avisar") != 0;
+	p->av_updates = rros_conf_get_bool(c, "security.av_updates", 1);
+	p->av_max_mb = (int)rros_conf_get_long(c, "security.av_max_file_mb", 100);
+	if (p->av_max_mb < 5 || p->av_max_mb > 4000)
+		p->av_max_mb = 100;
+	p->pw_min = (int)rros_conf_get_long(c, "security.password_min_length", 0);
+	if (p->pw_min < 0 || p->pw_min > 64)
+		p->pw_min = 0;
+	p->pw_complex = rros_conf_get_bool(c, "security.password_complex", 0);
+	p->usb_guard = rros_conf_get_bool(c, "security.usb_guard", 0);
+	p->tmp_noexec = rros_conf_get_bool(c, "security.tmp_noexec", 0);
 	/* una lista inválida no llega nunca al cortafuegos (el esquema ya la rechaza al guardarla) */
 	if (allow && rros_fw_ports_check(allow, NULL, 0) == 0)
 		snprintf(p->allow, sizeof p->allow, "%s", allow);
@@ -219,6 +234,50 @@ void rros_render_corelimit(FILE *f, const struct rros_secpol *p)
 	fputs("# Generado por rros-apply (security.core_dumps)\n", f);
 	if (!p->core_dumps)
 		fputs("*\thard\tcore\t0\n", f);
+}
+
+/* ---- antivirus (ClamAV) ---- */
+
+void rros_render_clamd(FILE *f, const struct rros_secpol *p)
+{
+	fputs("# Generado por rros-apply (security.av_*): el demonio de ClamAV y la protección en tiempo real.\n"
+	      "LogSyslog yes\nLogTime yes\nExtendedDetectionInfo yes\n"
+	      "LocalSocket /run/clamav/clamd.ctl\nFixStaleSocket yes\nUser clamav\n"
+	      "DatabaseDirectory /var/lib/clamav\nDetectPUA yes\nAlertBrokenExecutables yes\n", f);
+	fprintf(f, "MaxFileSize %dM\nMaxScanSize %dM\nStreamMaxLength %dM\n", p->av_max_mb, p->av_max_mb * 4, p->av_max_mb);
+	/* tiempo real: clamonacc vigila las carpetas personales con fanotify y pregunta a clamd */
+	fputs("OnAccessIncludePath /home\nOnAccessExcludeUname clamav\nOnAccessExcludeRootUID yes\n"
+	      "OnAccessExtraScanning yes\nOnAccessPrevention no\n"
+	      "VirusEvent /usr/libexec/rros-antivirus-evento\n", f);
+}
+
+void rros_render_avtimer(FILE *f, const struct rros_secpol *p)
+{
+	fputs("# Generado por rros-apply (security.av_schedule)\n[Timer]\nOnCalendar=\n", f);
+	fprintf(f, "OnCalendar=%s\n", !strcmp(p->av_schedule, "diario") ? "daily" : "weekly");
+}
+
+void rros_render_avpolicy(FILE *f, const struct rros_secpol *p)
+{
+	fputs("# Generado por rros-apply: lo que hace rros-antivirus con lo que encuentra\n", f);
+	fprintf(f, "ACCION=%s\nMAX_MB=%d\n", p->av_quarantine ? "cuarentena" : "avisar", p->av_max_mb);
+}
+
+void rros_render_pwquality(FILE *f, const struct rros_secpol *p)
+{
+	fputs("# Generado por rros-apply (security.password_*)\n", f);
+	fprintf(f, "minlen = %d\n", p->pw_min > 0 ? p->pw_min : 1);
+	if (p->pw_complex)
+		fputs("minclass = 4\ndcredit = -1\nucredit = -1\nlcredit = -1\nocredit = -1\n", f);
+	else
+		fputs("minclass = 0\n", f);
+	fputs("dictcheck = 1\nusercheck = 1\nenforce_for_root\n", f);
+}
+
+void rros_render_tmpmount(FILE *f, const struct rros_secpol *p)
+{
+	fputs("# Generado por rros-apply (security.tmp_noexec)\n[Mount]\n", f);
+	fprintf(f, "Options=mode=1777,strictatime,nosuid,nodev%s,size=50%%%%,nr_inodes=1m\n", p->tmp_noexec ? ",noexec" : "");
 }
 
 /* ---- niveles ---- */

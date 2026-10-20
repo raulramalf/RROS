@@ -1,0 +1,10 @@
+[Unit]
+Description=RROS: análisis antivirus programado
+After=clamav-freshclam.service
+ConditionPathExists=/usr/bin/clamscan
+
+[Service]
+Type=oneshot
+Nice=15
+IOSchedulingClass=idle
+ExecStart=/usr/bin/rros-antivirus analizar completo

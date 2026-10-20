@@ -128,6 +128,15 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `security.login_attempts` | entero | 0 – 20 | Intentos de contraseña antes de bloquear 10 minutos (0 = sin límite) |
 | `security.sudo_timeout_minutes` | entero | 0 – 60 | Minutos que sudo recuerda tu contraseña (0 = la pide siempre) |
 | `security.core_dumps` | booleano | true / false | Guardar volcados de memoria de programas que fallan |
+| `security.av_realtime` | booleano | true / false | Antivirus: protección en tiempo real (analiza cada archivo de /home al abrirlo; usa ~1 GB de RAM) |
+| `security.av_schedule` | opción | off|diario|semanal | Antivirus: análisis completo programado |
+| `security.av_action` | opción | cuarentena|avisar | Antivirus: qué hacer con una amenaza |
+| `security.av_updates` | booleano | true / false | Antivirus: descargar las firmas nuevas solo (cada hora) |
+| `security.av_max_file_mb` | entero | 5 – 4000 | Antivirus: tamaño máximo de archivo que se analiza (MB) |
+| `security.password_min_length` | entero | 0 – 64 | Directiva: longitud mínima de las contraseñas nuevas (0 = sin mínimo) |
+| `security.password_complex` | booleano | true / false | Directiva: las contraseñas nuevas deben mezclar mayúsculas, minúsculas, números y símbolos |
+| `security.usb_guard` | booleano | true / false | Directiva: bloquear los dispositivos USB nuevos hasta que los autorices |
+| `security.tmp_noexec` | booleano | true / false | Directiva: no ejecutar programas desde /tmp |
 | `boot.timeout_seconds` | entero | 0 – 60 | Tiempo del menú de arranque |
 | `boot.splash` | booleano | true / false | Pantalla de arranque gráfica |
 | `boot.quiet` | booleano | true / false | Arranque silencioso |

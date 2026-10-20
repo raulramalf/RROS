@@ -180,6 +180,17 @@ const struct rros_key rros_schema[] = {
 	I("security.login_attempts", 0, 20, "Intentos de contraseña antes de bloquear 10 minutos (0 = sin límite)"),
 	I("security.sudo_timeout_minutes", 0, 60, "Minutos que sudo recuerda tu contraseña (0 = la pide siempre)"),
 	B("security.core_dumps", "Guardar volcados de memoria de programas que fallan"),
+	/* antivirus (ClamAV) */
+	B("security.av_realtime", "Antivirus: protección en tiempo real (analiza cada archivo de /home al abrirlo; usa ~1 GB de RAM)"),
+	E("security.av_schedule", "off|diario|semanal", "Antivirus: análisis completo programado"),
+	E("security.av_action", "cuarentena|avisar", "Antivirus: qué hacer con una amenaza"),
+	B("security.av_updates", "Antivirus: descargar las firmas nuevas solo (cada hora)"),
+	I("security.av_max_file_mb", 5, 4000, "Antivirus: tamaño máximo de archivo que se analiza (MB)"),
+	/* directivas */
+	I("security.password_min_length", 0, 64, "Directiva: longitud mínima de las contraseñas nuevas (0 = sin mínimo)"),
+	B("security.password_complex", "Directiva: las contraseñas nuevas deben mezclar mayúsculas, minúsculas, números y símbolos"),
+	B("security.usb_guard", "Directiva: bloquear los dispositivos USB nuevos hasta que los autorices"),
+	B("security.tmp_noexec", "Directiva: no ejecutar programas desde /tmp"),
 
 	/* ---- arranque ---- */
 	I("boot.timeout_seconds", 0, 60, "Tiempo del menú de arranque"),

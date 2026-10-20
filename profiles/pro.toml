@@ -102,6 +102,17 @@ camera = true
 login_attempts = 10
 sudo_timeout_minutes = 5
 core_dumps = false
+# antivirus (ClamAV): el tiempo real usa ~1 GB de RAM, por eso solo va encendido en Pro
+av_realtime = true
+av_schedule = "diario"
+av_action = "cuarentena"
+av_updates = true
+av_max_file_mb = 100
+# directivas
+password_min_length = 8
+password_complex = false
+usb_guard = false
+tmp_noexec = false
 
 [locale]
 # idioma del sistema (menús de las aplicaciones); la zona horaria la elige el instalador

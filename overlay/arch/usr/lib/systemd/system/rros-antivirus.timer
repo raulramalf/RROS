@@ -1,0 +1,10 @@
+[Unit]
+Description=RROS: análisis antivirus programado (la frecuencia la pone rros-apply)
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target

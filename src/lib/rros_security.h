@@ -20,6 +20,15 @@ struct rros_secpol {
 	int auto_updates;      /* system.auto_updates */
 	int ssh;               /* services.ssh: abre el 22/tcp */
 	int printing;          /* services.printing: abre mDNS para encontrar impresoras */
+	int av_realtime;       /* security.av_realtime: clamd + clamonacc */
+	char av_schedule[12];  /* security.av_schedule: off, diario, semanal */
+	int av_quarantine;     /* security.av_action == cuarentena */
+	int av_updates;        /* security.av_updates: freshclam */
+	int av_max_mb;         /* security.av_max_file_mb */
+	int pw_min;            /* security.password_min_length */
+	int pw_complex;        /* security.password_complex */
+	int usb_guard;         /* security.usb_guard */
+	int tmp_noexec;        /* security.tmp_noexec */
 };
 
 void rros_secpol_from_conf(struct rros_secpol *p, const struct rros_conf *c);
@@ -41,6 +50,11 @@ void rros_render_sudoers(FILE *f, const struct rros_secpol *p);    /* /etc/sudoe
 void rros_render_faillock(FILE *f, const struct rros_secpol *p);   /* /etc/security/faillock.conf */
 void rros_render_autoupdates(FILE *f, const struct rros_secpol *p);/* /etc/apt/apt.conf.d/20auto-upgrades (Ubuntu) */
 void rros_render_corelimit(FILE *f, const struct rros_secpol *p);  /* /etc/security/limits.d/90-rros-core.conf */
+void rros_render_clamd(FILE *f, const struct rros_secpol *p);      /* /etc/clamav/clamd.conf */
+void rros_render_avtimer(FILE *f, const struct rros_secpol *p);    /* /etc/systemd/system/rros-antivirus.timer.d/rros.conf */
+void rros_render_avpolicy(FILE *f, const struct rros_secpol *p);   /* /etc/rros/antivirus.conf (lo lee rros-antivirus) */
+void rros_render_pwquality(FILE *f, const struct rros_secpol *p);  /* /etc/security/pwquality.conf.d/rros.conf */
+void rros_render_tmpmount(FILE *f, const struct rros_secpol *p);   /* /etc/systemd/system/tmp.mount.d/rros.conf */
 
 /* 1 si el sistema bajo root (""= /) es Arch: en Arch faillock va siempre en /etc/pam.d/system-auth, las
  * actualizaciones se descargan con rros-updates.timer (no hay unattended-upgrades) y ssh es sshd.service. */

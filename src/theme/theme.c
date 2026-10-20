@@ -174,21 +174,25 @@ void rros_hex_rgb(const char *hex, int *r, int *g, int *b)
 /* ---- estilos de escritorio ---- */
 
 const struct rros_desktop_preset rros_desktop_presets[] = {
-	{ "moderno", "Moderno", "El de RROS, como en macOS: barra fina arriba con el menú RROS, el menú de la aplicación, "
-	  "la bandeja y el reloj, y un dock abajo con tus aplicaciones y el Launchpad.",
-	  { { "ui.panel_position", "top" }, { "panel.style", "flat" }, { "ui.panel_size", "28" },
-	    { "panel.taskbar", "false" }, { "ui.dock", "true" }, { "ui.dock_position", "bottom" },
-	    { "ui.dock_hiding", "dodge" }, { "ui.global_menu", "true" }, { "ui.panel_autohide", "false" } } },
-	{ "clasico", "Clásico", "Como en Windows: barra de tareas abajo con el botón de aplicaciones, las ventanas abiertas, "
-	  "la bandeja y el reloj. Sin dock.",
-	  { { "ui.panel_position", "bottom" }, { "panel.style", "flat" }, { "ui.panel_size", "44" },
-	    { "panel.taskbar", "true" }, { "ui.dock", "false" }, { "ui.global_menu", "false" },
-	    { "ui.panel_autohide", "false" } } },
-	{ "enfoque", "Enfoque", "Para concentrarse: barra en píldora arriba con el reloj en el centro y el dock escondido "
-	  "hasta que llevas el ratón abajo. El escritorio, limpio del todo.",
-	  { { "ui.panel_position", "top" }, { "panel.style", "pill" }, { "ui.panel_size", "28" },
-	    { "panel.taskbar", "false" }, { "ui.dock", "true" }, { "ui.dock_position", "bottom" },
-	    { "ui.dock_hiding", "auto" }, { "ui.global_menu", "true" }, { "ui.panel_autohide", "false" } } },
+	{ "rros", "Fusión", "La de RROS: barra de tareas abajo, de borde a borde y siempre visible, con el botón de inicio, "
+	  "el buscador, tus aplicaciones en el centro, la bandeja y el reloj. Las ventanas no quedan debajo.",
+	  { { "ui.taskbar_style", "rros" }, { "ui.taskbar_align", "auto" }, { "ui.taskbar_labels", "false" },
+	    { "ui.taskbar_search", "true" }, { "ui.dock_hiding", "never" }, { "ui.global_menu", "false" } } },
+	{ "clasico", "Clásica", "Como en Windows 10: inicio a la izquierda y cada ventana abierta con su nombre en la barra.",
+	  { { "ui.taskbar_style", "clasica" }, { "ui.taskbar_align", "izquierda" }, { "ui.taskbar_labels", "true" },
+	    { "ui.taskbar_search", "true" }, { "ui.global_menu", "false" } } },
+	{ "isla", "Isla", "Barra de tareas flotante y redondeada, separada del borde, con las aplicaciones en el centro.",
+	  { { "ui.taskbar_style", "isla" }, { "ui.taskbar_align", "auto" }, { "ui.taskbar_labels", "false" },
+	    { "ui.taskbar_search", "false" }, { "ui.global_menu", "false" } } },
+	{ "moderno", "Dock", "Barra fina arriba con el menú RROS, la aplicación activa, la bandeja y el reloj, y un dock abajo "
+	  "(2D o 3D) con tus aplicaciones y el Launchpad.",
+	  { { "ui.taskbar_style", "dock" }, { "ui.dock", "true" }, { "ui.dock_position", "bottom" },
+	    { "ui.dock_hiding", "never" }, { "ui.panel_position", "top" }, { "panel.style", "flat" } } },
+	{ "doble", "Doble", "Barra superior con el menú y la bandeja, y barra de tareas abajo con las ventanas abiertas.",
+	  { { "ui.taskbar_style", "doble" }, { "ui.taskbar_align", "izquierda" }, { "ui.taskbar_labels", "true" },
+	    { "ui.taskbar_search", "false" }, { "ui.panel_position", "top" } } },
+	{ "lateral", "Lateral", "Barra de tareas vertical a la izquierda: deja toda la altura de la pantalla para las ventanas.",
+	  { { "ui.taskbar_style", "lateral" }, { "ui.taskbar_labels", "false" }, { "ui.taskbar_search", "false" } } },
 };
 const size_t rros_desktop_presets_len = sizeof rros_desktop_presets / sizeof rros_desktop_presets[0];
 

@@ -286,8 +286,8 @@ int main(void)
 	{
 		const struct rros_desktop_preset *d = rros_desktop_find("clasico");
 
-		CHECK(d != NULL && rros_desktop_find("mosaico") == NULL && rros_desktop_presets_len == 3);
-		CHECK(rros_desktop_find("moderno") && rros_desktop_find("enfoque"));
+		CHECK(d != NULL && rros_desktop_find("mosaico") == NULL && rros_desktop_presets_len == 6);
+		CHECK(rros_desktop_find("rros") && rros_desktop_find("moderno") && rros_desktop_find("lateral"));
 		/* todas sus claves pasan la validación del esquema */
 		for (size_t i = 0; i < rros_desktop_presets_len; i++)
 			for (size_t k = 0; k < 14 && rros_desktop_presets[i].keys[k][0]; k++) {
@@ -299,10 +299,10 @@ int main(void)
 					CHECK(rros_schema_check(key, rros_desktop_presets[i].keys[k][1],
 								key->type == RROS_T_STR || key->type == RROS_T_ENUM, err, sizeof err) == 0);
 			}
-		from_text(&t, "[ui]\npanel_position = \"bottom\"\npanel_size = 44\ndock = false\nglobal_menu = false\n"
-			      "panel_autohide = false\n[panel]\nstyle = \"flat\"\ntaskbar = true\n");
+		from_text(&t, "[ui]\ntaskbar_style = \"clasica\"\ntaskbar_align = \"izquierda\"\ntaskbar_labels = true\n"
+			      "taskbar_search = true\nglobal_menu = false\n");
 		CHECK(rros_desktop_current(&cur) == d);
-		from_text(&t, "[ui]\npanel_position = \"top\"\n");
+		from_text(&t, "[ui]\ntaskbar_style = \"clasica\"\ntaskbar_labels = false\n");
 		CHECK(rros_desktop_current(&cur) == NULL);
 	}
 

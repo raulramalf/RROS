@@ -1,5 +1,6 @@
 /* Fondos de pantalla generados con la paleta del tema (PNG, sin librerías externas).
- * Estilos: aurora, ondas, degradado, circulos (liso = sin imagen, solo el color de fondo). */
+ * Estilos: aurora, ondas, degradado, circulos, petalos, dunas, malla, cristal, topografico y seda
+ * (liso = sin imagen, solo el color de fondo). */
 #include "theme.h"
 
 #include <math.h>
@@ -351,16 +352,67 @@ static double rnd(uint32_t *s)
 	return (*s >> 8) / 16777216.0;
 }
 
+/* ruido de valor suave (determinista) para campos orgánicos */
+static double hash2(int x, int y, uint32_t s)
+{
+	uint32_t h = (uint32_t)x * 374761393u + (uint32_t)y * 668265263u + s * 2246822519u;
+
+	h = (h ^ (h >> 13)) * 1274126177u;
+	return ((h ^ (h >> 16)) & 0xffffff) / 16777216.0;
+}
+
+static double vnoise(double x, double y, uint32_t s)
+{
+	double fx = floor(x), fy = floor(y), tx = x - fx, ty = y - fy;
+	int ix = (int)fx, iy = (int)fy;
+	double a = hash2(ix, iy, s), b = hash2(ix + 1, iy, s), c = hash2(ix, iy + 1, s), d = hash2(ix + 1, iy + 1, s);
+
+	tx = tx * tx * tx * (tx * (tx * 6 - 15) + 10);
+	ty = ty * ty * ty * (ty * (ty * 6 - 15) + 10);
+	return a + (b - a) * tx + (c - a) * ty + (a - b - c + d) * tx * ty;
+}
+
+static double fbm(double x, double y, int oct)
+{
+	double s = 0, amp = 0.5, n = 0;
+
+	for (int i = 0; i < oct; i++) {
+		s += vnoise(x, y, (uint32_t)i + 7) * amp;
+		n += amp;
+		x = x * 2.03 + 17.1;
+		y = y * 2.03 - 9.7;
+		amp *= 0.5;
+	}
+	return s / n;
+}
+
 /* colores de la paleta y valores que solo dependen de la columna (se calculan una vez) */
 struct ctx {
 	struct col bg, sur, acc, mag, cya, blu, dim;
 	int dark;
+	int w, h;
 	double aspect;
-	double *col;    /* por columna: 3 bandas de aurora (centro, brillo) o 4 olas */
+	double *col;    /* por columna: bandas de aurora, olas o dunas */
+	double *fld;    /* campo por píxel (topográfico) */
+	double *vtx;    /* vértices (x, y, altura) de la malla de cristal */
+	int nx, ny;
+	double shp[64][8];   /* formas sueltas: pétalos y discos desenfocados */
+	int nshp;
 };
 
-static void ctx_init(struct ctx *k, const char *style, const struct rros_palette *p, int w, double aspect)
+#define NCOL 12
+
+/* luz sobre el fondo: en temas oscuros «trama», en claros una mezcla más suave */
+static struct col glow(const struct ctx *k, struct col c, struct col l, double t)
 {
+	return k->dark ? screen(c, l, t) : mix(c, l, t * 0.75);
+}
+
+static void ctx_init(struct ctx *k, const char *style, const struct rros_palette *p, int w, int h)
+{
+	uint32_t seed = 2024;
+
+	memset(k, 0, sizeof *k);
 	k->bg = hexc(p->bg);
 	k->sur = hexc(p->surface);
 	k->acc = hexc(p->accent);
@@ -369,12 +421,14 @@ static void ctx_init(struct ctx *k, const char *style, const struct rros_palette
 	k->blu = hexc(p->blue);
 	k->dim = hexc(p->accent_dim);
 	k->dark = lum(k->bg) < 0.5;
-	k->aspect = aspect;
-	k->col = calloc((size_t)w * 6, sizeof(double));
+	k->w = w;
+	k->h = h;
+	k->aspect = (double)w / h;
+	k->col = calloc((size_t)w * NCOL, sizeof(double));
 	if (!k->col)
 		return;
 	for (int x = 0; x < w; x++) {
-		double u = (x + 0.5) / w, *c = k->col + (size_t)x * 6;
+		double u = (x + 0.5) / w, *c = k->col + (size_t)x * NCOL;
 
 		if (!strcmp(style, "aurora")) {
 			static const double prm[3][4] = { { 0.46, 0.07, 0.9, 0.1 }, { 0.55, 0.05, 1.4, 0.55 }, { 0.38, 0.06, 0.7, 0.8 } };
@@ -388,15 +442,319 @@ static void ctx_init(struct ctx *k, const char *style, const struct rros_palette
 			for (int i = 0; i < 4; i++)
 				c[i] = 0.52 + i * 0.11 + 0.045 * sin(2 * M_PI * (u * (1.1 + i * 0.35) + i * 0.27)) +
 				       0.02 * sin(2 * M_PI * (u * 3.2 + i * 0.6));
+		} else if (!strcmp(style, "dunas")) {
+			/* cresta de cada duna (altura y pendiente); crestas algo afiladas */
+			for (int i = 0; i < 5; i++) {
+				double f = 0.8 + i * 0.35, ph = i * 0.37, e = 1e-3, hv[2];
+
+				for (int s = 0; s < 2; s++) {
+					double uu = u + s * e, q = 0.5 + 0.5 * sin(2 * M_PI * (f * uu + ph));
+
+					hv[s] = 0.5 + i * 0.1 - (0.05 + 0.012 * i) * pow(q, 1.6) -
+						0.012 * sin(2 * M_PI * (2.7 * uu + i * 0.8));
+				}
+				c[i * 2] = hv[0];
+				c[i * 2 + 1] = (hv[1] - hv[0]) / e;
+			}
 		}
+	}
+	if (!strcmp(style, "petalos")) {
+		/* seis pétalos de lirio desenfocados y discos de luz («bokeh») */
+		static const double ang[6] = { -2.6, -1.95, -1.3, -0.62, 0.05, 0.75 };
+
+		for (int i = 0; i < 6; i++) {
+			double *s = k->shp[k->nshp++];
+
+			s[0] = 0.74 * k->aspect;
+			s[1] = 0.66;
+			s[2] = ang[i] + 0.12 * sin(i * 2.1);
+			s[3] = 0.38 + 0.08 * sin(i * 1.7 + 0.4);   /* largo */
+			s[4] = 0.075 + 0.015 * cos(i * 2.3);       /* ancho */
+			s[5] = 0.25 * sin(i * 1.3 + 0.5);          /* curvatura */
+			s[6] = i & 1;
+		}
+		for (int i = 0; i < 40; i++) {
+			double *s = k->shp[k->nshp++], r = rnd(&seed);
+
+			s[0] = rnd(&seed) * k->aspect;
+			s[1] = rnd(&seed);
+			s[2] = 0.008 + 0.06 * r * r * r + 0.01 * rnd(&seed);   /* radio: pocos grandes */
+			s[3] = 0.12 + 0.3 * rnd(&seed);                          /* desenfoque relativo */
+			s[4] = (int)(rnd(&seed) * 3);
+			s[5] = 0.1 + 0.22 * rnd(&seed) * (1 - r * 0.6);          /* intensidad */
+		}
+	} else if (!strcmp(style, "cristal")) {
+		k->ny = 9;
+		k->nx = (int)(k->ny * k->aspect + 0.5);
+		k->nx = k->nx < 2 ? 2 : k->nx > 80 ? 80 : k->nx;
+		k->vtx = malloc(sizeof(double) * 3 * (size_t)(k->nx + 1) * (size_t)(k->ny + 1));
+		if (!k->vtx) {
+			free(k->col);
+			k->col = NULL;
+			return;
+		}
+		for (int j = 0; j <= k->ny; j++)
+			for (int i = 0; i <= k->nx; i++) {
+				double *v = k->vtx + 3 * ((size_t)j * (k->nx + 1) + i), jx = rnd(&seed) - 0.5, jy = rnd(&seed) - 0.5;
+
+				v[0] = (i + (i > 0 && i < k->nx ? jx * 0.7 : 0)) / k->nx * k->aspect;
+				v[1] = (j + (j > 0 && j < k->ny ? jy * 0.7 : 0)) / k->ny;
+				v[2] = rnd(&seed) * 0.09;
+			}
+	} else if (!strcmp(style, "topografico")) {
+		k->fld = malloc(sizeof(double) * (size_t)w * h);
+		if (!k->fld) {
+			free(k->col);
+			k->col = NULL;
+			return;
+		}
+		for (int y = 0; y < h; y++)
+			for (int x = 0; x < w; x++) {
+				double u = (x + 0.5) / w * k->aspect, v = (y + 0.5) / h;
+				double wx = fbm(u * 1.3 + 3.1, v * 1.3, 2) * 0.6, wy = fbm(u * 1.3, v * 1.3 + 5.2, 2) * 0.6;
+
+				k->fld[(size_t)y * w + x] = fbm(u * 1.6 + wx, v * 1.6 + wy, 4);
+			}
 	}
 }
 
-static struct col pixel(const char *style, const struct ctx *k, int x, double u, double v)
+/* pétalo: elipse afilada en la punta, curvada; distancia con signo aproximada a su borde */
+static double petal_dist(const double *s, double x, double y, double *along)
 {
-	const double *cv = k->col + (size_t)x * 6;
+	double dx = x - s[0], dy = y - s[1], ca = cos(s[2]), sa = sin(s[2]);
+	double a = dx * ca + dy * sa, b = -dx * sa + dy * ca, t = a / s[3], hw;
+
+	*along = t;
+	b -= s[5] * s[3] * t * t;
+	if (t <= 0)
+		return sqrt(a * a + b * b);
+	if (t >= 1)
+		return sqrt((a - s[3]) * (a - s[3]) + b * b);
+	hw = s[4] * pow(sin(M_PI * pow(t, 0.75)), 0.9);
+	return fabs(b) - hw;
+}
+
+static struct col px_petalos(const struct ctx *k, double u, double v)
+{
+	double x = u * k->aspect, gx = (u - 0.3) * k->aspect, gy = v - 0.3;
+	struct col pal[3] = { k->acc, k->mag, k->cya };
+	struct col c = mix(mix(k->sur, k->bg, 0.25), k->bg, smooth(0.0, 1.3, sqrt(gx * gx + gy * gy)));
+
+	/* halo detrás de la flor */
+	{
+		double hx = x - k->shp[0][0], hy = v - k->shp[0][1];
+
+		c = glow(k, c, k->acc, exp(-(hx * hx + hy * hy) / 0.09) * (k->dark ? 0.32 : 0.22));
+	}
+	for (int i = 6; i < k->nshp; i++) {
+		const double *s = k->shp[i];
+		double dx = x - s[0], dy = v - s[1], d = sqrt(dx * dx + dy * dy), r = s[2], bl = r * s[3] + 0.0015;
+
+		if (d < r + bl) {
+			double in = 1 - smooth(r - bl, r + bl, d), rim = 0.75 + 0.25 * smooth(r * 0.4, r, d);
+
+			c = glow(k, c, pal[(int)s[4]], in * rim * s[5]);
+		}
+	}
+	for (int i = 0; i < 6; i++) {
+		const double *s = k->shp[i];
+		double t, d = petal_dist(s, x, v, &t), bl = 0.006 + 0.03 * (s[6] ? 1 : 0.4);
+
+		if (d < bl) {
+			double a = 1 - smooth(-bl, bl, d), tt = t < 0 ? 0 : t > 1 ? 1 : t;
+			struct col pc = mix(mix(k->acc, k->mag, tt * 0.8), k->cya, smooth(0.75, 1.0, tt) * 0.5);
+
+			/* nervio central más claro */
+			pc = mix(pc, k->cya, exp(-pow(d / (s[4] * 0.35) + 1, 2) * 4) * 0.0 + (d < 0 ? 0.12 * (1 + d / s[4]) : 0));
+			c = mix(c, pc, a * (s[6] ? 0.55 : 0.8) * (0.55 + 0.45 * (1 - tt)) * (k->dark ? 1 : 0.85));
+		}
+	}
+	return c;
+}
+
+static struct col px_dunas(const struct ctx *k, const double *cv, double u, double v)
+{
+	double pv = 1.0 / k->h, sx = (u - 0.68) * k->aspect, sy = v - 0.36, sd = sqrt(sx * sx + sy * sy);
+	struct col haze = mix(k->sur, k->acc, k->dark ? 0.45 : 0.3);
+	struct col c = mix(k->dark ? mix(k->bg, (struct col){ 0, 0, 0 }, 0.25) : mix(k->bg, k->blu, 0.12), haze,
+			   smooth(0.0, 0.62, v));
+
+	/* sol bajo con halo */
+	c = glow(k, c, k->cya, exp(-sd * sd / 0.03) * 0.35);
+	c = glow(k, c, mix(k->cya, (struct col){ 1, 1, 1 }, 0.3), 1 - smooth(0.05, 0.053, sd));
+	for (int i = 0; i < 5; i++) {
+		double top = cv[i * 2], slope = cv[i * 2 + 1], e = smooth(top - pv, top + pv, v);
+
+		if (e > 0) {
+			double depth = i / 4.0, light = 0.5 + 0.5 * tanh(-slope * 4);
+			struct col far = mix(haze, k->acc, 0.25), near = k->dark ? mix(k->bg, k->sur, 0.3) : mix(k->sur, k->dim, 0.35);
+			struct col dc = mix(far, near, pow(depth, 0.8));
+
+			dc = mix(dc, mix(dc, k->bg, 0.6), (1 - light) * 0.5);
+			dc = glow(k, dc, k->cya, light * 0.12 * (1 - depth * 0.5));
+			/* brillo fino en la cresta y sombra hacia el pie */
+			dc = glow(k, dc, k->cya, exp(-pow((v - top) / (pv * 3 + 0.002), 2)) * 0.25 * light);
+			dc = mix(dc, k->bg, smooth(top, top + 0.25, v) * 0.35);
+			c = mix(c, dc, e);
+		}
+	}
+	return c;
+}
+
+static struct col px_malla(const struct ctx *k, double u, double v)
+{
+	static const double pt[6][3] = { { 0.12, 0.18, 0.11 }, { 0.82, 0.12, 0.09 }, { 0.62, 0.82, 0.12 },
+					 { 0.18, 0.88, 0.08 }, { 0.48, 0.45, 0.06 }, { 0.95, 0.62, 0.07 } };
+	struct col pal[6] = { k->acc, k->mag, k->cya, k->blu, k->dim, k->acc };
+	double wu = u + 0.07 * sin(2 * M_PI * (v * 1.2 + 0.15)) + 0.03 * sin(2 * M_PI * (v * 2.7 + u)),
+	       wv = v + 0.07 * sin(2 * M_PI * (u * 1.1 + 0.55)) + 0.03 * sin(2 * M_PI * (u * 2.3 - v));
+	double sw = 0.35, r = k->bg.r * sw, g = k->bg.g * sw, b = k->bg.b * sw;
+
+	for (int i = 0; i < 6; i++) {
+		double dx = (wu - pt[i][0]) * k->aspect * 0.8, dy = wv - pt[i][1], wt = exp(-(dx * dx + dy * dy) / pt[i][2]);
+
+		r += pal[i].r * wt;
+		g += pal[i].g * wt;
+		b += pal[i].b * wt;
+		sw += wt;
+	}
+	return mix((struct col){ r / sw, g / sw, b / sw }, k->bg, k->dark ? 0.32 : 0.25);
+}
+
+/* cristal: base en degradado y triángulos con luz según su inclinación */
+static struct col cristal_base(const struct ctx *k, double u, double v)
+{
+	double dx = (u - 0.8) * k->aspect, dy = v - 0.2, ex = (u - 0.15) * k->aspect, ey = v - 0.9;
+	struct col c = mix(mix(k->sur, k->bg, 0.2), k->bg, u * 0.4 + v * 0.6);
+
+	c = glow(k, c, k->acc, exp(-(dx * dx + dy * dy) / 0.35) * (k->dark ? 0.6 : 0.45));
+	return glow(k, c, k->mag, exp(-(ex * ex + ey * ey) / 0.25) * (k->dark ? 0.35 : 0.3));
+}
+
+static int tri_hit(const double *a, const double *b, const double *c, double x, double y)
+{
+	double d1 = (x - b[0]) * (a[1] - b[1]) - (a[0] - b[0]) * (y - b[1]);
+	double d2 = (x - c[0]) * (b[1] - c[1]) - (b[0] - c[0]) * (y - c[1]);
+	double d3 = (x - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (y - a[1]);
+
+	return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+}
+
+static struct col cristal_at(const struct ctx *k, double x, double y)
+{
+	int ci = (int)(x / k->aspect * k->nx), cj = (int)(y * k->ny);
+
+	for (int j = cj - 1; j <= cj + 1; j++)
+		for (int i = ci - 1; i <= ci + 1; i++) {
+			const double *q[4];
+
+			if (i < 0 || j < 0 || i >= k->nx || j >= k->ny)
+				continue;
+			q[0] = k->vtx + 3 * ((size_t)j * (k->nx + 1) + i);
+			q[1] = q[0] + 3;
+			q[2] = q[0] + 3 * (k->nx + 1);
+			q[3] = q[2] + 3;
+			for (int t = 0; t < 2; t++) {
+				const double *a, *b, *c;
+
+				/* la diagonal alterna para que no se vea una rejilla */
+				if ((i + j) & 1) {
+					a = t ? q[1] : q[0]; b = t ? q[3] : q[1]; c = q[2];
+				} else {
+					a = t ? q[0] : q[0]; b = t ? q[3] : q[1]; c = t ? q[2] : q[3];
+				}
+				if (tri_hit(a, b, c, x, y)) {
+					double ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+					double vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+					double nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, nl;
+					double cx = (a[0] + b[0] + c[0]) / 3, cy = (a[1] + b[1] + c[1]) / 3, sh;
+					struct col base = cristal_base(k, cx / k->aspect, cy);
+
+					if (nz < 0) {
+						nx = -nx; ny = -ny; nz = -nz;
+					}
+					nl = sqrt(nx * nx + ny * ny + nz * nz);
+					/* luz desde arriba a la derecha */
+					sh = (nx * 0.55 - ny * 0.55 + nz * 0.63) / nl - 0.63;
+					base = sh > 0 ? glow(k, base, k->cya, sh * 2.2) : mix(base, k->dark ? (struct col){ 0, 0, 0 } : k->bg, -sh * 2.5);
+					return base;
+				}
+			}
+		}
+	return cristal_base(k, x / k->aspect, y);
+}
+
+static struct col px_cristal(const struct ctx *k, double u, double v)
+{
+	double ox = 0.25 / k->w * k->aspect, oy = 0.25 / k->h, x = u * k->aspect;
+	struct col a = cristal_at(k, x - ox, v - oy), b = cristal_at(k, x + ox, v - oy), c = cristal_at(k, x - ox, v + oy),
+		   d = cristal_at(k, x + ox, v + oy);
+
+	return (struct col){ (a.r + b.r + c.r + d.r) / 4, (a.g + b.g + c.g + d.g) / 4, (a.b + b.b + c.b + d.b) / 4 };
+}
+
+static struct col px_topografico(const struct ctx *k, int x, int y, double u, double v)
+{
+	const double *f = k->fld + (size_t)y * k->w + x;
+	double fx = (x + 1 < k->w ? f[1] : f[0]) - (x > 0 ? f[-1] : f[0]);
+	double fy = (y + 1 < k->h ? f[k->w] : f[0]) - (y > 0 ? f[-k->w] : f[0]);
+	double gr = sqrt(fx * fx + fy * fy) / 2 + 1e-9, n = 38, l = f[0] * n, fr = l - floor(l), d = fmin(fr, 1 - fr) / (gr * n);
+	int major = ((int)floor(l + 0.5)) % 5 == 0;
+	double wd = major ? 1.1 : 0.55, line = 1 - smooth(wd - 0.6, wd + 0.6, d);
+	double dx = (u - 0.75) * k->aspect, dy = v - 0.3;
+	struct col c = mix(mix(k->sur, k->bg, 0.3), k->bg, smooth(0.0, 1.0, u * 0.3 + v * 0.7));
+	struct col lc = mix(k->acc, k->cya, smooth(0.35, 0.7, f[0]));
+
+	c = glow(k, c, k->acc, exp(-(dx * dx + dy * dy) / 0.25) * (k->dark ? 0.25 : 0.18));
+	if (line > 0)
+		c = mix(c, lc, line * (major ? 0.7 : 0.35) * (k->dark ? 1 : 0.9));
+	return c;
+}
+
+static struct col px_seda(const struct ctx *k, double u, double v)
+{
+	static const double rb[3][7] = { { 0.62, 0.16, 0.55, 0.05, 0.16, 0.06, 0.8 },
+					 { 0.42, 0.12, 0.8, 0.45, 0.11, 0.04, 1.3 },
+					 { 0.78, 0.08, 1.1, 0.7, 0.07, 0.025, 1.9 } };
+	struct col c = mix(mix(k->sur, k->bg, 0.15), k->bg, smooth(0.0, 1.0, v * 0.6 + (1 - u) * 0.4));
+	double pv = 1.5 / k->h;
+
+	for (int i = 0; i < 3; i++) {
+		const double *r = rb[i];
+		double ctr = r[0] + r[1] * sin(2 * M_PI * (r[2] * u + r[3])) + 0.03 * sin(2 * M_PI * (2.1 * u + i));
+		double th = r[4] + r[5] * sin(2 * M_PI * (r[6] * u + 0.3 * i)), s = (v - ctr) / th, as = fabs(s);
+
+		if (as < 1 + pv / th) {
+			/* pliegues: la tela gira a lo largo de la cinta */
+			double tw = 2.2 * s + 3.0 * sin(2 * M_PI * (0.6 * u + 0.2 * i)) + 1.5 * u;
+			double sh = 0.5 + 0.5 * cos(tw), spec = pow(sh, 14), a = 1 - smooth(1 - pv / th, 1 + pv / th, as);
+			struct col rc = mix(mix(k->acc, k->mag, (s + 1) / 2), k->dim, (1 - sh) * 0.55);
+
+			rc = mix(rc, k->bg, (1 - sh) * 0.45);
+			rc = glow(k, rc, k->cya, spec * 0.55 + 0.04 * sin(s * 90) * sh);
+			c = mix(c, rc, a * (0.92 - 0.2 * i) * (0.7 + 0.3 * (1 - as * as)));
+		}
+	}
+	return c;
+}
+
+static struct col pixel(const char *style, const struct ctx *k, int x, int y, double u, double v)
+{
+	const double *cv = k->col + (size_t)x * NCOL;
 	struct col c;
 
+	if (!strcmp(style, "petalos"))
+		return px_petalos(k, u, v);
+	if (!strcmp(style, "dunas"))
+		return px_dunas(k, cv, u, v);
+	if (!strcmp(style, "malla"))
+		return px_malla(k, u, v);
+	if (!strcmp(style, "cristal"))
+		return px_cristal(k, u, v);
+	if (!strcmp(style, "topografico"))
+		return px_topografico(k, x, y, u, v);
+	if (!strcmp(style, "seda"))
+		return px_seda(k, u, v);
 	if (!strcmp(style, "ondas")) {
 		struct col layers[4] = { k->dim, k->blu, k->acc, k->mag };
 		static const double alpha[4] = { 0.55, 0.45, 0.6, 0.5 };
@@ -469,7 +827,7 @@ int rros_wallpaper_render(const char *style, const struct rros_palette *p, int w
 	if (w < 16 || h < 16 || w > 8192 || h > 8192)
 		return -1;
 	img = malloc((size_t)w * h * 3);
-	ctx_init(&k, style, p, w, (double)w / h);
+	ctx_init(&k, style, p, w, h);
 	if (!img || !k.col) {
 		free(img);
 		free(k.col);
@@ -477,7 +835,7 @@ int rros_wallpaper_render(const char *style, const struct rros_palette *p, int w
 	}
 	for (int y = 0; y < h; y++)
 		for (int x = 0; x < w; x++) {
-			struct col c = pixel(style, &k, x, (x + 0.5) / w, (y + 0.5) / h);
+			struct col c = pixel(style, &k, x, y, (x + 0.5) / w, (y + 0.5) / h);
 			double dith = (bayer[y & 3][x & 3] + 0.5) / 16.0 - 0.5;
 			double ch[3] = { c.r, c.g, c.b };
 
@@ -489,6 +847,8 @@ int rros_wallpaper_render(const char *style, const struct rros_palette *p, int w
 		}
 	/* estrellas en el cielo de la aurora (solo en temas oscuros) */
 	free(k.col);
+	free(k.fld);
+	free(k.vtx);
 	if (!strcmp(style, "aurora") && k.dark)
 		for (int i = 0; i < w * h / 9000; i++) {
 			int x = (int)(rnd(&seed) * w), y = (int)(rnd(&seed) * h * 0.55);

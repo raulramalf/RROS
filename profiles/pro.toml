@@ -31,18 +31,24 @@ dim_inactive = false
 corner_radius = 12
 workspaces = 4
 hot_corners = true
-# estilo «moderno» (rros theme escritorio) con el dock en 3D
+# estilo «rros» (Fusión): barra de tareas abajo de borde a borde, siempre visible, con inicio, buscador,
+# las aplicaciones en el centro, la bandeja y el reloj (el dock 3D, en el estilo Dock)
+taskbar_style = "rros"
+taskbar_align = "auto"
+taskbar_size = 52
+taskbar_labels = false
+taskbar_search = true
 panel_position = "top"
 panel_size = 28
 dock = true
 dock_style = "3d"
 dock_icon_size = 52
 dock_position = "bottom"
-dock_hiding = "dodge"
+dock_hiding = "never"
 dock_launchpad = true
 dock_apps = "org.kde.dolphin,firefox,rros-apps,org.kde.konsole,org.kde.kate,rros-settings"
-window_buttons = "left"
-global_menu = true
+window_buttons = "right"
+global_menu = false
 
 [panel]
 style = "flat"

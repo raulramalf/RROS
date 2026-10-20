@@ -257,7 +257,8 @@ static void respond_run(int fd, const char *tool, char *const argv[])
 /* miniatura de un estilo de fondo con los colores del tema actual (PNG) */
 static void do_wallpaper_preview(int fd, const char *query)
 {
-	static const char *const styles[] = { "aurora", "ondas", "degradado", "circulos" };
+	static const char *const styles[] = { "aurora", "ondas", "degradado", "circulos", "petalos", "dunas", "malla", "cristal",
+					      "topografico", "seda" };
 	char style[16] = "", path[600], *body = NULL;
 	const char *dir = getenv("XDG_RUNTIME_DIR");
 	const char *st = NULL;

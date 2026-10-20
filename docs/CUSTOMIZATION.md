@@ -19,7 +19,7 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.font_antialias` | opción | none|grayscale|rgba | Suavizado de fuentes |
 | `ui.wallpaper` | texto |  | Ruta del fondo de pantalla |
 | `ui.wallpaper_mode` | opción | fill|fit|stretch|center|tile | Ajuste del fondo |
-| `ui.wallpaper_style` | opción | aurora|ondas|degradado|circulos|liso | Fondo generado con los colores del tema (si no eliges una imagen) |
+| `ui.wallpaper_style` | opción | aurora|ondas|degradado|circulos|petalos|dunas|malla|cristal|topografico|seda|liso | Fondo generado con los colores del tema (si no eliges una imagen) |
 | `ui.effects` | opción | off|basic|advanced | Nivel de efectos visuales |
 | `ui.animations` | booleano | true / false | Animaciones de ventanas y menús |
 | `ui.animation_speed` | entero | 25 – 400 | Velocidad de animación (%) |
@@ -30,7 +30,12 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.shadows` | booleano | true / false | Sombras de ventanas |
 | `ui.dim_inactive` | booleano | true / false | Oscurecer un poco las ventanas sin foco |
 | `ui.corner_radius` | entero | 0 – 32 | Radio de esquinas (px) |
-| `ui.dock` | booleano | true / false | Dock de aplicaciones, como en macOS |
+| `ui.taskbar_style` | opción | rros|clasica|isla|dock|doble|lateral | Barra de tareas: Fusión (la de RROS), Clásica, Isla flotante, Dock con barra superior, Doble o Lateral |
+| `ui.taskbar_align` | opción | auto|centro|izquierda | Aplicaciones de la barra de tareas: en el centro o a la izquierda |
+| `ui.taskbar_size` | entero | 36 – 72 | Alto de la barra de tareas (px) |
+| `ui.taskbar_labels` | booleano | true / false | Nombre de cada ventana junto a su icono en la barra de tareas |
+| `ui.taskbar_search` | booleano | true / false | Buscador en la barra de tareas |
+| `ui.dock` | booleano | true / false | Dock de aplicaciones (estilo Dock) |
 | `ui.dock_style` | opción | 2d|3d | Aspecto del dock: plano (2d) o con relieve, brillo y reflejo (3d) |
 | `ui.dock_icon_size` | entero | 32 – 96 | Tamaño de los iconos del dock (px) |
 | `ui.dock_position` | opción | bottom|left|right | Posición del dock |

@@ -33,7 +33,7 @@ static void usage(void)
 	      "  toggle                 alterna oscuro/claro\n"
 	      "  new NOMBRE [--base T]  crea un tema propio para editar\n"
 	      "  apply [--quiet]        aplica la configuración a Plasma (colores, dock, efectos, entrada...)\n"
-	      "  escritorio [ESTILO]    estilos de escritorio (moderno, clasico, enfoque); con ESTILO lo aplica\n"
+	      "  escritorio [ESTILO]    estilos de escritorio (rros, clasico, isla, moderno, doble, lateral); con ESTILO lo aplica\n"
 	      "  wallpaper [--next | --style S] [--out F] [--size AxB]   genera el fondo con los colores del tema\n"
 	      "  palette                muestra la paleta calculada\n"
 	      "  render --out DIR       escribe en DIR todo lo que se generaría (pruebas)\n", stderr);
@@ -539,7 +539,7 @@ static int cmd_desktop(const char *profile, const char *name)
 	}
 	d = rros_desktop_find(name);
 	if (!d) {
-		fprintf(stderr, "rros-theme: no hay ningún estilo de escritorio '%s' (moderno, clasico, enfoque)\n", name);
+		fprintf(stderr, "rros-theme: no hay ningún estilo de escritorio '%s' (rros, clasico, isla, moderno, doble, lateral)\n", name);
 		return 1;
 	}
 	for (size_t k = 0; k < 14 && d->keys[k][0]; k++)
@@ -553,7 +553,9 @@ static int cmd_desktop(const char *profile, const char *name)
 
 static int cmd_wallpaper(const char *profile, int argc, char **argv, int i)
 {
-	static const char *styles[] = { "aurora", "ondas", "degradado", "circulos", "liso" };
+	static const char *styles[] = { "aurora", "ondas", "degradado", "circulos", "petalos", "dunas", "malla",
+					"cristal", "topografico", "seda", "liso" };
+	const size_t ns = sizeof styles / sizeof *styles - 1;   /* generados (sin «liso») */
 	const char *style = NULL, *out = NULL;
 	int w = 1920, h = 1080, next = 0;
 	struct rros_theme t;
@@ -582,14 +584,14 @@ static int cmd_wallpaper(const char *profile, int argc, char **argv, int i)
 	if (next) {
 		size_t k = 0;
 
-		while (k < 4 && strcmp(styles[k], t.wallpaper_style))
+		while (k < ns && strcmp(styles[k], t.wallpaper_style))
 			k++;
-		if (rros_user_set("ui.wallpaper_style", styles[(k + 1) % 4], 0, err, sizeof err) ||
+		if (rros_user_set("ui.wallpaper_style", styles[(k + 1) % ns], 0, err, sizeof err) ||
 		    (t.wallpaper[0] && rros_user_unset("ui.wallpaper", 0, err, sizeof err))) {
 			fprintf(stderr, "rros-theme: %s\n", err);
 			return 1;
 		}
-		printf("fondo: %s\n", styles[(k + 1) % 4]);
+		printf("fondo: %s\n", styles[(k + 1) % ns]);
 		return cmd_apply(profile, 1);
 	}
 	if (!style)
@@ -601,10 +603,10 @@ static int cmd_wallpaper(const char *profile, int argc, char **argv, int i)
 	{
 		size_t k = 0;
 
-		while (k < 4 && strcmp(styles[k], style))
+		while (k < ns && strcmp(styles[k], style))
 			k++;
-		if (k == 4) {
-			fprintf(stderr, "rros-theme: estilo de fondo desconocido: %s (aurora, ondas, degradado, circulos)\n", style);
+		if (k == ns) {
+			fprintf(stderr, "rros-theme: estilo de fondo desconocido: %s (aurora, ondas, degradado, circulos, petalos, dunas, malla, cristal, topografico, seda)\n", style);
 			return 1;
 		}
 	}

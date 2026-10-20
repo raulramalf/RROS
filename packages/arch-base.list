@@ -131,6 +131,7 @@ spectacle
 mpv
 btop
 flatpak
+archlinux-appstream-data # iconos y fichas de las aplicaciones de Arch para la Tienda
 zip
 unzip
 7zip

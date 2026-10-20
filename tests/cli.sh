@@ -377,8 +377,8 @@ if grep -q firefox <<<"$GAMES"; then fail "apps: el filtro no excluye otras cate
 grep -q firefox <<<"$($APPS search navegador)" || fail "apps: búsqueda"
 grep -q 'org.mozilla.firefox' <<<"$($APPS info firefox)" || fail "apps: info"
 FF=$($APPS install firefox --dry-run)
-grep -q 'flatpak install --user -y --noninteractive flathub org.mozilla.firefox' <<<"$FF" || fail "apps: instalar por Flatpak"
-grep -q 'flatpak remote-add --user --if-not-exists flathub' <<<"$FF" || fail "apps: añade Flathub"
+grep -Eq 'flatpak install --(user|system) -y --noninteractive flathub org.mozilla.firefox' <<<"$FF" || fail "apps: instalar por Flatpak"
+grep -Eq 'flatpak remote-add --(user|system) --if-not-exists flathub' <<<"$FF" || fail "apps: añade Flathub"
 GIMP=$($APPS install gimp --dry-run)
 grep -q 'apt-get update' <<<"$GIMP" || fail "apps: apt-get update antes de instalar"
 grep -q 'apt-get install -y gimp' <<<"$GIMP" || fail "apps: instalar por apt"

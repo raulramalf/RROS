@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -425,9 +426,16 @@ static int cmd_info(const struct app *a)
 	return 0;
 }
 
+/* Flatpak para todo el equipo si somos root (la Tienda llama con pkexec: «--user» instalaría en la carpeta de root,
+ * no en la de quien la usa) y en la carpeta personal si no. */
+static char *fp_scope(void)
+{
+	return geteuid() == 0 ? "--system" : "--user";
+}
+
 static int flathub_setup(void)
 {
-	char *argv[] = { "flatpak", "remote-add", "--user", "--if-not-exists", "flathub", FLATHUB_URL, NULL };
+	char *argv[] = { "flatpak", "remote-add", fp_scope(), "--if-not-exists", "flathub", FLATHUB_URL, NULL };
 
 	if (!have_cmd("flatpak") && !dry_run) {
 		fputs("rros-apps: flatpak no está instalado (instálalo con el gestor de paquetes del sistema)\n", stderr);
@@ -515,7 +523,7 @@ static int cmd_install(const struct app *a, int force_flatpak)
 	}
 	printf("Instalando %s con %s...\n", a->name, use_flatpak ? "Flatpak (Flathub)" : backend_name[backend]);
 	if (use_flatpak) {
-		char *inst[] = { "flatpak", "install", "--user", "-y", "--noninteractive", "flathub", (char *)a->flatpak, NULL };
+		char *inst[] = { "flatpak", "install", fp_scope(), "-y", "--noninteractive", "flathub", (char *)a->flatpak, NULL };
 
 		if (flathub_setup() || step(inst) != 0) {
 			fprintf(stderr, "rros-apps: no se pudo instalar %s\n", a->name);
@@ -536,7 +544,7 @@ static int cmd_remove(const struct app *a)
 	int done = 0;
 
 	if (a->flatpak && (dry_run || flatpak_installed(a->flatpak))) {
-		char *argv[] = { "flatpak", "uninstall", "--user", "-y", (char *)a->flatpak, NULL };
+		char *argv[] = { "flatpak", "uninstall", "-y", "--noninteractive", (char *)a->flatpak, NULL };
 
 		if (step(argv) != 0)
 			return 1;
@@ -554,7 +562,7 @@ static int cmd_remove(const struct app *a)
 
 static int cmd_update(void)
 {
-	char *fp[] = { "flatpak", "update", "--user", "-y", NULL };
+	char *fp[] = { "flatpak", "update", "-y", "--noninteractive", NULL };
 	int rc = 0;
 
 	if (pkg_step("upgrade", NULL) != 0)
@@ -562,6 +570,259 @@ static int cmd_update(void)
 	if ((dry_run || have_cmd("flatpak")) && step(fp) != 0)
 		rc = 1;
 	return rc;
+}
+
+/* ---- Tienda completa: todo lo de Arch y de Flathub, no solo el catálogo ---- */
+
+static int name_ok(const char *s, const char *extra, size_t max)
+{
+	size_t n = strlen(s);
+
+	if (n == 0 || n > max || *s == '-')
+		return 0;
+	for (; *s; s++)
+		if (!isalnum((unsigned char)*s) && !strchr(extra, *s))
+			return 0;
+	return 1;
+}
+
+static char *capture_big(char *const argv[], size_t cap)
+{
+	char *buf = malloc(cap);
+
+	if (!buf)
+		return NULL;
+	if (run(argv, buf, cap, 1) < 0)
+		buf[0] = '\0';
+	return buf;
+}
+
+static void json_item(int *first, const char *origin, const char *id, const char *name, const char *desc, const char *version,
+		      int installed, const char *icon)
+{
+	printf("%s{\"origen\":", *first ? "" : ",");
+	json_str(origin);
+	printf(",\"id\":"); json_str(id);
+	printf(",\"name\":"); json_str(name);
+	printf(",\"desc\":"); json_str(desc);
+	printf(",\"version\":"); json_str(version);
+	printf(",\"icon\":"); json_str(icon);
+	printf(",\"installed\":%s}", installed ? "true" : "false");
+	*first = 0;
+}
+
+/* pacman -Ss: «repo/nombre versión [installed]» y la descripción en la línea siguiente */
+static void search_pacman(const char *q, int *first, int max)
+{
+	char *argv[] = { "pacman", "-Ss", "--", (char *)q, NULL };
+	char *out = capture_big(argv, 1 << 20), *line, *save = NULL, name[160] = "", ver[64] = "";
+	int inst = 0, n = 0;
+
+	if (!out)
+		return;
+	for (line = strtok_r(out, "\n", &save); line && n < max; line = strtok_r(NULL, "\n", &save)) {
+		if (line[0] != ' ') {
+			char repo_name[160];
+
+			inst = strstr(line, "[installed") != NULL;
+			if (sscanf(line, "%159s %63s", repo_name, ver) != 2) {
+				name[0] = '\0';
+				continue;
+			}
+			snprintf(name, sizeof name, "%s", strchr(repo_name, '/') ? strchr(repo_name, '/') + 1 : repo_name);
+		} else if (name[0]) {
+			while (*line == ' ')
+				line++;
+			json_item(first, "arch", name, name, line, ver, inst, name);
+			name[0] = '\0';
+			n++;
+		}
+	}
+	free(out);
+}
+
+/* flatpak search: columnas separadas por tabuladores */
+static void search_flatpak(const char *q, int *first, int max)
+{
+	char *argv[] = { "flatpak", "search", "--columns=application,name,description,version", (char *)q, NULL };
+	char *out, *line, *save = NULL;
+	int n = 0;
+
+	if (!have_cmd("flatpak"))
+		return;
+	/* la primera vez no hay índice de Flathub: se añade (para esta persona, sin contraseña) y se descarga */
+	{
+		char sys_as[] = "/var/lib/flatpak/appstream/flathub", user_as[700];
+		const char *home = getenv("HOME");
+
+		snprintf(user_as, sizeof user_as, "%s/.local/share/flatpak/appstream/flathub", home ? home : "/nonexistent");
+		if (access(sys_as, F_OK) != 0 && access(user_as, F_OK) != 0) {
+			char *add[] = { "flatpak", "remote-add", fp_scope(), "--if-not-exists", "flathub", FLATHUB_URL, NULL };
+			char *as[] = { "flatpak", "update", fp_scope(), "--appstream", "flathub", NULL };
+
+			run(add, NULL, 0, 1);
+			run(as, NULL, 0, 1);
+		}
+	}
+	out = capture_big(argv, 1 << 20);
+	if (!out)
+		return;
+	for (line = strtok_r(out, "\n", &save); line && n < max; line = strtok_r(NULL, "\n", &save)) {
+		char *f[4] = { 0 }, *p = line;
+
+		for (int i = 0; i < 4 && p; i++) {
+			f[i] = p;
+			p = strchr(p, '\t');
+			if (p)
+				*p++ = '\0';
+		}
+		if (!f[0] || !f[1] || !strchr(f[0], '.'))
+			continue;
+		json_item(first, "flathub", f[0], f[1], f[2] ? f[2] : "", f[3] ? f[3] : "", flatpak_installed(f[0]), f[0]);
+		n++;
+	}
+	free(out);
+}
+
+static int ci_contains(const char *hay, const char *needle)
+{
+	size_t n = strlen(needle);
+
+	for (; *hay; hay++)
+		if (!strncasecmp(hay, needle, n))
+			return 1;
+	return 0;
+}
+
+static int cmd_search_all(const char *q)
+{
+	int first = 1;
+
+	if (!name_ok(q, " .+_-", 60)) {
+		fputs("rros-apps: búsqueda no válida\n", stderr);
+		return 2;
+	}
+	putchar('[');
+	/* primero lo del catálogo de RROS (probado), luego Flathub y luego los repositorios de Arch */
+	for (size_t i = 0; i < napps; i++) {
+		const struct app *a = &apps[i];
+
+		if (ci_contains(a->name, q) || ci_contains(a->desc, q) || ci_contains(a->id, q))
+			json_item(&first, "rros", a->id, a->name, a->desc, "", is_installed(a), a->cmd ? a->cmd : a->id);
+	}
+	search_flatpak(q, &first, 30);
+	if (backend == PKG_PACMAN)
+		search_pacman(q, &first, 40);
+	puts("]");
+	return 0;
+}
+
+/* lo instalado que se ve en el menú: paquetes con lanzador y aplicaciones de Flathub */
+static int cmd_installed(void)
+{
+	char *own[] = { "sh", "-c", "pacman -Qqo /usr/share/applications/*.desktop 2>/dev/null | sort -u | xargs -r pacman -Qi 2>/dev/null", NULL };
+	char *fp[] = { "flatpak", "list", "--app", "--columns=application,name,description,version", NULL };
+	char *out, *line, *save = NULL, name[128] = "", ver[64] = "", desc[300] = "";
+	int first = 1;
+
+	putchar('[');
+	if (backend == PKG_PACMAN && (out = capture_big(own, 4 << 20))) {
+		for (line = strtok_r(out, "\n", &save); line; line = strtok_r(NULL, "\n", &save)) {
+			if (!strncmp(line, "Name ", 5))
+				snprintf(name, sizeof name, "%s", strstr(line, ": ") ? strstr(line, ": ") + 2 : "");
+			else if (!strncmp(line, "Version ", 8))
+				snprintf(ver, sizeof ver, "%s", strstr(line, ": ") ? strstr(line, ": ") + 2 : "");
+			else if (!strncmp(line, "Description ", 12)) {
+				snprintf(desc, sizeof desc, "%s", strstr(line, ": ") ? strstr(line, ": ") + 2 : "");
+				if (name[0])
+					json_item(&first, "arch", name, name, desc, ver, 1, name);
+				name[0] = '\0';
+			}
+		}
+		free(out);
+	}
+	if (have_cmd("flatpak") && (out = capture_big(fp, 1 << 20))) {
+		save = NULL;
+		for (line = strtok_r(out, "\n", &save); line; line = strtok_r(NULL, "\n", &save)) {
+			char *f[4] = { 0 }, *p = line;
+
+			for (int i = 0; i < 4 && p; i++) {
+				f[i] = p;
+				p = strchr(p, '\t');
+				if (p)
+					*p++ = '\0';
+			}
+			if (f[0] && f[1])
+				json_item(&first, "flathub", f[0], f[1], f[2] ? f[2] : "", f[3] ? f[3] : "", 1, f[0]);
+		}
+		free(out);
+	}
+	puts("]");
+	return 0;
+}
+
+/* actualizaciones pendientes: checkupdates (sin tocar la base de pacman) y Flatpak */
+static int cmd_pending(void)
+{
+	char *cu[] = { "checkupdates", NULL };
+	char *fp[] = { "flatpak", "remote-ls", "--updates", "--columns=application,name,version", NULL };
+	char *out, *line, *save = NULL;
+	int first = 1;
+
+	putchar('[');
+	if (backend == PKG_PACMAN && have_cmd("checkupdates") && (out = capture_big(cu, 1 << 20))) {
+		for (line = strtok_r(out, "\n", &save); line; line = strtok_r(NULL, "\n", &save)) {
+			char n[128], from[64], to[64];
+
+			if (sscanf(line, "%127s %63s -> %63s", n, from, to) == 3)
+				json_item(&first, "arch", n, n, from, to, 1, n);
+		}
+		free(out);
+	}
+	if (have_cmd("flatpak") && (out = capture_big(fp, 1 << 20))) {
+		save = NULL;
+		for (line = strtok_r(out, "\n", &save); line; line = strtok_r(NULL, "\n", &save)) {
+			char *f[3] = { 0 }, *p = line;
+
+			for (int i = 0; i < 3 && p; i++) {
+				f[i] = p;
+				p = strchr(p, '\t');
+				if (p)
+					*p++ = '\0';
+			}
+			if (f[0] && f[1])
+				json_item(&first, "flathub", f[0], f[1], "", f[2] ? f[2] : "", 1, f[0]);
+		}
+		free(out);
+	}
+	puts("]");
+	return 0;
+}
+
+/* instalar o quitar cualquier paquete de Arch o aplicación de Flathub (lo que se encontró con «buscar») */
+static int cmd_any(const char *what, const char *name)
+{
+	int inst = !strncmp(what, "instalar", 8);
+
+	if (strstr(what, "flatpak")) {
+		char *in[] = { "flatpak", "install", fp_scope(), "-y", "--noninteractive", "flathub", (char *)name, NULL };
+		char *rm[] = { "flatpak", "uninstall", "-y", "--noninteractive", (char *)name, NULL };
+
+		if (!name_ok(name, "._-", 200) || !strchr(name, '.')) {
+			fputs("rros-apps: id de Flathub no válido\n", stderr);
+			return 2;
+		}
+		printf("%s %s (Flathub)...\n", inst ? "Instalando" : "Quitando", name);
+		if (inst && flathub_setup())
+			return 1;
+		return step(inst ? in : rm) == 0 ? (puts("Listo"), 0) : 1;
+	}
+	if (!name_ok(name, "@._+-", 100)) {
+		fputs("rros-apps: nombre de paquete no válido\n", stderr);
+		return 2;
+	}
+	printf("%s %s (Arch)...\n", inst ? "Instalando" : "Quitando", name);
+	return pkg_step(inst ? "install" : "remove", name) == 0 ? (puts("Listo"), 0) : 1;
 }
 
 static void usage(FILE *out)
@@ -575,6 +836,10 @@ static void usage(FILE *out)
 	      "  remove ID [--dry-run]                        quitar\n"
 	      "  update [--dry-run]                           actualizar sistema y aplicaciones\n"
 	      "  setup [--dry-run]                            añadir Flathub (se hace solo al instalar)\n"
+	      "  buscar TEXTO                                 buscar en el catálogo, Flathub y Arch (JSON)\n"
+	      "  instaladas | pendientes                      lo instalado y las actualizaciones (JSON)\n"
+	      "  instalar-paquete|quitar-paquete NOMBRE       cualquier paquete de Arch\n"
+	      "  instalar-flatpak|quitar-flatpak ID           cualquier aplicación de Flathub\n"
 	      "\n"
 	      "Ejemplo: rros apps install firefox\n", out);
 }
@@ -599,6 +864,18 @@ int main(int argc, char **argv)
 		return cmd_categories();
 	if (!strcmp(cmd, "search") && argc == 3)
 		return cmd_list(0, argv, argv[2]);
+	if (!strcmp(cmd, "buscar") && argc == 3)
+		return cmd_search_all(argv[2]);
+	if (!strcmp(cmd, "instaladas"))
+		return cmd_installed();
+	if (!strcmp(cmd, "pendientes"))
+		return cmd_pending();
+	if ((!strcmp(cmd, "instalar-paquete") || !strcmp(cmd, "quitar-paquete") || !strcmp(cmd, "instalar-flatpak") ||
+	     !strcmp(cmd, "quitar-flatpak")) && argc >= 3) {
+		if (argc > 3 && !strcmp(argv[3], "--dry-run"))
+			dry_run = 1;
+		return cmd_any(cmd, argv[2]);
+	}
 	if (!strcmp(cmd, "update") || !strcmp(cmd, "setup")) {
 		for (int i = 2; i < argc; i++) {
 			if (!strcmp(argv[i], "--dry-run"))

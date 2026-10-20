@@ -242,6 +242,22 @@ QPixmap IconProvider::requestPixmap(const QString &id, QSize *size, const QSize 
 	QIcon icon = QIcon::fromTheme(id);
 	if (icon.isNull())
 		icon = QIcon::fromTheme(id.toLower());
+	// lo que aún no está instalado: los iconos de AppStream (Flathub y el catálogo de Arch, como GNOME Software)
+	if (icon.isNull()) {
+		static const char *const dirs[] = { "/var/lib/flatpak/appstream/flathub/x86_64/active/icons/128x128/%1.png",
+						    "/var/lib/flatpak/appstream/flathub/x86_64/active/icons/64x64/%1.png",
+						    "/usr/share/swcatalog/icons/archlinux-arch-extra/128x128/%1_%1.png",
+						    "/usr/share/swcatalog/icons/archlinux-arch-extra/64x64/%1_%1.png",
+						    "/usr/share/swcatalog/icons/archlinux-arch-extra/128x128/%1.png" };
+		if (!id.contains(QLatin1Char('/')) && !id.contains(QLatin1String("..")))
+			for (const char *d : dirs) {
+				const QString f = QString::fromLatin1(d).arg(id);
+				if (QFile::exists(f)) {
+					icon = QIcon(f);
+					break;
+				}
+			}
+	}
 	if (icon.isNull())
 		icon = QIcon(QStringLiteral(":/icons/sec-generica.svg"));
 	if (size)

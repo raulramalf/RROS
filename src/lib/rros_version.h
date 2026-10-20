@@ -1,5 +1,5 @@
 #ifndef RROS_VERSION_H
 #define RROS_VERSION_H
-#define RROS_VERSION "1.0.0"
-#define RROS_CODENAME "Boreal"
+#define RROS_VERSION "2.0.0"
+#define RROS_CODENAME "Lirio"
 #endif

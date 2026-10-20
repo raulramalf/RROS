@@ -51,6 +51,9 @@ for desk in $desks; do
 	check "lanzador: $desk.desktop" test -e "/usr/share/applications/$desk.desktop"
 done
 # lo propio de RROS: iconos, tema de escritorio 2D y 3D, menú RROS, carga, inicio de sesión y arranque
+check "antivirus: motor, rros-antivirus y análisis programado" sh -c "command -v clamscan && rros-antivirus estado --json | grep -q '\"motor\":true' && test -f /usr/lib/systemd/system/rros-antivirus.timer"
+check "directivas: pam_pwquality en passwd" grep -q pam_pwquality /etc/pam.d/passwd
+check "cursores de RROS" test -e /usr/share/icons/RROS-Lirio/cursors/default
 check "logotipo de RROS (PNG)" test -s /usr/share/icons/hicolor/256x256/apps/rros.png
 check "logotipo de RROS para la barra" test -s /usr/share/icons/hicolor/scalable/apps/rros-symbolic.svg
 for icon in rros-settings rros-apps rros-install rros-welcome rros-launchpad rros-updates; do
@@ -119,7 +122,7 @@ if [ "$BASE" = arch ]; then
 		[ -n "$sid" ] && su rros -c "$bus qdbus6 org.kde.KWin /Scripting/Script$sid org.kde.kwin.Script.run" >/dev/null 2>&1
 		sleep 1
 		journalctl -b _UID="$(id -u rros)" --no-pager 2>/dev/null | grep -F 'ventana:' | tail -n 20 | sed 's/^/diag: /'
-		check "RROS Shell dibuja el fondo, la barra y el dock" sh -c "j=\$(journalctl -b _UID=$(id -u rros) --no-pager 2>/dev/null); for c in rros-fondo rros-barra rros-dock; do echo \"\$j\" | grep -q \"capa \$c/[a-z]* dibujada\" || exit 1; done"
+		check "RROS Shell dibuja el fondo y la barra de tareas" sh -c "j=\$(journalctl -b _UID=$(id -u rros) --no-pager 2>/dev/null); for c in rros-fondo rros-tareas; do echo \"\$j\" | grep -q \"capa \$c/[a-z]* dibujada\" || exit 1; done"
 		if ! pgrep -u rros -x rros-shell >/dev/null 2>&1; then   # para saber por qué: sesión y registro de SDDM
 			{
 				echo "--- sesiones ---"; loginctl list-sessions --no-legend 2>&1 | head -5

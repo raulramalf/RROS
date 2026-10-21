@@ -110,7 +110,7 @@ report() {
 	no() { echo "| $1 | ➖ no tiene | $2 |"; }
 	# Wi-Fi: hay tarjeta y tiene controlador
 	if ls /sys/class/net/*/wireless >/dev/null 2>&1; then
-		w=$(basename "$(dirname "$(ls -d /sys/class/net/*/wireless | head -1)")")
+		w=$(basename "$(dirname "$(find /sys/class/net/ -mindepth 2 -maxdepth 2 -name wireless | head -1)")")
 		drv=$(basename "$(readlink -f "/sys/class/net/$w/device/driver" 2>/dev/null)")
 		ok "Wi-Fi" "$w con el controlador ${drv:-?}"
 	elif lspci 2>/dev/null | grep -qi 'network controller'; then warn "Wi-Fi" "hay tarjeta Wi-Fi pero sin controlador (mira «Firmware que falta»)"
@@ -135,11 +135,11 @@ report() {
 	*) ok "Aceleración 3D" "$r" ;;
 	esac
 	# bluetooth, cámara, panel táctil, batería
-	if [ -d /sys/class/bluetooth ] && ls /sys/class/bluetooth/hci* >/dev/null 2>&1; then ok "Bluetooth" "$(ls /sys/class/bluetooth | head -1)"; else no "Bluetooth" "-"; fi
-	if ls /dev/video* >/dev/null 2>&1; then ok "Cámara" "$(ls /dev/video* | wc -l) dispositivos de vídeo"; else no "Cámara" "-"; fi
+	if [ -d /sys/class/bluetooth ] && ls /sys/class/bluetooth/hci* >/dev/null 2>&1; then ok "Bluetooth" "$(find /sys/class/bluetooth/ -mindepth 1 -maxdepth 1 -name "hci*" -printf "%f\n" | head -1)"; else no "Bluetooth" "-"; fi
+	if ls /dev/video* >/dev/null 2>&1; then ok "Cámara" "$(find /dev -maxdepth 1 -name "video*" | wc -l) dispositivos de vídeo"; else no "Cámara" "-"; fi
 	if grep -qi touchpad /proc/bus/input/devices 2>/dev/null; then ok "Panel táctil" "detectado"; else no "Panel táctil" "-"; fi
 	if ls /sys/class/power_supply/BAT* >/dev/null 2>&1; then
-		b=$(ls -d /sys/class/power_supply/BAT* | head -1)
+		b=$(find /sys/class/power_supply/ -mindepth 1 -maxdepth 1 -name "BAT*" | head -1)
 		ok "Batería" "$(cat "$b/capacity" 2>/dev/null)% · salud $(( $(cat "$b/energy_full" 2>/dev/null || echo 0) * 100 / $(cat "$b/energy_full_design" 2>/dev/null || echo 1) ))%"
 	else no "Batería" "equipo de sobremesa o máquina virtual"; fi
 	# arranque seguro

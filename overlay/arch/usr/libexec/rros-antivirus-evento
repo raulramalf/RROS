@@ -5,6 +5,7 @@ f=$CLAM_VIRUSEVENT_FILENAME; v=$CLAM_VIRUSEVENT_VIRUSNAME
 [ -n "$f" ] || exit 0
 echo "$(date -Iseconds) $f $v (tiempo real)" >> /var/log/rros-antivirus.log
 ACCION=cuarentena
+# shellcheck source=/dev/null
 [ -r /etc/rros/antivirus.conf ] && . /etc/rros/antivirus.conf
 owner=$(stat -c %U "$f" 2>/dev/null)
 if [ "$ACCION" = cuarentena ]; then

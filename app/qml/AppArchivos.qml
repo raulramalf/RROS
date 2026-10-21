@@ -31,14 +31,22 @@ ApplicationWindow {
         else if (imgs.indexOf(e.suffix) >= 0) Sys.detached(["rros-ajustes", "--app", "fotos", e.path])
         else Sys.detached(["xdg-open", e.path])
     }
+    // icono propio de Lily según el tipo (app/icons/fm-*.svg); las carpetas conocidas llevan su símbolo
     function icon(e) {
-        if (e.dir) return "📁"
-        if (imgs.indexOf(e.suffix) >= 0) return "🖼"
-        if (["mp4", "mkv", "webm", "avi", "mov"].indexOf(e.suffix) >= 0) return "🎞"
-        if (["mp3", "ogg", "flac", "wav", "m4a", "opus"].indexOf(e.suffix) >= 0) return "🎵"
-        if (["zip", "tar", "gz", "xz", "zst", "7z", "rar"].indexOf(e.suffix) >= 0) return "🗜"
-        if (e.suffix === "pdf") return "📕"
-        return "📄"
+        var ext = e.suffix
+        if (e.dir) {
+            var sp = { "Escritorio": "escritorio", "Documentos": "documentos", "Descargas": "descargas", "Imágenes": "imagenes", "Música": "musica", "Vídeos": "videos" }
+            return "fm-carpeta" + (e.path === win.home + "/" + e.name && sp[e.name] ? "-" + sp[e.name] : "")
+        }
+        if (imgs.indexOf(ext) >= 0) return "fm-imagen"
+        if (["mp4", "mkv", "webm", "avi", "mov"].indexOf(ext) >= 0) return "fm-video"
+        if (["mp3", "ogg", "flac", "wav", "m4a", "opus"].indexOf(ext) >= 0) return "fm-audio"
+        if (["zip", "tar", "gz", "xz", "zst", "7z", "rar", "bz2"].indexOf(ext) >= 0) return "fm-comprimido"
+        if (ext === "pdf") return "fm-pdf"
+        if (["ods", "xlsx", "xls", "csv"].indexOf(ext) >= 0) return "fm-hoja"
+        if (["sh", "py", "js", "c", "h", "cpp", "qml", "json", "toml", "yml", "yaml", "html", "css", "rs", "go"].indexOf(ext) >= 0) return "fm-codigo"
+        if (["appimage", "run", "bin", "exe"].indexOf(ext) >= 0) return "fm-ejecutable"
+        return "fm-texto"
     }
     function human(n) {
         var u = ["B", "KB", "MB", "GB", "TB"], i = 0
@@ -80,9 +88,9 @@ ApplicationWindow {
                 spacing: 2
                 Txt { text: "Archivos"; font.pixelSize: 20; font.weight: Font.Bold; Layout.leftMargin: 8; Layout.bottomMargin: 10 }
                 Repeater {
-                    model: [["🏠", "Carpeta personal", ""], ["🖥", "Escritorio", "/Escritorio"], ["📄", "Documentos", "/Documentos"],
-                            ["⬇", "Descargas", "/Descargas"], ["🖼", "Imágenes", "/Imágenes"], ["🎵", "Música", "/Música"],
-                            ["🎞", "Vídeos", "/Vídeos"], ["🗑", "Papelera", "/.local/share/Trash/files"], ["💽", "Todo el equipo", "/"]]
+                    model: [["casa", "Carpeta personal", ""], ["escritorio", "Escritorio", "/Escritorio"], ["documentos", "Documentos", "/Documentos"],
+                            ["descargas", "Descargas", "/Descargas"], ["imagenes", "Imágenes", "/Imágenes"], ["musica", "Música", "/Música"],
+                            ["videos", "Vídeos", "/Vídeos"], ["papelera", "Papelera", "/.local/share/Trash/files"], ["equipo", "Todo el equipo", "/"]]
                     Rectangle {
                         readonly property string p: modelData[2] === "/" ? "/" : win.home + modelData[2]
                         visible: p === "/" || Sys.exists(p)
@@ -92,7 +100,7 @@ ApplicationWindow {
                         RowLayout {
                             anchors { fill: parent; leftMargin: 10 }
                             spacing: 10
-                            Txt { text: modelData[0] }
+                            Image { source: "qrc:/icons/fm-l-" + modelData[0] + ".svg"; sourceSize: Qt.size(18, 18) }
                             Txt { text: modelData[1]; color: win.cwd === parent.parent.p ? Ui.accentText : Ui.textColor; Layout.fillWidth: true }
                         }
                         MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; onClicked: win.go(parent.p) }
@@ -156,16 +164,16 @@ ApplicationWindow {
                         color: win.sel === modelData.path ? Qt.rgba(Qt.color(Ui.accent).r, Qt.color(Ui.accent).g, Qt.color(Ui.accent).b, 0.3)
                                                           : em.containsMouse ? Ui.cardHover : "transparent"
                         readonly property bool isImg: win.imgs.indexOf(modelData.suffix) >= 0 && modelData.size < 20000000
-                        // cuadrícula: miniatura o emoji arriba y nombre debajo
+                        // cuadrícula: miniatura o icono arriba y nombre debajo
                         Column {
                             visible: win.grid
                             anchors.centerIn: parent
                             spacing: 6
                             Item {
                                 width: 64; height: 56; anchors.horizontalCenter: parent.horizontalCenter
-                                Image { anchors.fill: parent; visible: parent.parent.parent.isImg && win.grid; asynchronous: true
+                                Image { id: thumb; anchors.fill: parent; visible: parent.parent.parent.isImg && win.grid; asynchronous: true
                                         source: visible ? "file://" + modelData.path : ""; sourceSize: Qt.size(128, 112); fillMode: Image.PreserveAspectFit }
-                                Txt { anchors.centerIn: parent; visible: !parent.parent.parent.isImg; text: win.icon(modelData); font.pixelSize: 40 }
+                                Image { anchors.centerIn: parent; visible: thumb.status !== Image.Ready; source: "qrc:/icons/" + win.icon(modelData) + ".svg"; sourceSize: Qt.size(56, 56) }
                             }
                             Txt { width: 104; horizontalAlignment: Text.AlignHCenter; text: modelData.name; elide: Text.ElideMiddle; font.pixelSize: Ui.fs - 1 }
                         }
@@ -174,7 +182,7 @@ ApplicationWindow {
                             visible: !win.grid
                             anchors { fill: parent; leftMargin: 10; rightMargin: 10 }
                             spacing: 10
-                            Txt { text: win.icon(modelData) }
+                            Image { source: "qrc:/icons/" + win.icon(modelData) + ".svg"; sourceSize: Qt.size(22, 22) }
                             Txt { text: modelData.name; elide: Text.ElideMiddle; Layout.fillWidth: true }
                             Txt { text: modelData.dir ? "" : win.human(modelData.size); color: Ui.muted; Layout.preferredWidth: 80; horizontalAlignment: Text.AlignRight }
                             Txt { text: Qt.formatDateTime(modelData.modified, "d MMM yyyy HH:mm"); color: Ui.muted; Layout.preferredWidth: 140 }

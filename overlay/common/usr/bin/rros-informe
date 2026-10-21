@@ -101,6 +101,51 @@ report() {
 	echo '```'
 	echo
 
+	echo "## Veredicto de compatibilidad (automático)"
+	echo
+	echo "| Pieza | Estado | Detalle |"
+	echo "|---|---|---|"
+	ok() { echo "| $1 | ✅ funciona | $2 |"; }
+	warn() { echo "| $1 | ⚠️ revisar | $2 |"; }
+	no() { echo "| $1 | ➖ no tiene | $2 |"; }
+	# Wi-Fi: hay tarjeta y tiene controlador
+	if ls /sys/class/net/*/wireless >/dev/null 2>&1; then
+		w=$(basename "$(dirname "$(ls -d /sys/class/net/*/wireless | head -1)")")
+		drv=$(basename "$(readlink -f "/sys/class/net/$w/device/driver" 2>/dev/null)")
+		ok "Wi-Fi" "$w con el controlador ${drv:-?}"
+	elif lspci 2>/dev/null | grep -qi 'network controller'; then warn "Wi-Fi" "hay tarjeta Wi-Fi pero sin controlador (mira «Firmware que falta»)"
+	else no "Wi-Fi" "sin tarjeta Wi-Fi"; fi
+	# suspensión: el núcleo la ofrece
+	if grep -qw mem /sys/power/state 2>/dev/null; then ok "Suspensión" "modo $(sed -n 's/.*\[\(.*\)\].*/\1/p' /sys/power/mem_sleep 2>/dev/null)"
+	else warn "Suspensión" "el núcleo no ofrece suspender a RAM"; fi
+	# sonido: salidas en PipeWire
+	n=$(pactl list short sinks 2>/dev/null | grep -vc auto_null)
+	if [ "${n:-0}" -gt 0 ]; then ok "Sonido" "$n salidas"; else warn "Sonido" "PipeWire no ve ninguna salida"; fi
+	# gráfica NVIDIA
+	if lspci 2>/dev/null | grep -qi 'vga.*nvidia\|3d.*nvidia'; then
+		if lsmod | grep -q '^nvidia '; then ok "NVIDIA" "controlador propietario cargado"
+		elif lsmod | grep -q '^nouveau'; then warn "NVIDIA" "con nouveau (libre): para juegos instala «nvidia-open» desde la Tienda"
+		else warn "NVIDIA" "sin controlador"; fi
+	else no "NVIDIA" "sin gráfica NVIDIA"; fi
+	# aceleración 3D
+	r=$(command -v glxinfo >/dev/null && glxinfo -B 2>/dev/null | sed -n 's/^OpenGL renderer string: //p')
+	case $r in
+	'') warn "Aceleración 3D" "sin comprobar (falta glxinfo)" ;;
+	*llvmpipe* | *softpipe*) warn "Aceleración 3D" "se dibuja con la CPU ($r)" ;;
+	*) ok "Aceleración 3D" "$r" ;;
+	esac
+	# bluetooth, cámara, panel táctil, batería
+	if [ -d /sys/class/bluetooth ] && ls /sys/class/bluetooth/hci* >/dev/null 2>&1; then ok "Bluetooth" "$(ls /sys/class/bluetooth | head -1)"; else no "Bluetooth" "-"; fi
+	if ls /dev/video* >/dev/null 2>&1; then ok "Cámara" "$(ls /dev/video* | wc -l) dispositivos de vídeo"; else no "Cámara" "-"; fi
+	if grep -qi touchpad /proc/bus/input/devices 2>/dev/null; then ok "Panel táctil" "detectado"; else no "Panel táctil" "-"; fi
+	if ls /sys/class/power_supply/BAT* >/dev/null 2>&1; then
+		b=$(ls -d /sys/class/power_supply/BAT* | head -1)
+		ok "Batería" "$(cat "$b/capacity" 2>/dev/null)% · salud $(( $(cat "$b/energy_full" 2>/dev/null || echo 0) * 100 / $(cat "$b/energy_full_design" 2>/dev/null || echo 1) ))%"
+	else no "Batería" "equipo de sobremesa o máquina virtual"; fi
+	# arranque seguro
+	if command -v mokutil >/dev/null && mokutil --sb-state 2>/dev/null | grep -qi enabled; then ok "Secure Boot" "activado"
+	else no "Secure Boot" "desactivado o sin UEFI"; fi
+	echo
 	echo "## Firmware que falta y errores de este arranque"
 	echo
 	echo '```'

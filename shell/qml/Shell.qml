@@ -52,7 +52,7 @@ QtObject {
         Taskbar { id: taskbar; anchors.fill: parent }
         function place() {
             Sh.layer(tbWin, { layer: "top", anchors: Th.vertical ? "left,top,bottom" : "bottom,left,right",
-                              exclusive: Th.vertical ? Th.tbH : Th.tbReserve, scope: "rros-tareas" })
+                              exclusive: Th.vertical ? Th.tbH : Th.tbReserve, keyboard: "ondemand", scope: "rros-tareas" })
             Sh.blurBehind(tbWin, true, [])
         }
         Component.onCompleted: { place(); visible = Th.taskbarOn }
@@ -154,6 +154,7 @@ QtObject {
     Connections {
         target: Sh
         // la tecla Windows: el Launchpad con el dock; el menú de inicio con la barra de tareas
+        function onFocusTaskbarRequested() { tbWin.requestActivate() }
         function onLaunchpadRequested() { if (Th.dock) Ux.toggle("launchpad"); else Ux.toggle("start", Th.vertical ? Th.tbH + 8 : 6, Th.vertical ? 8 : -1) }
         function onControlCenterRequested() { Ux.toggle("control", wall.width - 60, Th.barH + 4) }
     }

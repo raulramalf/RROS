@@ -12,6 +12,7 @@ Glass {
     radius: 14
     property string q: ""
     property bool all: false
+    property int sel: 0      // resultado elegido con las flechas
     property var results: q === "" ? [] : Search.results(Apps.search(q, 12))
     readonly property string user: Sh.home.split("/").pop()
     function launch(id) { Apps.launch(id); Ux.close() }
@@ -38,13 +39,16 @@ Glass {
             color: Th.text; placeholderTextColor: Th.muted
             font.family: Th.font; font.pixelSize: 14
             leftPadding: 38
-            onTextChanged: { sm.q = text; Search.q = text }
+            onTextChanged: { sm.q = text; Search.q = text; sm.sel = 0 }
+            Accessible.name: "Buscar aplicaciones, ajustes y archivos"
+            Keys.onDownPressed: sm.sel = Math.min(sm.sel + 1, sm.results.length - 1)
+            Keys.onUpPressed: sm.sel = Math.max(sm.sel - 1, 0)
             background: Rectangle {
                 radius: 19; color: Th.tile; border.color: field.activeFocus ? Th.accent : Th.edge; border.width: field.activeFocus ? 2 : 1
                 Glyph { name: "search"; color: Th.muted; x: 13; anchors.verticalCenter: parent.verticalCenter }
             }
             Keys.onEscapePressed: Ux.close()
-            Keys.onReturnPressed: if (sm.results.length) { sm.results[0].run(); Ux.close() }
+            Keys.onReturnPressed: if (sm.results.length) { sm.results[Math.min(sm.sel, sm.results.length - 1)].run(); Ux.close() }
         }
 
         // ---- cabecera de la sección ----
@@ -95,7 +99,7 @@ Glass {
             model: sm.results
             section.property: "kind"
             section.delegate: Txt { text: section; color: Th.accent; font.weight: Font.Bold; leftPadding: 10; topPadding: 6; bottomPadding: 2 }
-            delegate: Row0 { aname: modelData.title; aicon: modelData.icon; acomment: modelData.sub; first: index === 0; action: modelData.run }
+            delegate: Row0 { aname: modelData.title; aicon: modelData.icon; acomment: modelData.sub; first: index === sm.sel; action: modelData.run }
             Txt {
                 visible: parent.count === 0
                 anchors.centerIn: parent
@@ -150,6 +154,8 @@ Glass {
     component Row0: Rectangle {
         property string aid; property string aname; property string aicon; property string acomment; property bool first: false
         property var action: null
+        Accessible.role: Accessible.Button
+        Accessible.name: aname + (acomment ? ", " + acomment : "")
         width: ListView.view ? ListView.view.width : 0; height: 48; radius: 8
         color: rm.pressed ? Th.pressed : (rm.containsMouse || first) ? Th.hover : "transparent"
         Ico { x: 10; anchors.verticalCenter: parent.verticalCenter; size: 30; name: parent.aicon }

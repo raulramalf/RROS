@@ -16,6 +16,9 @@ Item {
     property string now: ""
     property string date: ""
 
+    // Windows+T (o el D-Bus focusTaskbar): el foco del teclado pasa al botón de inicio
+    function focusFirst() { start.forceActiveFocus() }
+    Connections { target: Sh; function onFocusTaskbarRequested() { tb.focusFirst() } }
     Timer {
         interval: 1000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: {
@@ -91,6 +94,9 @@ Item {
             Accessible.role: Accessible.Button
             Accessible.name: "Inicio"
             activeFocusOnTab: true
+            Keys.onRightPressed: nextItemInFocusChain(true).forceActiveFocus()
+            Keys.onDownPressed: nextItemInFocusChain(true).forceActiveFocus()
+            Rectangle { anchors.fill: parent; anchors.margins: -2; radius: width / 2; color: "transparent"; border.width: 2; border.color: Th.accent; visible: parent.activeFocus }
             Keys.onReturnPressed: tb.openAt("start", start)
             Keys.onSpacePressed: tb.openAt("start", start)
             Image {
@@ -141,7 +147,7 @@ Item {
                     var p = app.mapToItem(null, app.width / 2, 0)
                     Ux.toggle("dockmenu", tb.v ? tb.t + 8 : p.x, tb.v ? p.y + 40 : p.y, { kind: "app", id: modelData.id, pinned: modelData.pinned })
                 }
-                tip: modelData.name
+                tip: modelData.name + (running ? (focused ? ", activa" : ", abierta") : "")
                 Ico {
                     id: ic
                     size: tb.icon
@@ -244,6 +250,23 @@ Item {
         property bool active: false
         property bool hovered: ma.containsMouse
         property string tip: ""
+        // lector de pantalla y teclado: Tab/flechas para moverse, Intro o espacio para abrir, menú contextual con la tecla Menú
+        Accessible.role: Accessible.Button
+        Accessible.name: tip
+        activeFocusOnTab: true
+        Keys.onReturnPressed: clicked()
+        Keys.onSpacePressed: clicked()
+        Keys.onMenuPressed: rightClicked()
+        Keys.onRightPressed: nextItemInFocusChain(true).forceActiveFocus()
+        Keys.onLeftPressed: nextItemInFocusChain(false).forceActiveFocus()
+        Keys.onDownPressed: nextItemInFocusChain(true).forceActiveFocus()
+        Keys.onUpPressed: nextItemInFocusChain(false).forceActiveFocus()
+        Keys.onEscapePressed: Ux.close()
+        Rectangle {   // anillo de foco
+            anchors.fill: parent; anchors.margins: -2; radius: parent.radius + 2
+            color: "transparent"; border.width: 2; border.color: Th.accent
+            visible: parent.activeFocus
+        }
         Layout.preferredHeight: tb.v ? tb.t - 8 : tb.t - 8
         Layout.alignment: Qt.AlignCenter
         radius: 7

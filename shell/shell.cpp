@@ -227,6 +227,11 @@ void Shell::toggleControlCenter()
 	Q_EMIT controlCenterRequested();
 }
 
+void Shell::focusTaskbar()
+{
+	Q_EMIT focusTaskbarRequested();
+}
+
 void Shell::reload()
 {
 	Q_EMIT reloadRequested();
@@ -259,6 +264,14 @@ void Shell::setupShortcuts()
 		const int step = k.step;
 		connect(a, &QAction::triggered, this, [this, step]() { Q_EMIT volumeKey(step); });
 	}
+	// accesibilidad: Windows+T lleva el teclado a la barra de tareas
+	auto *tbk = new QAction(QStringLiteral("Ir a la barra de tareas"), this);
+	tbk->setObjectName(QStringLiteral("focus_taskbar"));
+	tbk->setProperty("componentName", QStringLiteral("lily-shell"));
+	tbk->setProperty("componentDisplayName", QStringLiteral("Lily Shell"));
+	KGlobalAccel::self()->setDefaultShortcut(tbk, { QKeySequence(Qt::META | Qt::Key_T) });
+	KGlobalAccel::self()->setShortcut(tbk, { QKeySequence(Qt::META | Qt::Key_T) });
+	connect(tbk, &QAction::triggered, this, &Shell::focusTaskbar);
 #endif
 }
 

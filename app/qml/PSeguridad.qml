@@ -115,6 +115,19 @@ RPage {
     }
     FolderDialog { id: folderPick; title: "Carpeta que quieres analizar"; onAccepted: p.scan(decodeURIComponent(String(selectedFolder).replace("file://", ""))) }
 
+    Section { text: "Arranque seguro (Secure Boot)" }
+    Card {
+        SRow {
+            id: sbRow
+            property var sb: null
+            Component.onCompleted: Sys.run(["rros-secureboot", "estado", "--json"], function (r) { try { sbRow.sb = JSON.parse(r.out) } catch (e) {} })
+            title: !sb ? "Comprobando…" : !sb.uefi ? "No disponible (el equipo no arranca en UEFI)" : sb.activado ? "Activado" : sb.modo_configuracion ? "Listo para activar" : "Desactivado"
+            subtitle: "Lily firma su arranque con claves propias y conserva las de Microsoft, así Windows sigue arrancando. Para activarlo: en la UEFI borra las claves de Secure Boot («Setup Mode»), pulsa «Activar» y después enciende Secure Boot en la UEFI."
+            Btn { visible: sbRow.sb && sbRow.sb.uefi && !sbRow.sb.activado; text: "Activar"
+                  onClicked: Sys.run(["pkexec", "rros-secureboot", "activar"], function (r) { Ui.toast(r.code === 0 ? "Listo: activa Secure Boot en la UEFI al reiniciar" : (r.err || r.out), r.code !== 0) }) }
+        }
+    }
+
     Section { text: "Directivas de seguridad" }
     Card {
         KeyRow { k: "security.password_min_length"; title: "Longitud mínima de las contraseñas"; subtitle: "Para las contraseñas nuevas. 0: sin mínimo"; unit: "" }

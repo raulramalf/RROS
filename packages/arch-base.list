@@ -70,6 +70,7 @@ inotify-tools           # grub-btrfsd
 
 # --- antivirus y directivas de seguridad ---
 clamav                  # motor antivirus (rros-antivirus): análisis, tiempo real con clamonacc y firmas con freshclam
+sbctl                   # Secure Boot con claves propias (rros-secureboot)
 usbguard                # directiva: bloquear USB nuevos
 libpwquality            # directiva: contraseñas
 libnotify               # avisos del antivirus en el escritorio (notify-send)

@@ -1,0 +1,34 @@
+# Paquete de Lily: las herramientas (rros-*), Ajustes de Lily, Lily Shell y la capa del sistema.
+# Lo construye .github/workflows/repo.yml y lo publica en el repositorio [lily] (una «release» de GitHub).
+pkgname=lily
+pkgver=2.0.0
+pkgrel=1
+pkgdesc="Lily: escritorio, ajustes, tienda, antivirus, copias y herramientas"
+arch=(x86_64)
+url="https://github.com/raulramalf/RROS"
+license=(GPL-3.0-or-later)
+depends=(qt6-base qt6-declarative qt6-svg qt6-wayland qt6-multimedia layer-shell-qt kwindowsystem kglobalaccel
+         kwin plasma-workspace clamav snapper rsync)
+makedepends=(git cmake extra-cmake-modules python)
+backup=(etc/rros/antivirus.conf)
+source=("lily::git+https://github.com/raulramalf/RROS.git#tag=v$pkgver")
+sha256sums=(SKIP)
+
+build() {
+	cd lily
+	make
+	make app
+	make shell SHELL_FULL=ON
+}
+
+check() {
+	cd lily
+	make test
+}
+
+package() {
+	cd lily
+	make install DESTDIR="$pkgdir" PREFIX=/usr
+	install -Dm755 build/shell/rros-shell "$pkgdir/usr/bin/rros-shell"
+	install -Dm644 README.md "$pkgdir/usr/share/doc/lily/README.md"
+}

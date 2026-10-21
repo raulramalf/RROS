@@ -1,0 +1,39 @@
+# Repositorio de paquetes de Lily: al publicar una etiqueta vX.Y.Z se construye el paquete «lily» en Arch y se sube
+# con su base de datos a la «release» «repo». Así un sistema instalado se actualiza con pacman sin reconstruir la ISO:
+#   [lily]
+#   Server = https://github.com/raulramalf/RROS/releases/download/repo
+name: Repositorio
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  paquete:
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    steps:
+      - name: Herramientas
+        run: |
+          pacman -Syu --noconfirm --needed base-devel git sudo
+          useradd -m construye && echo 'construye ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/construye
+      - uses: actions/checkout@v4
+      - name: Construir el paquete
+        run: |
+          chown -R construye . && cd packaging/lily
+          sudo -u construye makepkg -s --noconfirm
+      - name: Base de datos del repositorio
+        run: |
+          mkdir repo && cp packaging/lily/*.pkg.tar.zst repo/
+          repo-add repo/lily.db.tar.gz repo/*.pkg.tar.zst
+          # GitHub no sirve enlaces simbólicos: copias con el nombre que busca pacman
+          cp -L repo/lily.db.tar.gz repo/lily.db && cp -L repo/lily.files.tar.gz repo/lily.files
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: repo
+          name: Repositorio de Lily
+          files: repo/*

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# rros-secureboot: Secure Boot para Lily con claves propias (sbctl), conservando las de Microsoft para que Windows y
+# las tarjetas gráficas sigan arrancando.
+#   rros-secureboot estado [--json]   activado, modo de configuración, claves y archivos firmados
+#   rros-secureboot activar           crea las claves, las inscribe (con -m: también las de Microsoft) y firma el
+#                                     arranque; sbctl vuelve a firmar solo tras cada actualización del núcleo
+# Antes de «activar», en la BIOS/UEFI: Secure Boot → borrar las claves («Setup Mode»). Después, activar Secure Boot.
+set -u
+command -v sbctl >/dev/null || { echo "rros-secureboot: falta sbctl" >&2; exit 1; }
+case ${1:-estado} in
+estado)
+	s=$(sbctl status 2>/dev/null)
+	on=$(grep -qi 'Secure Boot:.*Enabled' <<<"$s" && echo true || echo false)
+	setup=$(grep -qi 'Setup Mode:.*Enabled' <<<"$s" && echo true || echo false)
+	keys=$( [ -d /var/lib/sbctl/keys ] || [ -d /usr/share/secureboot/keys ] && echo true || echo false)
+	if [ "${2:-}" = --json ]; then printf '{"activado":%s,"modo_configuracion":%s,"claves":%s,"uefi":%s}\n' "$on" "$setup" "$keys" "$([ -d /sys/firmware/efi ] && echo true || echo false)"
+	else echo "$s"; fi ;;
+activar)
+	[ "$(id -u)" -eq 0 ] || { echo "rros-secureboot: hace falta ser administrador" >&2; exit 1; }
+	[ -d /sys/firmware/efi ] || { echo "Este equipo no arranca en modo UEFI: Secure Boot no es posible." >&2; exit 1; }
+	sbctl status | grep -qi 'Setup Mode:.*Enabled' || { echo "Primero pon la UEFI en «Setup Mode» (borrar las claves de Secure Boot) y vuelve a intentarlo." >&2; exit 2; }
+	sbctl create-keys && sbctl enroll-keys -m && {
+		for f in /boot/vmlinuz-linux /boot/efi/EFI/*/grubx64.efi /boot/efi/EFI/BOOT/BOOTX64.EFI; do [ -e "$f" ] && sbctl sign -s "$f"; done
+		echo "Listo. Reinicia, entra en la UEFI y activa Secure Boot."
+	} ;;
+*) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

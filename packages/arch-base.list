@@ -59,6 +59,15 @@ playerctl
 ocean-sound-theme       # sonidos del sistema de Plasma
 sound-theme-freedesktop
 
+# --- instantáneas: vuelta atrás tras cada actualización (Btrfs) ---
+btrfs-progs
+snapper
+rsync                   # copias de seguridad a un disco (rros-copias)
+rclone                  # copias a la nube (Google Drive, OneDrive, Dropbox…)
+snap-pac                # una instantánea antes y después de cada pacman
+grub-btrfs              # las instantáneas, en el menú de arranque
+inotify-tools           # grub-btrfsd
+
 # --- antivirus y directivas de seguridad ---
 clamav                  # motor antivirus (rros-antivirus): análisis, tiempo real con clamonacc y firmas con freshclam
 usbguard                # directiva: bloquear USB nuevos

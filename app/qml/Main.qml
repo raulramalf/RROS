@@ -34,6 +34,7 @@ ApplicationWindow {
         ["seguridad", "Seguridad y privacidad", "app-seguridad", "PSeguridad.qml", 2],
         ["tienda", "Tienda", "app-tienda", "PTienda.qml", 3],
         ["actualizaciones", "Actualizaciones", "app-actualizar", "PActualizaciones.qml", 3],
+        ["copias", "Copias y restauración", "sec-avanzado", "PCopias.qml", 3],
         ["avanzado", "Avanzado", "sec-avanzado", "PAvanzado.qml", 3],
         ["instalar", "Instalar Lily", "app-instalar", "PInstalar.qml", 4]
     ]
@@ -42,7 +43,7 @@ ApplicationWindow {
 
     function go(id) {
         var aliases = { "temas": "apariencia", "dock": "escritorio", "wifi": "red", "audio": "sonido", "archivos": "general",
-                        "copias": "avanzado", "energía": "energia", "seguridad": "seguridad" }
+                        "backup": "copias", "energía": "energia", "seguridad": "seguridad" }
         if (aliases[id]) id = aliases[id]
         if (id.indexOf("cat:") === 0) id = "avanzado"
         for (var i = 0; i < sections.length; i++)

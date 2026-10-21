@@ -1,0 +1,10 @@
+[Unit]
+Description=Lily: copia de seguridad diaria (si hay destino y está conectado)
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# rros-copias: vuelta atrás del sistema (instantáneas Btrfs con snapper) y copias de seguridad de tu carpeta
+# personal (a un disco externo, estilo Time Machine, o a la nube con rclone). Lo usa Ajustes → Copias y restauración.
+#   rros-copias instantaneas [--json]       instantáneas del sistema
+#   rros-copias crear "DESCRIPCIÓN"         una instantánea ahora (root)
+#   rros-copias restaurar N                 vuelve el sistema a la instantánea N y reinicia (root; /home no cambia)
+#   rros-copias borrar N                    borra la instantánea N (root)
+#   rros-copias destino RUTA|remoto:carpeta adónde van las copias de tu carpeta personal
+#   rros-copias copiar                      copia ahora (incremental: solo lo que cambió)
+#   rros-copias versiones [--json]          copias guardadas
+#   rros-copias estado [--json]
+set -u
+# shellcheck disable=SC2155
+CONF=${XDG_CONFIG_HOME:-$HOME/.config}/rros/copias.conf
+DEST=""; [ -r "$CONF" ] && DEST=$(sed -n 's/^DEST=//p' "$CONF")
+js() { local s=${1//\\/\\\\}; s=${s//\"/\\\"}; printf '"%s"' "$s"; }
+need_root() { [ "$(id -u)" -eq 0 ] || { echo "rros-copias: hace falta ser administrador" >&2; exit 1; }; }
+nube() { [[ $DEST == *:* && $DEST != /* ]]; }
+
+instantaneas() {
+	command -v snapper >/dev/null && snapper --no-dbus list-configs 2>/dev/null | grep -q '^root' || { [ "${1:-}" = --json ] && echo '[]'; return 0; }
+	if [ "${1:-}" = --json ]; then
+		snapper --no-dbus --jsonout -c root list --columns number,date,description,type 2>/dev/null |
+			python3 -c 'import json,sys; d=json.load(sys.stdin)["root"]; print(json.dumps([{"n":s["number"],"fecha":s["date"],"desc":s["description"],"tipo":s["type"]} for s in d if s["number"]]))' 2>/dev/null || echo '[]'
+	else
+		snapper --no-dbus -c root list
+	fi
+}
+
+restaurar() {
+	need_root
+	local n=$1 dev top
+	[[ $n =~ ^[0-9]+$ ]] || { echo "rros-copias: número no válido" >&2; return 2; }
+	[ -d "/.snapshots/$n/snapshot" ] || { echo "rros-copias: no existe la instantánea $n" >&2; return 1; }
+	dev=$(findmnt -no SOURCE / | sed 's/\[.*//')
+	top=$(mktemp -d)
+	mount -o subvolid=5 "$dev" "$top" || return 1
+	snapper --no-dbus -c root create -d "Antes de volver a la $n" >/dev/null 2>&1
+	mv "$top/@" "$top/@roto-$(date +%Y%m%d-%H%M%S)" &&
+		btrfs subvolume snapshot "$top/@snapshots/$n/snapshot" "$top/@" >/dev/null &&
+		echo "Listo: al reiniciar, el sistema estará como en la instantánea $n."
+	umount "$top"; rmdir "$top"
+}
+
+copiar() {
+	[ -n "$DEST" ] || { echo "rros-copias: elige primero un destino (rros-copias destino …)" >&2; return 1; }
+	local ex=(--exclude=.cache/ --exclude=.local/share/Trash/ --exclude=.local/share/flatpak/ --exclude='*.tmp')
+	if nube; then
+		command -v rclone >/dev/null || { echo "rros-copias: falta rclone para copiar a la nube" >&2; return 1; }
+		rclone sync "$HOME" "$DEST/lily-copia" --exclude '.cache/**' --exclude '.local/share/Trash/**' \
+			--backup-dir "$DEST/lily-versiones/$(date +%Y-%m-%d_%H%M)" --progress --stats-one-line 2>&1 | tail -n 3
+	else
+		[ -d "$DEST" ] && [ -w "$DEST" ] || { echo "rros-copias: el destino $DEST no está conectado" >&2; return 1; }
+		local base="$DEST/lily-copias/$(hostname)" now last
+		now=$(date +%Y-%m-%d_%H%M); mkdir -p "$base"
+		last=$(ls -1d "$base"/20* 2>/dev/null | tail -n 1)
+		# cada copia es una carpeta con fecha; lo que no cambió son enlaces duros a la anterior (no ocupa)
+		rsync -a --info=progress2 "${ex[@]}" ${last:+--link-dest="$last"} "$HOME/" "$base/$now/" && ln -sfn "$now" "$base/ultima"
+	fi
+	mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/rros" && date -Iseconds > "${XDG_STATE_HOME:-$HOME/.local/state}/rros/ultima-copia"
+}
+
+versiones() {
+	local base="$DEST/lily-copias/$(hostname)" first=1 d
+	if [ "${1:-}" = --json ]; then
+		printf '['
+		if [ -n "$DEST" ] && ! nube; then for d in "$base"/20*; do [ -d "$d" ] || continue; [ $first -eq 1 ] || printf ','; printf '{"nombre":%s,"ruta":%s}' "$(js "${d##*/}")" "$(js "$d")"; first=0; done; fi
+		printf ']\n'
+	else ls -1 "$base" 2>/dev/null; fi
+}
+
+case ${1:-estado} in
+	instantaneas) instantaneas "${2:-}" ;;
+	crear) need_root; snapper --no-dbus -c root create -d "${2:-Manual}" ;;
+	restaurar) restaurar "${2:?falta el número}" ;;
+	borrar) need_root; [[ ${2:-} =~ ^[0-9]+$ ]] && snapper --no-dbus -c root delete "$2" ;;
+	destino) mkdir -p "$(dirname "$CONF")"; printf 'DEST=%s\n' "${2:?falta el destino}" > "$CONF" ;;
+	copiar) copiar ;;
+	versiones) versiones "${2:-}" ;;
+	estado) last=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/rros/ultima-copia" 2>/dev/null)
+		snap=false; command -v snapper >/dev/null && snapper --no-dbus list-configs 2>/dev/null | grep -q '^root' && snap=true
+		printf '{"instantaneas":%s,"destino":%s,"nube":%s,"conectado":%s,"ultima":%s}\n' "$snap" "$(js "$DEST")" \
+			"$(nube && echo true || echo false)" "$({ nube || [ -d "$DEST" ]; } && [ -n "$DEST" ] && echo true || echo false)" "$(js "$last")" ;;
+	*) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

@@ -1,0 +1,9 @@
+[Unit]
+Description=Lily: copia de seguridad de tu carpeta personal
+ConditionPathExists=%h/.config/rros/copias.conf
+
+[Service]
+Type=oneshot
+Nice=15
+IOSchedulingClass=idle
+ExecStart=/usr/bin/rros-copias copiar

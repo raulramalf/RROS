@@ -207,7 +207,7 @@ created=()   # particiones nuevas: junto a otro sistema se quitan si la instalac
 cleanup() {
 	local rc=$?
 	set +e
-	for m in run sys/firmware/efi/efivars sys proc dev/pts dev boot/efi boot; do
+	for m in run sys/firmware/efi/efivars sys proc dev/pts dev boot/efi boot var/log .snapshots home; do
 		mountpoint -q "$target/$m" && umount "$target/$m"
 	done
 	mountpoint -q "$target" && umount "$target"
@@ -266,8 +266,10 @@ done
 [ -n "$root" ] || die "el plan no tiene partición raíz"
 
 # --- sistemas de archivos ---
-rootfs=ext4
-[ "$profile" = lite ] || rootfs=btrfs
+# Btrfs en todas las ediciones: subvolúmenes e instantáneas antes de cada actualización, con vuelta atrás desde
+# el menú de arranque (snapper + snap-pac + grub-btrfs). ext4 solo si no hay mkfs.btrfs.
+rootfs=btrfs
+command -v mkfs.btrfs >/dev/null || rootfs=ext4
 command -v "mkfs.$rootfs" >/dev/null || die "falta mkfs.$rootfs en este sistema"
 what=$rootfs
 [ "$root_crypt" -eq 0 ] || what="$rootfs, cifrado con LUKS2"
@@ -293,7 +295,19 @@ if [ -n "$esp" ]; then
 		mkfs.vfat -F 32 -n ESP "$esp" >/dev/null
 	fi
 fi
-mount -o "$mopts" "$root_fs" "$target"
+if [ "$rootfs" = btrfs ]; then
+	# @ (el sistema), @home (tus archivos: no vuelven atrás con el sistema), @snapshots y @log
+	mount "$root_fs" "$target"
+	for sv in @ @home @snapshots @log; do btrfs subvolume create "$target/$sv" >/dev/null; done
+	umount "$target"
+	mount -o "$mopts,subvol=@" "$root_fs" "$target"
+	mkdir -p "$target/home" "$target/.snapshots" "$target/var/log"
+	mount -o "$mopts,subvol=@home" "$root_fs" "$target/home"
+	mount -o "$mopts,subvol=@snapshots" "$root_fs" "$target/.snapshots"
+	mount -o "$mopts,subvol=@log" "$root_fs" "$target/var/log"
+else
+	mount -o "$mopts" "$root_fs" "$target"
+fi
 if [ -n "$boot" ]; then
 	mkdir -p "$target/boot"
 	mount "$boot" "$target/boot"
@@ -358,10 +372,14 @@ echo "$host" > "$target/etc/hostname"
 } > "$target/etc/hosts"
 {
 	echo "# /etc/fstab - generado por rros-install"
-	if [ "$root_crypt" -eq 1 ]; then
-		echo "/dev/mapper/rros-root / $rootfs $mopts 0 1"
+	if [ "$root_crypt" -eq 1 ]; then dev=/dev/mapper/rros-root; else dev="UUID=$(blkid -s UUID -o value "$root_fs")"; fi
+	if [ "$rootfs" = btrfs ]; then
+		echo "$dev / btrfs $mopts,subvol=@ 0 0"
+		echo "$dev /home btrfs $mopts,subvol=@home 0 0"
+		echo "$dev /.snapshots btrfs $mopts,subvol=@snapshots 0 0"
+		echo "$dev /var/log btrfs $mopts,subvol=@log 0 0"
 	else
-		echo "UUID=$(blkid -s UUID -o value "$root") / $rootfs $mopts 0 1"
+		echo "$dev / $rootfs $mopts 0 1"
 	fi
 	[ -z "$boot" ] || echo "UUID=$(blkid -s UUID -o value "$boot") /boot ext4 defaults,noatime 0 2"
 	[ -z "$esp" ] || echo "UUID=$(blkid -s UUID -o value "$esp") /boot/efi vfat umask=0077 0 2"
@@ -490,6 +508,18 @@ if [ "$fw" = uefi ]; then
 	[ "$alongside" -eq 1 ] || in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable --recheck
 else
 	in_target grub-install --target=i386-pc --recheck "$disk"
+fi
+if [ "$base" = arch ] && [ "$rootfs" = btrfs ] && in_target sh -c 'command -v snapper' >/dev/null; then
+	# instantáneas: snapper quiere crear él /.snapshots; se le deja y se vuelve a montar @snapshots encima
+	umount "$target/.snapshots" && rmdir "$target/.snapshots"
+	in_target snapper --no-dbus -c root create-config / || echo "aviso: snapper no pudo crear su configuración"
+	in_target btrfs subvolume delete /.snapshots >/dev/null 2>&1
+	mkdir -p "$target/.snapshots" && mount -o "$mopts,subvol=@snapshots" "$root_fs" "$target/.snapshots"
+	chmod 750 "$target/.snapshots"
+	# pocas y útiles: 10 de actualizaciones (snap-pac) y ninguna por hora
+	in_target snapper --no-dbus -c root set-config TIMELINE_CREATE=no NUMBER_LIMIT=10 NUMBER_LIMIT_IMPORTANT=5 >/dev/null 2>&1
+	in_target systemctl enable snapper-cleanup.timer grub-btrfsd.service >/dev/null 2>&1
+	in_target snapper --no-dbus -c root create -d "Lily recién instalado" >/dev/null 2>&1
 fi
 if [ "$base" = arch ]; then
 	in_target grub-mkconfig -o /boot/grub/grub.cfg

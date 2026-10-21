@@ -180,6 +180,52 @@ Rectangle {
                     text: Sys.live ? "Estás probando Lily sin tocar tu disco. Instálalo para que vaya más rápido y se guarden tus cosas; puede ir junto a Windows."
                                    : "La Tienda tiene más aplicaciones y en Ajustes puedes cambiar todo esto cuando quieras. El botón de inicio, abajo a la izquierda, tiene todas tus aplicaciones y busca en todo."
                 }
+                // traer los archivos de Windows (si hay un Windows en el disco)
+                Rectangle {
+                    id: mig
+                    property var parts: []
+                    property var apps: []
+                    property string estado: ""
+                    visible: !Sys.live && parts.length > 0
+                    Layout.preferredWidth: 560
+                    Layout.preferredHeight: migCol.implicitHeight + 24
+                    radius: 12; color: Ui.card; border.color: Ui.line
+                    Component.onCompleted: if (!Sys.live && Sys.hasProgram("rros-migrar"))
+                        Sys.run(["rros-migrar", "buscar", "--json"], function (r) { if (Array.isArray(r)) mig.parts = r })
+                    ColumnLayout {
+                        id: migCol
+                        anchors { fill: parent; margins: 12 }
+                        spacing: 8
+                        Txt { text: "Traer tus cosas de Windows"; font.weight: Font.DemiBold }
+                        Txt { text: mig.estado !== "" ? mig.estado : "Copia Documentos, Imágenes, Música, Vídeos, Escritorio y Descargas. No se borra nada en Windows."; color: Ui.muted; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                        Flow {
+                            Layout.fillWidth: true; spacing: 8
+                            Repeater {
+                                model: mig.parts.reduce(function (a, p) { return a.concat(p.usuarios.map(function (u) { return [p.dispositivo, u] })) }, [])
+                                Btn {
+                                    text: "Copiar de " + modelData[1]
+                                    onClicked: {
+                                        mig.estado = "Copiando…"
+                                        Sys.stream(["rros-migrar", "copiar", modelData[0], modelData[1]],
+                                                   function (line) { mig.estado = line },
+                                                   function (code) {
+                                                       mig.estado = code === 0 ? "Listo: tus archivos ya están en tu carpeta personal." : "No se pudo copiar todo (código " + code + ")."
+                                                       Sys.run(["rros-migrar", "apps", modelData[0], "--json"], function (r) { if (Array.isArray(r)) mig.apps = r })
+                                                   })
+                                    }
+                                }
+                            }
+                        }
+                        Txt { visible: mig.apps.length > 0; text: "Programas que tenías y su equivalente en Lily:"; color: Ui.muted }
+                        Flow {
+                            Layout.fillWidth: true; spacing: 6
+                            Repeater {
+                                model: mig.apps
+                                Btn { text: modelData.windows + " → " + modelData.lily; onClicked: Sys.detached(["rros-ajustes", "--pagina", "tienda"]) }
+                            }
+                        }
+                    }
+                }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 10

@@ -99,6 +99,49 @@ RPage {
             Card {
                 id: dc
                 property string diskPath: modelData.path
+                property real modelData_free: modelData.free_mb || 0
+                // el disco dibujado: cada partición a su escala y, en verde, dónde iría Lily
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: 64
+                    readonly property real total: Math.max(1, modelData.size / 1048576)
+                    Row {
+                        id: bar
+                        anchors { left: parent.left; right: parent.right; top: parent.top; margins: 14 }
+                        height: 26
+                        spacing: 2
+                        Repeater {
+                            model: modelData.parts
+                            Rectangle {
+                                width: Math.max(4, (bar.width - 2 * modelData.parts.length) * modelData.size_mb / parent.parent.parent.total)
+                                height: 26; radius: 5
+                                color: modelData.role === "windows" ? "#3b82f6" : modelData.role === "esp" ? "#8a8f98" : modelData.role === "linux" ? "#f59e0b" : "#6b7280"
+                                Txt { anchors.centerIn: parent; visible: parent.width > 60; text: modelData.label || modelData.fstype || modelData.name; color: "white"; font.pixelSize: 10; elide: Text.ElideRight; width: parent.width - 8; horizontalAlignment: Text.AlignHCenter }
+                            }
+                        }
+                        Rectangle {
+                            visible: dc.modelData_free > 0
+                            width: Math.max(6, bar.width * dc.modelData_free / parent.parent.total); height: 26; radius: 5
+                            color: p.f.disk === dc.diskPath && p.f.mode === "alongside" ? Ui.ok : "transparent"
+                            border.color: Ui.line; border.width: 1
+                            Txt { anchors.centerIn: parent; visible: parent.width > 60; text: p.f.disk === dc.diskPath && p.f.mode === "alongside" ? "Lily" : "libre"; font.pixelSize: 10 }
+                        }
+                    }
+                    Rectangle {   // con «borrar todo», el disco entero en verde
+                        visible: p.f.disk === dc.diskPath && p.f.mode === "wipe"
+                        anchors.fill: bar; radius: 5; color: Ui.ok
+                        Txt { anchors.centerIn: parent; text: "Lily (todo el disco)"; color: "white"; font.pixelSize: 11; font.weight: Font.DemiBold }
+                    }
+                    Row {
+                        anchors { left: parent.left; top: bar.bottom; topMargin: 6; leftMargin: 14 }
+                        spacing: 14
+                        Repeater {
+                            model: [["#3b82f6", "Windows"], ["#8a8f98", "Arranque (EFI)"], ["#f59e0b", "Linux"], ["#6b7280", "Otros"], [Ui.ok, "Lily"]]
+                            Row { spacing: 4; Rectangle { width: 10; height: 10; radius: 3; color: modelData[0]; anchors.verticalCenter: parent.verticalCenter }
+                                  Txt { text: modelData[1]; font.pixelSize: 10; color: Ui.muted } }
+                        }
+                    }
+                }
                 SRow {
                     title: modelData.model + " · " + modelData.size_h
                     subtitle: modelData.path + (modelData.systems ? " · tiene " + modelData.systems : "") + (modelData.free_h ? " · libre " + modelData.free_h : "") + (modelData.in_use ? "\nNo disponible: " + modelData.in_use : "")

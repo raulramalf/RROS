@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# rros-migrar: trae tus cosas de Windows a Lily (mismo equipo, otra partición o un disco externo).
+#   rros-migrar buscar [--json]        particiones de Windows y sus usuarios
+#   rros-migrar copiar DISPOSITIVO USUARIO [--dry-run]
+#                                      copia Documentos, Escritorio, Descargas, Imágenes, Música y Vídeos a tus carpetas
+#                                      (sin borrar nada en Windows; lo que ya exista no se pisa)
+#   rros-migrar apps DISPOSITIVO [--json]
+#                                      programas instalados en Windows y su equivalente en la Tienda de Lily
+# La partición se monta solo para leer, con udisks (sin contraseña de administrador).
+set -u
+js() { local s=${1//\\/\\\\}; s=${s//\"/\\\"}; printf '"%s"' "$s"; }
+montar() {   # DISPOSITIVO -> punto de montaje (lo monta en solo lectura si hace falta)
+	local m
+	m=$(findmnt -nro TARGET "$1" | head -1)
+	[ -n "$m" ] || m=$(udisksctl mount -b "$1" -o ro 2>/dev/null | sed -n 's/.* at \(.*\)\.\{0,1\}$/\1/p' | sed 's/\.$//')
+	[ -n "$m" ] && echo "$m"
+}
+buscar() {
+	local first=1 dev m u users
+	[ "${1:-}" = --json ] && printf '['
+	while read -r dev fs; do
+		[ "$fs" = ntfs ] || [ "$fs" = ntfs3 ] || continue
+		m=$(montar "$dev") || continue
+		[ -d "$m/Users" ] || continue
+		users=$(find "$m/Users" -mindepth 1 -maxdepth 1 -type d ! -name Public ! -name Default ! -name 'Default User' ! -name 'All Users' -printf '%f\n' 2>/dev/null)
+		if [ "${1:-}" = --json ]; then
+			[ $first -eq 1 ] || printf ','; first=0
+			printf '{"dispositivo":%s,"usuarios":[' "$(js "$dev")"
+			local f2=1; while read -r u; do [ -n "$u" ] || continue; [ $f2 -eq 1 ] || printf ','; f2=0; printf '%s' "$(js "$u")"; done <<<"$users"
+			printf ']}'
+		else echo "$dev: $(tr '\n' ' ' <<<"$users")"; fi
+	done < <(lsblk -rno PATH,FSTYPE)
+	[ "${1:-}" = --json ] && printf ']\n'
+}
+copiar() {
+	local dev=$1 user=$2 dry=${3:-} m src d
+	m=$(montar "$dev") || { echo "rros-migrar: no se pudo abrir $dev" >&2; return 1; }
+	src="$m/Users/$user"
+	[ -d "$src" ] || { echo "rros-migrar: no existe el usuario $user" >&2; return 1; }
+	# carpeta de Windows -> carpeta de Lily (las de xdg-user-dirs, en español)
+	for pair in "Documents:$(xdg-user-dir DOCUMENTS)" "Desktop:$(xdg-user-dir DESKTOP)" "Downloads:$(xdg-user-dir DOWNLOAD)" \
+		"Pictures:$(xdg-user-dir PICTURES)" "Music:$(xdg-user-dir MUSIC)" "Videos:$(xdg-user-dir VIDEOS)"; do
+		d=${pair#*:}; [ -d "$src/${pair%%:*}" ] || continue
+		echo "Copiando ${pair%%:*} → ${d/#$HOME/~}"
+		[ "$dry" = --dry-run ] && continue
+		mkdir -p "$d"
+		rsync -a --ignore-existing --info=progress2 --exclude 'desktop.ini' --exclude 'Thumbs.db' --exclude 'My *' "$src/${pair%%:*}/" "$d/"
+	done
+	echo "Listo: tus archivos de Windows están en tus carpetas de Lily."
+}
+apps() {
+	local dev=$1 m list first=1 name lily
+	m=$(montar "$dev") || return 1
+	list=$(find "$m/Program Files" "$m/Program Files (x86)" "$m/Users"/*/AppData/Local -maxdepth 1 -mindepth 1 -type d -printf '%f\n' 2>/dev/null | sort -u)
+	[ "${1:-}${2:-}" ] && [ "${2:-}" = --json ] && printf '['
+	# lo que se suele usar en Windows y su alternativa en la Tienda (id del catálogo)
+	while IFS='|' read -r pat name lily; do
+		grep -qiE "$pat" <<<"$list" || continue
+		if [ "${2:-}" = --json ]; then [ $first -eq 1 ] || printf ','; first=0; printf '{"windows":%s,"lily":%s}' "$(js "$name")" "$(js "$lily")"
+		else echo "$name → $lily"; fi
+	done <<'EOF2'
+^Google$|Chrome|Google Chrome|chromium
+Mozilla Firefox|Firefox|firefox
+Microsoft Office|Microsoft Office|libreoffice
+^Spotify|Spotify|spotify
+^Steam$|Steam|steam
+^Discord|Discord|discord
+^Zoom|Zoom|zoom
+^VLC|VLC|vlc
+^GIMP|GIMP|gimp
+^Adobe$|Adobe Photoshop|gimp
+Microsoft VS Code|Visual Studio Code|vscode
+^Telegram|Telegram|telegram
+^WhatsApp|WhatsApp|whatsapp
+^OBS|OBS Studio|obs
+^7-Zip|7-Zip|ark
+Notepad\+\+|Notepad++|kate
+^Thunderbird|Thunderbird|thunderbird
+^Audacity|Audacity|audacity
+^Blender|Blender|blender
+EOF2
+	[ "${2:-}" = --json ] && printf ']\n'
+}
+case ${1:-buscar} in
+buscar) buscar "${2:-}" ;;
+copiar) copiar "${2:?falta el dispositivo}" "${3:?falta el usuario}" "${4:-}" ;;
+apps) apps "${2:?falta el dispositivo}" "${3:-}" ;;
+*) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

@@ -208,7 +208,7 @@ static int cmd_disks(int argc, char **argv)
 			rros_human_size(p->size, sz, sizeof sz);
 			printf("%s{\"name\":", k ? "," : "");
 			json_str(p->name);
-			printf(",\"start_mb\":%llu,\"size_h\":", p->start / RROS_MIB);
+			printf(",\"start_mb\":%llu,\"size_mb\":%llu,\"size_h\":", p->start / RROS_MIB, p->size / RROS_MIB);
 			json_str(sz);
 			printf(",\"fstype\":");
 			json_str(p->fstype);

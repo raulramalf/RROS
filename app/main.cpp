@@ -1,5 +1,6 @@
 // RROS Ajustes: ventana nativa de ajustes del sistema. Con --bienvenida abre el asistente del primer inicio.
 #include <QCommandLineParser>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
@@ -27,7 +28,7 @@ int main(int argc, char *argv[])
 	QCommandLineOption welcome(QStringLiteral("bienvenida"), QStringLiteral("Asistente de bienvenida"));
 	QCommandLineOption shot(QStringLiteral("captura"), QStringLiteral("Guarda una captura de la ventana y sale (pruebas)"),
 				QStringLiteral("PNG"));
-	QCommandLineOption appOpt(QStringLiteral("app"), QStringLiteral("Aplicación de Lily: notas o capturas"), QStringLiteral("APP"));
+	QCommandLineOption appOpt(QStringLiteral("app"), QStringLiteral("Aplicación de Lily: notas, capturas, archivos o fotos"), QStringLiteral("APP"));
 	cli.addOption(appOpt);
 	cli.addOption(page);
 	cli.addOption(welcome);
@@ -46,8 +47,13 @@ int main(int argc, char *argv[])
 						 cli.isSet(welcome) || cli.value(page) == QStringLiteral("bienvenida"));
 	engine.rootContext()->setContextProperty(QStringLiteral("shotPath"), cli.value(shot));
 	const QString appName = cli.value(appOpt);
+	// archivos o fotos: carpeta o imagen con la que abrir (rros-ajustes --app fotos ~/Imágenes/x.png)
+	const QString arg = cli.positionalArguments().value(0);
+	engine.rootContext()->setContextProperty(QStringLiteral("appArg"), arg.isEmpty() ? arg : QFileInfo(arg).absoluteFilePath());
 	engine.load(QUrl(appName == QStringLiteral("notas") ? QStringLiteral("qrc:/qml/AppNotas.qml")
 			 : appName == QStringLiteral("capturas") ? QStringLiteral("qrc:/qml/AppCapturas.qml")
+			 : appName == QStringLiteral("archivos") ? QStringLiteral("qrc:/qml/AppArchivos.qml")
+			 : appName == QStringLiteral("fotos") ? QStringLiteral("qrc:/qml/AppFotos.qml")
 								   : QStringLiteral("qrc:/qml/Main.qml")));
 	if (engine.rootObjects().isEmpty())
 		return 1;

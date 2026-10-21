@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Fotos
+Comment=Visor de imágenes y galería de Lily
+Exec=rros-ajustes --app fotos %f
+MimeType=image/png;image/jpeg;image/webp;image/gif;image/bmp;image/svg+xml;
+Icon=image-viewer
+Categories=Graphics;Viewer;
+Keywords=fotos;imágenes;galería;visor;

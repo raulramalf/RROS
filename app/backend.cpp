@@ -294,3 +294,28 @@ QVariantList Backend::listDir(const QString &dir, const QStringList &filters) co
 					{ QStringLiteral("modified"), fi.lastModified() } });
 	return out;
 }
+
+/* contenido de una carpeta para el gestor de archivos: carpetas primero y luego por nombre */
+QVariantList Backend::entries(const QString &dir, bool hidden) const
+{
+	QVariantList out;
+	QDir::Filters f = QDir::AllEntries | QDir::NoDotAndDotDot;
+	if (hidden)
+		f |= QDir::Hidden;
+	const QFileInfoList l = QDir(dir).entryInfoList(f, QDir::DirsFirst | QDir::Name | QDir::IgnoreCase | QDir::LocaleAware);
+	for (const QFileInfo &fi : l)
+		out.append(QVariantMap{ { QStringLiteral("path"), fi.absoluteFilePath() }, { QStringLiteral("name"), fi.fileName() },
+					{ QStringLiteral("dir"), fi.isDir() }, { QStringLiteral("size"), fi.size() },
+					{ QStringLiteral("suffix"), fi.suffix().toLower() }, { QStringLiteral("modified"), fi.lastModified() } });
+	return out;
+}
+
+bool Backend::makeDir(const QString &path)
+{
+	return QDir().mkpath(path);
+}
+
+bool Backend::rename(const QString &from, const QString &to)
+{
+	return !QFileInfo::exists(to) && QFile::rename(from, to);
+}

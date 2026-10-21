@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Archivos
+Comment=Explorador de archivos de Lily
+Exec=rros-ajustes --app archivos %f
+MimeType=inode/directory;
+Icon=system-file-manager
+Categories=System;FileManager;
+Keywords=archivos;carpetas;explorador;

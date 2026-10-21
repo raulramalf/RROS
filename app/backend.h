@@ -32,6 +32,9 @@ public:
 	Q_INVOKABLE bool writeFile(const QString &path, const QString &text);
 	Q_INVOKABLE bool removeFile(const QString &path);
 	Q_INVOKABLE QVariantList listDir(const QString &dir, const QStringList &filters) const;
+	Q_INVOKABLE QVariantList entries(const QString &dir, bool hidden) const;
+	Q_INVOKABLE bool makeDir(const QString &path);
+	Q_INVOKABLE bool rename(const QString &from, const QString &to);
 	Q_INVOKABLE bool hasProgram(const QString &name) const;
 	Q_INVOKABLE QString env(const QString &name) const;
 	// ratones y paneles táctiles de KWin (org.kde.KWin.InputDevice)

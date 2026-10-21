@@ -64,7 +64,7 @@ def mono(color, symbolic=False):
     cls = ' class="ColorScheme-Text"' if symbolic else ""
     style = '<style id="current-color-scheme">.ColorScheme-Text { color:#e6ecff; }</style>' if symbolic else ""
     size = 16 if symbolic else 64
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="56 40 400 440" width="{size}" height="{size}">{style}'
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 30 372 320" width="{size}" height="{size}">{style}'
             f'<g{cls}>{body}</g></svg>\n')
 
 

@@ -79,12 +79,28 @@ Item {
         rowSpacing: 2; columnSpacing: 2
 
         // ---- inicio ----
-        TbButton {
+        // botón de inicio redondo: la flor de Lily en un círculo
+        Rectangle {
             id: start
-            Layout.preferredWidth: tb.v ? tb.t - 8 : tb.t - 4
-            onClicked: tb.openAt("start", start)
-            active: Ux.open === "start"
-            Image { anchors.centerIn: parent; source: Th.dark ? "qrc:/icons/app-rros-mono.svg" : "qrc:/icons/app-rros-mono-dark.svg"; sourceSize: Qt.size(64, 64); width: tb.icon * 0.92; height: width }
+            Layout.preferredWidth: tb.t - 10; Layout.preferredHeight: tb.t - 10
+            Layout.alignment: Qt.AlignCenter
+            radius: width / 2
+            color: sm2.pressed ? Th.pressed : (Ux.open === "start" || sm2.containsMouse) ? Th.hover : "transparent"
+            border.width: Ux.open === "start" ? 1 : 0
+            border.color: Th.edge
+            Accessible.role: Accessible.Button
+            Accessible.name: "Inicio"
+            activeFocusOnTab: true
+            Keys.onReturnPressed: tb.openAt("start", start)
+            Keys.onSpacePressed: tb.openAt("start", start)
+            Image {
+                anchors.centerIn: parent
+                source: "qrc:/icons/app-rros.png"
+                width: parent.width - 8; height: width
+                sourceSize: Qt.size(96, 96)
+                smooth: true; mipmap: true
+            }
+            MouseArea { id: sm2; anchors.fill: parent; hoverEnabled: true; onClicked: tb.openAt("start", start) }
         }
         // ---- buscador ----
         Rectangle {

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""El logotipo de RROS en todos los sitios del sistema, a partir de docs/brand/rros-logo.svg.
+"""El logotipo de Lily (un lirio araña rojo) en todos los sitios del sistema, a partir de docs/brand/lily-logo.svg
+(el icono) y docs/brand/lily-flor.svg (solo la flor; la dibuja scripts/make-lily.py).
 
 - PNG (el logo lleva una foto y filtros que no todos los visores de SVG dibujan): iconos del tema hicolor,
   RROS Ajustes y RROS Shell (app/icons/app-rros.png), pantalla de carga, inicio de sesión (SDDM) y GRUB.
@@ -18,7 +19,8 @@ import sys
 import tempfile
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-LOGO = os.path.join(ROOT, "docs/brand/rros-logo.svg")
+LOGO = os.path.join(ROOT, "docs/brand/lily-logo.svg")
+FLOR = os.path.join(ROOT, "docs/brand/lily-flor.svg")
 ARCH = os.path.join(ROOT, "overlay/arch/usr/share")
 HICOLOR = os.path.join(ARCH, "icons/hicolor")
 SIZES = (16, 22, 24, 32, 48, 64, 128, 256, 512)
@@ -55,14 +57,15 @@ def render(svg, size, out, tmp):
 
 
 def mono(color, symbolic=False):
-    # las letras del logo (los mismos trazos), sin la foto, recortadas al bloque RR/OS
-    paths = re.findall(r'<path transform="[^"]+" d="[^"]+"/>', open(LOGO).read())
-    if len(paths) != 4:
-        sys.exit("make-logo.py: el logo debería tener 4 letras (RR/OS) en trazos")
-    fill = 'class="ColorScheme-Text" fill="currentColor"' if symbolic else f'fill="{color}"'
+    # la flor en una sola tinta, para la barra de tareas y los tamaños pequeños
+    s = open(FLOR).read()
+    body = s[s.index("</defs>") + 7:s.index("</svg>")]
+    body = re.sub(r'(fill|stroke)="(url\(#r\)|#[0-9a-fA-F]{6})"', lambda m: f'{m.group(1)}="{"currentColor" if symbolic else color}"', body)
+    cls = ' class="ColorScheme-Text"' if symbolic else ""
     style = '<style id="current-color-scheme">.ColorScheme-Text { color:#e6ecff; }</style>' if symbolic else ""
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="138 140 236 236" width="{16 if symbolic else 64}" '
-            f'height="{16 if symbolic else 64}">{style}<g {fill}>' + "".join(paths) + "</g></svg>\n")
+    size = 16 if symbolic else 64
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="56 40 400 440" width="{size}" height="{size}">{style}'
+            f'<g{cls}>{body}</g></svg>\n')
 
 
 def main():
@@ -74,9 +77,9 @@ def main():
         render(LOGO, 128, os.path.join(ARCH, "sddm/themes/rros/rros.png"), tmp)
         render(LOGO, 96, os.path.join(ARCH, "grub/themes/rros/logo.png"), tmp)
     with open(os.path.join(ROOT, "app/icons/app-rros-mono.svg"), "w") as f:
-        f.write(mono("#f4ead9"))
+        f.write(mono("#ff4a5e"))
     with open(os.path.join(ROOT, "app/icons/app-rros-mono-dark.svg"), "w") as f:   # para los temas claros
-        f.write(mono("#2a0f16"))
+        f.write(mono("#b0102a"))
     with open(os.path.join(HICOLOR, "scalable/apps/rros-symbolic.svg"), "w") as f:
         f.write(mono(None, symbolic=True))
     # el SVG con la foto no se instala como icono: se usarían los PNG

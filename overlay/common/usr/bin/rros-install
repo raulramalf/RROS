@@ -451,7 +451,7 @@ if [ "$base" = arch ]; then
 	{
 		echo "# Generado por rros-install. Edita y ejecuta: sudo grub-mkconfig -o /boot/grub/grub.cfg"
 		echo 'GRUB_DEFAULT=0'
-		echo 'GRUB_DISTRIBUTOR="RROS"'
+		echo 'GRUB_DISTRIBUTOR="Lily"'
 		echo "GRUB_TIMEOUT=$([ "$alongside" -eq 1 ] && echo 10 || echo 2)"
 		echo 'GRUB_TIMEOUT_STYLE=menu'
 		echo "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet loglevel=3 ${extra}\""

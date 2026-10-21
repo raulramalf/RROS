@@ -1,4 +1,4 @@
-# Ediciones de RROS (perfiles de hardware)
+# Ediciones de Lily (perfiles de hardware)
 
 Hay tres ediciones de la misma versión. Cambian los efectos, el dock, la memoria (zram) y las aplicaciones que
 vienen instaladas; el resto es igual. Todas usan como mucho **20 GB de disco** y están pensadas para equipos de
@@ -22,8 +22,8 @@ escribe en el registro de la CI (`info: procesador en reposo`). Con el escritori
 pocos puntos porcentuales; los números de cada edición están en el README cuando se miden.
 
 Sin aceleración gráfica (máquina virtual sin 3D o «modo seguro» del menú de arranque) KWin dibuja con el
-procesador; RROS lo detecta al iniciar sesión y apaga los efectos aunque la edición los tenga.
+procesador; Lily lo detecta al iniciar sesión y apaga los efectos aunque la edición los tenga.
 
 ## Selección automática
-`rros-hwdetect` lee `/proc/meminfo` y `/proc/cpuinfo` y propone la edición (RROS Ajustes → General lo muestra).
+`rros-hwdetect` lee `/proc/meminfo` y `/proc/cpuinfo` y propone la edición (Ajustes de Lily → General lo muestra).
 El usuario siempre puede cambiar cualquier ajuste.

@@ -6,7 +6,7 @@ import "."
 RPage {
     id: p
     title: "Actualizaciones"
-    subtitle: "RROS descarga las novedades cada día; tú decides cuándo instalarlas"
+    subtitle: "Lily descarga las novedades cada día; tú decides cuándo instalarlas"
     icon: "qrc:/icons/app-actualizar.svg"
     property var pending: []
     property bool checking: false
@@ -32,7 +32,7 @@ RPage {
 
     Card {
         SRow {
-            title: p.checking ? "Buscando…" : p.pending.length === 0 ? "RROS está al día" : p.pending.length + " actualizaciones"
+            title: p.checking ? "Buscando…" : p.pending.length === 0 ? "Lily está al día" : p.pending.length + " actualizaciones"
             subtitle: p.working ? p.log : (p.pending.length ? "Se recomienda reiniciar después si se actualiza el kernel" : "")
             separator: false
             RowLayout {

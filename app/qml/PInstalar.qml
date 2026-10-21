@@ -1,4 +1,4 @@
-// Instalar RROS (solo en el sistema en vivo): idioma, disco, usuario, resumen y progreso
+// Instalar Lily (solo en el sistema en vivo): idioma, disco, usuario, resumen y progreso
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -6,8 +6,8 @@ import "."
 
 RPage {
     id: p
-    title: "Instalar RROS"
-    subtitle: "Cuatro pasos y RROS queda en el disco. Puede ir junto a Windows (en el espacio libre) y cifrado."
+    title: "Instalar Lily"
+    subtitle: "Cuatro pasos y Lily queda en el disco. Puede ir junto a Windows (en el espacio libre) y cifrado."
     icon: "qrc:/icons/app-instalar.svg"
     property int step: 0
     property var disks: null
@@ -51,7 +51,7 @@ RPage {
     onShown: poll()
     Timer { interval: 1500; repeat: true; running: p.visible && p.status && p.status.started && !p.status.done; onTriggered: p.poll() }
 
-    Note { visible: !Sys.live; text: "RROS ya está instalado en este equipo. El instalador solo está en el sistema en vivo (la ISO o la memoria USB)." }
+    Note { visible: !Sys.live; text: "Lily ya está instalado en este equipo. El instalador solo está en el sistema en vivo (la ISO o la memoria USB)." }
 
     // pasos
     RowLayout {
@@ -93,7 +93,7 @@ RPage {
         Layout.fillWidth: true
         Note { visible: p.disks === null; text: "Buscando discos…" }
         Note { visible: p.disks !== null && !!p.disks.error; text: p.disks ? p.disks.error || "" : ""; kind: "error" }
-        Txt { visible: p.disks !== null; color: Ui.muted; text: p.disks ? "Arranque " + (p.disks.firmware === "uefi" ? "UEFI" : "BIOS") + " · RROS " + p.disks.profile + " necesita " + Math.round(p.disks.min_mb / 1024) + " GB" : "" }
+        Txt { visible: p.disks !== null; color: Ui.muted; text: p.disks ? "Arranque " + (p.disks.firmware === "uefi" ? "UEFI" : "BIOS") + " · Lily " + p.disks.profile + " necesita " + Math.round(p.disks.min_mb / 1024) + " GB" : "" }
         Repeater {
             model: p.disks ? p.disks.disks : []
             Card {
@@ -105,7 +105,7 @@ RPage {
                 }
                 Repeater {
                     model: modelData.in_use ? [] : [["alongside", modelData.systems ? "Junto a " + modelData.systems + " (en el espacio libre)" : "En el espacio libre, sin borrar nada", modelData.alongside],
-                                                    ["wipe", "Borrar todo el disco e instalar RROS", modelData.wipe]]
+                                                    ["wipe", "Borrar todo el disco e instalar Lily", modelData.wipe]]
                     SRow {
                         property bool on: p.f.disk === dc.diskPath && p.f.mode === modelData[0]
                         title: modelData[1]
@@ -174,7 +174,7 @@ RPage {
     Card {
         visible: p.status !== null && p.status.started === true
         SRow {
-            title: p.status && p.status.done ? (p.status.ok ? "RROS está instalado" : "La instalación no se ha completado") : (p.status && p.status.text ? p.status.text : "Empezando…")
+            title: p.status && p.status.done ? (p.status.ok ? "Lily está instalado" : "La instalación no se ha completado") : (p.status && p.status.text ? p.status.text : "Empezando…")
             subtitle: p.status && p.status.done ? (p.status.ok ? "Reinicia y quita la memoria USB (o la ISO)." : p.status.error) : (p.status && p.status.steps ? "Paso " + p.status.step + " de " + p.status.steps : "")
             Btn { visible: p.status && p.status.done && p.status.ok; text: "Reiniciar ahora"; kind: "primary"; onClicked: Ui.api("POST", "/api/reboot", {}, function (r) { if (!r.ok) Ui.toast(r.error, true) }) }
         }

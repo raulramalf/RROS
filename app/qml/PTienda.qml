@@ -1,5 +1,5 @@
-// Tienda de RROS, al estilo de GNOME Software o Discover: Explorar (destacadas y categorías del catálogo probado de
-// RROS), búsqueda en todo Flathub y en los repositorios de Arch, Instaladas y Actualizaciones. Instala con el progreso
+// Tienda de Lily, al estilo de GNOME Software o Discover: Explorar (destacadas y categorías del catálogo probado de
+// Lily), búsqueda en todo Flathub y en los repositorios de Arch, Instaladas y Actualizaciones. Instala con el progreso
 // en la misma ventana; los paquetes con la contraseña de administrador y Flathub para todo el equipo.
 import QtQuick
 import QtQuick.Layouts
@@ -8,10 +8,10 @@ import "."
 RPage {
     id: p
     title: "Tienda"
-    subtitle: "Miles de aplicaciones: las probadas para RROS, todo Flathub y los repositorios de Arch"
+    subtitle: "Miles de aplicaciones: las probadas para Lily, todo Flathub y los repositorios de Arch"
     icon: "qrc:/icons/app-tienda.svg"
     property string tab: "explorar"
-    property var apps: []            // catálogo de RROS
+    property var apps: []            // catálogo de Lily
     property string cat: ""
     property string q: ""
     property var found: []
@@ -24,7 +24,7 @@ RPage {
     property var detail: null
     readonly property var cats: [["", "Destacadas"], ["internet", "Internet"], ["office", "Oficina"], ["media", "Música y vídeo"],
                                  ["graphics", "Gráficos"], ["dev", "Programación"], ["utility", "Utilidades"], ["games", "Juegos"], ["system", "Sistema"]]
-    readonly property var srcName: ({ "rros": "Probada en RROS", "arch": "Repositorios de Arch", "flathub": "Flathub" })
+    readonly property var srcName: ({ "rros": "Probada en Lily", "arch": "Repositorios de Arch", "flathub": "Flathub" })
 
     function refresh() { Ui.api("GET", "/api/apps", {}, function (r) { apps = Array.isArray(r) ? r : [] }) }
     function json(cmd, cb) { Sys.run(["rros-apps"].concat(cmd), function (r) { var v = []; try { v = JSON.parse(r.out) } catch (e) {} cb(v) }) }
@@ -68,7 +68,7 @@ RPage {
     Note {
         visible: Sys.live
         kind: "warn"
-        text: "Estás en el sistema en vivo: lo que instales se guarda en la memoria y se pierde al apagar. Instala RROS para conservarlo."
+        text: "Estás en el sistema en vivo: lo que instales se guarda en la memoria y se pierde al apagar. Instala Lily para conservarlo."
     }
     // ---- pestañas y buscador ----
     RowLayout {

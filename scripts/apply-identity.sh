@@ -28,8 +28,8 @@ RROS_BASE=$base
 IDN
 if [ "$base" = ubuntu ]; then
 cat > "$root/etc/os-release" <<OSR
-PRETTY_NAME="RROS $version ($codename, $profile)"
-NAME="RROS"
+PRETTY_NAME="Lily $version ($codename, $profile)"
+NAME="Lily"
 VERSION_ID="$version"
 VERSION="$version ($codename)"
 VERSION_CODENAME=${codename,,}

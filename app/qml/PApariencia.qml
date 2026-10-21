@@ -156,6 +156,31 @@ RPage {
             }
         }
     }
+    Section { text: "Fondo animado" }
+    Card {
+        SRow {
+            title: "Escena animada"
+            subtitle: "Encima del fondo, con muy poco gasto. Necesita las animaciones activadas."
+            Seg { options: [["off", "Ninguna"], ["petalos", "Pétalos"], ["luciernagas", "Luciérnagas"], ["lluvia", "Lluvia"]]
+                  value: Ui.v("ui.wallpaper_live"); onPicked: function (v) { Ui.setKey("ui.wallpaper_live", v) } }
+        }
+        SRow {
+            title: "Vídeo o GIF de fondo"
+            subtitle: Ui.v("ui.wallpaper_video") !== "" ? Ui.v("ui.wallpaper_video")
+                    : "Un vídeo (mp4, webm, mkv) o un GIF: un fondo de anime, un paisaje… En bucle y sin sonido."
+            RowLayout {
+                Btn { text: "Quitar"; visible: Ui.v("ui.wallpaper_video") !== ""; onClicked: Ui.setKey("ui.wallpaper_video", "") }
+                Btn { text: "Elegir…"; onClicked: pickVideo.open() }
+            }
+        }
+        KeyRow { k: "ui.wallpaper_pause_battery"; title: "Pararlo cuando el portátil va con batería"; separator: false }
+    }
+    FileDialog {
+        id: pickVideo
+        title: "Elige un vídeo o un GIF para el fondo"
+        nameFilters: ["Vídeos y GIF (*.mp4 *.webm *.mkv *.mov *.gif)"]
+        onAccepted: Ui.setKey("ui.wallpaper_video", decodeURIComponent(String(selectedFile).replace("file://", "")))
+    }
     FileDialog {
         id: pick
         title: "Elige una imagen de fondo"

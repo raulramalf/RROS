@@ -1,4 +1,4 @@
-// Barra de tareas de RROS: botón de inicio, buscador, aplicaciones ancladas y abiertas, bandeja, fecha y hora y,
+// Barra de tareas de Lily: botón de inicio, buscador, aplicaciones ancladas y abiertas, bandeja, fecha y hora y,
 // en la esquina, «mostrar el escritorio». La estructura es la de Windows; el acabado (iconos que crecen un poco al
 // pasar el ratón, indicador de la app activa) recuerda a macOS. Siempre visible: reserva su franja de la pantalla y
 // las ventanas maximizadas llegan justo hasta ella. Estilos: Fusión, Clásica, Isla, Doble y Lateral (vertical).

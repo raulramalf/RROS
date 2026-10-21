@@ -1,4 +1,4 @@
-// Tema y ajustes de RROS para el escritorio: colores del tema en uso, la barra, el dock y el fondo.
+// Tema y ajustes de Lily para el escritorio: colores del tema en uso, la barra, el dock y el fondo.
 // Se leen de «rros-settings api» y se vuelven a leer cuando cambian los ajustes.
 pragma Singleton
 import QtQuick
@@ -70,6 +70,9 @@ QtObject {
     property bool animations: b("ui.animations", true) && v("ui.effects", "basic") !== "off"
     property int anim: animations ? 180 : 0
     property string wallpaper: "/usr/share/wallpapers/RROS/contents/images/1920x1080.png"
+    property string wallpaperVideo: v("ui.wallpaper_video", "")
+    property string wallpaperLive: v("ui.wallpaper_live", "off")
+    property bool pauseOnBattery: b("ui.wallpaper_pause_battery", true)
 
     function stateDir() { return Sh.home + "/.local/state/rros" }
     function reload() {

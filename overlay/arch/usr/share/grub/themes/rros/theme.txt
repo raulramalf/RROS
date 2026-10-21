@@ -1,4 +1,4 @@
-# Menú de arranque de RROS (GRUB): fondo aurora, logotipo y la entrada elegida en una píldora del color de acento.
+# Menú de arranque de Lily (GRUB): fondo aurora, logotipo y la entrada elegida en una píldora del color de acento.
 # El fondo (background.png) lo genera rros-theme al construir la ISO.
 title-text: ""
 desktop-image: "background.png"

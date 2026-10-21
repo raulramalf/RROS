@@ -7,11 +7,13 @@
     <linearGradient id="fl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.16"/></linearGradient>
     <linearGradient id="oro" x1="0" y1="0" x2="0.5" y2="1"><stop offset="0" stop-color="#fff2dc"/><stop offset="0.4" stop-color="#efc9a6"/><stop offset="0.75" stop-color="#c4945f"/><stop offset="1" stop-color="#7d5634"/></linearGradient><linearGradient id="vino" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#d0304a"/><stop offset="0.6" stop-color="#8e1428"/><stop offset="1" stop-color="#3d0611"/></linearGradient><linearGradient id="ojo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf2"/><stop offset="1" stop-color="#e3cdb0"/></linearGradient>
   </defs>
-  <ellipse cx="50" cy="93.5" rx="42" ry="5.5" fill="url(#cs)"/>
-  <rect x="6" y="7" width="88" height="88" rx="22" fill="#000" opacity=".16"/>
+  <ellipse cx="50" cy="94" rx="40" ry="4.5" fill="url(#cs)"/>
+  <rect x="7" y="8" width="86" height="86" rx="21.5" fill="#000" opacity=".14"/>
+  <g transform="translate(50 50) scale(.977) translate(-50 -49)">
   <rect x="6" y="5" width="88" height="88" rx="22" fill="url(#bd)"/>
   <rect x="6" y="5" width="88" height="88" rx="22" fill="url(#gl)"/>
   <rect x="6" y="49" width="88" height="44" rx="22" fill="url(#fl)"/>
   <rect x="6.75" y="5.75" width="86.5" height="86.5" rx="21.25" fill="none" stroke="url(#rim)" stroke-width="1.5"/>
   <path d="M50 15l29 10v21c0 18-12 30.5-29 37-17-6.5-29-19-29-37V25z" fill="#000" opacity="0.23" transform="translate(0 3.8)"/><path d="M50 15l29 10v21c0 18-12 30.5-29 37-17-6.5-29-19-29-37V25z" fill="#000" opacity="0.45" transform="translate(0 2.4)"/><path d="M50 15l29 10v21c0 18-12 30.5-29 37-17-6.5-29-19-29-37V25z" fill="url(#oro)"/><path d="M50 22.5l22 7.6v16.2c0 14-9 23.8-22 29-13-5.2-22-15-22-29V30.1z" fill="url(#vino)"/><path d="M50 22.5l22 7.6v16.2c0 1-.05 2-.15 3H28.15c-.1-1-.15-2-.15-3V30.1z" fill="#fff" opacity=".1"/><path d="M50 16.5l27.5 9.5" stroke="#fff" stroke-opacity=".8" stroke-width="1" fill="none"/><circle cx="50" cy="44" r="7" fill="url(#ojo)"/><path d="M46.5 47h7l2 15h-11z" fill="url(#ojo)"/><circle cx="50" cy="44" r="2.6" fill="#5c0a19"/><path d="M49 45h2l.8 11h-3.6z" fill="#5c0a19"/>
+  </g>
 </svg>

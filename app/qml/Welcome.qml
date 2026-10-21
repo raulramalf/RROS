@@ -40,9 +40,9 @@ Rectangle {
                     source: "qrc:/icons/app-rros.png"; sourceSize: Qt.size(132, 132); Layout.alignment: Qt.AlignHCenter
                     NumberAnimation on scale { from: 0.85; to: 1; duration: 600; easing.type: Easing.OutBack; running: w.step === 0 }
                 }
-                Txt { text: "Bienvenido a RROS"; font.pixelSize: 34; font.weight: Font.Black; Layout.alignment: Qt.AlignHCenter }
+                Txt { text: "Bienvenido a Lily"; font.pixelSize: 34; font.weight: Font.Black; Layout.alignment: Qt.AlignHCenter }
                 Txt { text: "Ligero, tuyo y en español. Vamos a dejarlo a tu gusto en un minuto."; color: Ui.muted; font.pixelSize: 15; Layout.alignment: Qt.AlignHCenter }
-                Txt { text: Ui.st ? "Edición " + Ui.st.profile.charAt(0).toUpperCase() + Ui.st.profile.slice(1) + " · RROS " + Ui.st.version : ""; color: Ui.muted; Layout.alignment: Qt.AlignHCenter }
+                Txt { text: Ui.st ? "Edición " + Ui.st.profile.charAt(0).toUpperCase() + Ui.st.profile.slice(1) + " · Lily " + Ui.st.version : ""; color: Ui.muted; Layout.alignment: Qt.AlignHCenter }
             }
 
             // 1. aspecto
@@ -150,13 +150,13 @@ Rectangle {
                 Txt { text: Sys.live ? "¿Lo instalamos?" : "¡Todo listo!"; font.pixelSize: 28; font.weight: Font.Bold; Layout.alignment: Qt.AlignHCenter }
                 Txt {
                     Layout.preferredWidth: 520; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap; elide: Text.ElideNone; color: Ui.muted
-                    text: Sys.live ? "Estás probando RROS sin tocar tu disco. Instálalo para que vaya más rápido y se guarden tus cosas; puede ir junto a Windows."
+                    text: Sys.live ? "Estás probando Lily sin tocar tu disco. Instálalo para que vaya más rápido y se guarden tus cosas; puede ir junto a Windows."
                                    : "La Tienda tiene más aplicaciones, y en Ajustes puedes cambiar todo esto cuando quieras. El Launchpad, en el dock, muestra todas tus aplicaciones."
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 10
-                    Btn { visible: Sys.live; text: "Instalar RROS"; kind: "primary"; onClicked: { Sys.detached(["rros-ajustes", "--pagina", "instalar"]); w.finish() } }
+                    Btn { visible: Sys.live; text: "Instalar Lily"; kind: "primary"; onClicked: { Sys.detached(["rros-ajustes", "--pagina", "instalar"]); w.finish() } }
                     Btn { visible: !Sys.live; text: "Abrir la Tienda"; onClicked: Sys.detached(["rros-ajustes", "--pagina", "tienda"]) }
                     Btn { visible: !Sys.live; text: "Abrir Ajustes"; onClicked: Sys.detached(["rros-ajustes"]) }
                 }

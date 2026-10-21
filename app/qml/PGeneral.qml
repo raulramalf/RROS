@@ -1,4 +1,4 @@
-// General: este equipo, la versión de RROS y qué edición le va mejor
+// General: este equipo, la versión de Lily y qué edición le va mejor
 import QtQuick
 import QtQuick.Layouts
 import "."
@@ -6,7 +6,7 @@ import "."
 RPage {
     id: p
     title: "General"
-    subtitle: "Tu equipo y la versión de RROS"
+    subtitle: "Tu equipo y la versión de Lily"
     icon: "qrc:/icons/sec-general.svg"
     property string cpu: ""
     property int cores: 0
@@ -58,7 +58,7 @@ RPage {
             Image { source: "qrc:/icons/app-rros.png"; sourceSize: Qt.size(96, 96) }
             ColumnLayout {
                 spacing: 4
-                Txt { text: "RROS"; color: "#ffffff"; font.pixelSize: 30; font.weight: Font.Black }
+                Txt { text: "Lily"; color: "#ffffff"; font.pixelSize: 30; font.weight: Font.Black }
                 Txt { text: Ui.st ? "Versión " + Ui.st.version + " «" + Ui.st.codename + "» · edición " + Ui.st.profile.charAt(0).toUpperCase() + Ui.st.profile.slice(1) : ""; color: "#e8ecff" }
                 Txt { text: Sys.live ? "Sistema en vivo (desde la ISO o la memoria USB)" : "Instalado · encendido hace " + p.up; color: "#c9d1f5"; font.pixelSize: Ui.fs - 1 }
                 Layout.fillWidth: true
@@ -78,7 +78,7 @@ RPage {
         KeyRow { k: "net.hostname"; title: "Nombre del equipo"; subtitle: "Cómo lo ven los demás en la red"; separator: false; placeholder: Sys.readFile("/proc/sys/kernel/hostname").trim() }
     }
 
-    Section { text: "Ediciones de RROS" }
+    Section { text: "Ediciones de Lily" }
     Note {
         text: Ui.st && Ui.st.hw ? "Para este equipo (" + Math.round(Ui.st.hw.ram_mb / 1024) + " GB de RAM, " + Ui.st.hw.cpus +
               " hilos) se recomienda la edición " + Ui.st.hw.recommended.charAt(0).toUpperCase() + Ui.st.hw.recommended.slice(1) + "." : ""

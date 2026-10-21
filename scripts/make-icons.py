@@ -94,9 +94,9 @@ def squircle(name, glyph, shadow=True):
     <linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <linearGradient id="r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".5" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
   </defs>
-  <rect x="6" y="5" width="88" height="88" rx="22" fill="url(#g)"/>
-  <rect x="6" y="5" width="88" height="88" rx="22" fill="url(#h)"/>
-  <rect x="6.75" y="5.75" width="86.5" height="86.5" rx="21.25" fill="none" stroke="url(#r)" stroke-width="1.5"/>
+  <rect x="6" y="6" width="88" height="88" rx="22" fill="url(#g)"/>
+  <rect x="6" y="6" width="88" height="88" rx="22" fill="url(#h)"/>
+  <rect x="6.75" y="6.75" width="86.5" height="86.5" rx="21.25" fill="none" stroke="url(#r)" stroke-width="1.5"/>
   <g transform="translate(0 1.6)" opacity=".22">{glyph.replace('#fff', '#000')}</g>
   {glyph}
 </svg>
@@ -174,13 +174,15 @@ def lienzo(name, art, extra_defs=""):
     {lgrad("fl", [(0, "#000", 0), (1, "#000", .16)])}
     {extra_defs}
   </defs>
-  <ellipse cx="50" cy="93.5" rx="42" ry="5.5" fill="url(#cs)"/>
-  <rect x="6" y="7" width="88" height="88" rx="22" fill="#000" opacity=".16"/>
+  <ellipse cx="50" cy="94" rx="40" ry="4.5" fill="url(#cs)"/>
+  <rect x="7" y="8" width="86" height="86" rx="21.5" fill="#000" opacity=".14"/>
+  <g transform="translate(50 50) scale(.977) translate(-50 -49)">
   <rect x="6" y="5" width="88" height="88" rx="22" fill="url(#bd)"/>
   <rect x="6" y="5" width="88" height="88" rx="22" fill="url(#gl)"/>
   <rect x="6" y="49" width="88" height="44" rx="22" fill="url(#fl)"/>
   <rect x="6.75" y="5.75" width="86.5" height="86.5" rx="21.25" fill="none" stroke="url(#rim)" stroke-width="1.5"/>
   {art}
+  </g>
 </svg>
 '''
 

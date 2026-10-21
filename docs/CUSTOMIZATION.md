@@ -19,6 +19,9 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.font_antialias` | opción | none|grayscale|rgba | Suavizado de fuentes |
 | `ui.wallpaper` | texto |  | Ruta del fondo de pantalla |
 | `ui.wallpaper_mode` | opción | fill|fit|stretch|center|tile | Ajuste del fondo |
+| `ui.wallpaper_video` | texto |  | Fondo en vídeo o GIF (ruta a un .mp4, .webm, .mkv o .gif; vacío = fondo fijo) |
+| `ui.wallpaper_live` | opción | off|petalos|luciernagas|lluvia | Escena animada sobre el fondo |
+| `ui.wallpaper_pause_battery` | booleano | true / false | Parar el fondo animado con la batería |
 | `ui.wallpaper_style` | opción | aurora|ondas|degradado|circulos|petalos|dunas|malla|cristal|topografico|seda|liso | Fondo generado con los colores del tema (si no eliges una imagen) |
 | `ui.effects` | opción | off|basic|advanced | Nivel de efectos visuales |
 | `ui.animations` | booleano | true / false | Animaciones de ventanas y menús |

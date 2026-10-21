@@ -1,4 +1,4 @@
-// Estado y aspecto comunes de RROS Ajustes: los colores salen del tema de RROS que esté en uso.
+// Estado y aspecto comunes de Ajustes de Lily: los colores salen del tema de Lily que esté en uso.
 pragma Singleton
 import QtQuick
 

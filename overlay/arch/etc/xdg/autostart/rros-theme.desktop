@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=RROS: tema y fondo
-Comment=Aplica a Plasma los colores, las barras de título y el fondo del tema de RROS
+Name=Lily: tema y fondo
+Comment=Aplica a Plasma los colores, las barras de título y el fondo del tema de Lily
 Exec=sh -c 'rros-first-login; rros-theme apply --quiet'
 OnlyShowIn=KDE;
 NoDisplay=true

@@ -8,7 +8,7 @@ Window {
     width: 1280; height: 800
     visible: true
     color: "black"
-    title: "RROS Shell (demo)"
+    title: "Lily Shell (demo)"
     Wallpaper { anchors.fill: parent }
     Bar { id: bar; visible: Th.topBar; anchors { left: parent.left; right: parent.right } y: Th.barTop ? 0 : parent.height - height; height: implicitHeight }
     Taskbar {
@@ -35,7 +35,7 @@ Window {
         onTriggered: {
             // ventanas de ejemplo para el dock y la barra
             Tk.list = [{ row: 0, appId: "org.kde.dolphin", name: "Dolphin", title: "Inicio — Archivos", active: true, minimized: false },
-                       { row: 1, appId: "firefox", name: "Firefox", title: "RROS", active: false, minimized: false }]
+                       { row: 1, appId: "firefox", name: "Firefox", title: "Lily", active: false, minimized: false }]
             Tk.active = Tk.list[0]
             if (openWhat === "launchpad") Ux.toggle("launchpad")
             else if (openWhat === "start") Ux.toggle("start", Th.vertical ? Th.tbH + 8 : 6, Th.vertical ? 8 : -1)

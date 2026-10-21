@@ -1,4 +1,4 @@
-// Menú desplegable de RROS: entries = [[texto, acción] | ["-"]]
+// Menú desplegable de Lily: entries = [[texto, acción] | ["-"]]
 import QtQuick
 import QtQuick.Layouts
 import "."

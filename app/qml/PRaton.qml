@@ -1,4 +1,4 @@
-// Ratón y panel táctil: cada aparato por separado (KWin) y los valores por defecto de RROS
+// Ratón y panel táctil: cada aparato por separado (KWin) y los valores por defecto de Lily
 import QtQuick
 import QtQuick.Layouts
 import "."
@@ -48,7 +48,7 @@ RPage {
             }
         }
     }
-    Note { visible: p.devs.length === 0; text: "No se encontraron ratones ni paneles táctiles (hace falta una sesión de Plasma). Abajo están los valores de RROS para los que conectes." }
+    Note { visible: p.devs.length === 0; text: "No se encontraron ratones ni paneles táctiles (hace falta una sesión de Plasma). Abajo están los valores de Lily para los que conectes." }
 
     Section { text: "Para todos los aparatos" }
     Card {

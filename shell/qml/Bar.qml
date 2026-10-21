@@ -1,4 +1,4 @@
-// Barra superior de RROS (estilos Dock y Doble): el menú RROS, la aplicación activa, la bandeja y la fecha y hora.
+// Barra superior de Lily (estilos Dock y Doble): el menú Lily, la aplicación activa, la bandeja y la fecha y hora.
 // Pensada como la de un ordenador: fondo sólido del color de las ventanas, iconos de la bandeja agrupados (un clic
 // abre los ajustes rápidos), avisos con su contador y el reloj con la fecha completa.
 import QtQuick

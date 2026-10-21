@@ -159,7 +159,7 @@ if [ "$LIVE" -eq 0 ]; then
 	check "instalado: el usuario tiene contraseña" sh -c 'passwd -S rros | grep -q " P "'
 	check "instalado: el usuario administra (sudo)" sh -c 'id -nG rros | grep -qwE "wheel|sudo"'
 	check "instalado: la raíz está en /etc/fstab" grep -qE '^[^#[:space:]]+[[:space:]]+/[[:space:]]' /etc/fstab
-	check "instalado: GRUB con la entrada de RROS" sh -c 'grep -q RROS /boot/grub/grub.cfg'
+	check "instalado: GRUB con la entrada de Lily" sh -c 'grep -q Lily /boot/grub/grub.cfg'
 	check "instalado: zona horaria de la instalación" sh -c 'readlink /etc/localtime | grep -q Europe/Madrid'
 	check "instalado: GRUB con el tema de RROS" grep -q 'GRUB_THEME=.*rros' /etc/default/grub
 	if [ -d /sys/firmware/efi ]; then

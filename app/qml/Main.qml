@@ -1,4 +1,4 @@
-// Ventana principal de RROS Ajustes: barra lateral con las secciones y la página a la derecha.
+// Ventana principal de Ajustes de Lily: barra lateral con las secciones y la página a la derecha.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -12,7 +12,7 @@ ApplicationWindow {
     minimumWidth: welcomeMode ? 760 : 860
     minimumHeight: 560
     visible: true
-    title: welcomeMode ? "Bienvenido a RROS" : "RROS Ajustes"
+    title: welcomeMode ? "Bienvenido a Lily" : "Ajustes de Lily"
     color: Ui.window
     font.family: Ui.font
 
@@ -35,7 +35,7 @@ ApplicationWindow {
         ["tienda", "Tienda", "app-tienda", "PTienda.qml", 3],
         ["actualizaciones", "Actualizaciones", "app-actualizar", "PActualizaciones.qml", 3],
         ["avanzado", "Avanzado", "sec-avanzado", "PAvanzado.qml", 3],
-        ["instalar", "Instalar RROS", "app-instalar", "PInstalar.qml", 4]
+        ["instalar", "Instalar Lily", "app-instalar", "PInstalar.qml", 4]
     ]
     property string current: "general"
     property string filter: ""
@@ -92,8 +92,8 @@ ApplicationWindow {
                     Image { source: "qrc:/icons/app-rros.png"; sourceSize: Qt.size(30, 30) }
                     ColumnLayout {
                         spacing: 0
-                        Txt { text: "RROS Ajustes"; font.weight: Font.Bold; font.pixelSize: 15 }
-                        Txt { text: Ui.st ? "RROS " + Ui.st.version + " · " + Ui.st.profile : ""; color: Ui.muted; font.pixelSize: 11 }
+                        Txt { text: "Ajustes de Lily"; font.weight: Font.Bold; font.pixelSize: 15 }
+                        Txt { text: Ui.st ? "Lily " + Ui.st.version + " · " + Ui.st.profile : ""; color: Ui.muted; font.pixelSize: 11 }
                     }
                 }
                 Field {

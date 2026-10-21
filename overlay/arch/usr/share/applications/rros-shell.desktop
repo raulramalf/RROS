@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=RROS Shell
-Comment=La barra, el dock, el Launchpad y el centro de control de RROS
+Name=Lily Shell
+Comment=La barra, el dock, el Launchpad y el centro de control de Lily
 Exec=/usr/bin/rros-shell
 Icon=rros
 NoDisplay=true

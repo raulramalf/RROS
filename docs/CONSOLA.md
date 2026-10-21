@@ -1,4 +1,4 @@
-# La consola de RROS paso a paso
+# La consola de Lily paso a paso
 
 Esta guía explica **cómo se escribe cada comando**, qué significa cada parte y qué hacer cuando algo falla. Todos los ejemplos son reales y funcionan tal cual.
 
@@ -23,7 +23,7 @@ rros config set ui.accent '#22d3ee'
 - **Opciones**: empiezan por `-` o `--` y modifican el comportamiento (`-p lite`, `--system`, `--yes`). Se escriben **antes del subcomando** cuando son generales: `rros-config -p pro get ui.gap`.
 - Los espacios separan las partes. Si un valor lleva espacios, va entre comillas (siguiente sección).
 
-### Los comandos de RROS
+### Los comandos de Lily
 
 | Escribes | Para qué sirve |
 |---|---|
@@ -36,8 +36,8 @@ rros config set ui.accent '#22d3ee'
 | `rros budget` | Comprueba el presupuesto de memoria y disco |
 | `rros hw` | Hardware detectado y perfil recomendado |
 | `rros install plan` | Calcula las particiones (no toca ningún disco) |
-| `rros install` | Instala RROS desde el sistema live: borrando el disco o junto a Windows, con cifrado opcional (`--dry-run` solo simula). También en RROS Ajustes → *Instalar RROS* |
-| `rros informe` | Informe de hardware para contar cómo funciona RROS en tu PC (sin números de serie ni MAC) |
+| `rros install` | Instala Lily desde el sistema live: borrando el disco o junto a Windows, con cifrado opcional (`--dry-run` solo simula). También en Ajustes de Lily → *Instalar Lily* |
+| `rros informe` | Informe de hardware para contar cómo funciona Lily en tu PC (sin números de serie ni MAC) |
 | `rros seguridad` | Auditoría de seguridad con puntuación; niveles y cortafuegos (`rros-security`) |
 | `rros dispositivos` | Discos, USB, red, radios, sonido, pantallas, batería; montar y expulsar (`rros-devices`) |
 | `rros nuevo` | Crear archivos y proyectos desde plantillas (`rros-new`) |
@@ -165,11 +165,11 @@ Lo que no definas en tu tema se hereda del tema base. También puedes editar los
 
 ### Escritorio, dock y fondo
 
-El escritorio es KDE Plasma con el aspecto de RROS. Tres estilos preparados cambian de golpe la barra y el dock:
+El escritorio es KDE Plasma con el aspecto de Lily. Tres estilos preparados cambian de golpe la barra y el dock:
 
 ```sh
 rros theme escritorio              # los estilos; * marca el que usas
-rros theme escritorio moderno      # el de RROS: barra fina arriba con el menú RROS y dock abajo
+rros theme escritorio moderno      # el de Lily: barra fina arriba con el menú Lily y dock abajo
 rros theme escritorio clasico      # barra de tareas abajo con el botón de aplicaciones, sin dock
 rros theme escritorio enfoque      # barra en píldora con el reloj en el centro y el dock escondido
 ```
@@ -222,7 +222,7 @@ Cambiar la barra o el dock los rehace al momento si estás en Plasma.
 
 ## 7. Atajos, reglas de ventana e inicio automático
 
-Estas tres cosas son **claves dinámicas**: tú eliges el identificador (la parte después del punto) y el valor tiene un formato fijo. RROS lo comprueba al guardarlo, así que un valor mal escrito se rechaza con un mensaje.
+Estas tres cosas son **claves dinámicas**: tú eliges el identificador (la parte después del punto) y el valor tiene un formato fijo. Lily lo comprueba al guardarlo, así que un valor mal escrito se rechaza con un mensaje.
 
 ### Atajos de teclado: `keybind.<id>`
 
@@ -374,7 +374,7 @@ rros theme use contrast
 chmod +x ~/.local/bin/modo-presentacion
 modo-presentacion
 ```
-(`~/.local/bin` ya está en el PATH en RROS.)
+(`~/.local/bin` ya está en el PATH en Lily.)
 
 ### Extensiones de `rros`
 Cualquier programa llamado `rros-NOMBRE` que esté en el PATH funciona como `rros NOMBRE`:
@@ -383,7 +383,7 @@ Cualquier programa llamado `rros-NOMBRE` que esté en el PATH funciona como `rro
 mv ~/.local/bin/modo-presentacion ~/.local/bin/rros-presentacion
 rros presentacion
 ```
-Así tus comandos conviven con los de RROS y aparecen con el mismo estilo.
+Así tus comandos conviven con los de Lily y aparecen con el mismo estilo.
 
 ---
 
@@ -415,7 +415,7 @@ Los discos del sistema (`/`, `/boot`...) nunca se desmontan desde aquí.
 ### Crear archivos
 ```sh
 rros nuevo                           # asistente: elige plantilla, nombre y carpeta
-rros nuevo lista                     # plantillas de RROS y las tuyas
+rros nuevo lista                     # plantillas de Lily y las tuyas
 rros nuevo bash copia-seguridad      # copia-seguridad.sh, ya ejecutable
 rros nuevo web index --dir ~/web     # ~/web/index.html
 rros nuevo proyecto-c hola           # carpeta hola/ con main.c y Makefile: cd hola && make && ./hola
@@ -434,7 +434,7 @@ rros config -p lite get ui.effects      # off
 rros config -p pro  get ui.effects      # advanced
 ```
 
-Para pruebas y scripts puedes redirigir dónde lee y escribe RROS:
+Para pruebas y scripts puedes redirigir dónde lee y escribe Lily:
 
 | Variable | Qué cambia |
 |---|---|
@@ -476,7 +476,7 @@ rros config get ui.gap                                      # tu valor real, int
 | Iniciar un programa al entrar | `rros config set autostart.x 'comando'` |
 | Deshacer un cambio | `rros config unset CLAVE` |
 | Guardar/volver a un estado | `rros config snapshot save/restore NOMBRE` |
-| Ajustes con ventana | `rros settings` (o el menú RROS → Ajustes) |
+| Ajustes con ventana | `rros settings` (o el menú Lily → Ajustes) |
 | Ajustes en la terminal | `rros settings tui` |
 | Buscar un ajuste | `rros config schema \| grep palabra` |
 | ¿Estoy protegido? | `rros seguridad` |

@@ -1,4 +1,4 @@
-// El escritorio de RROS: cada pieza en su capa de Wayland (fondo, barra, dock, lo que se abre encima, avisos).
+// El escritorio de Lily: cada pieza en su capa de Wayland (fondo, barra, dock, lo que se abre encima, avisos).
 import QtQml
 import QtQuick
 import QtQuick.Window

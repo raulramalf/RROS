@@ -1,4 +1,4 @@
-// Pantalla de carga de RROS (mientras Plasma prepara el escritorio): el logotipo y una barra que avanza.
+// Pantalla de carga de Lily (mientras Plasma prepara el escritorio): el logotipo y una barra que avanza.
 import QtQuick 2.15
 
 Rectangle {

@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Instalar RROS
-Comment=Instala RROS en el disco de este equipo
+Name=Instalar Lily
+Comment=Instala Lily en el disco de este equipo
 Exec=rros-ajustes --pagina instalar
 Icon=rros-install
 Terminal=false

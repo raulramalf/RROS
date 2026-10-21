@@ -2,7 +2,7 @@
 Type=Application
 Name=Ajustes
 GenericName=Ajustes del sistema
-Comment=Apariencia, dock, red, sonido, pantallas, dispositivos y todos los ajustes de RROS
+Comment=Apariencia, dock, red, sonido, pantallas, dispositivos y todos los ajustes de Lily
 Exec=rros-ajustes
 Icon=rros-settings
 Terminal=false

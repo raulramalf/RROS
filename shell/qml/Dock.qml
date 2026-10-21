@@ -1,4 +1,4 @@
-// Dock de RROS: el Launchpad, tus aplicaciones y las abiertas, y la papelera. Los iconos crecen al pasar el ratón.
+// Dock de Lily: el Launchpad, tus aplicaciones y las abiertas, y la papelera. Los iconos crecen al pasar el ratón.
 // 2D: una franja de cristal. 3D: un estante en perspectiva con brillo, canto y el reflejo de los iconos.
 import QtQuick
 import "."

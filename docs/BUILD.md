@@ -1,4 +1,4 @@
-# Construir RROS
+# Construir Lily
 
 ## Herramientas en C (cualquier Linux)
 ```
@@ -6,11 +6,11 @@ make WERROR=1 && make test
 ```
 Necesita `gcc` y `make`.
 
-## RROS Ajustes (Qt 6)
+## Ajustes de Lily (Qt 6)
 ```
 make app            # build/app/rros-ajustes
 ```
-Necesita `cmake`, `qt6-base` y `qt6-declarative` (y en tiempo de ejecución `qt6-svg`). Sin instalar RROS, desde
+Necesita `cmake`, `qt6-base` y `qt6-declarative` (y en tiempo de ejecución `qt6-svg`). Sin instalar Lily, desde
 el repositorio:
 ```
 PATH=$PWD/build:$PATH RROS_PROFILE_DIR=$PWD/profiles build/app/rros-ajustes --pagina apariencia
@@ -21,7 +21,7 @@ build/app/rros-ajustes --pagina tienda --captura /tmp/tienda.png     # guarda un
 ## Iconos y tema de escritorio
 Son SVG generados (se guardan en el repositorio):
 ```
-scripts/make-icons.py          # logotipo, aplicaciones de RROS y secciones de Ajustes
+scripts/make-icons.py          # logotipo, aplicaciones de Lily y secciones de Ajustes
 scripts/make-desktoptheme.py   # tema de escritorio de Plasma: rros (2D) y rros-3d
 ```
 
@@ -38,7 +38,7 @@ FIRMWARE=uefi BASE=arch ISO=build/rros-arch-lite.iso scripts/test-iso.sh lite in
 ```
 Sin un Arch a mano lo hace GitHub Actions: workflow **Arch** (*Run workflow*, o `[iso-arch]` en el mensaje de un
 commit). Comprueba que todos los paquetes existen (`scripts/check-packages-arch.sh`, también los de la Tienda),
-compila (también RROS Ajustes), pasa las pruebas, construye la ISO, la arranca en QEMU con el autotest (y una
+compila (también Ajustes de Lily), pasa las pruebas, construye la ISO, la arranca en QEMU con el autotest (y una
 captura del escritorio) y la instala en un disco virtual (normal, UEFI y cifrada), arrancando cada instalación.
 
 La ISO arranca en BIOS y UEFI, **sin Secure Boot**.

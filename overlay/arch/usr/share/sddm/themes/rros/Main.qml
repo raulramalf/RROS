@@ -1,4 +1,4 @@
-// Inicio de sesión de RROS (SDDM): reloj arriba, la persona en el centro y los botones de apagar abajo.
+// Inicio de sesión de Lily (SDDM): reloj arriba, la persona en el centro y los botones de apagar abajo.
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 
@@ -172,7 +172,7 @@ Rectangle {
         Image { source: "rros.png"; width: 30; height: 30; smooth: true; mipmap: true }
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: "RROS"
+            text: "Lily"
             color: "#ffffff"; font.family: "Inter"; font.pixelSize: 15; font.weight: Font.Bold
         }
     }

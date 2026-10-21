@@ -6,7 +6,7 @@ import "."
 RPage {
     id: p
     title: "Avanzado"
-    subtitle: "Todos los ajustes de RROS, uno a uno. Lo mismo que «rros config» en la terminal."
+    subtitle: "Todos los ajustes de Lily, uno a uno. Lo mismo que «rros config» en la terminal."
     icon: "qrc:/icons/sec-avanzado.svg"
     property string cat: "ui"
     property string q: ""

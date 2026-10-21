@@ -1,17 +1,17 @@
 # Arquitectura
 
-RROS usa el **kernel Linux**, los paquetes de **Arch Linux** y el escritorio **KDE Plasma** (Wayland), y escribe
+Lily usa el **kernel Linux**, los paquetes de **Arch Linux** y el escritorio **KDE Plasma** (Wayland), y escribe
 lo que le da identidad: las herramientas en C, la aplicación de ajustes en Qt/QML y el diseño.
 
 | Capa | Origen |
 |---|---|
 | Kernel y paquetes | Arch Linux (rolling): kernel `linux`, firmware, pacman |
-| Escritorio | KDE Plasma 6 (Wayland) con el aspecto de RROS: tema de escritorio 2D/3D, barras de título, menú RROS, colores, iconos, carga, inicio de sesión y GRUB |
+| Escritorio | KDE Plasma 6 (Wayland) con el aspecto de Lily: tema de escritorio 2D/3D, barras de título, menú Lily, colores, iconos, carga, inicio de sesión y GRUB |
 | **rros-config** | **C.** Ajustes por capas: perfil < sistema (`/etc/rros/rros.toml`) < usuario (`~/.config/rros/rros.toml`), validados con un esquema |
 | **rros-theme** | **C.** Traduce los ajustes a Plasma: escribe sus claves en `kwinrc`, `kdeglobals`, `kcminputrc`, `powerdevilrc`... sin borrar las demás, genera la barra y el dock (guion de plasmashell), colores, barras de título, Konsole, atajos, reglas de ventanas y fondos |
 | **rros-apply** | **C.** Lo que es de root: zram, red, cortafuegos, kernel, servicios, idioma |
-| **rros-settings** | **C.** API en JSON (`rros-settings api`) que usa RROS Ajustes, y versión de terminal (TUI) |
-| **RROS Ajustes** (`rros-ajustes`) | **C++/QML.** Ajustes, Tienda, bienvenida e instalador. Llama a la API y a las herramientas del sistema (nmcli, pactl, bluetoothctl, kscreen-doctor, KWin por D-Bus); lo de root pasa por pkexec |
+| **rros-settings** | **C.** API en JSON (`rros-settings api`) que usa Ajustes de Lily, y versión de terminal (TUI) |
+| **Ajustes de Lily** (`rros-ajustes`) | **C++/QML.** Ajustes, Tienda, bienvenida e instalador. Llama a la API y a las herramientas del sistema (nmcli, pactl, bluetoothctl, kscreen-doctor, KWin por D-Bus); lo de root pasa por pkexec |
 | **rros-apps** | **C.** Tienda: pacman o Flathub |
 | **rros-security**, **rros-devices**, **rros-new**, **rros-hwdetect**, **rros-budget** | **C.** Seguridad, dispositivos, plantillas, hardware y presupuestos |
 | **rros-installer** / **rros-install** | **C** (plan de particiones) y **shell** (instalación: particiones, cifrado, copia, GRUB) |

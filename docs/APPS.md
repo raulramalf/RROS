@@ -1,4 +1,4 @@
-# Qué trae RROS: aplicaciones y sistema
+# Qué trae Lily: aplicaciones y sistema
 
 Todo lo de esta página sale de `packages/arch-*.list`, y `scripts/check-packages-arch.sh` comprueba en la CI que cada paquete existe en los repositorios de Arch (las listas de la base Ubuntu, `packages/ubuntu-*.list`, se comprueban con `scripts/check-packages.sh`). **Nada de esto usa snap.**
 
@@ -21,7 +21,7 @@ Todo lo de esta página sale de `packages/arch-*.list`, y `scripts/check-package
 | Historial del portapapeles | cliphist | `Mod+V` |
 | Tienda de aplicaciones | `rros apps` y la ventana de ajustes (pacman y Flatpak/Flathub) | |
 | Ajustes | `rros settings` | `Mod+,` |
-| Instalador | RROS Ajustes → *Instalar RROS* o `rros install` (solo en la ISO) | |
+| Instalador | Ajustes de Lily → *Instalar Lily* o `rros install` (solo en la ISO) | |
 
 **Sistema que funciona sin tocar nada**
 

@@ -98,7 +98,7 @@ eq "$("$B/rros-config" -p lite get ui.color_scheme)" dark
 # ficha y diagnóstico
 "$B/rros-fetch" --plain | gq 'Perfil' || fail "rros-fetch"
 "$B/rros-fetch" --plain | gq 'SO\|Sistema' || fail "rros-fetch sistema"
-"$B/rros" version | gq 'Boreal' || fail "rros version"
+"$B/rros" version | gq 'Lirio' || fail "rros version"
 # el resultado de la comprobación de snap depende del equipo (los runners de CI lo tienen)
 doc_out=$("$B/rros" doctor) || true
 case $doc_out in *snap*) ;; *) fail "rros doctor no informa de snap" ;; esac

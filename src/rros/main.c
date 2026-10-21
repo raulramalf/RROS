@@ -71,7 +71,7 @@ static int doctor(void)
 
 	color = isatty(STDOUT_FILENO) && !getenv("NO_COLOR");
 	rros_read_active_profile(profile, sizeof profile);
-	printf("RROS %s · diagnóstico\n", RROS_VERSION);
+	printf("Lily %s · diagnóstico\n", RROS_VERSION);
 
 	rros_conf_init(&eff);
 	rc = rros_load_effective(&eff, profile);
@@ -97,7 +97,7 @@ static int doctor(void)
 
 static void usage(void)
 {
-	fputs("RROS " RROS_VERSION " (" RROS_CODENAME ")\n"
+	fputs("Lily " RROS_VERSION " (" RROS_CODENAME ")\n"
 	      "uso: rros COMANDO [argumentos]\n"
 	      "  info      ficha del sistema          (rros-fetch)\n"
 	      "  config    personalización            (rros-config)\n"
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 		return 2;
 	}
 	if (!strcmp(argv[1], "version")) {
-		puts("RROS " RROS_VERSION " (" RROS_CODENAME ")");
+		puts("Lily " RROS_VERSION " (" RROS_CODENAME ")");
 		return 0;
 	}
 	if (!strcmp(argv[1], "doctor"))

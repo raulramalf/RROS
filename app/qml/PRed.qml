@@ -209,7 +209,7 @@ RPage {
             separator: false
             Btn {
                 text: "Crear…"
-                onClicked: ask.ask("Punto de acceso", "Los demás se conectan a esta red", [{ id: "ssid", label: "Nombre", value: "RROS" }, { id: "pw", label: "Contraseña (8 caracteres o más)", password: true }], "Crear",
+                onClicked: ask.ask("Punto de acceso", "Los demás se conectan a esta red", [{ id: "ssid", label: "Nombre", value: "Lily" }, { id: "pw", label: "Contraseña (8 caracteres o más)", password: true }], "Crear",
                                    function (v) { p.nm_(["device", "wifi", "hotspot", "ssid", v.ssid, "password", v.pw], "Punto de acceso «" + v.ssid + "» activo") })
             }
         }

@@ -1,4 +1,4 @@
-// Superficie de cristal de RROS: el color del tema translúcido, borde fino y un brillo arriba
+// Superficie de cristal de Lily: el color del tema translúcido, borde fino y un brillo arriba
 import QtQuick
 import "."
 

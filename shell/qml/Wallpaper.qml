@@ -11,6 +11,21 @@ Rectangle {
         asynchronous: true
         cache: false
         sourceSize: Qt.size(parent.width, parent.height)
+        visible: video.status !== Loader.Ready
+    }
+    // fondo en vídeo o GIF (anime, paisajes…) y escenas animadas encima del fondo fijo
+    Loader {
+        id: video
+        anchors.fill: parent
+        active: Th.wallpaperVideo !== "" && Sh.exists(Th.wallpaperVideo)
+        source: "VideoWall.qml"
+        onLoaded: item.path = Qt.binding(function () { return Th.wallpaperVideo })
+    }
+    Loader {
+        anchors.fill: parent
+        active: Th.wallpaperLive !== "off" && Th.animations
+        source: "LiveWall.qml"
+        onLoaded: item.scene = Qt.binding(function () { return Th.wallpaperLive })
     }
     MouseArea {
         anchors.fill: parent

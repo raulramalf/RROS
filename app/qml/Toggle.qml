@@ -1,4 +1,4 @@
-// Interruptor de RROS
+// Interruptor de Lily
 import QtQuick
 import "."
 

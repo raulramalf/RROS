@@ -171,7 +171,7 @@ RPage {
     }
     Section { text: "Privacidad" }
     Card {
-        KeyRow { k: "privacy.telemetry"; title: "Enviar datos de uso"; subtitle: "RROS no envía nada a nadie" }
+        KeyRow { k: "privacy.telemetry"; title: "Enviar datos de uso"; subtitle: "Lily no envía nada a nadie" }
         KeyRow { k: "privacy.crash_reports"; title: "Informes de fallos" }
         KeyRow { k: "services.location"; title: "Ubicación"; separator: false }
     }

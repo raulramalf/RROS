@@ -1,4 +1,4 @@
-// Lo que se abre encima del escritorio: menú RROS, centro de control, calendario, Launchpad y menús del dock y del fondo.
+// Lo que se abre encima del escritorio: menú Lily, centro de control, calendario, Launchpad y menús del dock y del fondo.
 // Un clic fuera lo cierra.
 import QtQuick
 import "."
@@ -28,7 +28,7 @@ Item {
         x: ov.clampX(Ux.ax, width); y: ov.menuTop(height)
         entries: [["Acerca de este equipo", "rros-ajustes --pagina general"], ["-"],
                   ["Ajustes…", "rros-ajustes"], ["Tienda…", "rros-ajustes --pagina tienda"], ["Actualizaciones…", "rros-ajustes --pagina actualizaciones"]]
-                 .concat(Sh.live ? [["Instalar RROS…", "rros-ajustes --pagina instalar"]] : [])
+                 .concat(Sh.live ? [["Instalar Lily…", "rros-ajustes --pagina instalar"]] : [])
                  .concat([["-"], ["Forzar salida…", "qdbus6 org.kde.KWin /KWin killWindow"], ["Monitor del sistema", "plasma-systemmonitor"], ["-"],
                            ["Reposo", "systemctl suspend"], ["Reiniciar…", "qdbus6 org.kde.LogoutPrompt /LogoutPrompt promptReboot"],
                            ["Apagar…", "qdbus6 org.kde.LogoutPrompt /LogoutPrompt promptShutDown"], ["-"],

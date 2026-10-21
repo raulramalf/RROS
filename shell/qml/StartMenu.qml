@@ -1,4 +1,4 @@
-// Menú de inicio de RROS: buscador arriba, aplicaciones ancladas, «Todas las aplicaciones» en lista alfabética y,
+// Menú de inicio de Lily: buscador arriba, aplicaciones ancladas, «Todas las aplicaciones» en lista alfabética y,
 // abajo, la persona usuaria y los botones de sesión (bloquear, cerrar sesión, reposo, reiniciar, apagar).
 import QtQuick
 import QtQuick.Controls

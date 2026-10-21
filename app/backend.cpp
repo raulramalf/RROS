@@ -5,6 +5,8 @@
 #include <QDBusReply>
 #include <QDir>
 #include <QFile>
+#include <QSaveFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QJsonDocument>
@@ -263,4 +265,32 @@ QPixmap IconProvider::requestPixmap(const QString &id, QSize *size, const QSize 
 	if (size)
 		*size = QSize(s, s);
 	return icon.pixmap(s, s);
+}
+
+/* ---- para las aplicaciones de Lily (Notas, Capturas) ---- */
+
+bool Backend::writeFile(const QString &path, const QString &text)
+{
+	QDir().mkpath(QFileInfo(path).absolutePath());
+	QSaveFile f(path);
+	if (!f.open(QIODevice::WriteOnly))
+		return false;
+	f.write(text.toUtf8());
+	return f.commit();
+}
+
+bool Backend::removeFile(const QString &path)
+{
+	return QFile::remove(path);
+}
+
+/* archivos de una carpeta, del más reciente al más antiguo: [{ path, name, modified }] */
+QVariantList Backend::listDir(const QString &dir, const QStringList &filters) const
+{
+	QVariantList out;
+	const QFileInfoList l = QDir(dir).entryInfoList(filters, QDir::Files, QDir::Time);
+	for (const QFileInfo &fi : l)
+		out.append(QVariantMap{ { QStringLiteral("path"), fi.absoluteFilePath() }, { QStringLiteral("name"), fi.completeBaseName() },
+					{ QStringLiteral("modified"), fi.lastModified() } });
+	return out;
 }

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Notas
+Comment=Notas rápidas de Lily, guardadas como archivos en Documentos/Notas
+Exec=rros-ajustes --app notas
+Icon=rros-new
+Categories=Office;Utility;
+Keywords=notas;apuntes;texto;

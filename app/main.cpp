@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
 	QCommandLineOption welcome(QStringLiteral("bienvenida"), QStringLiteral("Asistente de bienvenida"));
 	QCommandLineOption shot(QStringLiteral("captura"), QStringLiteral("Guarda una captura de la ventana y sale (pruebas)"),
 				QStringLiteral("PNG"));
+	QCommandLineOption appOpt(QStringLiteral("app"), QStringLiteral("Aplicación de Lily: notas o capturas"), QStringLiteral("APP"));
+	cli.addOption(appOpt);
 	cli.addOption(page);
 	cli.addOption(welcome);
 	cli.addOption(shot);
@@ -43,7 +45,10 @@ int main(int argc, char *argv[])
 	engine.rootContext()->setContextProperty(QStringLiteral("welcomeMode"),
 						 cli.isSet(welcome) || cli.value(page) == QStringLiteral("bienvenida"));
 	engine.rootContext()->setContextProperty(QStringLiteral("shotPath"), cli.value(shot));
-	engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
+	const QString appName = cli.value(appOpt);
+	engine.load(QUrl(appName == QStringLiteral("notas") ? QStringLiteral("qrc:/qml/AppNotas.qml")
+			 : appName == QStringLiteral("capturas") ? QStringLiteral("qrc:/qml/AppCapturas.qml")
+								   : QStringLiteral("qrc:/qml/Main.qml")));
 	if (engine.rootObjects().isEmpty())
 		return 1;
 	return app.exec();

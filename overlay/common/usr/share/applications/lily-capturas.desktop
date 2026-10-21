@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Capturas
+Comment=Capturas de pantalla de Lily: pantalla entera, ventana o zona
+Exec=rros-ajustes --app capturas
+Icon=accessories-screenshot
+Categories=Utility;Graphics;
+Keywords=captura;pantalla;screenshot;

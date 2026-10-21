@@ -76,6 +76,8 @@ check "zram como swap" sh -c 'swapon --show | grep -q zram'
 check "identidad: os-release de RROS" grep -q '^ID=rros' /etc/os-release
 
 check "rros doctor (usuario)" as_user "rros doctor"
+# si falla, enseña el diagnóstico completo en el registro para saber qué parte
+as_user "NO_COLOR=1 rros doctor" >/dev/null 2>&1 || as_user "NO_COLOR=1 rros doctor; rros-config validate; rros-budget ram" 2>&1 | sed 's/^/diag: /'
 for tool in rros-install rros-installer sfdisk mkfs.ext4 mkfs.vfat grub-install efibootmgr tar cryptsetup os-prober; do
 	check "instalador: $tool" has "$tool"
 done

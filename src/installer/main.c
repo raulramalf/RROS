@@ -201,9 +201,17 @@ static int cmd_disks(int argc, char **argv)
 			printf(",\"%s\":", names[m]);
 			json_str(err);
 		}
+		/* en el orden del disco: readdir de /sys no garantiza ninguno */
+		int ord[32], n = d->nparts < 32 ? d->nparts : 32;
+		for (int k = 0; k < n; k++) {
+			int j = k;
+			for (; j > 0 && d->parts[ord[j - 1]].start > d->parts[k].start; j--)
+				ord[j] = ord[j - 1];
+			ord[j] = k;
+		}
 		printf(",\"parts\":[");
-		for (int k = 0; k < d->nparts; k++) {
-			const struct rros_dpart *p = &d->parts[k];
+		for (int k = 0; k < n; k++) {
+			const struct rros_dpart *p = &d->parts[ord[k]];
 
 			rros_human_size(p->size, sz, sizeof sz);
 			printf("%s{\"name\":", k ? "," : "");

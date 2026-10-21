@@ -211,6 +211,16 @@ check "terminal: perfil y colores de RROS" as_user "test -s ~/.local/share/konso
 echo "info: memoria usada $(awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {printf "%d MB de %d MB", (t-a)/1024, t/1024}' /proc/meminfo)"
 echo "info: sistema instalado $(du -sxm / 2>/dev/null | cut -f1) MB (sin /home ni /tmp)"
 [ "$LIVE" -eq 0 ] && cpu_idle
+# rendimiento medido en cada versión: si empeora por encima del presupuesto de la edición, la CI falla.
+# RAM en reposo (sistema instalado, sin el live en memoria) frente a max_idle_ram_mb del perfil; arranque < 90 s
+if [ "$LIVE" -eq 0 ]; then
+	used=$(awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {printf "%d", (t-a)/1024}' /proc/meminfo)
+	budget=$(sed -n 's/^max_idle_ram_mb *= *//p' "/usr/share/rros/profiles/$(cat /etc/rros/profile 2>/dev/null || echo lite).toml" | head -1)
+	check "rendimiento: RAM en reposo ${used} MB dentro del presupuesto (${budget:-?} MB)" test "$used" -le "${budget:-99999}"
+	boot=$(systemd-analyze time 2>/dev/null | sed -n 's/.*= *\([0-9.]*\)s$/\1/p' | head -1)
+	[ -n "$boot" ] && echo "info: arranque ${boot} s (systemd-analyze)"
+	check "rendimiento: arranque en menos de 90 s" sh -c "[ -z '$boot' ] || awk 'BEGIN{exit !($boot < 90)}'"
+fi
 sfs=/run/archiso/bootmnt/arch/x86_64/airootfs.sfs
 [ -e "$sfs" ] && echo "info: imagen comprimida del sistema $(du -m "$sfs" | cut -f1) MB"
 echo "=== resultado: $ok correctas, $bad con fallo ==="

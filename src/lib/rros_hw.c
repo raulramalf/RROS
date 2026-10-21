@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/utsname.h>
 #include <unistd.h>
 
@@ -43,7 +44,9 @@ static long meminfo_kb(const char *root, const char *field)
 
 long rros_hw_ram_used_mb(const char *root)
 {
-	long total, avail;
+	long total, avail, cow = 0;
+	char path[512];
+	struct statvfs st;
 
 	if (!root)
 		root = "";
@@ -51,7 +54,14 @@ long rros_hw_ram_used_mb(const char *root)
 	avail = meminfo_kb(root, "MemAvailable");
 	if (total < 0 || avail < 0)
 		return -1;
-	return (total - avail) / 1024;
+	/* sistema en vivo: lo que se escribe va a un tmpfs en RAM (la «copia» del disco). En el sistema instalado eso
+	 * está en el disco, así que no cuenta como memoria del escritorio */
+	snprintf(path, sizeof path, "%s/run/archiso/cowspace", root);
+	if (statvfs(path, &st) == 0 && st.f_blocks > st.f_bfree)
+		cow = (long)((unsigned long long)(st.f_blocks - st.f_bfree) * st.f_frsize / 1024);
+	if (cow > total - avail)
+		cow = 0;
+	return (total - avail - cow) / 1024;
 }
 
 static void detect_cpu(struct rros_hw *hw, const char *root)

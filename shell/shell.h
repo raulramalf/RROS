@@ -46,6 +46,7 @@ public Q_SLOTS:
 	Q_SCRIPTABLE void toggleControlCenter();
 	Q_SCRIPTABLE void reload();
 	Q_SCRIPTABLE void focusTaskbar();
+	Q_SCRIPTABLE void setDoNotDisturb(bool on);
 	// D-Bus (org.kde.osdService): lo que PowerDevil y otros piden mostrar (brillo, teclado...)
 	Q_SCRIPTABLE void showOsd(const QString &icon, int percent, const QString &text);
 
@@ -54,6 +55,7 @@ Q_SIGNALS:
 	void controlCenterRequested();
 	void reloadRequested();
 	void focusTaskbarRequested();
+	void dndRequested(bool on);
 	void fileChanged(const QString &path);
 	void osd(const QString &icon, int percent, const QString &text);
 	void volumeKey(int step);       // +1, -1, 0 (silencio)

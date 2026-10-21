@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# rros-chequeo: el chequeo de seguridad mensual de Lily (como el de Windows Security). Revisa la auditoría de
+# rros-security, el antivirus y las copias, y avisa en el escritorio con lo que haya que mirar. Lo lanza
+# rros-chequeo.timer (de usuario) una vez al mes.
+set -u
+problemas=()
+sec=$(rros-security auditoria --json 2>/dev/null)
+score=$(sed -n 's/.*"score":\([0-9]*\).*/\1/p' <<<"$sec")
+[ "${score:-100}" -ge 70 ] || problemas+=("puntuación de seguridad ${score}/100")
+av=$(rros-antivirus estado --json 2>/dev/null)
+grep -q '"firmas":""' <<<"$av" && problemas+=("el antivirus no tiene firmas")
+grep -q '"programado":false' <<<"$av" && grep -q '"tiempo_real":false' <<<"$av" && problemas+=("el antivirus no analiza solo")
+cp=$(rros-copias estado --json 2>/dev/null)
+grep -q '"destino":""' <<<"$cp" && problemas+=("no tienes copia de seguridad de tus archivos")
+if [ ${#problemas[@]} -eq 0 ]; then
+	notify-send -a "Seguridad" -i rros-security "Chequeo de seguridad: todo bien" "Puntuación ${score:-?}/100. Lily está protegido."
+else
+	msg=$(printf '• %s\n' "${problemas[@]}")
+	notify-send -a "Seguridad" -i rros-security -u critical "Chequeo de seguridad: ${#problemas[@]} cosas que revisar" "$msg
+Ábrelo en Ajustes → Seguridad."
+fi

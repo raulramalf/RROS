@@ -10,6 +10,10 @@ Glass {
     width: 340
     height: col.implicitHeight + 28
     radius: 18
+    // modos de Lily (rros-modo): enfoque y juego
+    property string mode: "normal"
+    function setMode(m) { mode = m; Sh.run(["rros-modo", m], function () {}) }
+    onVisibleChanged: if (visible) Sh.run(["rros-modo", "estado"], function (r) { cc.mode = r.out.trim() || "normal" })
     ColumnLayout {
         id: col
         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 14 }
@@ -28,8 +32,14 @@ Glass {
                      onToggled: Notifs.doNotDisturb = !Notifs.doNotDisturb }
             Toggle { title: "Luz nocturna"; sub: Sy.nightLight ? "Activada" : "Desactivada"; glyph: "night"; on: Sy.nightLight
                      onToggled: Th.set("ui.night_light", Sy.nightLight ? "off" : "on") }
+            Toggle { title: "Enfoque"; sub: cc.mode === "enfoque" ? "Sin avisos ni animaciones" : "Desactivado"; glyph: "dnd"; on: cc.mode === "enfoque"
+                     onToggled: cc.setMode(cc.mode === "enfoque" ? "normal" : "enfoque") }
+            Toggle { title: "Modo juego"; sub: cc.mode === "juego" ? "Máximo rendimiento" : "Desactivado"; glyph: "power"; on: cc.mode === "juego"
+                     onToggled: cc.setMode(cc.mode === "juego" ? "normal" : "juego") }
             Toggle { title: "Captura"; sub: "De la pantalla"; glyph: "camera"; on: false; toggle: false
-                     onToggled: { Ux.close(); Sh.detached(["spectacle"]) } }
+                     onToggled: { Ux.close(); Sh.detached(["rros-ajustes", "--app", "capturas"]) } }
+            Toggle { title: "Móvil"; sub: "KDE Connect"; glyph: "bluetooth"; on: false; toggle: false
+                     onToggled: { Ux.close(); Sh.detached(["rros-ajustes", "--pagina", "movil"]) } }
         }
         SliderRow { visible: Sy.brightness >= 0; title: "Pantalla"; glyph: "sun"; value: Sy.brightness; to: 100; onMoved: function (v) { Sy.setBrightness(Math.max(1, v)) } }
         SliderRow { title: "Sonido"; glyph: "volume"; value: Sy.muted ? 0 : Sy.volume; to: 100; onMoved: function (v) { Sy.setVolume(v) } }

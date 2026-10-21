@@ -29,6 +29,7 @@ ApplicationWindow {
         ["teclado", "Teclado y atajos", "sec-teclado", "PTeclado.qml", 1],
         ["energia", "Batería y energía", "sec-energia", "PEnergia.qml", 1],
         ["dispositivos", "Dispositivos", "app-dispositivos", "PDispositivos.qml", 1],
+        ["movil", "Móvil", "sec-bluetooth", "PMovil.qml", 1],
         ["fecha", "Fecha, hora e idioma", "sec-fecha", "PFecha.qml", 2],
         ["accesibilidad", "Accesibilidad", "sec-accesibilidad", "PAccesibilidad.qml", 2],
         ["seguridad", "Seguridad y privacidad", "app-seguridad", "PSeguridad.qml", 2],

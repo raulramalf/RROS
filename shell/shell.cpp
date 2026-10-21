@@ -227,6 +227,11 @@ void Shell::toggleControlCenter()
 	Q_EMIT controlCenterRequested();
 }
 
+void Shell::setDoNotDisturb(bool on)
+{
+	Q_EMIT dndRequested(on);
+}
+
 void Shell::focusTaskbar()
 {
 	Q_EMIT focusTaskbarRequested();

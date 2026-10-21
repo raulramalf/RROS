@@ -7,7 +7,7 @@ Rectangle {
     id: w
     color: Ui.window
     property int step: 0
-    readonly property int last: 4
+    readonly property int last: 5
 
     function finish() {
         Sys.detached(["sh", "-c", "mkdir -p \"$HOME/.config/rros\" && touch \"$HOME/.config/rros/.bienvenida-vista\""])
@@ -118,15 +118,16 @@ Rectangle {
                 visible: w.step === 3
                 spacing: 18
                 Txt { text: "¿Cómo quieres el escritorio?"; font.pixelSize: 26; font.weight: Font.Bold; Layout.alignment: Qt.AlignHCenter }
-                RowLayout {
-                    spacing: 16
+                Flow {
+                    spacing: 14
+                    Layout.preferredWidth: 3 * 206 + 2 * 14
                     Layout.alignment: Qt.AlignHCenter
                     Repeater {
                         model: Ui.st ? Ui.st.desktops : []
                         ColumnLayout {
                             spacing: 8
                             Rectangle {
-                                width: 206; height: 128; radius: 14; color: "transparent"
+                                width: 206; height: 122; radius: 14; color: "transparent"
                                 border.width: Ui.st.desktop_current === modelData.id ? 4 : 1
                                 border.color: Ui.st.desktop_current === modelData.id ? Ui.accent : Ui.line
                                 StylePreview { anchors.centerIn: parent; kind: modelData.id }
@@ -141,17 +142,43 @@ Rectangle {
                 }
             }
 
-            // 4. listo
+            // 4. tu seguridad, en claro
             ColumnLayout {
                 anchors.centerIn: parent
                 visible: w.step === 4
+                spacing: 12
+                Txt { text: "Lily te protege así"; font.pixelSize: 26; font.weight: Font.Bold; Layout.alignment: Qt.AlignHCenter }
+                Repeater {
+                    model: [["Cortafuegos", "Nadie de fuera puede entrar en tu equipo si tú no lo pides."],
+                            ["Antivirus", "Revisa tus descargas y tus archivos; lo sospechoso va a una cuarentena donde no hace daño."],
+                            ["Vuelta atrás", "Antes de cada actualización se guarda el sistema: si algo falla, vuelves a como estaba."],
+                            ["Contraseñas", "Tras varios intentos fallidos la cuenta se bloquea unos minutos."],
+                            ["Chequeo mensual", "Cada mes Lily revisa todo y te avisa si algo necesita tu atención."]]
+                    RowLayout {
+                        Layout.preferredWidth: 560
+                        spacing: 12
+                        Rectangle { width: 10; height: 10; radius: 5; color: Ui.ok; Layout.alignment: Qt.AlignTop; Layout.topMargin: 5 }
+                        ColumnLayout {
+                            spacing: 0
+                            Txt { text: modelData[0]; font.weight: Font.DemiBold }
+                            Txt { text: modelData[1]; color: Ui.muted; wrapMode: Text.WordWrap; Layout.preferredWidth: 530 }
+                        }
+                    }
+                }
+                Btn { text: "Ver Seguridad"; Layout.alignment: Qt.AlignHCenter; onClicked: Sys.detached(["rros-ajustes", "--pagina", "seguridad"]) }
+            }
+
+            // 5. listo
+            ColumnLayout {
+                anchors.centerIn: parent
+                visible: w.step === 5
                 spacing: 14
                 Image { source: Sys.live ? "qrc:/icons/app-instalar.svg" : "qrc:/icons/app-bienvenida.svg"; sourceSize: Qt.size(110, 110); Layout.alignment: Qt.AlignHCenter }
                 Txt { text: Sys.live ? "¿Lo instalamos?" : "¡Todo listo!"; font.pixelSize: 28; font.weight: Font.Bold; Layout.alignment: Qt.AlignHCenter }
                 Txt {
                     Layout.preferredWidth: 520; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap; elide: Text.ElideNone; color: Ui.muted
                     text: Sys.live ? "Estás probando Lily sin tocar tu disco. Instálalo para que vaya más rápido y se guarden tus cosas; puede ir junto a Windows."
-                                   : "La Tienda tiene más aplicaciones, y en Ajustes puedes cambiar todo esto cuando quieras. El Launchpad, en el dock, muestra todas tus aplicaciones."
+                                   : "La Tienda tiene más aplicaciones y en Ajustes puedes cambiar todo esto cuando quieras. El botón de inicio, abajo a la izquierda, tiene todas tus aplicaciones y busca en todo."
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter

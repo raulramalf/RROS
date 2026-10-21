@@ -155,6 +155,7 @@ QtObject {
         target: Sh
         // la tecla Windows: el Launchpad con el dock; el menú de inicio con la barra de tareas
         function onFocusTaskbarRequested() { tbWin.requestActivate() }
+        function onDndRequested(on) { Notifs.doNotDisturb = on }
         function onLaunchpadRequested() { if (Th.dock) Ux.toggle("launchpad"); else Ux.toggle("start", Th.vertical ? Th.tbH + 8 : 6, Th.vertical ? 8 : -1) }
         function onControlCenterRequested() { Ux.toggle("control", wall.width - 60, Th.barH + 4) }
     }

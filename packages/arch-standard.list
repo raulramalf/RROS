@@ -18,3 +18,4 @@ btrfs-progs
 vulkan-intel
 vulkan-radeon
 intel-media-driver      # vídeo acelerado en Intel recientes (AMD: ya va en mesa)
+kdeconnect              # el móvil y el ordenador conectados (Ajustes → Móvil)

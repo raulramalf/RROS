@@ -1,0 +1,10 @@
+[Unit]
+Description=Lily: chequeo de seguridad cada mes
+
+[Timer]
+OnCalendar=monthly
+Persistent=true
+RandomizedDelaySec=2h
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,6 @@
+[Unit]
+Description=Lily: chequeo de seguridad mensual
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rros-chequeo

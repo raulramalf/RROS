@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# rros-modo: modos de uso de Lily (los usa el centro de control).
+#   rros-modo enfoque   no molestar: sin avisos y sin animaciones del fondo
+#   rros-modo juego     además, CPU en rendimiento (power-profiles), GameMode y el antivirus en tiempo real en pausa
+#   rros-modo normal    todo como estaba
+#   rros-modo estado
+set -u
+ST=${XDG_STATE_HOME:-$HOME/.local/state}/rros/modo
+mkdir -p "$(dirname "$ST")"
+shell() { qdbus6 org.rros.Shell /Shell org.rros.Shell."$1" "${@:2}" >/dev/null 2>&1; }
+case ${1:-estado} in
+enfoque|juego)
+	[ -s "$ST.antes" ] || rros-config get ui.wallpaper_live > "$ST.antes" 2>/dev/null
+	shell setDoNotDisturb true
+	rros-config set ui.wallpaper_live off >/dev/null 2>&1
+	if [ "$1" = juego ]; then
+		powerprofilesctl set performance 2>/dev/null
+		# el antivirus en tiempo real se para mientras juegas (lo vuelve a poner «normal»)
+		systemctl is-active --quiet clamav-clamonacc.service && pkexec systemctl stop clamav-clamonacc.service 2>/dev/null && touch "$ST.av"
+	fi
+	echo "$1" > "$ST" ;;
+normal)
+	shell setDoNotDisturb false
+	[ -s "$ST.antes" ] && rros-config set ui.wallpaper_live "$(cat "$ST.antes")" >/dev/null 2>&1
+	powerprofilesctl set balanced 2>/dev/null
+	[ -e "$ST.av" ] && pkexec systemctl start clamav-clamonacc.service 2>/dev/null
+	rm -f "$ST.antes" "$ST.av"; echo normal > "$ST" ;;
+estado) cat "$ST" 2>/dev/null || echo normal ;;
+*) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

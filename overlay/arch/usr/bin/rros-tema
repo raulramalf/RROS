@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# rros-tema: temas completos de Lily (colores, acento, fondo, escena animada, puntero, letra y diseño de la barra) en
+# un archivo .lilytema para compartirlos.
+#   rros-tema exportar ARCHIVO.lilytema [NOMBRE]
+#   rros-tema importar ARCHIVO.lilytema
+#   rros-tema lista | aplicar NOMBRE        los incluidos (/usr/share/rros/temas)
+set -u
+KEYS=(ui.theme ui.color_scheme ui.accent ui.wallpaper_style ui.wallpaper_live ui.cursor_theme ui.font ui.font_size
+      ui.taskbar_style ui.taskbar_align ui.taskbar_size ui.corner_radius ui.transparency)
+DIR=/usr/share/rros/temas
+importar() {
+	local f=$1 k v n=0
+	[ -r "$f" ] || { echo "rros-tema: no se puede leer $f" >&2; return 1; }
+	while IFS='=' read -r k v; do
+		k=${k// /}; v=${v#"${v%%[![:space:]]*}"}; v=${v#\"}; v=${v%\"}
+		case " ${KEYS[*]} " in *" $k "*) rros-config set "$k" "$v" >/dev/null && n=$((n + 1)) ;; esac   # solo claves conocidas
+	done < <(grep -E '^[a-z_.]+ *=' "$f")
+	rros-theme apply --quiet >/dev/null 2>&1
+	echo "Tema aplicado ($n ajustes)"
+}
+case ${1:-lista} in
+exportar)
+	f=${2:?falta el archivo}; { echo "# Tema de Lily: ${3:-mi tema}"; echo "nombre = \"${3:-mi tema}\""
+		for k in "${KEYS[@]}"; do v=$(rros-config get "$k" 2>/dev/null) && echo "$k = \"$v\""; done; } > "$f"
+	echo "Guardado en $f" ;;
+importar) importar "${2:?falta el archivo}" ;;
+lista) for f in "$DIR"/*.lilytema; do [ -e "$f" ] && echo "$(basename "$f" .lilytema)|$(sed -n 's/^nombre = "\(.*\)"/\1/p' "$f")"; done ;;
+aplicar) importar "$DIR/${2:?falta el nombre}.lilytema" ;;
+*) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

@@ -156,6 +156,43 @@ RPage {
             }
         }
     }
+    Section { text: "Temas completos" }
+    Flow {
+        Layout.fillWidth: true
+        spacing: 12
+        Repeater {
+            model: p.packs
+            Rectangle {
+                width: 200; height: 64; radius: 12; color: pm.containsMouse ? Ui.cardHover : Ui.card; border.color: Ui.line
+                Txt { anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter } text: modelData.name; font.weight: Font.DemiBold }
+                MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: Sys.run(["rros-tema", "aplicar", modelData.id], function (r) { Ui.toast(r.code === 0 ? "Tema «" + modelData.name + "» aplicado" : "No se pudo", r.code !== 0); Ui.reload() }) }
+            }
+        }
+    }
+    Card {
+        SRow {
+            title: "Compartir tu tema"
+            subtitle: "Colores, acento, fondo, escena animada, puntero, letra y diseño de la barra en un archivo .lilytema"
+            separator: false
+            RowLayout {
+                Btn { text: "Importar…"; onClicked: themeIn.open() }
+                Btn { text: "Exportar…"; onClicked: themeOut.open() }
+            }
+        }
+    }
+    FileDialog { id: themeIn; title: "Tema de Lily"; nameFilters: ["Temas de Lily (*.lilytema)"]
+                 onAccepted: Sys.run(["rros-tema", "importar", decodeURIComponent(String(selectedFile).replace("file://", ""))], function (r) { Ui.toast(r.out.trim() || r.err, r.code !== 0); Ui.reload() }) }
+    FileDialog { id: themeOut; title: "Guardar el tema"; fileMode: FileDialog.SaveFile; nameFilters: ["Temas de Lily (*.lilytema)"]
+                 onAccepted: { var f = decodeURIComponent(String(selectedFile).replace("file://", "")); if (!/\.lilytema$/.test(f)) f += ".lilytema"
+                               Sys.run(["rros-tema", "exportar", f, "Mi tema"], function (r) { Ui.toast(r.out.trim() || r.err, r.code !== 0) }) } }
+    property var packs: []
+    property var videos: []
+    function loadExtras() {
+        Sys.run(["rros-tema", "lista"], function (r) { p.packs = r.out.split("\n").filter(function (l) { return l !== "" }).map(function (l) { var x = l.split("|"); return { id: x[0], name: x[1] } }) })
+        p.videos = Sys.listDir(Sys.env("HOME") + "/Vídeos/Fondos", ["*.mp4", "*.webm", "*.mkv", "*.gif"])
+    }
+
     Section { text: "Fondo animado" }
     Card {
         SRow {
@@ -173,7 +210,33 @@ RPage {
                 Btn { text: "Elegir…"; onClicked: pickVideo.open() }
             }
         }
-        KeyRow { k: "ui.wallpaper_pause_battery"; title: "Pararlo cuando el portátil va con batería"; separator: false }
+        KeyRow { k: "ui.wallpaper_pause_battery"; title: "Pararlo cuando el portátil va con batería" }
+        SRow {
+            title: "Galería"
+            subtitle: "Tus fondos animados están en Vídeos/Fondos. Descarga más (anime, paisajes, píxel art…) y guárdalos ahí."
+            separator: false
+            RowLayout {
+                Btn { text: "Descargar más"; onClicked: Sys.detached(["xdg-open", "https://motionbgs.com/"]) }
+                Btn { text: "Abrir la carpeta"; onClicked: { Sys.writeFile(Sys.env("HOME") + "/Vídeos/Fondos/.lily", ""); Sys.detached(["xdg-open", Sys.env("HOME") + "/Vídeos/Fondos"]) } }
+            }
+        }
+    }
+    Flow {
+        Layout.fillWidth: true
+        spacing: 12
+        visible: p.videos.length > 0
+        Repeater {
+            model: p.videos
+            Rectangle {
+                property bool on: Ui.v("ui.wallpaper_video") === modelData.path
+                width: 180; height: 112; radius: 12; color: Ui.card; clip: true
+                border.width: on ? 3 : 1; border.color: on ? Ui.accent : Ui.line
+                AnimatedImage { anchors.fill: parent; anchors.margins: 3; visible: /\.gif$/i.test(modelData.path); source: visible ? "file://" + modelData.path : ""; fillMode: Image.PreserveAspectCrop; playing: vm.containsMouse }
+                Txt { anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 8 } text: modelData.name; elide: Text.ElideRight; font.pixelSize: Ui.fs - 2
+                      style: Text.Outline; styleColor: "#80000000" }
+                MouseArea { id: vm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Ui.setKey("ui.wallpaper_video", modelData.path) }
+            }
+        }
     }
     FileDialog {
         id: pickVideo
@@ -192,9 +255,10 @@ RPage {
     property var fonts: Qt.fontFamilies().filter(function (f) { return !/emoji|symbol|unifont|opensymbol|^dejavu math|^noto (sans|serif) (?!mono)[a-z]+ ?[a-z]*$/i.test(f) || /^noto (sans|serif)$/i.test(f) })
     property var monoFonts: Qt.fontFamilies().filter(function (f) { return /mono|code|courier|consol|hack|fira code|jetbrains/i.test(f) })
     property var cursors: []
-    Component.onCompleted: Sys.run(["sh", "-c", "for d in /usr/share/icons/*/cursors \"$HOME\"/.local/share/icons/*/cursors; do [ -d \"$d\" ] && t=${d%/cursors} && n=$(sed -n 's/^Name=//p' \"$t/index.theme\" 2>/dev/null | head -1) && p=$(ls \"$t\"/preview*.png 2>/dev/null | head -1) && echo \"${t##*/}|${n:-${t##*/}}|$p\"; done"], function (r) {
+    Component.onCompleted: { loadExtras(); cursorsLoad() }
+    function cursorsLoad() { Sys.run(["sh", "-c", "for d in /usr/share/icons/*/cursors \"$HOME\"/.local/share/icons/*/cursors; do [ -d \"$d\" ] && t=${d%/cursors} && n=$(sed -n 's/^Name=//p' \"$t/index.theme\" 2>/dev/null | head -1) && p=$(ls \"$t\"/preview*.png 2>/dev/null | head -1) && echo \"${t##*/}|${n:-${t##*/}}|$p\"; done"], function (r) {
         p.cursors = r.out.split("\n").filter(function (l) { return l !== "" }).map(function (l) { var x = l.split("|"); return { id: x[0], name: x[1], preview: x[2] || "" } })
-    })
+    }) }
 
     Section { text: "Letra" }
     Card {

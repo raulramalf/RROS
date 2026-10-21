@@ -12,13 +12,14 @@ Glass {
     radius: 14
     property string q: ""
     property bool all: false
-    property var results: q === "" ? [] : Apps.search(q, 40)
+    property var results: q === "" ? [] : Search.results(Apps.search(q, 12))
     readonly property string user: Sh.home.split("/").pop()
     function launch(id) { Apps.launch(id); Ux.close() }
     function run(cmd) { Ux.close(); Sh.detached(cmd) }
 
     Connections {
         target: Ux
+        function onDemoSearchChanged() { field.text = Ux.demoSearch }
         function onOpenChanged() {
             if (Ux.open !== "start") return
             field.text = ""; sm.all = false
@@ -37,13 +38,13 @@ Glass {
             color: Th.text; placeholderTextColor: Th.muted
             font.family: Th.font; font.pixelSize: 14
             leftPadding: 38
-            onTextChanged: sm.q = text
+            onTextChanged: { sm.q = text; Search.q = text }
             background: Rectangle {
                 radius: 19; color: Th.tile; border.color: field.activeFocus ? Th.accent : Th.edge; border.width: field.activeFocus ? 2 : 1
                 Glyph { name: "search"; color: Th.muted; x: 13; anchors.verticalCenter: parent.verticalCenter }
             }
             Keys.onEscapePressed: Ux.close()
-            Keys.onReturnPressed: if (sm.results.length) sm.launch(sm.results[0].id)
+            Keys.onReturnPressed: if (sm.results.length) { sm.results[0].run(); Ux.close() }
         }
 
         // ---- cabecera de la sección ----
@@ -92,7 +93,9 @@ Glass {
             Layout.fillWidth: true; Layout.fillHeight: true
             clip: true; spacing: 2
             model: sm.results
-            delegate: Row0 { aid: modelData.id; aname: modelData.name; aicon: modelData.icon; acomment: modelData.comment || ""; first: index === 0 }
+            section.property: "kind"
+            section.delegate: Txt { text: section; color: Th.accent; font.weight: Font.Bold; leftPadding: 10; topPadding: 6; bottomPadding: 2 }
+            delegate: Row0 { aname: modelData.title; aicon: modelData.icon; acomment: modelData.sub; first: index === 0; action: modelData.run }
             Txt {
                 visible: parent.count === 0
                 anchors.centerIn: parent
@@ -146,6 +149,7 @@ Glass {
     }
     component Row0: Rectangle {
         property string aid; property string aname; property string aicon; property string acomment; property bool first: false
+        property var action: null
         width: ListView.view ? ListView.view.width : 0; height: 48; radius: 8
         color: rm.pressed ? Th.pressed : (rm.containsMouse || first) ? Th.hover : "transparent"
         Ico { x: 10; anchors.verticalCenter: parent.verticalCenter; size: 30; name: parent.aicon }
@@ -154,6 +158,6 @@ Glass {
             Txt { text: aname; width: parent.width; elide: Text.ElideRight }
             Txt { visible: acomment !== ""; text: acomment; color: Th.muted; font.pixelSize: 11; width: parent.width; elide: Text.ElideRight }
         }
-        MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; onClicked: sm.launch(aid) }
+        MouseArea { id: rm; anchors.fill: parent; hoverEnabled: true; onClicked: { if (action) { action(); Ux.close() } else sm.launch(aid) } }
     }
 }

@@ -38,6 +38,7 @@ public:
 	Q_INVOKABLE bool exists(const QString &path) const;
 	Q_INVOKABLE void watch(const QString &path);
 	Q_INVOKABLE bool saveShot(QObject *window, const QString &path);
+	Q_INVOKABLE void copy(const QString &text);
 
 public Q_SLOTS:
 	// D-Bus (org.rros.Shell): la tecla Super, rros-theme y los atajos

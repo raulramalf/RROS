@@ -1,6 +1,7 @@
 #include "shell.h"
 
 #include <QAction>
+#include <QClipboard>
 #include <QDBusConnection>
 #include <QDir>
 #include <QFile>
@@ -209,6 +210,11 @@ bool Shell::saveShot(QObject *window, const QString &path)
 {
 	auto *w = qobject_cast<QQuickWindow *>(window);
 	return w && w->grabWindow().save(path);
+}
+
+void Shell::copy(const QString &text)
+{
+	QGuiApplication::clipboard()->setText(text);
 }
 
 void Shell::toggleLaunchpad()

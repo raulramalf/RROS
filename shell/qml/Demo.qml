@@ -38,6 +38,7 @@ Window {
                        { row: 1, appId: "firefox", name: "Firefox", title: "Lily", active: false, minimized: false }]
             Tk.active = Tk.list[0]
             if (openWhat === "launchpad") Ux.toggle("launchpad")
+            else if (openWhat.indexOf("buscar:") === 0) { Ux.toggle("start", 6, -1); searchDemo.text = openWhat.slice(7); searchDemo.start() }
             else if (openWhat === "start") Ux.toggle("start", Th.vertical ? Th.tbH + 8 : 6, Th.vertical ? 8 : -1)
             else if (openWhat === "control") Ux.toggle("control", w.width - 90, Th.topBar ? Th.barH + 4 : -1)
             else if (openWhat === "menu") Ux.toggle("menu", 8, Th.barH + 4)
@@ -47,5 +48,6 @@ Window {
             if (shotPath !== "") shot.start()
         }
     }
+    Timer { id: searchDemo; property string text; interval: 300; onTriggered: Ux.demoSearch = text }
     Timer { id: shot; interval: 1200; onTriggered: { Sh.saveShot(w, shotPath); Qt.quit() } }
 }

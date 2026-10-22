@@ -41,6 +41,8 @@ jobs:
       PROFILE: ${{ matrix.profile }}
       # la RAM mínima de cada edición (profiles/*.toml)
       RAM_MB: ${{ matrix.profile == 'pro' && '6144' || matrix.profile == 'standard' && '4096' || '2048' }}
+      # disco de las pruebas de instalación: el instalador pide max_disk_gb del perfil (lite 10, standard 14, pro 20)
+      DISK_GB: ${{ matrix.profile == 'pro' && '32' || matrix.profile == 'standard' && '24' || '16' }}
     steps:
       - name: Espacio en disco (fuera lo que no se usa del runner)
         run: |

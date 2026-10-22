@@ -6,7 +6,7 @@
 #   test-iso.sh PERFIL vm           instala la máquina virtual que se publica (usuario y contraseña «lily», todos los
 #                                   controladores) y deja OUT/lily-PERFIL.vmdk, para VirtualBox, VMware y QEMU
 # Variables: RAM_MB (por defecto 2048), TIMEOUT (segundos de cada arranque, 1500), DISK_GB (16), WAIT (segundos antes de la primera captura, 300),
-#            COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
+#            VM_DISK_GB (40, el disco de la máquina virtual), COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
 #   En screenshot: FIRMWARE=bios|uefi|secboot (secboot = UEFI con Secure Boot y las claves de Microsoft,
 #   como un PC con Windows) y MEDIA=cd|usb (la ISO grabada en una memoria USB)
 #   BASE=arch para la ISO de Arch (ISO=build/lily-PERFIL.iso)
@@ -149,8 +149,8 @@ case "$mode" in
 		need_cmd qemu-img
 		disk=$out/disco.qcow2
 		rm -f "$disk"
-		qemu-img create -f qcow2 "$disk" "${DISK_GB:-40}G" >/dev/null
-		log "máquina virtual: instalación en un disco de ${DISK_GB:-40} GB (RAM ${ram} MB)"
+		qemu-img create -f qcow2 "$disk" "${VM_DISK_GB:-40}G" >/dev/null
+		log "máquina virtual: instalación en un disco de ${VM_DISK_GB:-40} GB (RAM ${ram} MB)"
 		live_args "rros.installtest=/dev/vda rros.installtest.vm"
 		run_serial "$out/install.log" RROS_INSTALL 1 -kernel "$kernel" -initrd "$initrd" -append "$append" -cdrom "$iso" \
 			-drive "file=$disk,if=virtio,format=qcow2"

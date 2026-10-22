@@ -49,5 +49,6 @@ Window {
         }
     }
     Timer { id: searchDemo; property string text; interval: 300; onTriggered: Ux.demoSearch = text }
-    Timer { id: shot; interval: 1200; onTriggered: { Sh.saveShot(w, shotPath); Qt.quit() } }
+    // LILY_SHOT_DELAY (ms): esperar más antes de la captura, p. ej. para que caigan las partículas de las escenas
+    Timer { id: shot; interval: Number(Sh.env("LILY_SHOT_DELAY")) || 1200; onTriggered: { Sh.saveShot(w, shotPath); Qt.quit() } }
 }

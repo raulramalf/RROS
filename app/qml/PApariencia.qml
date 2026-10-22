@@ -305,9 +305,30 @@ RPage {
     Card {
         SRow {
             title: "Escena animada"
-            subtitle: "Encima del fondo, con muy poco gasto. Necesita las animaciones activadas."
-            Seg { options: [["off", "Ninguna"], ["petalos", "Pétalos"], ["luciernagas", "Luciérnagas"], ["lluvia", "Lluvia"]]
-                  value: Ui.v("ui.wallpaper_live"); onPicked: function (v) { Ui.setKey("ui.wallpaper_live", v) } }
+            subtitle: "Encima del fondo, con muy poco gasto. Necesita las animaciones activadas; en un equipo o máquina virtual sin aceleración gráfica se paran solas para que todo vaya fluido."
+        }
+        // las escenas, en fichas: un emoji que la resume y su nombre
+        Flow {
+            Layout.fillWidth: true
+            Layout.margins: 14
+            Layout.topMargin: 0
+            spacing: 8
+            Repeater {
+                model: [["off", "Ninguna", "∅"], ["petalos", "Pétalos de lirio", "🌺"], ["sakura", "Sakura", "🌸"], ["hojas", "Hojas de otoño", "🍂"],
+                        ["nieve", "Nieve", "❄"], ["luciernagas", "Luciérnagas", "✨"], ["burbujas", "Burbujas de luz", "🫧"],
+                        ["estrellas", "Estrellas fugaces", "🌠"], ["aurora", "Aurora boreal", "🌌"], ["lluvia", "Lluvia", "🌧"]]
+                Rectangle {
+                    property bool on: (Ui.v("ui.wallpaper_live") || "off") === modelData[0]
+                    implicitWidth: sr.implicitWidth + 24; implicitHeight: 34; radius: 17
+                    color: on ? Ui.accent : (sm.containsMouse ? Ui.cardHover : Ui.field)
+                    border.color: on ? "transparent" : Ui.line
+                    Row { id: sr; anchors.centerIn: parent; spacing: 6
+                          Txt { text: modelData[2]; color: parent.parent.on ? Ui.accentText : Ui.textColor }
+                          Txt { text: modelData[1]; color: parent.parent.on ? Ui.accentText : Ui.textColor; font.pixelSize: Ui.fs - 1 } }
+                    MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                onClicked: Ui.setKey("ui.wallpaper_live", modelData[0]) }
+                }
+            }
         }
         SRow {
             title: "Vídeo o GIF de fondo"

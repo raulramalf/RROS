@@ -43,7 +43,7 @@ const struct rros_key rros_schema[] = {
 	S("ui.wallpaper", "Ruta del fondo de pantalla"),
 	E("ui.wallpaper_mode", "fill|fit|stretch|center|tile", "Ajuste del fondo"),
 	S("ui.wallpaper_video", "Fondo en vídeo o GIF (ruta a un .mp4, .webm, .mkv o .gif; vacío = fondo fijo)"),
-	E("ui.wallpaper_live", "off|petalos|luciernagas|lluvia", "Escena animada sobre el fondo"),
+	E("ui.wallpaper_live", "off|petalos|sakura|hojas|nieve|luciernagas|burbujas|estrellas|aurora|lluvia", "Escena animada sobre el fondo"),
 	B("ui.wallpaper_pause_battery", "Parar el fondo animado con la batería"),
 	E("ui.wallpaper_style", "aurora|ondas|degradado|circulos|petalos|dunas|malla|cristal|topografico|seda|liso", "Fondo generado con los colores del tema (si no eliges una imagen)"),
 	E("ui.effects", "off|basic|advanced", "Nivel de efectos visuales"),

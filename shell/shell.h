@@ -43,6 +43,7 @@ public:
 	Q_INVOKABLE void watch(const QString &path);
 	Q_INVOKABLE bool saveShot(QObject *window, const QString &path);
 	Q_INVOKABLE void copy(const QString &text);
+	Q_INVOKABLE QString env(const QString &name) const { return qEnvironmentVariable(name.toUtf8().constData()); }
 
 public Q_SLOTS:
 	// D-Bus (org.rros.Shell): la tecla Super, rros-theme y los atajos

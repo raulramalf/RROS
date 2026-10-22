@@ -965,7 +965,6 @@ name = "OpenShot"
 category = "media"
 desc = "Editor de vídeo fácil de usar."
 tags = "vídeo,edición"
-pacman = "openshot"
 flatpak = "org.openshot.OpenShot"
 cmd = "openshot-qt"
 
@@ -986,20 +985,11 @@ tags = "grabar pantalla"
 flatpak = "io.github.seadve.Kooha"
 cmd = "kooha"
 
-[app.simplescreenrecorder]
-name = "SimpleScreenRecorder"
-category = "media"
-desc = "Grabador de pantalla con muchas opciones."
-tags = "grabar pantalla"
-pacman = "simplescreenrecorder"
-cmd = "simplescreenrecorder"
-
 [app.cheese]
 name = "Cheese"
 category = "media"
 desc = "Fotos y vídeos con la webcam."
 tags = "cámara"
-pacman = "cheese"
 flatpak = "org.gnome.Cheese"
 cmd = "cheese"
 
@@ -1230,7 +1220,6 @@ name = "IntelliJ IDEA Community"
 category = "dev"
 desc = "Entorno de desarrollo para Java y Kotlin."
 tags = "ide,java"
-pacman = "intellij-idea-community-edition"
 flatpak = "com.jetbrains.IntelliJ-IDEA-Community"
 cmd = "idea"
 
@@ -1264,7 +1253,6 @@ name = "Arduino IDE"
 category = "dev"
 desc = "Programa placas Arduino."
 tags = "electrónica"
-pacman = "arduino-ide"
 flatpak = "cc.arduino.IDE2"
 cmd = "arduino-ide"
 
@@ -1345,7 +1333,7 @@ name = "VirtualBox"
 category = "dev"
 desc = "Máquinas virtuales de Oracle."
 tags = "máquinas virtuales"
-pacman = "virtualbox,virtualbox-host-modules-arch"
+pacman = "virtualbox"
 cmd = "virtualbox"
 
 [app.rust]

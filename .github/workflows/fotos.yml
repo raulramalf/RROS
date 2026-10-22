@@ -2,9 +2,11 @@ name: Fotos
 
 # Busca en Wikimedia Commons fotos reales del lirio de araña (Lycoris radiata) grandes y con licencia libre, baja las
 # candidatas (con su autor y licencia en creditos.txt) y las deja en la rama «fotos-lirio» para elegir una para el
-# fondo de pantalla y el logotipo de Lily. Solo a mano (Run workflow).
+# fondo de pantalla y el logotipo de Lily. A mano (Run workflow) o al cambiar este archivo.
 on:
   workflow_dispatch:
+  push:
+    paths: [.github/workflows/fotos.yml]
 
 permissions:
   contents: write

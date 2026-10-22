@@ -12,8 +12,15 @@ pw=/run/rros-installtest.pw
 set --
 grep -qw rros.installtest.cifrado /proc/cmdline && set -- --encrypt --passphrase-file "$pw"
 grep -qw rros.installtest.uefi /proc/cmdline && set -- "$@" --uefi
-if rros-install --disk "$disk" --user rros --fullname "Prueba Lily" --hostname lily-prueba --password-file "$pw" \
-	--timezone Europe/Madrid --cmdline "console=ttyS0 rros.selftest" --yes "$@"; then
+# rros.installtest.vm: la imagen de máquina virtual que se publica (usuario «lily», contraseña «lily», sin el
+# autotest en el arranque y con todos los controladores, para VirtualBox, VMware y QEMU)
+if grep -qw rros.installtest.vm /proc/cmdline; then
+	printf 'lily\n' > "$pw"
+	set -- --user lily --fullname "Lily" --hostname lily --generic --bios --cmdline "quiet splash" "$@"
+else
+	set -- --user rros --fullname "Prueba Lily" --hostname lily-prueba --cmdline "console=ttyS0 rros.selftest" "$@"
+fi
+if rros-install --disk "$disk" --password-file "$pw" --timezone Europe/Madrid --yes "$@"; then
 	sync
 	echo "RROS_INSTALL_OK"
 else

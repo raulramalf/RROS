@@ -24,3 +24,16 @@ btrfs-progs
 vulkan-intel
 vulkan-radeon
 intel-media-driver
+thunderbird             # correo y calendario
+thunderbird-i18n-es-es
+hunspell-es_es
+filelight
+kfind
+ksystemlog              # registros del sistema
+kdenlive                # edición de vídeo
+inkscape                # dibujo vectorial
+audacity                # edición de audio
+obs-studio              # grabar la pantalla y emitir en directo
+code                    # editor de código (Code - OSS)
+podman                  # contenedores sin servicio de root
+distrobox               # otras distribuciones en contenedores (Ubuntu, Fedora…) con sus apps

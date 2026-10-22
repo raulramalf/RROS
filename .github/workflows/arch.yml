@@ -3,8 +3,9 @@ name: Arch
 # Lily sobre Arch Linux con KDE Plasma.
 #  - comprobar: en cada cambio, en un contenedor Arch: los paquetes existen, compila (también Lily Ajustes, en
 #    Qt) y pasan las pruebas.
-#  - iso: construye la ISO con archiso y la arranca en QEMU con el autotest. A mano (Run workflow) o con
-#    «[iso-arch]» en el mensaje del commit.
+#  - iso: construye la ISO de cada edición (Lite, Standard y Pro, en paralelo) con archiso, la arranca en QEMU con
+#    el autotest, la instala (BIOS, UEFI y cifrada) y publica también una máquina virtual con Lily ya instalado
+#    (VMDK, para VirtualBox, VMware y QEMU). A mano (Run workflow) o con «[iso-arch]» en el mensaje del commit.
 on:
   push:
   workflow_dispatch:
@@ -12,8 +13,8 @@ on:
       profile:
         description: Perfil de hardware
         type: choice
-        options: [lite, standard, pro]
-        default: lite
+        options: [todas, lite, standard, pro]
+        default: todas
 
 jobs:
   comprobar:
@@ -32,9 +33,19 @@ jobs:
     needs: comprobar
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[iso-arch]')
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: ${{ fromJSON((inputs.profile == '' || inputs.profile == null || inputs.profile == 'todas') && '["lite","standard","pro"]' || format('["{0}"]', inputs.profile)) }}
     env:
-      PROFILE: ${{ inputs.profile || 'lite' }}
+      PROFILE: ${{ matrix.profile }}
+      # la RAM mínima de cada edición (profiles/*.toml)
+      RAM_MB: ${{ matrix.profile == 'pro' && '6144' || matrix.profile == 'standard' && '4096' || '2048' }}
     steps:
+      - name: Espacio en disco (fuera lo que no se usa del runner)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          df -h /
       - uses: actions/checkout@v4
       - name: ISO con archiso (contenedor Arch)
         run: |
@@ -81,6 +92,18 @@ jobs:
         run: |
           CRYPT=1 BASE=arch ISO="$PWD/build/lily-$PROFILE.iso" OUT="$PWD/build/test-arch-cifrado-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" install
+      # máquina virtual con Lily instalado (usuario y contraseña «lily»): se importa en VirtualBox o VMware, o se
+      # arranca con QEMU. Antes se borran los discos de las pruebas para dejar sitio
+      - name: Máquina virtual lista para usar
+        run: |
+          rm -f build/test-arch-*-"$PROFILE"/disco.qcow2
+          BASE=arch ISO="$PWD/build/lily-$PROFILE.iso" OUT="$PWD/build/vm-$PROFILE" \
+            scripts/test-iso.sh "$PROFILE" vm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lily-${{ env.PROFILE }}-maquina-virtual
+          path: build/vm-${{ env.PROFILE }}/lily-${{ env.PROFILE }}.vmdk
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -19,3 +19,9 @@ vulkan-intel
 vulkan-radeon
 intel-media-driver      # vídeo acelerado en Intel recientes (AMD: ya va en mesa)
 kdeconnect              # el móvil y el ordenador conectados (Ajustes → Móvil)
+thunderbird             # correo y calendario
+thunderbird-i18n-es-es
+hunspell-es_es          # corrector ortográfico en español (LibreOffice, Firefox, Kate)
+filelight               # qué ocupa el disco, en un gráfico
+kfind                   # buscar archivos
+vlc                     # reproductor para cualquier formato

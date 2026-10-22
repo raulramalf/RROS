@@ -3,6 +3,8 @@
 #   test-iso.sh PERFIL selftest     arranque por consola serie con el autotest (rros.selftest)
 #   test-iso.sh PERFIL install      instala en un disco virtual (rros.installtest), arranca desde él y pasa el autotest
 #   test-iso.sh PERFIL screenshot   arranca con GRUB y guarda una captura del escritorio
+#   test-iso.sh PERFIL vm           instala la máquina virtual que se publica (usuario y contraseña «lily», todos los
+#                                   controladores) y deja OUT/lily-PERFIL.vmdk, para VirtualBox, VMware y QEMU
 # Variables: RAM_MB (por defecto 2048), TIMEOUT (segundos de cada arranque, 1500), DISK_GB (16), WAIT (segundos antes de la primera captura, 300),
 #            COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
 #   En screenshot: FIRMWARE=bios|uefi|secboot (secboot = UEFI con Secure Boot y las claves de Microsoft,
@@ -11,7 +13,7 @@
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
 
-profile=${1:?uso: $0 PERFIL selftest|install|screenshot}
+profile=${1:?uso: $0 PERFIL selftest|install|screenshot|vm}
 mode=${2:-selftest}
 check_profile "$profile"
 need_cmd qemu-system-x86_64
@@ -140,6 +142,22 @@ case "$mode" in
 			run_serial "$out/serial.log" RROS_SELFTEST 0 "${fwargs[@]}" -drive "file=$disk,if=virtio,format=qcow2" -boot c
 		fi
 		verdict "$out/serial.log" RROS_SELFTEST "autotest del sistema instalado"
+		;;
+	vm)
+		# el mismo instalador que la prueba «install», con rros.installtest.vm; el disco se pasa a VMDK (disperso:
+		# solo ocupa lo usado), que abren VirtualBox, VMware y QEMU
+		need_cmd qemu-img
+		disk=$out/disco.qcow2
+		rm -f "$disk"
+		qemu-img create -f qcow2 "$disk" "${DISK_GB:-40}G" >/dev/null
+		log "máquina virtual: instalación en un disco de ${DISK_GB:-40} GB (RAM ${ram} MB)"
+		live_args "rros.installtest=/dev/vda rros.installtest.vm"
+		run_serial "$out/install.log" RROS_INSTALL 1 -kernel "$kernel" -initrd "$initrd" -append "$append" -cdrom "$iso" \
+			-drive "file=$disk,if=virtio,format=qcow2"
+		verdict "$out/install.log" RROS_INSTALL "instalación de la máquina virtual"
+		qemu-img convert -p -O vmdk -o subformat=monolithicSparse "$disk" "$out/lily-$profile.vmdk"
+		rm -f "$disk"
+		log "máquina virtual lista: $out/lily-$profile.vmdk ($(du -h "$out/lily-$profile.vmdk" | cut -f1))"
 		;;
 	screenshot)
 		need_cmd python3

@@ -49,6 +49,9 @@ power-profiles-daemon
 brightnessctl
 libnotify
 virtualbox-guest-utils  # en VirtualBox: pantalla que se ajusta a la ventana y portapapeles compartido
+open-vm-tools           # en VMware: pantalla que se ajusta, portapapeles y apagado limpio (solo arranca en VMware)
+spice-vdagent           # en QEMU, virt-manager y GNOME Boxes: pantalla que se ajusta y portapapeles
+qemu-guest-agent        # en QEMU: apagado limpio y datos para el anfitrión
 
 # --- sonido ---
 pipewire

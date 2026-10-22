@@ -12,16 +12,17 @@ Sistema operativo ligero, en español y con diseño propio, sobre **Arch Linux**
 | RAM del sistema en reposo (tope) | 1,3 GB | 2 GB | 3 GB |
 | Efectos | ninguno: todo aparece al instante | animaciones rápidas | todos: desenfoque, lámpara mágica, transparencias |
 | Dock | 2D | 2D | 3D |
-| Aplicaciones | Firefox, archivos, terminal, editor, visores, música y vídeo | + LibreOffice, Elisa, impresoras y escáner, móviles | + GIMP, VLC, particiones, KDE Connect, desarrollo |
+| Aplicaciones | Firefox, archivos, terminal, editor, visores, música y vídeo | + LibreOffice, Thunderbird, Elisa, VLC, corrector en español, impresoras y escáner, móviles | + GIMP, Kdenlive, Inkscape, Audacity, OBS, Code, contenedores (Podman, Distrobox), particiones |
 
 Todo se puede cambiar después en Ajustes de Lily (efectos, dock 2D/3D, estilo del escritorio...). Sin aceleración gráfica (una máquina virtual sin 3D), Lily apaga solo los efectos para que vaya fluido. Las medidas reales están en [Estado](#estado).
 
 ## Probarlo
 
 ### En una máquina virtual o en un PC (el sistema completo)
-La ISO la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → la última ejecución en verde → *Artifacts* → `lily-lite-iso` (un .zip con la ISO dentro). Para otra edición: *Run workflow* y elige `standard` o `pro`.
+La ISO la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → la última ejecución en verde → *Artifacts* → `lily-lite-iso`, `lily-standard-iso` o `lily-pro-iso` (un .zip con la ISO dentro), y `lily-EDICIÓN-maquina-virtual` con Lily ya instalado.
 
 - **VirtualBox:** tipo Linux / Arch Linux (64-bit), 4 GB de RAM (mínimo 2), 2 procesadores o más, 20 GB de disco. En *Pantalla*: controlador **VMSVGA**, 128 MB de vídeo y **Habilitar aceleración 3D** (sin ella, Lily va bien pero sin efectos). Si sale *AMD-V/VT-x is disabled*, activa la virtualización en la BIOS del PC ([docs/TRY.md](docs/TRY.md)).
+- **Máquinas virtuales listas para usar** (Lily ya instalado, para VirtualBox, VMware y QEMU) y las tres ediciones (Lite, Standard y Pro): [docs/MAQUINAS-VIRTUALES.md](docs/MAQUINAS-VIRTUALES.md).
 - **PC real:** grábala en una memoria USB con balenaEtcher o Rufus (modo DD) y desactiva Secure Boot. Guía: [docs/PROBAR-EN-PC.md](docs/PROBAR-EN-PC.md).
 
 Arranca en el escritorio sin tocar el disco y abre la **bienvenida**; desde ahí (o desde el menú Lily) se instala: junto a Windows en el espacio libre o en todo el disco, con cifrado si quieres.

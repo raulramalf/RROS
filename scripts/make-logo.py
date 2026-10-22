@@ -73,7 +73,7 @@ FOTO = os.path.join(ROOT, "docs/brand/fotos/lirio.jpg")
 
 def logo_from_photo():
     """El icono: la flor de la foto real (docs/brand/fotos, créditos en CREDITOS.md) en un círculo, con un viñeteado
-    suave para que resalte y un aro fino champán. Queda en docs/brand/lily-logo.svg con la imagen dentro."""
+    suave para que resalte. Queda en docs/brand/lily-logo.svg con la imagen dentro."""
     import base64
     import io
     from PIL import Image, ImageDraw, ImageFilter
@@ -86,9 +86,9 @@ def logo_from_photo():
     im.save(buf, "JPEG", quality=90)
     data = base64.b64encode(buf.getvalue()).decode()
     svg = ('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" '
-           'width="512" height="512"><title>Lily</title><defs><clipPath id="c"><circle cx="256" cy="256" r="244"/></clipPath></defs>'
+           'width="512" height="512"><title>Lily</title><defs><clipPath id="c"><circle cx="256" cy="256" r="255"/></clipPath></defs>'
            f'<image clip-path="url(#c)" x="0" y="0" width="512" height="512" xlink:href="data:image/jpeg;base64,{data}"/>'
-           '<circle cx="256" cy="256" r="241" fill="none" stroke="#d9b98f" stroke-width="6" opacity="0.9"/></svg>\n')
+           '</svg>\n')
     with open(LOGO, "w") as f:
         f.write(svg)
 

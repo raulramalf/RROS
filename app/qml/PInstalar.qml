@@ -7,14 +7,26 @@ import "."
 RPage {
     id: p
     title: "Instalar Lily"
-    subtitle: "Cuatro pasos y Lily queda en el disco. Puede ir junto a Windows (en el espacio libre) y cifrado."
+    subtitle: "Cinco pasos y Lily queda en el disco. Puede ir junto a Windows (en el espacio libre) y cifrado."
     icon: "qrc:/icons/app-instalar.svg"
     property int step: 0
     property var disks: null
     property var status: null
     property var f: ({ locale: "es_ES.UTF-8", keymap: "es", timezone: "Europe/Madrid", disk: "", mode: "", encrypt: false,
                        passphrase: "", passphrase2: "", fullname: "", user: "", password: "", password2: "", hostname: "lily", confirm: false })
-    readonly property var steps: ["Idioma", "Disco", "Usuario", "Resumen"]
+    readonly property var steps: ["Idioma", "Disco", "Usuario", "Aplicaciones", "Resumen"]
+    // aplicaciones: las que trae la edición (se pueden quitar) y las del catálogo para añadir (al tener Internet)
+    property var catalog: []
+    property var quitar: []
+    property var anadir: []
+    property string appCat: "internet"
+    function loadCatalog() { Sys.run(["rros-apps", "list", "--json"], function (r) { try { p.catalog = JSON.parse(r.out) } catch (e) { p.catalog = [] } }) }
+    function shipped(a) { return a.shipped === true }
+    function toggle(listName, id) {
+        var l = p[listName].slice(), i = l.indexOf(id)
+        if (i >= 0) l.splice(i, 1); else l.push(id)
+        p[listName] = l
+    }
 
     function setF(k, v) { var x = f; x[k] = v; f = x }
     function diskOf() { if (!disks) return null; for (var i = 0; i < disks.disks.length; i++) if (disks.disks[i].path === f.disk) return disks.disks[i]; return null }
@@ -33,22 +45,27 @@ RPage {
             if (f.password !== f.password2) return "Las contraseñas no coinciden"
             if (!/^[a-zA-Z0-9-]{1,63}$/.test(f.hostname)) return "El nombre del equipo: letras, números y guiones"
         }
-        if (step === 3 && f.mode === "wipe" && !f.confirm) return "Confirma que se borrará el disco"
+        if (step === 4 && f.mode === "wipe" && !f.confirm) return "Confirma que se borrará el disco"
         return ""
     }
     function next() {
         var e = problem()
         if (e) { Ui.toast(e, true); return }
-        if (step < 3) { step++; if (step === 1 && !disks) loadDisks(); return }
+        if (step < 4) { step++; if (step === 1 && !disks) loadDisks(); if (step === 3 && !catalog.length) loadCatalog(); return }
         Ui.api("POST", "/api/install", { disk: f.disk, mode: f.mode, encrypt: f.encrypt ? "1" : "0", passphrase: f.encrypt ? f.passphrase : "",
                                           user: f.user, fullname: f.fullname, password: f.password, hostname: f.hostname,
-                                          keymap: f.keymap, locale: f.locale, timezone: f.timezone }, function (r) {
+                                          keymap: f.keymap, locale: f.locale, timezone: f.timezone,
+                                          quitar: quitar.join(","), anadir: anadir.join(",") }, function (r) {
             if (!r.ok) { Ui.toast(r.error, true); return }
             setF("password", ""); setF("password2", ""); setF("passphrase", ""); setF("passphrase2", "")
             poll()
         })
     }
-    onShown: poll()
+    onShown: {
+        poll()
+        // capturas de la documentación: LILY_STEP=3 abre el instalador en ese paso
+        if (shotPath !== "" && Sys.env("LILY_STEP") !== "") { step = Number(Sys.env("LILY_STEP")); if (step === 3) loadCatalog() }
+    }
     Timer { interval: 1500; repeat: true; running: p.visible && p.status && p.status.started && !p.status.done; onTriggered: p.poll() }
 
     Note { visible: !Sys.live; text: "Lily ya está instalado en este equipo. El instalador solo está en el sistema en vivo (la ISO o la memoria USB)." }
@@ -183,9 +200,79 @@ RPage {
         SRow { title: "Nombre del equipo"; separator: false; Field { text: p.f.hostname; onEditingFinished: p.setF("hostname", text) } }
     }
 
-    // 4. resumen
+    // 4. aplicaciones
     ColumnLayout {
         visible: Sys.live && p.step === 3 && !(p.status && p.status.started)
+        spacing: 12
+        Layout.fillWidth: true
+        Txt { text: "Las que trae tu edición"; font.weight: Font.DemiBold; font.pixelSize: Ui.fs + 1 }
+        Txt { text: "Desmarca las que no quieras: se quitan al instalar, sin necesidad de Internet."; color: Ui.muted; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            Repeater {
+                model: p.catalog.filter(p.shipped)
+                Rectangle {
+                    property bool on: p.quitar.indexOf(modelData.id) < 0
+                    implicitWidth: sh.implicitWidth + 40; implicitHeight: 32; radius: 16
+                    color: on ? Qt.rgba(Qt.color(Ui.accent).r, Qt.color(Ui.accent).g, Qt.color(Ui.accent).b, 0.22) : Ui.field
+                    border.color: on ? Ui.accent : Ui.line
+                    Txt { x: 12; anchors.verticalCenter: parent.verticalCenter; text: parent.on ? "✓" : "–"; color: parent.on ? Ui.accent : Ui.muted; font.weight: Font.Bold }
+                    Txt { id: sh; x: 28; anchors.verticalCenter: parent.verticalCenter; text: modelData.name; color: parent.on ? Ui.textColor : Ui.muted }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: p.toggle("quitar", modelData.id) }
+                }
+            }
+        }
+        Txt { text: "Añadir más"; font.weight: Font.DemiBold; font.pixelSize: Ui.fs + 1; Layout.topMargin: 8 }
+        Txt { text: "Las que marques se descargan e instalan solas la primera vez que el equipo tenga Internet (te avisa al terminar)."
+              color: Ui.muted; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 6
+            Repeater {
+                model: [["internet", "Internet"], ["office", "Oficina"], ["media", "Música y vídeo"], ["graphics", "Gráficos"], ["games", "Juegos"],
+                        ["dev", "Programación"], ["education", "Educación"], ["utility", "Utilidades"], ["system", "Sistema"]]
+                Rectangle {
+                    property bool on: p.appCat === modelData[0]
+                    implicitWidth: ac.implicitWidth + 22; implicitHeight: 28; radius: 14
+                    color: on ? Ui.accent : Ui.field; border.color: on ? "transparent" : Ui.line
+                    Txt { id: ac; anchors.centerIn: parent; text: modelData[1]; color: parent.on ? Ui.accentText : Ui.textColor; font.pixelSize: Ui.fs - 1 }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: p.appCat = modelData[0] }
+                }
+            }
+        }
+        GridLayout {
+            Layout.fillWidth: true
+            columns: width > 640 ? 3 : 2
+            columnSpacing: 8; rowSpacing: 8
+            Repeater {
+                model: p.catalog.filter(function (a) { return a.category === p.appCat && !p.shipped(a) })
+                Rectangle {
+                    property bool on: p.anadir.indexOf(modelData.id) >= 0
+                    Layout.fillWidth: true; implicitHeight: 54; radius: 10
+                    color: on ? Qt.rgba(Qt.color(Ui.accent).r, Qt.color(Ui.accent).g, Qt.color(Ui.accent).b, 0.18) : Ui.card
+                    border.color: on ? Ui.accent : Ui.line
+                    RowLayout {
+                        anchors { fill: parent; margins: 10 }
+                        spacing: 8
+                        Rectangle { width: 18; height: 18; radius: 5; color: parent.parent.on ? Ui.accent : "transparent"; border.color: parent.parent.on ? Ui.accent : Ui.muted
+                                    Txt { anchors.centerIn: parent; visible: parent.parent.parent.on; text: "✓"; color: Ui.accentText; font.pixelSize: 11; font.weight: Font.Bold } }
+                        ColumnLayout {
+                            spacing: 0; Layout.fillWidth: true
+                            Txt { text: modelData.name; font.weight: Font.DemiBold; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Txt { text: modelData.desc; color: Ui.muted; font.pixelSize: Ui.fs - 2; elide: Text.ElideRight; Layout.fillWidth: true }
+                        }
+                    }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: p.toggle("anadir", modelData.id) }
+                }
+            }
+        }
+        Txt { visible: p.anadir.length > 0; text: p.anadir.length + (p.anadir.length === 1 ? " aplicación elegida" : " aplicaciones elegidas") + " para instalar"; color: Ui.muted }
+    }
+
+    // 5. resumen
+    ColumnLayout {
+        visible: Sys.live && p.step === 4 && !(p.status && p.status.started)
         spacing: 12
         Layout.fillWidth: true
         Card {
@@ -193,7 +280,10 @@ RPage {
             SRow { title: "Cómo"; subtitle: p.f.mode === "wipe" ? "Borrando todo el disco" : "En el espacio libre" }
             SRow { title: "Cifrado"; subtitle: p.f.encrypt ? "Sí" : "No" }
             SRow { title: "Usuario"; subtitle: p.f.fullname + " · " + p.f.user + " · equipo " + p.f.hostname }
-            SRow { title: "Idioma y teclado"; subtitle: p.f.locale + " · " + p.f.keymap + " · " + p.f.timezone; separator: false }
+            SRow { title: "Idioma y teclado"; subtitle: p.f.locale + " · " + p.f.keymap + " · " + p.f.timezone }
+            SRow { title: "Aplicaciones"; separator: false
+                   subtitle: (p.quitar.length ? "Se quitan: " + p.quitar.join(", ") + ". " : "Todas las de tu edición. ")
+                           + (p.anadir.length ? "Se añaden al tener Internet: " + p.anadir.join(", ") : "") }
         }
         Card {
             visible: p.f.mode === "wipe"
@@ -210,7 +300,7 @@ RPage {
         visible: Sys.live && !(p.status && p.status.started)
         Item { Layout.fillWidth: true }
         Btn { text: "Atrás"; visible: p.step > 0; onClicked: p.step-- }
-        Btn { text: p.step === 3 ? "Instalar ahora" : "Siguiente"; kind: "primary"; onClicked: p.next() }
+        Btn { text: p.step === 4 ? "Instalar ahora" : "Siguiente"; kind: "primary"; onClicked: p.next() }
     }
 
     // progreso

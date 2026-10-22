@@ -437,6 +437,8 @@ static int handle(int fd, struct req *rp)
 		form_get(r.body, "password", ir.password, sizeof ir.password);
 		form_get(r.body, "passphrase", ir.passphrase, sizeof ir.passphrase);
 		form_get(r.body, "cmdline", ir.cmdline, sizeof ir.cmdline);
+		form_get(r.body, "quitar", ir.quitar, sizeof ir.quitar);
+		form_get(r.body, "anadir", ir.anadir, sizeof ir.anadir);
 		form_get(r.body, "encrypt", a, sizeof a);
 		ir.encrypt = !strcmp(a, "1");
 		if (!model_is_live())

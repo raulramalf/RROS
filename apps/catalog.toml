@@ -43,6 +43,7 @@ flatpak = "com.brave.Browser"
 
 [app.thunderbird]
 name = "Thunderbird"
+shipped = "standard,pro"
 category = "internet"
 desc = "Correo, calendario y contactos de Mozilla."
 tags = "correo,calendario"
@@ -173,7 +174,7 @@ desc = "Reproduce casi cualquier formato."
 tags = "vídeo,música"
 apt = "vlc"
 pacman = "vlc"
-shipped = "pro"
+shipped = "standard,pro"
 
 [app.elisa]
 name = "Elisa"
@@ -196,6 +197,7 @@ pacman = "audacious"
 
 [app.audacity]
 name = "Audacity"
+shipped = "pro"
 category = "media"
 desc = "Editor de audio."
 tags = "audio,edición"
@@ -204,6 +206,7 @@ pacman = "audacity"
 
 [app.obs]
 name = "OBS Studio"
+shipped = "pro"
 category = "media"
 desc = "Grabación y retransmisión de pantalla."
 tags = "grabar pantalla,streaming"
@@ -213,6 +216,7 @@ flatpak = "com.obsproject.Studio"
 
 [app.kdenlive]
 name = "Kdenlive"
+shipped = "pro"
 category = "media"
 desc = "Editor de vídeo."
 tags = "vídeo,edición"
@@ -256,6 +260,7 @@ shipped = "pro"
 
 [app.inkscape]
 name = "Inkscape"
+shipped = "pro"
 category = "graphics"
 desc = "Dibujo vectorial."
 tags = "dibujo,diseño"
@@ -693,6 +698,7 @@ flatpak = "com.wps.Office"
 
 [app.okular]
 name = "Okular"
+shipped = "lite,standard,pro"
 category = "office"
 desc = "Visor de PDF, cómics y libros electrónicos, con notas."
 tags = "pdf,lectura"
@@ -1040,6 +1046,7 @@ flatpak = "com.github.iwalton3.jellyfin-media-player"
 
 [app.gwenview]
 name = "Gwenview"
+shipped = "lite,standard,pro"
 category = "graphics"
 desc = "Visor de imágenes de KDE."
 tags = "fotos,visor"
@@ -1201,6 +1208,7 @@ cmd = "zeditor"
 
 [app.kate]
 name = "Kate"
+shipped = "lite,standard,pro"
 category = "dev"
 desc = "Editor de texto avanzado de KDE."
 tags = "editor,código"
@@ -1612,6 +1620,7 @@ cmd = "qgis"
 
 [app.filelight]
 name = "Filelight"
+shipped = "standard,pro"
 category = "system"
 desc = "Qué ocupa el disco, en un gráfico."
 tags = "disco"
@@ -1663,6 +1672,7 @@ cmd = "deja-dup"
 
 [app.kdeconnect]
 name = "KDE Connect"
+shipped = "standard,pro"
 category = "system"
 desc = "El móvil y el ordenador conectados."
 tags = "móvil"
@@ -1709,6 +1719,7 @@ cmd = "system-config-printer"
 
 [app.ark]
 name = "Ark"
+shipped = "lite,standard,pro"
 category = "utility"
 desc = "Comprime y descomprime ZIP, RAR, 7z y más."
 tags = "comprimir"
@@ -1725,6 +1736,7 @@ flatpak = "io.github.peazip.PeaZip"
 
 [app.spectacle]
 name = "Spectacle"
+shipped = "lite,standard,pro"
 category = "utility"
 desc = "Capturas de pantalla de KDE."
 tags = "capturas"
@@ -1734,6 +1746,7 @@ cmd = "spectacle"
 
 [app.kcalc]
 name = "Calculadora (KCalc)"
+shipped = "lite,standard,pro"
 category = "utility"
 desc = "Calculadora científica."
 tags = "calculadora"

@@ -1,0 +1,13 @@
+[Unit]
+Description=Lily: instalar las aplicaciones elegidas en el instalador (al tener Internet)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/var/lib/rros/apps-pendientes
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/rros-apps-pendientes
+TimeoutStartSec=2h
+
+[Install]
+WantedBy=multi-user.target

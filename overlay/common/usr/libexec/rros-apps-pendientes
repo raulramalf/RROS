@@ -1,0 +1,32 @@
+#!/bin/sh
+# Instala las aplicaciones que se eligieron en el instalador (/var/lib/rros/apps-pendientes, una por línea) en
+# cuanto hay Internet. Lo lanza rros-apps-pendientes.service; las que fallan quedan apuntadas para el siguiente
+# arranque y, cuando no queda ninguna, el servicio se desactiva solo.
+set -u
+f=/var/lib/rros/apps-pendientes
+[ -s "$f" ] || { systemctl disable rros-apps-pendientes.service >/dev/null 2>&1; exit 0; }
+# esperar a tener Internet (hasta 10 minutos)
+i=0
+until getent hosts archlinux.org >/dev/null 2>&1 || [ $i -ge 60 ]; do sleep 10; i=$((i + 1)); done
+getent hosts archlinux.org >/dev/null 2>&1 || { echo "rros-apps-pendientes: sin Internet; se intentará en el próximo arranque"; exit 0; }
+ok="" fallan=""
+while read -r id; do
+	[ -n "$id" ] || continue
+	if rros-apps install "$id" </dev/null; then ok="$ok $id"; else fallan="$fallan $id"; fi
+done < "$f"
+if [ -n "$fallan" ]; then
+	# shellcheck disable=SC2086  # una por línea
+	printf '%s\n' $fallan > "$f"
+else
+	rm -f "$f"
+	systemctl disable rros-apps-pendientes.service >/dev/null 2>&1
+fi
+# aviso al usuario que tenga la sesión abierta
+msg="Ya están instaladas:$ok"
+[ -n "$fallan" ] && msg="$msg. No se pudieron instalar:$fallan (se reintentará)"
+for u in $(loginctl list-users --no-legend 2>/dev/null | awk '$1 >= 1000 {print $2}'); do
+	uid=$(id -u "$u")
+	sudo -u "$u" DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+		notify-send -a "Tienda" -i rros-apps "Aplicaciones que elegiste al instalar" "$msg" >/dev/null 2>&1 || true
+done
+exit 0

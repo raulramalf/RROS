@@ -31,6 +31,8 @@ uso: rros-install [opciones]
   --locale IDIOMA       idioma del sistema (por defecto: es_ES.UTF-8)
   --timezone ZONA       zona horaria, p. ej. Europe/Madrid (por defecto: UTC)
   --cmdline TEXTO       parámetros extra del kernel (p. ej. "console=ttyS0")
+  --quitar-apps ID,ID   apps del catálogo de Lily que trae la edición y no quieres (se quitan sin Internet)
+  --anadir-apps ID,ID   apps del catálogo que se instalan solas la primera vez que haya Internet
   --generic             initramfs con todos los controladores (no solo los de este equipo): para imágenes de
                         máquina virtual o discos que se van a mover a otro ordenador
   --source DIR          sistema a copiar (por defecto: el sistema de archivos de la ISO)
@@ -60,7 +62,7 @@ step() {
 	[ -z "$progress" ] || printf '%s/%s %s\n' "$1" "$STEPS" "$2" > "$progress"
 }
 
-generic=0 disk="" user=rros fullname="" host=lily pwfile="" ppfile="" profile="" fw="" extra="" src="" keymap=es
+quitar="" anadir="" generic=0 disk="" user=rros fullname="" host=lily pwfile="" ppfile="" profile="" fw="" extra="" src="" keymap=es
 tz=Etc/UTC locale=es_ES.UTF-8 progress="" alongside=0 encrypt=0 dry=0 yes=0
 args=("$@")
 while [ $# -gt 0 ]; do
@@ -81,6 +83,8 @@ while [ $# -gt 0 ]; do
 	--timezone) tz=${2:?falta la zona horaria}; shift 2 ;;
 	--cmdline) extra=${2:-}; shift 2 ;;
 	--generic) generic=1; shift ;;
+	--quitar-apps) quitar=${2:-}; shift 2 ;;
+	--anadir-apps) anadir=${2:-}; shift 2 ;;
 	--source) src=${2:?falta el directorio}; shift 2 ;;
 	--progress-file) progress=${2:?falta la ruta}; shift 2 ;;
 	--dry-run) dry=1; shift ;;
@@ -97,6 +101,7 @@ echo "$user" | grep -Eq '^[a-z_][a-z0-9_-]{0,30}$' || die "usuario no válido (m
 printf '%s\n' "$fullname" | grep -Eq '^[^:,=[:cntrl:]]{0,60}$' || die "nombre completo no válido (sin : , ni =)"
 echo "$host" | grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' || die "nombre de equipo no válido"
 echo "$extra" | grep -Eq '^[A-Za-z0-9_=,.: /-]*$' || die "--cmdline contiene caracteres no permitidos"
+echo "$quitar$anadir" | grep -Eq '^[a-z0-9_,-]*$' || die "lista de aplicaciones no válida (ids del catálogo separados por comas)"
 echo "$keymap" | grep -Eq '^[a-z0-9_-]{2,20}$' || die "teclado no válido"
 echo "$locale" | grep -Eq '^[a-z]{2,3}_[A-Z]{2}\.UTF-8$' || die "idioma no válido (p. ej. es_ES.UTF-8)"
 echo "$tz" | grep -Eq '^[A-Za-z0-9_+/-]{1,40}$' || die "zona horaria no válida"
@@ -464,6 +469,21 @@ elif [ "$root_crypt" -eq 1 ]; then
 	# entran cryptsetup y el mapa de teclado de console-setup: la contraseña se teclea en la distribución elegida
 	log "regenerando el initramfs (con cryptsetup)"
 	in_target update-initramfs -u -k all
+fi
+
+# --- aplicaciones elegidas en el instalador ---
+if [ -n "$quitar" ]; then
+	log "quitando las aplicaciones que no quieres: $quitar"
+	for id in ${quitar//,/ }; do
+		in_target rros-apps remove "$id" >/dev/null 2>&1 || echo "aviso: no se pudo quitar $id" >&2
+	done
+fi
+if [ -n "$anadir" ]; then
+	# sin Internet no se pueden descargar: quedan apuntadas y las instala rros-apps-pendientes al conectarse
+	log "estas aplicaciones se instalarán solas al tener Internet: $anadir"
+	mkdir -p "$target/var/lib/rros"
+	tr ',' '\n' <<<"$anadir" > "$target/var/lib/rros/apps-pendientes"
+	in_target systemctl enable rros-apps-pendientes.service >/dev/null 2>&1 || true
 fi
 
 # --- gestor de arranque ---

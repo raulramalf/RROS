@@ -391,6 +391,8 @@ RPage {
                     source: modelData.preview !== "" ? "file://" + modelData.preview : ""
                     visible: modelData.preview !== ""
                 }
+                Txt { anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 32 }
+                      visible: modelData.preview === ""; text: "Sin muestra"; color: Ui.muted; font.pixelSize: Ui.fs - 2 }
                 Txt { anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 12 }
                       text: modelData.name; font.weight: Font.DemiBold; font.pixelSize: Ui.fs - 1 }
                 Rectangle { visible: parent.on; anchors { right: parent.right; top: parent.top; margins: 6 } width: 20; height: 20; radius: 10; color: Ui.accent

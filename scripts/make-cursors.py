@@ -533,6 +533,10 @@ def main():
             os.makedirs(dest, exist_ok=True)
             sheet(theme_dir, dest)
         print(theme_dir)
+    # build() borra cada carpeta: la muestra de Ajustes (preview.png) se vuelve a hacer siempre
+    import subprocess
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "cursor-preview.py")]
+                   + [os.path.join(OUT, t) for t in THEMES], check=True)
 
 
 if __name__ == "__main__":

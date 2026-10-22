@@ -59,6 +59,9 @@ done
 # herramientas y capa de Lily
 make -C "$ROOT_DIR" install DESTDIR="$P/airootfs" PREFIX=/usr >/dev/null
 "$ROOT_DIR/scripts/apply-overlay.sh" "$P/airootfs" "$profile" arch
+# /etc/lsb-release es del paquete lsb-release (lo traen open-vm-tools y otros): si ya está, pacman no instala. Lo
+# escribe rros-arch-setup después de instalar los paquetes
+rm -f "$P/airootfs/etc/lsb-release"
 
 # nombre, etiqueta y permisos (se añaden al final: sustituyen a los de releng). mkarchiso copia airootfs sin
 # conservar los permisos (cp --no-preserve=mode): todo lo ejecutable (programas de Lily, scripts) tiene que ir

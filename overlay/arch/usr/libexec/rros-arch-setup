@@ -21,6 +21,12 @@ BUG_REPORT_URL="$RROS_HOME/issues"
 LOGO=rros
 OSR
 [ -L /etc/os-release ] || ln -sf ../usr/lib/os-release /etc/os-release
+cat > /etc/lsb-release <<LSB
+DISTRIB_ID=Lily
+DISTRIB_RELEASE=$RROS_VERSION
+DISTRIB_CODENAME=$RROS_CODENAME_LC
+DISTRIB_DESCRIPTION="Lily $RROS_VERSION ($RROS_CODENAME)"
+LSB
 # idiomas: español (por defecto) e inglés
 if [ -f /etc/locale.gen ]; then
 	sed -i -E 's/^#(es_ES\.UTF-8 UTF-8|en_US\.UTF-8 UTF-8)/\1/' /etc/locale.gen

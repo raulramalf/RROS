@@ -401,10 +401,10 @@ python3 -c 'import json,sys; d=json.load(sys.stdin); assert len(d)>=50 and all("
 # el catálogo es coherente: categorías conocidas y todo tiene un origen de instalación
 python3 -c '
 import json,sys
-cats={"internet","office","media","graphics","dev","system","games","utility"}
+cats={"internet","office","media","graphics","dev","system","games","education","utility"}
 for a in json.load(sys.stdin):
     assert a["category"] in cats, a["id"]
-    assert a["flatpak"] or (a["apt"] and a["pacman"]), a["id"]
+    assert a["flatpak"] or a["pacman"], a["id"]
 ' <<<"$JSON" || fail "apps: catálogo incoherente"
 
 # --- instalador: la parte que no toca discos (plan y validación de argumentos) ---

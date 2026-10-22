@@ -24,18 +24,24 @@ jobs:
           UA = {"User-Agent": "LilyOS-fotos/1.0 (https://github.com/raulramalf/RROS)"}
           def get(url):
               return urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=60).read()
-          q = {"action": "query", "format": "json", "generator": "categorymembers", "gcmtype": "file", "gcmlimit": "500",
+          q = {"action": "query", "format": "json", "generator": "categorymembers", "gcmtype": "file", "gcmlimit": "40",
                "prop": "imageinfo", "iiprop": "url|size|extmetadata|mime", "iiurlwidth": "2560",
                "iiextmetadatafilter": "LicenseShortName|Artist|ImageDescription"}
           pages = {}
           for cat in ("Category:Lycoris radiata", "Category:Lycoris radiata in Japan", "Category:Quality images of Lycoris radiata",
                       "Category:Featured pictures of Lycoris"):
-              q["gcmtitle"] = cat
-              try:
-                  d = json.loads(get("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode(q)))
-                  pages.update({p["title"]: p for p in d.get("query", {}).get("pages", {}).values()})
-              except Exception as e:
-                  print("sin", cat, e)
+              cont = {}
+              while True:   # Commons da los datos de pocas fotos por petición: se pide por páginas
+                  try:
+                      d = json.loads(get("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode({**q, "gcmtitle": cat, **cont})))
+                  except Exception as e:
+                      print("sin", cat, e); break
+                  for p in d.get("query", {}).get("pages", {}).values():
+                      if p.get("imageinfo"):
+                          pages[p["title"]] = p
+                  if "continue" not in d:
+                      break
+                  cont = d["continue"]
           ok = []
           for t, p in pages.items():
               ii = p["imageinfo"][0]

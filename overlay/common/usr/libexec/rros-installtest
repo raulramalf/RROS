@@ -12,7 +12,7 @@ pw=/run/rros-installtest.pw
 set --
 grep -qw rros.installtest.cifrado /proc/cmdline && set -- --encrypt --passphrase-file "$pw"
 grep -qw rros.installtest.uefi /proc/cmdline && set -- "$@" --uefi
-if rros-install --disk "$disk" --user rros --fullname "Prueba Lily" --hostname rros-prueba --password-file "$pw" \
+if rros-install --disk "$disk" --user rros --fullname "Prueba Lily" --hostname lily-prueba --password-file "$pw" \
 	--timezone Europe/Madrid --cmdline "console=ttyS0 rros.selftest" --yes "$@"; then
 	sync
 	echo "RROS_INSTALL_OK"

@@ -1,4 +1,6 @@
 lirio.jpg|Lirio|oscuro
+lirio-rojo.jpg|Lirio rojo|oscuro
+jardin-lirios.jpg|Jardín de lirios|oscuro
 seda.jpg|Seda|oscuro
 crepusculo.jpg|Crepúsculo|oscuro
 oceano.jpg|Océano|oscuro

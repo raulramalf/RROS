@@ -54,23 +54,6 @@ def lily(cx, cy, s, petal="url(#pet)", stamen="#ff7a8a", sw=3.2, op=1.0):
 
 # ---------------------------------------------------------------- fondos
 
-def f_lirio():
-    r = random.Random(1)
-    bokeh = "".join(f'<circle cx="{r.uniform(0, 2560):.0f}" cy="{r.uniform(0, 1600):.0f}" r="{r.uniform(8, 46):.0f}" '
-                    f'fill="#ff5a70" opacity="{r.uniform(0.04, 0.16):.2f}"/>' for _ in range(46))
-    defs = (blur("b60", 60) + blur("b14", 14) + blur("b3", 3) +
-            '<radialGradient id="bg" cx="0.68" cy="0.42" r="0.9"><stop offset="0" stop-color="#4a0c1c"/>'
-            '<stop offset="0.45" stop-color="#22060e"/><stop offset="1" stop-color="#0a0205"/></radialGradient>'
-            '<linearGradient id="pet" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9e0f28"/>'
-            '<stop offset="0.6" stop-color="#e5304a"/><stop offset="1" stop-color="#ff7b8c"/></linearGradient>')
-    body = (f'<rect width="2560" height="1600" fill="url(#bg)"/><g filter="url(#b14)">{bokeh}</g>'
-            f'<g filter="url(#b60)">{lily(1720, 900, 3.4, "#c8203c", "#c8203c", 6, 0.55)}</g>'
-            f'<g filter="url(#b3)">{lily(1720, 900, 3.2)}</g>'
-            # tallo fino que se pierde abajo
-            '<path d="M1720,905 C1712,1150 1700,1400 1690,1640" stroke="#3b6b3a" stroke-width="10" fill="none" opacity="0.7"/>')
-    return svg(defs, body, 0.09)
-
-
 def f_seda(light=False):
     r = random.Random(2)
     bg = ("#f6eee6", "#ead8cc") if light else ("#16050b", "#2c0a15")
@@ -228,8 +211,12 @@ def f_bosque():
     return svg(defs, body, 0.07)
 
 
+# fotos reales del lirio de araña (docs/brand/fotos, con sus créditos): se recortan a 16:10 y se reducen
+FOTOS = os.path.join(ROOT, "docs/brand/fotos")
 FONDOS = [
-    ("lirio", "Lirio", "oscuro", f_lirio),
+    ("lirio", "Lirio", "oscuro", os.path.join(FOTOS, "lirio.jpg")),
+    ("lirio-rojo", "Lirio rojo", "oscuro", os.path.join(FOTOS, "lirio-rojo.jpg")),
+    ("jardin-lirios", "Jardín de lirios", "oscuro", os.path.join(FOTOS, "jardin-lirios.jpg")),
     ("seda", "Seda", "oscuro", f_seda),
     ("crepusculo", "Crepúsculo", "oscuro", f_crepusculo),
     ("oceano", "Océano", "oscuro", f_oceano),
@@ -268,9 +255,16 @@ def main():
     index = []
     for slug, name, tone, fn in FONDOS:
         with tempfile.TemporaryDirectory() as tmp:
-            png = os.path.join(tmp, "f.png")
-            render(fn(), png, W, H)
-            im = add_grain(Image.open(png).convert("RGB").crop((0, 0, W, H)))
+            if isinstance(fn, str):     # foto: recorte centrado a la proporción de la pantalla
+                im = Image.open(fn).convert("RGB")
+                k = max(W / im.width, H / im.height)
+                im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+                x, y = (im.width - W) // 2, (im.height - H) // 2
+                im = im.crop((x, y, x + W, y + H))
+            else:
+                png = os.path.join(tmp, "f.png")
+                render(fn(), png, W, H)
+                im = add_grain(Image.open(png).convert("RGB").crop((0, 0, W, H)))
             im.save(os.path.join(OUT, slug + ".jpg"), quality=88, optimize=True, progressive=True)
             im.resize((384, 240), Image.LANCZOS).save(os.path.join(OUT, "miniaturas", slug + ".jpg"), quality=86)
         index.append(f"{slug}.jpg|{name}|{tone}")

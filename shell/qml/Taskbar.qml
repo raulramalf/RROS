@@ -63,9 +63,19 @@ Item {
         color: Th.barColor
         border.width: Th.island ? 1 : 0
         border.color: Th.edge
-        Rectangle {   // filo hacia la pantalla
+        // brillo suave hacia el escritorio: la barra parece cristal y no una franja pintada
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            gradient: Gradient {
+                orientation: tb.v ? Gradient.Horizontal : Gradient.Vertical
+                GradientStop { position: 0; color: Qt.rgba(1, 1, 1, Th.dark ? 0.06 : 0.30) }
+                GradientStop { position: 1; color: "transparent" }
+            }
+        }
+        Rectangle {   // filo de luz hacia la pantalla
             visible: !Th.island
-            color: Th.edge
+            color: Th.dark ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(0, 0, 0, 0.08)
             x: tb.v ? parent.width - 1 : 0
             width: tb.v ? 1 : parent.width
             height: tb.v ? parent.height : 1
@@ -88,9 +98,19 @@ Item {
             Layout.preferredWidth: tb.t - 10; Layout.preferredHeight: tb.t - 10
             Layout.alignment: Qt.AlignCenter
             radius: width / 2
-            color: sm2.pressed ? Th.pressed : (Ux.open === "start" || sm2.containsMouse) ? Th.hover : "transparent"
-            border.width: Ux.open === "start" ? 1 : 0
-            border.color: Th.edge
+            // un toque del acento siempre: el inicio se encuentra a la primera aunque la barra sea oscura
+            color: sm2.pressed ? Th.pressed : (Ux.open === "start" || sm2.containsMouse) ? Th.hover
+                 : Qt.rgba(Qt.color(Th.accent).r, Qt.color(Th.accent).g, Qt.color(Th.accent).b, 0.18)
+            border.width: 0
+            // halo del color del acento al pasar el ratón o con el menú abierto
+            Rectangle {
+                anchors.centerIn: parent
+                width: parent.width + 4; height: width; radius: width / 2
+                color: "transparent"; border.width: 2
+                border.color: Qt.rgba(Qt.color(Th.accent).r, Qt.color(Th.accent).g, Qt.color(Th.accent).b, 0.55)
+                opacity: Ux.open === "start" || sm2.containsMouse ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 120 } }
+            }
             Accessible.role: Accessible.Button
             Accessible.name: "Inicio"
             activeFocusOnTab: true
@@ -102,9 +122,11 @@ Item {
             Image {
                 anchors.centerIn: parent
                 source: "qrc:/icons/app-rros.png"
-                width: parent.width - 8; height: width
+                width: parent.width - 2; height: width
                 sourceSize: Qt.size(96, 96)
                 smooth: true; mipmap: true
+                scale: sm2.pressed ? 0.92 : 1
+                Behavior on scale { NumberAnimation { duration: 90 } }
             }
             MouseArea { id: sm2; anchors.fill: parent; hoverEnabled: true; onClicked: tb.openAt("start", start) }
         }
@@ -124,6 +146,15 @@ Item {
                 Txt { text: "Buscar"; color: Th.muted; anchors.verticalCenter: parent.verticalCenter }
             }
             MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.IBeamCursor; onClicked: tb.openAt("start", start, { search: true }) }
+        }
+        TbButton {
+            id: searchBtn
+            visible: Th.tbSearch && Th.tbCenter
+            Layout.preferredWidth: tb.v ? tb.t - 8 : tb.t - 8
+            radius: height / 2
+            tip: "Buscar aplicaciones, ajustes y archivos"
+            onClicked: tb.openAt("start", start, { search: true })
+            Glyph { name: "search"; anchors.centerIn: parent; color: Th.text }
         }
         Item { visible: Th.tbCenter; Layout.fillWidth: !tb.v; Layout.fillHeight: tb.v }
 
@@ -192,8 +223,9 @@ Item {
             id: tray
             visible: !Th.topBar
             active: Ux.open === "control"
-            Layout.preferredWidth: tb.v ? tb.t - 8 : trayFlow.implicitWidth + 20
-            Layout.preferredHeight: tb.v ? trayFlow.implicitHeight + 16 : tb.t - 8
+            Layout.preferredWidth: tb.v ? tb.t - 8 : trayFlow.implicitWidth + 22
+            Layout.preferredHeight: tb.v ? trayFlow.implicitHeight + 16 : tb.t - 10
+            radius: height / 2
             onClicked: tb.openAt("control", tray)
             tip: "Ajustes rápidos"
             Grid {
@@ -210,8 +242,9 @@ Item {
             id: clock
             visible: !Th.topBar
             active: Ux.open === "calendar"
-            Layout.preferredWidth: tb.v ? tb.t - 8 : Math.max(ct.implicitWidth, cd.implicitWidth) + 22
-            Layout.preferredHeight: tb.v ? 46 : tb.t - 8
+            Layout.preferredWidth: tb.v ? tb.t - 8 : Math.max(ct.implicitWidth, cd.implicitWidth) + 24
+            Layout.preferredHeight: tb.v ? 46 : tb.t - 10
+            radius: tb.v ? 7 : height / 2
             onClicked: tb.openAt("calendar", clock)
             tip: "Calendario y avisos"
             Column {
@@ -269,10 +302,10 @@ Item {
         }
         Layout.preferredHeight: tb.v ? tb.t - 8 : tb.t - 8
         Layout.alignment: Qt.AlignCenter
-        radius: 7
+        radius: 9
         color: ma.pressed ? Th.pressed : active ? Th.tile : ma.containsMouse ? Th.hover : "transparent"
         border.width: active ? 1 : 0
-        border.color: Th.edge
+        border.color: Th.dark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06)
         Behavior on color { ColorAnimation { duration: 90 } }
         Item { id: inner; anchors.fill: parent }
         MouseArea {

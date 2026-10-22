@@ -14,18 +14,30 @@ Item {
     Emitter {
         system: ps; enabled: lw.scene === "petalos"
         width: parent.width; y: -30
-        emitRate: 3; lifeSpan: 14000
+        emitRate: 2; lifeSpan: 16000
         velocity: AngleDirection { angle: 90; angleVariation: 20; magnitude: 55; magnitudeVariation: 25 }
         size: 18; sizeVariation: 10
     }
     Wander { system: ps; enabled: lw.scene === "petalos"; xVariance: 60; pace: 40 }
     ItemParticle {
         system: ps; visible: lw.scene === "petalos"
-        delegate: Rectangle {
-            width: 7 + Math.random() * 6; height: width * 3.2; radius: width / 2
-            color: Qt.rgba(0.85 + Math.random() * 0.15, 0.12 + Math.random() * 0.1, 0.2, 0.9)
+        // pétalo curvo con degradado; «da vueltas» en el aire: gira y a la vez se estrecha y ensancha (como si se
+        // volteara), cada uno a su ritmo
+        delegate: Image {
+            id: pet
+            source: "qrc:/icons/petalo.svg"
+            width: 10 + Math.random() * 8; height: width * 2.6
+            sourceSize: Qt.size(24, 64)
+            opacity: 0.75 + Math.random() * 0.25
             rotation: Math.random() * 360
-            RotationAnimation on rotation { from: 0; to: 360; duration: 4000 + Math.random() * 5000; loops: Animation.Infinite; running: !lw.paused }
+            RotationAnimation on rotation { from: pet.rotation; to: pet.rotation + (Math.random() < 0.5 ? 360 : -360)
+                                             duration: 6000 + Math.random() * 6000; loops: Animation.Infinite; running: !lw.paused }
+            transform: Scale {
+                origin.x: pet.width / 2
+                SequentialAnimation on xScale { loops: Animation.Infinite; running: !lw.paused
+                    NumberAnimation { to: 0.15; duration: 700 + Math.random() * 900; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1; duration: 700 + Math.random() * 900; easing.type: Easing.InOutSine } }
+            }
         }
         fade: true
     }

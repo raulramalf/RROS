@@ -16,7 +16,9 @@ QtObject {
     function rgba(c, a) { var q = Qt.color(c); return Qt.rgba(q.r, q.g, q.b, a) }
     property color glass: rgba(pal.surface, dark ? 0.80 : 0.86)
     property color glassStrong: rgba(pal.surface, dark ? 0.94 : 0.97)
-    property color barColor: rgba(pal.surface, dark ? 0.90 : 0.92)
+    // barra de tareas translúcida sobre el desenfoque de KWin, así toma el tono del fondo; sin efectos (Lite o una
+    // gráfica sin aceleración) no hay desenfoque y va casi opaca para que se lea bien
+    property color barColor: rgba(pal.surface, v("ui.effects", "basic") === "off" ? (dark ? 0.92 : 0.94) : (dark ? 0.68 : 0.74))
     property color edge: dark ? Qt.rgba(1, 1, 1, 0.12) : rgba(pal.text, 0.16)
     property color hover: rgba(pal.text, dark ? 0.10 : 0.08)
     property color pressed: rgba(pal.text, dark ? 0.16 : 0.13)

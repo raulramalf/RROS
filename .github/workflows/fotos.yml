@@ -1,0 +1,65 @@
+name: Fotos
+
+# Busca en Wikimedia Commons fotos reales del lirio de araña (Lycoris radiata) grandes y con licencia libre, baja las
+# candidatas (con su autor y licencia en creditos.txt) y las deja en la rama «fotos-lirio» para elegir una para el
+# fondo de pantalla y el logotipo de Lily. Solo a mano (Run workflow).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fotos:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Candidatas de Wikimedia Commons
+        run: |
+          mkdir -p fotos
+          python3 - <<'PY'
+          import json, re, urllib.parse, urllib.request
+          UA = {"User-Agent": "LilyOS-fotos/1.0 (https://github.com/raulramalf/RROS)"}
+          def get(url):
+              return urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=60).read()
+          q = {"action": "query", "format": "json", "generator": "categorymembers", "gcmtype": "file", "gcmlimit": "500",
+               "prop": "imageinfo", "iiprop": "url|size|extmetadata|mime", "iiurlwidth": "2560",
+               "iiextmetadatafilter": "LicenseShortName|Artist|ImageDescription"}
+          pages = {}
+          for cat in ("Category:Lycoris radiata", "Category:Lycoris radiata in Japan", "Category:Quality images of Lycoris radiata",
+                      "Category:Featured pictures of Lycoris"):
+              q["gcmtitle"] = cat
+              try:
+                  d = json.loads(get("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode(q)))
+                  pages.update({p["title"]: p for p in d.get("query", {}).get("pages", {}).values()})
+              except Exception as e:
+                  print("sin", cat, e)
+          ok = []
+          for t, p in pages.items():
+              ii = p["imageinfo"][0]
+              m = ii.get("extmetadata", {})
+              lic = m.get("LicenseShortName", {}).get("value", "")
+              if ii.get("mime") != "image/jpeg" or ii["width"] < 2400 or ii["width"] < ii["height"]:
+                  continue
+              if not re.match(r"(CC0|CC BY(-SA)? \d|Public domain)", lic):
+                  continue
+              artist = re.sub("<[^>]+>", "", m.get("Artist", {}).get("value", "")).strip()
+              ok.append((ii["width"] * ii["height"], t, ii, lic, artist))
+          ok.sort(reverse=True)
+          cred = []
+          for i, (_, t, ii, lic, artist) in enumerate(ok[:16], 1):
+              name = f"{i:02d}.jpg"
+              open(f"fotos/{name}", "wb").write(get(ii.get("thumburl") or ii["url"]))
+              cred.append(f"{name} | {t} | {ii['width']}x{ii['height']} | {lic} | {artist} | {ii['descriptionurl']}")
+              print(cred[-1])
+          open("fotos/creditos.txt", "w").write("\n".join(cred) + "\n")
+          PY
+      - name: A la rama fotos-lirio
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan fotos-lirio
+          git rm -rf --cached . >/dev/null
+          git add fotos
+          git commit -m "Fotos candidatas del lirio de araña (Wikimedia Commons)"
+          git push -f origin fotos-lirio

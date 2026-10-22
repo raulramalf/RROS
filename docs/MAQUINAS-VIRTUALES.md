@@ -8,11 +8,11 @@ vivo y el instalador, como en un PC de verdad).
 En GitHub → pestaña **Actions** → workflow **Arch** → la última ejecución en verde. Abajo, en *Artifacts* (hace
 falta haber iniciado sesión en GitHub; cada descarga es un .zip):
 
-| Edición | ISO | Máquina virtual (ya instalado) | RAM para la VM | Disco |
+| Edición | ISO | Máquina virtual (ya instalado): VirtualBox · VMware y QEMU | RAM para la VM | Disco |
 |---|---|---|---|---|
-| **Lite** — equipos modestos, sin efectos | `lily-lite-iso` | `lily-lite-maquina-virtual` | 2 GB (mejor 3) | 20 GB |
-| **Standard** — oficina, correo, música, impresoras | `lily-standard-iso` | `lily-standard-maquina-virtual` | 4 GB | 30 GB |
-| **Pro** — además vídeo, audio, dibujo, código y contenedores | `lily-pro-iso` | `lily-pro-maquina-virtual` | 6 GB (mejor 8) | 40 GB |
+| **Lite** — equipos modestos, sin efectos | `lily-lite-iso` | `lily-lite-virtualbox` · `lily-lite-vmware-qemu` | 2 GB (mejor 3) | 20 GB |
+| **Standard** — oficina, correo, música, impresoras | `lily-standard-iso` | `lily-standard-virtualbox` · `lily-standard-vmware-qemu` | 4 GB | 30 GB |
+| **Pro** — además vídeo, audio, dibujo, código y contenedores | `lily-pro-iso` | `lily-pro-virtualbox` · `lily-pro-vmware-qemu` | 6 GB (mejor 8) | 40 GB |
 
 La máquina virtual entra con **usuario `lily` y contraseña `lily`**. Cámbiala en cuanto entres: abre la terminal
 (Konsole) y escribe `passwd`.
@@ -21,12 +21,14 @@ Para todas: **2 procesadores o más** y la aceleración de la CPU activada en la
 
 ## VirtualBox
 
-**Con la máquina virtual (VMDK):**
+**Con la máquina virtual (`lily-EDICIÓN-virtualbox`, un disco VDI):**
 
-1. Descomprime el .zip: queda `lily-EDICIÓN.vmdk`. Ponlo en una carpeta donde vaya a quedarse.
+No uses *Archivo → Importar servicio virtualizado*: eso es para archivos .ova y no reconoce un disco suelto.
+
+1. Descomprime el .zip: queda `lily-EDICIÓN.vdi`. Ponlo en una carpeta donde vaya a quedarse.
 2. *Nueva* → Nombre «Lily», Tipo **Linux**, Versión **Arch Linux (64-bit)**. Desmarca «Habilitar EFI».
 3. Memoria y procesadores según la tabla.
-4. Disco duro: **Usar un archivo de disco duro virtual existente** → elige el `.vmdk`.
+4. Disco duro: **Usar un archivo de disco duro virtual existente** → el icono de la carpeta → *Añadir* → elige el `.vdi`.
 5. Antes de arrancar, en *Configuración → Pantalla*: controlador **VMSVGA**, 128 MB de memoria de vídeo. La
    aceleración 3D puede ir activada o no; si ves fallos gráficos, quítala.
 6. Arranca. La ventana se ajusta sola al tamaño (Lily lleva las utilidades de VirtualBox).
@@ -40,7 +42,7 @@ bienvenida te ofrece «Instalar Lily» (también en Ajustes de Lily → «Instal
 1. *Create a New Virtual Machine* → *I will install the operating system later* → Linux, **Other Linux 6.x kernel
    64-bit**.
 2. Memoria y procesadores según la tabla.
-3. Con la máquina virtual: al terminar, *Edit virtual machine settings* → quita el disco que se creó → *Add → Hard
+3. Con la máquina virtual (`lily-EDICIÓN-vmware-qemu`, un VMDK): al terminar, *Edit virtual machine settings* → quita el disco que se creó → *Add → Hard
    Disk → Use an existing virtual disk* → el `.vmdk` (si pregunta por convertir el formato, di que sí).
    Con la ISO: *CD/DVD → Use ISO image file*.
 4. *Options → Advanced → Firmware type*: **BIOS** para la máquina virtual (la ISO arranca con BIOS o UEFI).

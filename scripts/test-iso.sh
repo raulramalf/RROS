@@ -4,7 +4,7 @@
 #   test-iso.sh PERFIL install      instala en un disco virtual (rros.installtest), arranca desde él y pasa el autotest
 #   test-iso.sh PERFIL screenshot   arranca con GRUB y guarda una captura del escritorio
 #   test-iso.sh PERFIL vm           instala la máquina virtual que se publica (usuario y contraseña «lily», todos los
-#                                   controladores) y deja OUT/lily-PERFIL.vmdk, para VirtualBox, VMware y QEMU
+#                                   controladores) y deja OUT/lily-PERFIL.vdi (VirtualBox) y .vmdk (VMware, QEMU)
 # Variables: RAM_MB (por defecto 2048), TIMEOUT (segundos de cada arranque, 1500), DISK_GB (16), WAIT (segundos antes de la primera captura, 300),
 #            VM_DISK_GB (40, el disco de la máquina virtual), COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
 #   En screenshot: FIRMWARE=bios|uefi|secboot (secboot = UEFI con Secure Boot y las claves de Microsoft,
@@ -155,9 +155,11 @@ case "$mode" in
 		run_serial "$out/install.log" RROS_INSTALL 1 -kernel "$kernel" -initrd "$initrd" -append "$append" -cdrom "$iso" \
 			-drive "file=$disk,if=virtio,format=qcow2"
 		verdict "$out/install.log" RROS_INSTALL "instalación de la máquina virtual"
+		# VDI para VirtualBox (su formato propio) y VMDK para VMware y QEMU
+		qemu-img convert -p -O vdi "$disk" "$out/lily-$profile.vdi"
 		qemu-img convert -p -O vmdk -o subformat=monolithicSparse "$disk" "$out/lily-$profile.vmdk"
 		rm -f "$disk"
-		log "máquina virtual lista: $out/lily-$profile.vmdk ($(du -h "$out/lily-$profile.vmdk" | cut -f1))"
+		log "máquina virtual lista: $out/lily-$profile.vdi y .vmdk ($(du -h "$out/lily-$profile.vdi" | cut -f1))"
 		;;
 	screenshot)
 		need_cmd python3

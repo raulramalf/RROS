@@ -19,7 +19,7 @@ Todo se puede cambiar después en Ajustes de Lily (efectos, dock 2D/3D, estilo d
 ## Probarlo
 
 ### En una máquina virtual o en un PC (el sistema completo)
-La ISO la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → la última ejecución en verde → *Artifacts* → `lily-lite-iso`, `lily-standard-iso` o `lily-pro-iso` (un .zip con la ISO dentro), y `lily-EDICIÓN-maquina-virtual` con Lily ya instalado.
+La ISO la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → la última ejecución en verde → *Artifacts* → `lily-lite-iso`, `lily-standard-iso` o `lily-pro-iso` (un .zip con la ISO dentro), y `lily-EDICIÓN-virtualbox` (VDI) y `lily-EDICIÓN-vmware-qemu` (VMDK) con Lily ya instalado.
 
 - **VirtualBox:** tipo Linux / Arch Linux (64-bit), 4 GB de RAM (mínimo 2), 2 procesadores o más, 20 GB de disco. En *Pantalla*: controlador **VMSVGA**, 128 MB de vídeo y **Habilitar aceleración 3D** (sin ella, Lily va bien pero sin efectos). Si sale *AMD-V/VT-x is disabled*, activa la virtualización en la BIOS del PC ([docs/TRY.md](docs/TRY.md)).
 - **Máquinas virtuales listas para usar** (Lily ya instalado, para VirtualBox, VMware y QEMU) y las tres ediciones (Lite, Standard y Pro): [docs/MAQUINAS-VIRTUALES.md](docs/MAQUINAS-VIRTUALES.md).

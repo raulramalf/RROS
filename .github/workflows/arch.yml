@@ -103,7 +103,12 @@ jobs:
             scripts/test-iso.sh "$PROFILE" vm
       - uses: actions/upload-artifact@v4
         with:
-          name: lily-${{ env.PROFILE }}-maquina-virtual
+          name: lily-${{ env.PROFILE }}-virtualbox
+          path: build/vm-${{ env.PROFILE }}/lily-${{ env.PROFILE }}.vdi
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lily-${{ env.PROFILE }}-vmware-qemu
           path: build/vm-${{ env.PROFILE }}/lily-${{ env.PROFILE }}.vmdk
           if-no-files-found: error
       - uses: actions/upload-artifact@v4

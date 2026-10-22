@@ -20,6 +20,19 @@ QtObject {
     function activate(row) { if (model) model.activate(row) }
     function toggleMinimized(row) { if (model) model.toggleMin(row) }
     function close(row) { if (model) model.close(row) }
+    // «mostrar el escritorio» de Lily: minimiza solo las ventanas de aplicaciones (no las capas de Lily Shell, que
+    // es lo que hacía el de KWin y dejaba la pantalla en negro) y, la segunda vez, devuelve las que minimizó
+    property var hidden: []
+    function showDesktop() {
+        var open = list.filter(function (w) { return !w.minimized })
+        if (open.length > 0) {
+            hidden = open.map(function (w) { return w.row })
+            open.forEach(function (w) { toggleMinimized(w.row) })
+        } else {
+            hidden.forEach(function (r) { if (list.some(function (w) { return w.row === r && w.minimized })) toggleMinimized(r) })
+            hidden = []
+        }
+    }
     function windowsOf(appId) {
         var out = []
         var n = String(appId).toLowerCase()

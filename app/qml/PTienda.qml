@@ -13,6 +13,9 @@ RPage {
     property string tab: "explorar"
     property var apps: []            // catálogo de Lily
     property string cat: ""
+    property string tag: ""          // etiqueta elegida dentro de la categoría (navegador, fotos, emuladores…)
+    property bool loadingApps: false
+    property bool loadFailed: false
     property string q: ""
     property var found: []
     property bool searching: false
@@ -23,10 +26,33 @@ RPage {
     property string log: ""
     property var detail: null
     readonly property var cats: [["", "Destacadas"], ["internet", "Internet"], ["office", "Oficina"], ["media", "Música y vídeo"],
-                                 ["graphics", "Gráficos"], ["dev", "Programación"], ["utility", "Utilidades"], ["games", "Juegos"], ["system", "Sistema"]]
+                                 ["graphics", "Gráficos"], ["dev", "Programación"], ["utility", "Utilidades"], ["games", "Juegos"],
+                                 ["education", "Educación"], ["system", "Sistema"]]
     readonly property var srcName: ({ "rros": "Probada en Lily", "arch": "Repositorios de Arch", "flathub": "Flathub" })
 
-    function refresh() { Ui.api("GET", "/api/apps", {}, function (r) { apps = Array.isArray(r) ? r : [] }) }
+    // el catálogo: por la API de Ajustes y, si falla o llega vacío, directamente de rros-apps; si tampoco, se dice
+    // (con «Reintentar») en vez de dejar la Tienda en blanco
+    function refresh() {
+        loadingApps = true; loadFailed = false
+        Ui.api("GET", "/api/apps", {}, function (r) {
+            if (Array.isArray(r) && r.length > 0) { apps = r; loadingApps = false; return }
+            json(["list", "--json"], function (v) { p.apps = v; p.loadingApps = false; p.loadFailed = v.length === 0 })
+        })
+    }
+    // las etiquetas más usadas de la categoría elegida, para afinar (máx. 16)
+    readonly property var tags: {
+        var n = {}
+        apps.forEach(function (a) {
+            if (cat !== "" && a.category !== cat) return
+            ;(a.tags || "").split(",").forEach(function (t) { t = t.trim(); if (t) n[t] = (n[t] || 0) + 1 })
+        })
+        return Object.keys(n).sort(function (x, y) { return n[y] - n[x] || x.localeCompare(y) }).slice(0, 16)
+    }
+    function visibleApps() {
+        return apps.filter(function (a) {
+            return (cat === "" || a.category === cat) && (tag === "" || (a.tags || "").split(",").indexOf(tag) >= 0)
+        }).map(catalogItem)
+    }
     function json(cmd, cb) { Sys.run(["rros-apps"].concat(cmd), function (r) { var v = []; try { v = JSON.parse(r.out) } catch (e) {} cb(v) }) }
     function search() {
         if (q.length < 2) { found = []; return }
@@ -59,7 +85,7 @@ RPage {
         })
     }
     function iconOf(a) { return "image://icon/" + (a.icon || a.cmd || a.id) }
-    function catalogItem(a) { return { origen: "rros", id: a.id, name: a.name, desc: a.desc, version: "", icon: a.installed ? (a.cmd || a.id) : (a.flatpak || a.cmd || a.id), installed: a.installed, shipped: a.shipped, cmd: a.cmd, category: a.category } }
+    function catalogItem(a) { return { origen: "rros", id: a.id, name: a.name, desc: a.desc, version: "", icon: a.installed ? (a.cmd || a.id) : (a.flatpak || a.cmd || a.id), installed: a.installed, shipped: a.shipped, cmd: a.cmd, category: a.category, tags: a.tags || "" } }
     onShown: if (apps.length === 0) refresh()
     onTabChanged: loadTab()
 
@@ -132,13 +158,37 @@ RPage {
                 color: on ? Ui.accent : Ui.field
                 border.color: on ? "transparent" : Ui.line
                 Txt { id: ct; anchors.centerIn: parent; text: modelData[1]; color: on ? Ui.accentText : Ui.textColor; font.pixelSize: Ui.fs - 1 }
-                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: p.cat = modelData[0] }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { p.cat = modelData[0]; p.tag = "" } }
             }
         }
     }
+    // etiquetas de la categoría: «navegador», «fotos», «emuladores»…
+    Flow {
+        visible: p.tab === "explorar" && p.q === "" && p.detail === null && p.tags.length > 0
+        Layout.fillWidth: true
+        spacing: 6
+        Repeater {
+            model: p.tags
+            Rectangle {
+                property bool on: p.tag === modelData
+                implicitWidth: tt.implicitWidth + 20; implicitHeight: 24; radius: 12
+                color: on ? Qt.rgba(Qt.color(Ui.accent).r, Qt.color(Ui.accent).g, Qt.color(Ui.accent).b, 0.25) : "transparent"
+                border.color: on ? Ui.accent : Ui.line
+                Txt { id: tt; anchors.centerIn: parent; text: "# " + modelData; font.pixelSize: Ui.fs - 2; color: on ? Ui.textColor : Ui.muted }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: p.tag = on ? "" : modelData }
+            }
+        }
+    }
+    // cargando o sin catálogo
+    RowLayout {
+        visible: p.tab === "explorar" && p.q === "" && p.detail === null && p.apps.length === 0
+        spacing: 12
+        Txt { text: p.loadingApps ? "Cargando el catálogo…" : "No se pudo leer el catálogo de aplicaciones."; color: Ui.muted }
+        Btn { visible: !p.loadingApps; text: "Reintentar"; onClicked: p.refresh() }
+    }
     // portada: la primera destacada en grande
     Rectangle {
-        visible: p.tab === "explorar" && p.q === "" && p.cat === "" && p.detail === null && p.apps.length > 0
+        visible: p.tab === "explorar" && p.q === "" && p.cat === "" && p.tag === "" && p.detail === null && p.apps.length > 0
         Layout.fillWidth: true
         implicitHeight: 150
         radius: 16
@@ -147,7 +197,15 @@ RPage {
             GradientStop { position: 0; color: Qt.darker(Ui.accent, 1.6) }
             GradientStop { position: 1; color: Qt.darker(Ui.pal.cyan, 2.2) }
         }
-        property var hero: p.apps.length ? p.catalogItem(p.apps.filter(function (a) { return !a.installed })[0] || p.apps[0]) : null
+        // una destacada distinta cada día, de las más conocidas que aún no tienes
+        readonly property var picks: ["vlc", "gimp", "obs", "steam", "kdenlive", "blender", "spotify", "krita", "onlyoffice", "kodi",
+                                      "retroarch", "stellarium", "inkscape", "telegram", "freecad", "heroic", "audacity", "darktable"]
+        property var hero: {
+            var cand = p.apps.filter(function (a) { return !a.installed && picks.indexOf(a.id) >= 0 })
+            if (!cand.length) cand = p.apps.filter(function (a) { return !a.installed })
+            if (!cand.length) cand = p.apps
+            return cand.length ? p.catalogItem(cand[Math.floor(Date.now() / 86400000) % cand.length]) : null
+        }
         RowLayout {
             anchors { fill: parent; margins: 24 }
             spacing: 22
@@ -190,7 +248,7 @@ RPage {
                  : p.tab === "instaladas" ? p.installed
                  : p.tab === "actualizaciones" ? p.pending
                  : p.q !== "" ? p.found
-                 : p.apps.filter(function (a) { return p.cat === "" || a.category === p.cat }).map(p.catalogItem)
+                 : p.visibleApps()
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 96
@@ -218,6 +276,8 @@ RPage {
                                       color: modelData.origen === "rros" ? Ui.accentText : Ui.muted }
                             }
                             Txt { visible: modelData.installed && p.tab === "explorar"; text: "Instalada"; color: Ui.ok; font.pixelSize: 11 }
+                            Txt { visible: (modelData.tags || "") !== ""; text: (modelData.tags || "").split(",").slice(0, 2).map(function (t) { return "#" + t }).join("  ")
+                                  color: Ui.muted; font.pixelSize: 10; elide: Text.ElideRight; Layout.fillWidth: true }
                         }
                     }
                     Btn {

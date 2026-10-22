@@ -15,6 +15,7 @@ class Shell : public QObject
 	Q_PROPERTY(bool live READ live CONSTANT)
 	Q_PROPERTY(bool layerShell READ layerShell CONSTANT)
 	Q_PROPERTY(QString home READ home CONSTANT)
+	Q_PROPERTY(bool softRender READ softRender CONSTANT)
 
 public:
 	explicit Shell(QObject *parent = nullptr);
@@ -22,6 +23,9 @@ public:
 	bool live() const;
 	bool layerShell() const;
 	QString home() const;
+	// sin aceleración gráfica (máquina virtual sin 3D: Mesa dibuja con la CPU): Lily Shell se aligera sola
+	bool softRender() const;
+	static bool detectSoftRender();
 
 	// Convierte una ventana de QML en una capa del escritorio. opts: layer (background, bottom, top, overlay),
 	// anchors ("top,left,right"), exclusive (px; -1 no reserva nada), margins [arriba, derecha, abajo, izquierda],

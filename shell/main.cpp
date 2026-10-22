@@ -7,6 +7,8 @@
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #include <QGuiApplication>
+#include <QQuickWindow>
+#include <QSGRendererInterface>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -21,6 +23,10 @@ int main(int argc, char *argv[])
 {
 	QQuickStyle::setStyle(QStringLiteral("Basic"));
 	QGuiApplication app(argc, argv);
+	// sin aceleración gráfica, el dibujo 2D por software de Qt Quick va mucho más fluido que OpenGL emulado con la
+	// CPU (llvmpipe). QT_QUICK_BACKEND manda si alguien lo pone a mano
+	if (qEnvironmentVariableIsEmpty("QT_QUICK_BACKEND") && Shell::detectSoftRender())
+		QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
 	app.setApplicationName(QStringLiteral("rros-shell"));
 	app.setOrganizationName(QStringLiteral("Lily"));
 	app.setDesktopFileName(QStringLiteral("rros-shell"));

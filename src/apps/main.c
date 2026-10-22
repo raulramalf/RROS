@@ -18,7 +18,7 @@
 
 struct app {
 	char id[40];
-	const char *name, *category, *desc, *apt, *pacman, *flatpak, *shipped, *cmd;
+	const char *name, *category, *desc, *apt, *pacman, *flatpak, *shipped, *cmd, *tags;
 };
 
 enum { PKG_APT, PKG_PACMAN };
@@ -117,6 +117,7 @@ static int load_catalog(void)
 		if (!strcmp(field, "name")) a->name = kv->val;
 		else if (!strcmp(field, "category")) a->category = kv->val;
 		else if (!strcmp(field, "desc")) a->desc = kv->val;
+		else if (!strcmp(field, "tags")) a->tags = kv->val;
 		else if (!strcmp(field, "apt")) a->apt = all_in(kv->val, ".+-") ? kv->val : NULL;
 		else if (!strcmp(field, "pacman")) a->pacman = all_in(kv->val, ".+-_,") ? kv->val : NULL;
 		else if (!strcmp(field, "flatpak")) a->flatpak = all_in(kv->val, "._-") ? kv->val : NULL;
@@ -260,32 +261,70 @@ static int split_pkgs(const char *list, char *buf, size_t bn, char **argv, int n
 
 /* ---- estado ---- */
 
+/* Lo instalado se pregunta una sola vez (todos los paquetes y todas las apps de Flatpak) y luego se busca en esa
+ * lista: preguntar app por app tardaba decenas de segundos con el catálogo entero y la Tienda parecía vacía. */
+static char *pkg_list, *fp_list;
+
+static char *capture_all(char *const argv[])
+{
+	static const size_t cap = 4 << 20;
+	char *buf = calloc(1, cap);
+
+	if (buf && run(argv, buf + 1, cap - 2, 1) != 0)
+		buf[1] = 0;
+	if (buf)
+		buf[0] = '\n';     /* así cada nombre va entre dos saltos de línea: «\nnombre\n» */
+	return buf;
+}
+
+static int in_list(const char *list, const char *name)
+{
+	char key[160];
+
+	if (!list)
+		return 0;
+	snprintf(key, sizeof key, "\n%s\n", name);
+	return strstr(list, key) != NULL;
+}
+
 /* instalada si lo está el primer paquete de la lista (el programa; los demás son idioma o extras) */
 static int pkg_installed(const char *list)
 {
-	char first[64], out[64] = "";
+	char first[64];
 	size_t l = strcspn(list, ",");
 
 	snprintf(first, sizeof first, "%.*s", (int)l, list);
-	if (backend == PKG_PACMAN) {
-		char *argv[] = { "pacman", "-Q", "--", first, NULL };
+	if (!pkg_list) {
+		if (backend == PKG_PACMAN) {
+			char *argv[] = { "pacman", "-Qq", NULL };
 
-		return run(argv, out, sizeof out, 1) == 0;
-	} else {
-		char *argv[] = { "dpkg-query", "-W", "-f=${db:Status-Status}", first, NULL };
+			pkg_list = capture_all(argv);
+		} else {
+			char *argv[] = { "dpkg-query", "-W", "-f=${db:Status-Status} ${Package}\n", NULL };
+			char *raw = capture_all(argv), *line, *save = NULL;
+			size_t n = 0, cap = raw ? strlen(raw) + 2 : 2;
 
-		if (run(argv, out, sizeof out, 1) != 0)
-			return 0;
-		return !strcmp(out, "installed");
+			pkg_list = calloc(1, cap);
+			if (raw && pkg_list) {
+				pkg_list[n++] = '\n';
+				for (line = strtok_r(raw, "\n", &save); line; line = strtok_r(NULL, "\n", &save))
+					if (!strncmp(line, "installed ", 10))
+						n += (size_t)snprintf(pkg_list + n, cap - n, "%s\n", line + 10);
+			}
+			free(raw);
+		}
 	}
+	return in_list(pkg_list, first);
 }
 
 static int flatpak_installed(const char *id)
 {
-	char *argv[] = { "flatpak", "info", (char *)id, NULL };
-	char out[8];
+	if (!fp_list) {
+		char *argv[] = { "flatpak", "list", "--app", "--columns=application", NULL };
 
-	return run(argv, out, sizeof out, 1) == 0;
+		fp_list = have_cmd("flatpak") ? capture_all(argv) : calloc(1, 2);
+	}
+	return in_list(fp_list, id);
 }
 
 static int is_installed(const struct app *a)
@@ -377,6 +416,7 @@ static int cmd_list(int argc, char **argv, const char *query)
 			printf(",\"pkg\":"); json_str(pkgs_of(a) ? pkgs_of(a) : "");
 			printf(",\"pkg_manager\":\"%s\"", backend_name[backend]);
 			printf(",\"flatpak\":"); json_str(a->flatpak ? a->flatpak : "");
+			printf(",\"tags\":"); json_str(a->tags ? a->tags : "");
 			printf(",\"cmd\":"); json_str(a->cmd ? a->cmd : "");
 			printf(",\"shipped\":%s,\"installed\":%s}", shipped_in(a, profile) ? "true" : "false", inst ? "true" : "false");
 		} else {
@@ -396,7 +436,8 @@ static int cmd_categories(void)
 {
 	static const struct { const char *id, *label; } cats[] = {
 		{ "internet", "Internet" }, { "office", "Oficina" }, { "media", "Multimedia" }, { "graphics", "Gráficos" },
-		{ "dev", "Desarrollo" }, { "system", "Sistema" }, { "games", "Juegos" }, { "utility", "Utilidades" },
+		{ "dev", "Desarrollo" }, { "system", "Sistema" }, { "games", "Juegos" }, { "education", "Educación" },
+		{ "utility", "Utilidades" },
 	};
 
 	for (size_t c = 0; c < sizeof cats / sizeof *cats; c++) {

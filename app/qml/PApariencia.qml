@@ -10,6 +10,8 @@ RPage {
     subtitle: "Colores, fondo de pantalla y letra. Todo el sistema cambia a la vez: ventanas, barra, dock y terminal."
     icon: "qrc:/icons/sec-apariencia.svg"
     property var previews: ({})
+    // miniatura de un fondo generado: la hecha con tus colores si ya está, si no la que trae el sistema
+    function stylePreview(st) { return previews[st] || (st !== "liso" ? "file:///usr/share/rros/estilos/" + st + ".png" : "") }
 
     function useTheme(name) {
         Ui.run(["rros-theme", "use", name], function (r) {
@@ -117,7 +119,7 @@ RPage {
     // vista previa: el escritorio en pequeño con la barra de tareas. Al pasar el ratón por un fondo se ve aquí
     // antes de elegirlo; con un clic se pone.
     property string hoverWall: ""
-    readonly property string curWall: Ui.v("ui.wallpaper") !== "" ? "file://" + Ui.v("ui.wallpaper") : (p.previews[Ui.v("ui.wallpaper_style")] || "")
+    readonly property string curWall: Ui.v("ui.wallpaper") !== "" ? "file://" + Ui.v("ui.wallpaper") : p.stylePreview(Ui.v("ui.wallpaper_style"))
     property var lilyWalls: []
     function loadWalls() {
         var dir = "/usr/share/wallpapers/Lily"
@@ -214,10 +216,10 @@ RPage {
                         border.width: on ? 3 : 1
                         border.color: on ? Ui.accent : Ui.line
                         clip: true
-                        Image { anchors.fill: parent; anchors.margins: 2; source: p.previews[modelData[0]] || ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
+                        Image { anchors.fill: parent; anchors.margins: 2; source: p.stylePreview(modelData[0]); fillMode: Image.PreserveAspectCrop; asynchronous: true }
                         MouseArea {
                             anchors.fill: parent; cursorShape: Qt.PointingHandCursor; hoverEnabled: true
-                            onContainsMouseChanged: p.hoverWall = containsMouse ? (p.previews[modelData[0]] || "") : ""
+                            onContainsMouseChanged: p.hoverWall = containsMouse ? p.stylePreview(modelData[0]) : ""
                             onClicked: { if (Ui.v("ui.wallpaper") !== "") Ui.unsetKey("ui.wallpaper"); Ui.setKey("ui.wallpaper_style", modelData[0]) }
                         }
                     }
@@ -242,8 +244,35 @@ RPage {
         Repeater {
             model: p.packs
             Rectangle {
-                width: 200; height: 64; radius: 12; color: pm.containsMouse ? Ui.cardHover : Ui.card; border.color: Ui.line
-                Txt { anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter } text: modelData.name; font.weight: Font.DemiBold }
+                // lo que trae el tema, leído de su archivo: fondo, claro u oscuro, acento y cursor
+                readonly property var kv: {
+                    var o = {}
+                    Sys.readFile("/usr/share/rros/temas/" + modelData.id + ".lilytema").split("\n").forEach(function (l) {
+                        var m = l.match(/^\s*([\w.]+)\s*=\s*"?(.*?)"?\s*$/); if (m) o[m[1]] = m[2] })
+                    return o
+                }
+                readonly property bool darkPack: kv["ui.color_scheme"] !== "light"
+                width: 220; height: 150; radius: 12; clip: true
+                color: Ui.card
+                border.width: pm.containsMouse ? 2 : 1; border.color: pm.containsMouse ? Ui.accent : Ui.line
+                Image {
+                    x: 6; y: 6; width: parent.width - 12; height: 92
+                    fillMode: Image.PreserveAspectCrop; asynchronous: true
+                    source: kv["ui.wallpaper"] ? "file://" + kv["ui.wallpaper"] : p.stylePreview(kv["ui.wallpaper_style"] || "aurora")
+                    // ventana de muestra con los colores del tema
+                    Rectangle {
+                        x: 18; y: 14; width: 100; height: 56; radius: 5
+                        color: parent.parent.darkPack ? "#ee1d0b12" : "#f4fbf7f2"
+                        Rectangle { x: 8; y: 10; width: 60; height: 5; radius: 2.5; color: parent.parent.parent.darkPack ? "#80ffffff" : "#40000000" }
+                        Rectangle { x: 8; y: 22; width: 44; height: 5; radius: 2.5; color: parent.parent.parent.darkPack ? "#50ffffff" : "#25000000" }
+                        Rectangle { x: 8; y: 38; width: 34; height: 10; radius: 5; color: parent.parent.parent.kv["ui.accent"] || Ui.accent }
+                    }
+                    Rectangle { anchors { left: parent.left; right: parent.right; bottom: parent.bottom } height: 12
+                                color: parent.parent.darkPack ? "#cc1a0a10" : "#d8fbf6f1" }
+                }
+                Txt { x: 12; y: 106; text: modelData.name; font.weight: Font.DemiBold }
+                Txt { x: 12; y: 126; text: (darkPack ? "Oscuro" : "Claro") + (kv["ui.cursor_theme"] ? " · " + kv["ui.cursor_theme"].replace("-", " ") : "")
+                      color: Ui.muted; font.pixelSize: Ui.fs - 2 }
                 MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                             onClicked: Sys.run(["rros-tema", "aplicar", modelData.id], function (r) { Ui.toast(r.code === 0 ? "Tema «" + modelData.name + "» aplicado" : "No se pudo", r.code !== 0); Ui.reload() }) }
             }

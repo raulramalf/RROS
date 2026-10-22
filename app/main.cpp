@@ -5,15 +5,38 @@
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QOffscreenSurface>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
 #include <QQuickStyle>
+#include <QQuickWindow>
+#include <QSGRendererInterface>
 
 #include "backend.h"
+
+// sin aceleración gráfica (máquina virtual sin 3D), Qt Quick dibuja más fluido por software que con OpenGL emulado
+static bool softRender()
+{
+	const QByteArray e = qgetenv("RROS_SOFT_RENDER");
+	if (!e.isEmpty())
+		return e == "1";
+	QOpenGLContext ctx;
+	QOffscreenSurface surf;
+	surf.create();
+	if (!ctx.create() || !ctx.makeCurrent(&surf))
+		return true;
+	const QByteArray r = reinterpret_cast<const char *>(ctx.functions()->glGetString(GL_RENDERER));
+	ctx.doneCurrent();
+	return r.contains("llvmpipe") || r.contains("softpipe") || r.contains("Software Rasterizer");
+}
 
 int main(int argc, char *argv[])
 {
 	// controles propios de Lily: no dependen del estilo de la plataforma
 	QQuickStyle::setStyle(QStringLiteral("Basic"));
 	QGuiApplication app(argc, argv);
+	if (qEnvironmentVariableIsEmpty("QT_QUICK_BACKEND") && softRender())
+		QQuickWindow::setGraphicsApi(QSGRendererInterface::Software);
 	app.setApplicationName(QStringLiteral("rros-ajustes"));
 	app.setApplicationDisplayName(QStringLiteral("Lily Ajustes"));
 	app.setOrganizationName(QStringLiteral("Lily"));

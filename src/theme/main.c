@@ -423,8 +423,12 @@ static void plasma_reload(const struct rros_theme *t, const char *old_theme, con
 	/* el puntero: KWin lo cambia al momento con plasma-apply-cursortheme (leer kcminputrc no basta en Wayland) */
 	{
 		char *cur[] = { "plasma-apply-cursortheme", (char *)t->cursor_theme, NULL };
-
+		/* y el aviso de KDE «ha cambiado el cursor» (KGlobalSettings, CursorChanged = 5): KWin y las aplicaciones
+		 * abiertas cambian el puntero sin tener que reiniciar la sesión */
+		char *note[] = { "dbus-send", "--session", "--type=signal", "/KGlobalSettings", "org.kde.KGlobalSettings.notifyChange",
+				 "int32:5", "int32:0", NULL };
 		run(cur, NULL, 0);
+		run(note, NULL, 0);
 	}
 	if (strcmp(old_theme, rros_desktoptheme(t))) {
 		char *dt[] = { "plasma-apply-desktoptheme", (char *)rros_desktoptheme(t), NULL };

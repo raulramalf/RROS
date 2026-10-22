@@ -355,11 +355,11 @@ if "$B/rros" noexiste 2>/dev/null; then fail "rros noexiste debía fallar"; fi
 # --- tienda de aplicaciones: rros-apps (dpkg-query, pacman y flatpak simulados) ---
 mkdir -p "$T/fakebin"
 # shellcheck disable=SC2016
-printf '#!/bin/sh\n[ "$3" = "mpv" ] && { printf installed; exit 0; }\nexit 1\n' > "$T/fakebin/dpkg-query"
+printf '#!/bin/sh\nprintf "installed mpv\\nnot-installed vlc\\n"\n' > "$T/fakebin/dpkg-query"
 # shellcheck disable=SC2016
-printf '#!/bin/sh\n[ "$2" = "org.signal.Signal" ] && exit 0\nexit 1\n' > "$T/fakebin/flatpak"
+printf '#!/bin/sh\n[ "$1" = "list" ] && { echo org.signal.Signal; exit 0; }\nexit 1\n' > "$T/fakebin/flatpak"
 # shellcheck disable=SC2016
-printf '#!/bin/sh\n[ "$1" = "-Q" ] && [ "$3" = "mpv" ] && { echo "mpv 1-1"; exit 0; }\nexit 1\n' > "$T/fakebin/pacman"
+printf '#!/bin/sh\n[ "$1" = "-Qq" ] && { echo mpv; exit 0; }\nexit 1\n' > "$T/fakebin/pacman"
 chmod +x "$T/fakebin/dpkg-query" "$T/fakebin/flatpak" "$T/fakebin/pacman"
 export RROS_APPS_CATALOG=$PWD/apps/catalog.toml
 APPS="env PATH=$T/fakebin:$PATH RROS_PKG=apt $B/rros-apps"

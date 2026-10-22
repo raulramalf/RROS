@@ -10,6 +10,7 @@
 name = "Web (Epiphany)"
 category = "internet"
 desc = "Navegador ligero de GNOME."
+tags = "navegador"
 apt = "epiphany-browser"
 pacman = "epiphany"
 cmd = "epiphany"
@@ -18,6 +19,7 @@ cmd = "epiphany"
 name = "Firefox"
 category = "internet"
 desc = "El navegador de Mozilla, con sus extensiones."
+tags = "navegador"
 shipped = "lite,standard,pro"
 pacman = "firefox,firefox-i18n-es-es"
 flatpak = "org.mozilla.firefox"
@@ -27,6 +29,7 @@ cmd = "firefox"
 name = "Chromium"
 category = "internet"
 desc = "Navegador de código abierto basado en Chromium."
+tags = "navegador"
 pacman = "chromium"
 flatpak = "org.chromium.Chromium"
 cmd = "chromium"
@@ -35,12 +38,14 @@ cmd = "chromium"
 name = "Brave"
 category = "internet"
 desc = "Navegador con bloqueo de anuncios integrado."
+tags = "navegador,privacidad"
 flatpak = "com.brave.Browser"
 
 [app.thunderbird]
 name = "Thunderbird"
 category = "internet"
 desc = "Correo, calendario y contactos de Mozilla."
+tags = "correo,calendario"
 pacman = "thunderbird,thunderbird-i18n-es-es"
 flatpak = "org.mozilla.Thunderbird"
 
@@ -48,6 +53,7 @@ flatpak = "org.mozilla.Thunderbird"
 name = "Geary"
 category = "internet"
 desc = "Cliente de correo sencillo."
+tags = "correo"
 apt = "geary"
 pacman = "geary"
 
@@ -55,6 +61,7 @@ pacman = "geary"
 name = "Transmission"
 category = "internet"
 desc = "Cliente BitTorrent ligero."
+tags = "descargas"
 apt = "transmission-gtk"
 pacman = "transmission-gtk"
 
@@ -62,6 +69,7 @@ pacman = "transmission-gtk"
 name = "qBittorrent"
 category = "internet"
 desc = "Cliente BitTorrent completo."
+tags = "descargas"
 apt = "qbittorrent"
 pacman = "qbittorrent"
 
@@ -69,6 +77,7 @@ pacman = "qbittorrent"
 name = "FileZilla"
 category = "internet"
 desc = "Cliente FTP y SFTP."
+tags = "ftp,descargas"
 apt = "filezilla"
 pacman = "filezilla"
 
@@ -76,6 +85,7 @@ pacman = "filezilla"
 name = "Telegram"
 category = "internet"
 desc = "Mensajería."
+tags = "chat,móvil"
 pacman = "telegram-desktop"
 flatpak = "org.telegram.desktop"
 
@@ -83,6 +93,7 @@ flatpak = "org.telegram.desktop"
 name = "Signal"
 category = "internet"
 desc = "Mensajería cifrada."
+tags = "chat,privacidad"
 pacman = "signal-desktop"
 flatpak = "org.signal.Signal"
 
@@ -90,6 +101,7 @@ flatpak = "org.signal.Signal"
 name = "Discord"
 category = "internet"
 desc = "Chat de voz y texto."
+tags = "chat,juegos"
 pacman = "discord"
 flatpak = "com.discordapp.Discord"
 
@@ -98,6 +110,7 @@ flatpak = "com.discordapp.Discord"
 name = "LibreOffice"
 category = "office"
 desc = "Suite ofimática completa: Writer, Calc, Impress."
+tags = "documentos,hojas de cálculo,presentaciones"
 apt = "libreoffice"
 pacman = "libreoffice-fresh,libreoffice-fresh-es"
 flatpak = "org.libreoffice.LibreOffice"
@@ -107,6 +120,7 @@ shipped = "standard,pro"
 name = "AbiWord"
 category = "office"
 desc = "Procesador de textos ligero."
+tags = "documentos"
 apt = "abiword"
 pacman = "abiword"
 
@@ -114,6 +128,7 @@ pacman = "abiword"
 name = "Gnumeric"
 category = "office"
 desc = "Hoja de cálculo ligera."
+tags = "hojas de cálculo"
 apt = "gnumeric"
 pacman = "gnumeric"
 
@@ -121,6 +136,7 @@ pacman = "gnumeric"
 name = "Documentos (Evince)"
 category = "office"
 desc = "Visor de PDF y documentos."
+tags = "pdf,lectura"
 apt = "evince"
 pacman = "evince"
 
@@ -128,6 +144,7 @@ pacman = "evince"
 name = "calibre"
 category = "office"
 desc = "Biblioteca y lector de libros electrónicos."
+tags = "libros,lectura"
 apt = "calibre"
 pacman = "calibre"
 
@@ -135,6 +152,7 @@ pacman = "calibre"
 name = "Obsidian"
 category = "office"
 desc = "Notas enlazadas en Markdown."
+tags = "notas"
 pacman = "obsidian"
 flatpak = "md.obsidian.Obsidian"
 
@@ -143,6 +161,7 @@ flatpak = "md.obsidian.Obsidian"
 name = "mpv"
 category = "media"
 desc = "Reproductor de vídeo y música."
+tags = "vídeo"
 apt = "mpv"
 pacman = "mpv"
 shipped = "lite,standard,pro"
@@ -151,6 +170,7 @@ shipped = "lite,standard,pro"
 name = "VLC"
 category = "media"
 desc = "Reproduce casi cualquier formato."
+tags = "vídeo,música"
 apt = "vlc"
 pacman = "vlc"
 shipped = "pro"
@@ -159,6 +179,7 @@ shipped = "pro"
 name = "Elisa"
 category = "media"
 desc = "Tu música, ordenada por álbumes y artistas."
+tags = "música"
 apt = "elisa"
 pacman = "elisa"
 flatpak = "org.kde.elisa"
@@ -169,6 +190,7 @@ shipped = "standard,pro"
 name = "Audacious"
 category = "media"
 desc = "Reproductor de música."
+tags = "música"
 apt = "audacious"
 pacman = "audacious"
 
@@ -176,6 +198,7 @@ pacman = "audacious"
 name = "Audacity"
 category = "media"
 desc = "Editor de audio."
+tags = "audio,edición"
 apt = "audacity"
 pacman = "audacity"
 
@@ -183,6 +206,7 @@ pacman = "audacity"
 name = "OBS Studio"
 category = "media"
 desc = "Grabación y retransmisión de pantalla."
+tags = "grabar pantalla,streaming"
 apt = "obs-studio"
 pacman = "obs-studio"
 flatpak = "com.obsproject.Studio"
@@ -191,6 +215,7 @@ flatpak = "com.obsproject.Studio"
 name = "Kdenlive"
 category = "media"
 desc = "Editor de vídeo."
+tags = "vídeo,edición"
 apt = "kdenlive"
 pacman = "kdenlive"
 flatpak = "org.kde.kdenlive"
@@ -199,6 +224,7 @@ flatpak = "org.kde.kdenlive"
 name = "HandBrake"
 category = "media"
 desc = "Convierte vídeo entre formatos."
+tags = "vídeo,conversión"
 apt = "handbrake"
 pacman = "handbrake"
 flatpak = "fr.handbrake.ghb"
@@ -207,6 +233,7 @@ flatpak = "fr.handbrake.ghb"
 name = "Spotify"
 category = "media"
 desc = "Música en streaming."
+tags = "música,streaming"
 flatpak = "com.spotify.Client"
 
 # ---------------- Gráficos ----------------
@@ -214,6 +241,7 @@ flatpak = "com.spotify.Client"
 name = "imv"
 category = "graphics"
 desc = "Visor de imágenes rápido."
+tags = "fotos,visor"
 apt = "imv"
 pacman = "imv"
 
@@ -221,6 +249,7 @@ pacman = "imv"
 name = "GIMP"
 category = "graphics"
 desc = "Edición de imágenes."
+tags = "retoque,fotos"
 apt = "gimp"
 pacman = "gimp"
 shipped = "pro"
@@ -229,6 +258,7 @@ shipped = "pro"
 name = "Inkscape"
 category = "graphics"
 desc = "Dibujo vectorial."
+tags = "dibujo,diseño"
 apt = "inkscape"
 pacman = "inkscape"
 flatpak = "org.inkscape.Inkscape"
@@ -237,6 +267,7 @@ flatpak = "org.inkscape.Inkscape"
 name = "Krita"
 category = "graphics"
 desc = "Pintura digital."
+tags = "dibujo,pintura"
 apt = "krita"
 pacman = "krita"
 flatpak = "org.kde.krita"
@@ -245,6 +276,7 @@ flatpak = "org.kde.krita"
 name = "Blender"
 category = "graphics"
 desc = "Modelado y animación 3D."
+tags = "3d,animación"
 apt = "blender"
 pacman = "blender"
 flatpak = "org.blender.Blender"
@@ -253,6 +285,7 @@ flatpak = "org.blender.Blender"
 name = "darktable"
 category = "graphics"
 desc = "Revelado de fotografías RAW."
+tags = "fotos,raw"
 apt = "darktable"
 pacman = "darktable"
 
@@ -261,6 +294,7 @@ pacman = "darktable"
 name = "Visual Studio Code"
 category = "dev"
 desc = "Editor de código."
+tags = "editor,código"
 pacman = "code"
 flatpak = "com.visualstudio.code"
 
@@ -268,6 +302,7 @@ flatpak = "com.visualstudio.code"
 name = "Geany"
 category = "dev"
 desc = "Editor de código ligero."
+tags = "editor,código"
 apt = "geany"
 pacman = "geany"
 
@@ -275,6 +310,7 @@ pacman = "geany"
 name = "Neovim"
 category = "dev"
 desc = "Editor modal para la terminal."
+tags = "editor,terminal"
 apt = "neovim"
 pacman = "neovim"
 
@@ -282,6 +318,7 @@ pacman = "neovim"
 name = "Git"
 category = "dev"
 desc = "Control de versiones."
+tags = "git"
 apt = "git"
 pacman = "git"
 shipped = "standard,pro"
@@ -290,6 +327,7 @@ shipped = "standard,pro"
 name = "Python 3 y pip"
 category = "dev"
 desc = "Python con el gestor de paquetes pip."
+tags = "lenguaje,python"
 apt = "python3-pip"
 pacman = "python-pip"
 
@@ -297,6 +335,7 @@ pacman = "python-pip"
 name = "Node.js"
 category = "dev"
 desc = "JavaScript fuera del navegador."
+tags = "lenguaje,web"
 apt = "nodejs"
 pacman = "nodejs,npm"
 
@@ -304,6 +343,7 @@ pacman = "nodejs,npm"
 name = "Docker"
 category = "dev"
 desc = "Contenedores."
+tags = "contenedores"
 apt = "docker.io"
 pacman = "docker,docker-compose"
 
@@ -312,6 +352,7 @@ pacman = "docker,docker-compose"
 name = "Archivos (Thunar)"
 category = "system"
 desc = "Gestor de archivos."
+tags = "archivos"
 apt = "thunar"
 pacman = "thunar"
 
@@ -319,6 +360,7 @@ pacman = "thunar"
 name = "Gestor de particiones"
 category = "system"
 desc = "Crear, borrar y cambiar el tamaño de particiones (KDE Partition Manager)."
+tags = "disco"
 apt = "partitionmanager"
 pacman = "partitionmanager"
 cmd = "partitionmanager"
@@ -328,6 +370,7 @@ shipped = "pro"
 name = "GParted"
 category = "system"
 desc = "Particiones de disco."
+tags = "disco"
 apt = "gparted"
 pacman = "gparted"
 
@@ -335,6 +378,7 @@ pacman = "gparted"
 name = "Discos"
 category = "system"
 desc = "Estado de los discos, formateo y comprobaciones."
+tags = "disco,usb"
 apt = "gnome-disk-utility"
 pacman = "gnome-disk-utility"
 
@@ -342,6 +386,7 @@ pacman = "gnome-disk-utility"
 name = "Monitor del sistema"
 category = "system"
 desc = "Procesos, memoria, red y procesador con gráficas."
+tags = "monitor"
 apt = "plasma-systemmonitor"
 pacman = "plasma-systemmonitor"
 cmd = "plasma-systemmonitor"
@@ -351,6 +396,7 @@ shipped = "lite,standard,pro"
 name = "btop"
 category = "system"
 desc = "Monitor del sistema en la terminal."
+tags = "monitor,terminal"
 apt = "btop"
 pacman = "btop"
 shipped = "lite,standard,pro"
@@ -359,6 +405,7 @@ shipped = "lite,standard,pro"
 name = "Timeshift"
 category = "system"
 desc = "Copias de seguridad del sistema para volver atrás."
+tags = "copias"
 apt = "timeshift"
 pacman = "timeshift"
 
@@ -366,6 +413,7 @@ pacman = "timeshift"
 name = "BleachBit"
 category = "system"
 desc = "Limpia archivos temporales y libera espacio."
+tags = "limpieza,privacidad"
 apt = "bleachbit"
 pacman = "bleachbit"
 
@@ -373,6 +421,7 @@ pacman = "bleachbit"
 name = "Máquinas virtuales"
 category = "system"
 desc = "Crea y ejecuta máquinas virtuales."
+tags = "máquinas virtuales"
 apt = "virt-manager"
 pacman = "virt-manager,qemu-desktop,libvirt,dnsmasq"
 
@@ -381,12 +430,14 @@ pacman = "virt-manager,qemu-desktop,libvirt,dnsmasq"
 name = "Steam"
 category = "games"
 desc = "Tienda y biblioteca de juegos."
+tags = "lanzador,tienda"
 flatpak = "com.valvesoftware.Steam"
 
 [app.lutris]
 name = "Lutris"
 category = "games"
 desc = "Juegos de otras plataformas en un solo sitio."
+tags = "lanzador,wine"
 apt = "lutris"
 pacman = "lutris"
 
@@ -394,6 +445,7 @@ pacman = "lutris"
 name = "SuperTuxKart"
 category = "games"
 desc = "Carreras de karts."
+tags = "carreras"
 apt = "supertuxkart"
 pacman = "supertuxkart"
 
@@ -402,6 +454,7 @@ pacman = "supertuxkart"
 name = "KeePassXC"
 category = "utility"
 desc = "Gestor de contraseñas."
+tags = "contraseñas,seguridad"
 apt = "keepassxc"
 pacman = "keepassxc"
 
@@ -409,6 +462,7 @@ pacman = "keepassxc"
 name = "Bitwarden"
 category = "utility"
 desc = "Gestor de contraseñas en la nube."
+tags = "contraseñas,seguridad"
 pacman = "bitwarden"
 flatpak = "com.bitwarden.desktop"
 
@@ -416,6 +470,7 @@ flatpak = "com.bitwarden.desktop"
 name = "Calculadora"
 category = "utility"
 desc = "Calculadora científica."
+tags = "calculadora"
 apt = "galculator"
 pacman = "galculator"
 
@@ -423,4 +478,1371 @@ pacman = "galculator"
 name = "Flatseal"
 category = "utility"
 desc = "Controla los permisos de las aplicaciones Flatpak."
+tags = "flatpak,permisos"
 flatpak = "com.github.tchx84.Flatseal"
+
+# ================= Más aplicaciones (con etiquetas) =================
+
+[app.vivaldi]
+name = "Vivaldi"
+category = "internet"
+desc = "Navegador muy configurable, con paneles y correo."
+tags = "navegador"
+pacman = "vivaldi"
+flatpak = "com.vivaldi.Vivaldi"
+cmd = "vivaldi"
+
+[app.librewolf]
+name = "LibreWolf"
+category = "internet"
+desc = "Firefox centrado en la privacidad, sin telemetría."
+tags = "navegador,privacidad"
+flatpak = "io.gitlab.librewolf-community"
+
+[app.tor]
+name = "Tor Browser"
+category = "internet"
+desc = "Navega de forma anónima por la red Tor."
+tags = "navegador,privacidad"
+pacman = "torbrowser-launcher"
+flatpak = "org.torproject.torbrowser-launcher"
+cmd = "torbrowser-launcher"
+
+[app.evolution]
+name = "Evolution"
+category = "internet"
+desc = "Correo, calendario y contactos todo en uno."
+tags = "correo,calendario"
+pacman = "evolution"
+flatpak = "org.gnome.Evolution"
+cmd = "evolution"
+
+[app.kmail]
+name = "KMail"
+category = "internet"
+desc = "Cliente de correo de KDE."
+tags = "correo"
+pacman = "kmail"
+flatpak = "org.kde.kmail2"
+cmd = "kmail"
+
+[app.element]
+name = "Element"
+category = "internet"
+desc = "Chat seguro en la red Matrix."
+tags = "chat,privacidad"
+pacman = "element-desktop"
+flatpak = "im.riot.Riot"
+cmd = "element-desktop"
+
+[app.whatsapp]
+name = "WhatsApp (ZapZap)"
+category = "internet"
+desc = "WhatsApp en el escritorio."
+tags = "chat,móvil"
+flatpak = "com.rtosta.zapzap"
+
+[app.slack]
+name = "Slack"
+category = "internet"
+desc = "Mensajería para equipos de trabajo."
+tags = "chat,trabajo"
+flatpak = "com.slack.Slack"
+
+[app.teams]
+name = "Teams for Linux"
+category = "internet"
+desc = "Cliente no oficial de Microsoft Teams."
+tags = "videollamadas,trabajo"
+flatpak = "com.github.IsmaelMartinez.teams_for_linux"
+
+[app.zoom]
+name = "Zoom"
+category = "internet"
+desc = "Videollamadas y reuniones."
+tags = "videollamadas,trabajo"
+flatpak = "us.zoom.Zoom"
+
+[app.skype]
+name = "Skype"
+category = "internet"
+desc = "Llamadas y videollamadas de Microsoft."
+tags = "videollamadas"
+flatpak = "com.skype.Client"
+
+[app.nextcloud]
+name = "Nextcloud"
+category = "internet"
+desc = "Sincroniza tus archivos con tu nube Nextcloud."
+tags = "nube,sincronizar"
+pacman = "nextcloud-client"
+flatpak = "com.nextcloud.desktopclient.nextcloud"
+cmd = "nextcloud"
+
+[app.syncthing]
+name = "Syncthing"
+category = "internet"
+desc = "Sincroniza carpetas entre tus equipos, sin nube."
+tags = "sincronizar,privacidad"
+pacman = "syncthing"
+flatpak = "com.github.zocker_160.SyncThingy"
+cmd = "syncthing"
+
+[app.dropbox]
+name = "Dropbox (Maestral)"
+category = "internet"
+desc = "Cliente ligero para tu Dropbox."
+tags = "nube,sincronizar"
+flatpak = "com.samschott.maestral"
+
+[app.onedrive]
+name = "OneDrive (OneDriveGUI)"
+category = "internet"
+desc = "Tu OneDrive de Microsoft en el escritorio."
+tags = "nube,sincronizar"
+flatpak = "io.github.bpozdena.OneDriveGUI"
+
+[app.ktorrent]
+name = "KTorrent"
+category = "internet"
+desc = "Descargas torrent de KDE."
+tags = "descargas"
+pacman = "ktorrent"
+flatpak = "org.kde.ktorrent"
+cmd = "ktorrent"
+
+[app.fragments]
+name = "Fragments"
+category = "internet"
+desc = "Cliente torrent sencillo y bonito."
+tags = "descargas"
+pacman = "fragments"
+flatpak = "de.haeckerfelix.Fragments"
+cmd = "fragments"
+
+[app.motrix]
+name = "Motrix"
+category = "internet"
+desc = "Gestor de descargas rápido."
+tags = "descargas"
+flatpak = "net.agalwood.Motrix"
+
+[app.anydesk]
+name = "AnyDesk"
+category = "internet"
+desc = "Escritorio remoto para ayudar o pedir ayuda."
+tags = "remoto"
+flatpak = "com.anydesk.Anydesk"
+
+[app.remmina]
+name = "Remmina"
+category = "internet"
+desc = "Conexiones a escritorios remotos (RDP, VNC, SSH)."
+tags = "remoto"
+pacman = "remmina"
+flatpak = "org.remmina.Remmina"
+cmd = "remmina"
+
+[app.krdc]
+name = "KRDC"
+category = "internet"
+desc = "Cliente de escritorio remoto de KDE."
+tags = "remoto"
+pacman = "krdc"
+flatpak = "org.kde.krdc"
+cmd = "krdc"
+
+[app.newsflash]
+name = "NewsFlash"
+category = "internet"
+desc = "Lector de noticias RSS."
+tags = "noticias"
+pacman = "newsflash"
+flatpak = "io.gitlab.news_flash.NewsFlash"
+cmd = "newsflash"
+
+[app.tuba]
+name = "Tuba"
+category = "internet"
+desc = "Cliente para Mastodon y el Fediverso."
+tags = "redes sociales"
+pacman = "tuba"
+flatpak = "dev.geopjr.Tuba"
+cmd = "tuba"
+
+[app.protonvpn]
+name = "Proton VPN"
+category = "internet"
+desc = "VPN gratuita y segura."
+tags = "vpn,privacidad"
+flatpak = "com.protonvpn.www"
+
+[app.onlyoffice]
+name = "ONLYOFFICE"
+category = "office"
+desc = "Oficina muy compatible con Word, Excel y PowerPoint."
+tags = "documentos,hojas de cálculo,presentaciones"
+flatpak = "org.onlyoffice.desktopeditors"
+
+[app.wps]
+name = "WPS Office"
+category = "office"
+desc = "Paquete ofimático parecido a Microsoft Office."
+tags = "documentos,hojas de cálculo"
+flatpak = "com.wps.Office"
+
+[app.okular]
+name = "Okular"
+category = "office"
+desc = "Visor de PDF, cómics y libros electrónicos, con notas."
+tags = "pdf,lectura"
+pacman = "okular"
+flatpak = "org.kde.okular"
+cmd = "okular"
+
+[app.xournalpp]
+name = "Xournal++"
+category = "office"
+desc = "Toma notas a mano y firma o anota PDF."
+tags = "pdf,notas"
+pacman = "xournalpp"
+flatpak = "com.github.xournalpp.xournalpp"
+cmd = "xournalpp"
+
+[app.joplin]
+name = "Joplin"
+category = "office"
+desc = "Notas y tareas sincronizadas, con Markdown."
+tags = "notas"
+flatpak = "net.cozic.joplin_desktop"
+
+[app.logseq]
+name = "Logseq"
+category = "office"
+desc = "Notas enlazadas y diario personal."
+tags = "notas"
+flatpak = "com.logseq.Logseq"
+
+[app.zim]
+name = "Zim"
+category = "office"
+desc = "Wiki personal de escritorio para organizar ideas."
+tags = "notas"
+pacman = "zim"
+flatpak = "org.zim_wiki.Zim"
+cmd = "zim"
+
+[app.simplenote]
+name = "Simplenote"
+category = "office"
+desc = "Notas sencillas sincronizadas."
+tags = "notas"
+flatpak = "com.simplenote.Simplenote"
+
+[app.planner]
+name = "Planify"
+category = "office"
+desc = "Gestor de tareas y proyectos."
+tags = "tareas,productividad"
+flatpak = "io.github.alainm23.planify"
+
+[app.kalendar]
+name = "Merkuro Calendario"
+category = "office"
+desc = "Calendario y tareas de KDE."
+tags = "calendario,tareas"
+pacman = "merkuro"
+flatpak = "org.kde.merkuro.calendar"
+cmd = "merkuro-calendar"
+
+[app.gnucash]
+name = "GnuCash"
+category = "office"
+desc = "Contabilidad personal y de pequeñas empresas."
+tags = "finanzas"
+pacman = "gnucash"
+flatpak = "org.gnucash.GnuCash"
+cmd = "gnucash"
+
+[app.kmymoney]
+name = "KMyMoney"
+category = "office"
+desc = "Finanzas personales: cuentas, presupuestos e informes."
+tags = "finanzas"
+pacman = "kmymoney"
+flatpak = "org.kde.kmymoney"
+cmd = "kmymoney"
+
+[app.homebank]
+name = "HomeBank"
+category = "office"
+desc = "Controla tus gastos de forma sencilla."
+tags = "finanzas"
+pacman = "homebank"
+flatpak = "fr.free.Homebank"
+cmd = "homebank"
+
+[app.scribus]
+name = "Scribus"
+category = "office"
+desc = "Maquetación de revistas, carteles y folletos."
+tags = "maquetación,diseño"
+pacman = "scribus"
+flatpak = "net.scribus.Scribus"
+cmd = "scribus"
+
+[app.foliate]
+name = "Foliate"
+category = "office"
+desc = "Lector de libros electrónicos (EPUB) muy cómodo."
+tags = "lectura,libros"
+pacman = "foliate"
+flatpak = "com.github.johnfactotum.Foliate"
+cmd = "foliate"
+
+[app.ghostwriter]
+name = "Ghostwriter"
+category = "office"
+desc = "Editor de Markdown sin distracciones."
+tags = "escritura,markdown"
+pacman = "ghostwriter"
+flatpak = "org.kde.ghostwriter"
+cmd = "ghostwriter"
+
+[app.manuskript]
+name = "Manuskript"
+category = "office"
+desc = "Herramienta para escribir novelas."
+tags = "escritura"
+flatpak = "ch.theologeek.Manuskript"
+
+[app.simple-scan]
+name = "Escáner (Simple Scan)"
+category = "office"
+desc = "Escanea documentos y fotos."
+tags = "escáner"
+pacman = "simple-scan"
+flatpak = "org.gnome.SimpleScan"
+cmd = "simple-scan"
+
+[app.celluloid]
+name = "Celluloid"
+category = "media"
+desc = "Reproductor de vídeo sencillo basado en mpv."
+tags = "vídeo"
+pacman = "celluloid"
+flatpak = "io.github.celluloid_player.Celluloid"
+cmd = "celluloid"
+
+[app.haruna]
+name = "Haruna"
+category = "media"
+desc = "Reproductor de vídeo de KDE."
+tags = "vídeo"
+pacman = "haruna"
+flatpak = "org.kde.haruna"
+cmd = "haruna"
+
+[app.kodi]
+name = "Kodi"
+category = "media"
+desc = "Centro multimedia para tu salón."
+tags = "vídeo,música,tv"
+pacman = "kodi"
+flatpak = "tv.kodi.Kodi"
+cmd = "kodi"
+
+[app.stremio]
+name = "Stremio"
+category = "media"
+desc = "Películas y series en streaming."
+tags = "vídeo,streaming"
+flatpak = "com.stremio.Stremio"
+
+[app.freetube]
+name = "FreeTube"
+category = "media"
+desc = "YouTube sin anuncios y con privacidad."
+tags = "vídeo,privacidad"
+flatpak = "io.freetubeapp.FreeTube"
+
+[app.rhythmbox]
+name = "Rhythmbox"
+category = "media"
+desc = "Biblioteca de música y radios."
+tags = "música"
+pacman = "rhythmbox"
+flatpak = "org.gnome.Rhythmbox3"
+cmd = "rhythmbox"
+
+[app.strawberry]
+name = "Strawberry"
+category = "media"
+desc = "Reproductor de música para coleccionistas."
+tags = "música"
+pacman = "strawberry"
+flatpak = "org.strawberrymusicplayer.strawberry"
+cmd = "strawberry"
+
+[app.amberol]
+name = "Amberol"
+category = "media"
+desc = "Reproductor de música minimalista."
+tags = "música"
+pacman = "amberol"
+flatpak = "io.bassi.Amberol"
+cmd = "amberol"
+
+[app.shortwave]
+name = "Shortwave"
+category = "media"
+desc = "Miles de emisoras de radio por Internet."
+tags = "radio"
+pacman = "shortwave"
+flatpak = "de.haeckerfelix.Shortwave"
+cmd = "shortwave"
+
+[app.podcasts]
+name = "Podcasts"
+category = "media"
+desc = "Escucha y suscríbete a podcasts."
+tags = "podcasts"
+pacman = "gnome-podcasts"
+flatpak = "org.gnome.Podcasts"
+cmd = "gnome-podcasts"
+
+[app.ardour]
+name = "Ardour"
+category = "media"
+desc = "Estudio de grabación profesional."
+tags = "audio,producción"
+pacman = "ardour"
+flatpak = "org.ardour.Ardour"
+cmd = "ardour"
+
+[app.lmms]
+name = "LMMS"
+category = "media"
+desc = "Crea música con secuenciador y sintetizadores."
+tags = "audio,producción"
+pacman = "lmms"
+flatpak = "io.lmms.LMMS"
+cmd = "lmms"
+
+[app.musescore]
+name = "MuseScore"
+category = "media"
+desc = "Escribe y reproduce partituras."
+tags = "música,partituras"
+pacman = "musescore"
+flatpak = "org.musescore.MuseScore"
+cmd = "mscore"
+
+[app.tenacity]
+name = "Tenacity"
+category = "media"
+desc = "Editor de audio, sucesor de Audacity."
+tags = "audio"
+flatpak = "org.tenacityaudio.Tenacity"
+
+[app.shotcut]
+name = "Shotcut"
+category = "media"
+desc = "Editor de vídeo potente y gratuito."
+tags = "vídeo,edición"
+pacman = "shotcut"
+flatpak = "org.shotcut.Shotcut"
+cmd = "shotcut"
+
+[app.openshot]
+name = "OpenShot"
+category = "media"
+desc = "Editor de vídeo fácil de usar."
+tags = "vídeo,edición"
+pacman = "openshot"
+flatpak = "org.openshot.OpenShot"
+cmd = "openshot-qt"
+
+[app.pitivi]
+name = "Pitivi"
+category = "media"
+desc = "Editor de vídeo sencillo."
+tags = "vídeo,edición"
+pacman = "pitivi"
+flatpak = "org.pitivi.Pitivi"
+cmd = "pitivi"
+
+[app.kooha]
+name = "Kooha"
+category = "media"
+desc = "Graba la pantalla de forma sencilla."
+tags = "grabar pantalla"
+flatpak = "io.github.seadve.Kooha"
+cmd = "kooha"
+
+[app.simplescreenrecorder]
+name = "SimpleScreenRecorder"
+category = "media"
+desc = "Grabador de pantalla con muchas opciones."
+tags = "grabar pantalla"
+pacman = "simplescreenrecorder"
+cmd = "simplescreenrecorder"
+
+[app.cheese]
+name = "Cheese"
+category = "media"
+desc = "Fotos y vídeos con la webcam."
+tags = "cámara"
+pacman = "cheese"
+flatpak = "org.gnome.Cheese"
+cmd = "cheese"
+
+[app.kamoso]
+name = "Kamoso"
+category = "media"
+desc = "Webcam de KDE."
+tags = "cámara"
+pacman = "kamoso"
+flatpak = "org.kde.kamoso"
+cmd = "kamoso"
+
+[app.soundconverter]
+name = "SoundConverter"
+category = "media"
+desc = "Convierte audio entre formatos."
+tags = "audio,conversión"
+pacman = "soundconverter"
+flatpak = "org.soundconverter.SoundConverter"
+cmd = "soundconverter"
+
+[app.easyeffects]
+name = "Easy Effects"
+category = "media"
+desc = "Ecualizador y efectos para todo el sonido."
+tags = "audio,ecualizador"
+pacman = "easyeffects"
+flatpak = "com.github.wwmm.easyeffects"
+cmd = "easyeffects"
+
+[app.plex]
+name = "Plex"
+category = "media"
+desc = "Tu biblioteca de Plex en el escritorio."
+tags = "vídeo,streaming"
+flatpak = "tv.plex.PlexDesktop"
+
+[app.jellyfin]
+name = "Jellyfin Media Player"
+category = "media"
+desc = "Reproductor para tu servidor Jellyfin."
+tags = "vídeo,streaming"
+flatpak = "com.github.iwalton3.jellyfin-media-player"
+
+[app.gwenview]
+name = "Gwenview"
+category = "graphics"
+desc = "Visor de imágenes de KDE."
+tags = "fotos,visor"
+pacman = "gwenview"
+flatpak = "org.kde.gwenview"
+cmd = "gwenview"
+
+[app.digikam]
+name = "digiKam"
+category = "graphics"
+desc = "Gestiona y edita miles de fotos."
+tags = "fotos,biblioteca"
+pacman = "digikam"
+flatpak = "org.kde.digikam"
+cmd = "digikam"
+
+[app.shotwell]
+name = "Shotwell"
+category = "graphics"
+desc = "Organiza tus fotos por fecha y álbum."
+tags = "fotos,biblioteca"
+pacman = "shotwell"
+flatpak = "org.gnome.Shotwell"
+cmd = "shotwell"
+
+[app.rawtherapee]
+name = "RawTherapee"
+category = "graphics"
+desc = "Revelado de fotos RAW."
+tags = "fotos,raw"
+pacman = "rawtherapee"
+flatpak = "com.rawtherapee.RawTherapee"
+cmd = "rawtherapee"
+
+[app.pinta]
+name = "Pinta"
+category = "graphics"
+desc = "Dibujo y retoque sencillo, como Paint.NET."
+tags = "dibujo,retoque"
+pacman = "pinta"
+flatpak = "com.github.PintaProject.Pinta"
+cmd = "pinta"
+
+[app.kolourpaint]
+name = "KolourPaint"
+category = "graphics"
+desc = "Dibujo sencillo, como el Paint de Windows."
+tags = "dibujo"
+pacman = "kolourpaint"
+flatpak = "org.kde.kolourpaint"
+cmd = "kolourpaint"
+
+[app.mypaint]
+name = "MyPaint"
+category = "graphics"
+desc = "Pintura digital con tableta."
+tags = "dibujo,pintura"
+pacman = "mypaint"
+flatpak = "org.mypaint.MyPaint"
+cmd = "mypaint"
+
+[app.drawing]
+name = "Drawing"
+category = "graphics"
+desc = "Dibujo rápido y sencillo."
+tags = "dibujo"
+flatpak = "com.github.maoschanz.drawing"
+cmd = "drawing"
+
+[app.upscayl]
+name = "Upscayl"
+category = "graphics"
+desc = "Amplía imágenes con IA sin perder calidad."
+tags = "fotos,ia"
+flatpak = "org.upscayl.Upscayl"
+
+[app.converseen]
+name = "Converseen"
+category = "graphics"
+desc = "Convierte y redimensiona muchas imágenes a la vez."
+tags = "fotos,conversión"
+flatpak = "net.fasterland.converseen"
+cmd = "converseen"
+
+[app.freecad]
+name = "FreeCAD"
+category = "graphics"
+desc = "Diseño 3D paramétrico para ingeniería."
+tags = "3d,cad"
+pacman = "freecad"
+flatpak = "org.freecad.FreeCAD"
+cmd = "freecad"
+
+[app.librecad]
+name = "LibreCAD"
+category = "graphics"
+desc = "Dibujo técnico 2D (CAD)."
+tags = "cad"
+pacman = "librecad"
+flatpak = "org.librecad.librecad"
+cmd = "librecad"
+
+[app.sweethome3d]
+name = "Sweet Home 3D"
+category = "graphics"
+desc = "Diseña tu casa y amuéblala en 3D."
+tags = "3d,casa"
+pacman = "sweethome3d"
+flatpak = "com.sweethome3d.Sweethome3d"
+cmd = "sweethome3d"
+
+[app.synfig]
+name = "Synfig Studio"
+category = "graphics"
+desc = "Animación 2D."
+tags = "animación"
+pacman = "synfig"
+flatpak = "org.synfig.SynfigStudio"
+cmd = "synfigstudio"
+
+[app.penpot]
+name = "Penpot"
+category = "graphics"
+desc = "Diseño de interfaces y prototipos (como Figma)."
+tags = "diseño,interfaces"
+flatpak = "com.authormore.penpotdesktop"
+
+[app.colorpicker]
+name = "Selector de color (Eyedropper)"
+category = "graphics"
+desc = "Toma colores de cualquier sitio de la pantalla."
+tags = "diseño,color"
+flatpak = "com.github.finefindus.eyedropper"
+
+[app.flameshot]
+name = "Flameshot"
+category = "graphics"
+desc = "Capturas de pantalla con anotaciones."
+tags = "capturas"
+pacman = "flameshot"
+flatpak = "org.flameshot.Flameshot"
+cmd = "flameshot"
+
+[app.codium]
+name = "VSCodium"
+category = "dev"
+desc = "Visual Studio Code sin telemetría."
+tags = "editor,código"
+flatpak = "com.vscodium.codium"
+
+[app.zed]
+name = "Zed"
+category = "dev"
+desc = "Editor de código muy rápido."
+tags = "editor,código"
+pacman = "zed"
+flatpak = "dev.zed.Zed"
+cmd = "zeditor"
+
+[app.kate]
+name = "Kate"
+category = "dev"
+desc = "Editor de texto avanzado de KDE."
+tags = "editor,código"
+pacman = "kate"
+flatpak = "org.kde.kate"
+cmd = "kate"
+
+[app.gnome-builder]
+name = "GNOME Builder"
+category = "dev"
+desc = "Entorno de desarrollo para GNOME."
+tags = "ide"
+pacman = "gnome-builder"
+flatpak = "org.gnome.Builder"
+cmd = "gnome-builder"
+
+[app.intellij]
+name = "IntelliJ IDEA Community"
+category = "dev"
+desc = "Entorno de desarrollo para Java y Kotlin."
+tags = "ide,java"
+pacman = "intellij-idea-community-edition"
+flatpak = "com.jetbrains.IntelliJ-IDEA-Community"
+cmd = "idea"
+
+[app.pycharm]
+name = "PyCharm Community"
+category = "dev"
+desc = "Entorno de desarrollo para Python."
+tags = "ide,python"
+pacman = "pycharm-community-edition"
+flatpak = "com.jetbrains.PyCharm-Community"
+cmd = "pycharm"
+
+[app.androidstudio]
+name = "Android Studio"
+category = "dev"
+desc = "Crea aplicaciones para Android."
+tags = "ide,android"
+flatpak = "com.google.AndroidStudio"
+
+[app.qtcreator]
+name = "Qt Creator"
+category = "dev"
+desc = "Entorno de desarrollo para Qt y C++."
+tags = "ide,c++"
+pacman = "qtcreator"
+flatpak = "io.qt.QtCreator"
+cmd = "qtcreator"
+
+[app.arduino]
+name = "Arduino IDE"
+category = "dev"
+desc = "Programa placas Arduino."
+tags = "electrónica"
+pacman = "arduino-ide"
+flatpak = "cc.arduino.IDE2"
+cmd = "arduino-ide"
+
+[app.thonny]
+name = "Thonny"
+category = "dev"
+desc = "Python para principiantes."
+tags = "python,aprender"
+flatpak = "org.thonny.Thonny"
+cmd = "thonny"
+
+[app.github-desktop]
+name = "GitHub Desktop"
+category = "dev"
+desc = "Git y GitHub con ventanas."
+tags = "git"
+flatpak = "io.github.shiftey.Desktop"
+
+[app.gitg]
+name = "gitg"
+category = "dev"
+desc = "Visor gráfico de repositorios Git."
+tags = "git"
+pacman = "gitg"
+flatpak = "org.gnome.gitg"
+cmd = "gitg"
+
+[app.meld]
+name = "Meld"
+category = "dev"
+desc = "Compara archivos y carpetas."
+tags = "comparar"
+pacman = "meld"
+flatpak = "org.gnome.meld"
+cmd = "meld"
+
+[app.dbeaver]
+name = "DBeaver"
+category = "dev"
+desc = "Gestor universal de bases de datos."
+tags = "bases de datos"
+pacman = "dbeaver"
+flatpak = "io.dbeaver.DBeaverCommunity"
+cmd = "dbeaver"
+
+[app.postman]
+name = "Postman"
+category = "dev"
+desc = "Prueba APIs web."
+tags = "api,web"
+flatpak = "com.getpostman.Postman"
+
+[app.bruno]
+name = "Bruno"
+category = "dev"
+desc = "Cliente de APIs libre y sin cuenta."
+tags = "api,web"
+flatpak = "com.usebruno.Bruno"
+
+[app.podman-desktop]
+name = "Podman Desktop"
+category = "dev"
+desc = "Contenedores con interfaz gráfica."
+tags = "contenedores"
+flatpak = "io.podman_desktop.PodmanDesktop"
+
+[app.boxes]
+name = "Cajas (GNOME Boxes)"
+category = "dev"
+desc = "Máquinas virtuales sin complicaciones."
+tags = "máquinas virtuales"
+pacman = "gnome-boxes"
+flatpak = "org.gnome.Boxes"
+cmd = "gnome-boxes"
+
+[app.virtualbox]
+name = "VirtualBox"
+category = "dev"
+desc = "Máquinas virtuales de Oracle."
+tags = "máquinas virtuales"
+pacman = "virtualbox,virtualbox-host-modules-arch"
+cmd = "virtualbox"
+
+[app.rust]
+name = "Rust"
+category = "dev"
+desc = "Lenguaje Rust y su gestor cargo."
+tags = "lenguaje"
+pacman = "rustup"
+cmd = "rustup"
+
+[app.go]
+name = "Go"
+category = "dev"
+desc = "Lenguaje Go de Google."
+tags = "lenguaje"
+pacman = "go"
+cmd = "go"
+
+[app.jdk]
+name = "Java (OpenJDK)"
+category = "dev"
+desc = "Ejecuta y desarrolla en Java."
+tags = "lenguaje,java"
+pacman = "jdk-openjdk"
+cmd = "java"
+
+[app.heroic]
+name = "Heroic Games Launcher"
+category = "games"
+desc = "Tus juegos de Epic, GOG y Amazon."
+tags = "lanzador"
+flatpak = "com.heroicgameslauncher.hgl"
+
+[app.bottles]
+name = "Bottles"
+category = "games"
+desc = "Ejecuta programas y juegos de Windows."
+tags = "windows,wine"
+flatpak = "com.usebottles.bottles"
+
+[app.prismlauncher]
+name = "Prism Launcher (Minecraft)"
+category = "games"
+desc = "Lanzador de Minecraft con mods."
+tags = "minecraft"
+pacman = "prismlauncher"
+flatpak = "org.prismlauncher.PrismLauncher"
+cmd = "prismlauncher"
+
+[app.retroarch]
+name = "RetroArch"
+category = "games"
+desc = "Emuladores de consolas clásicas."
+tags = "emuladores,retro"
+pacman = "retroarch"
+flatpak = "org.libretro.RetroArch"
+cmd = "retroarch"
+
+[app.dolphin-emu]
+name = "Dolphin (GameCube y Wii)"
+category = "games"
+desc = "Emulador de GameCube y Wii."
+tags = "emuladores"
+pacman = "dolphin-emu"
+flatpak = "org.DolphinEmu.dolphin-emu"
+cmd = "dolphin-emu"
+
+[app.pcsx2]
+name = "PCSX2"
+category = "games"
+desc = "Emulador de PlayStation 2."
+tags = "emuladores"
+flatpak = "net.pcsx2.PCSX2"
+
+[app.ppsspp]
+name = "PPSSPP"
+category = "games"
+desc = "Emulador de PSP."
+tags = "emuladores"
+pacman = "ppsspp"
+flatpak = "org.ppsspp.PPSSPP"
+cmd = "ppsspp"
+
+[app.minetest]
+name = "Luanti (Minetest)"
+category = "games"
+desc = "Mundo de bloques libre, como Minecraft."
+tags = "construcción"
+pacman = "luanti"
+flatpak = "net.minetest.Minetest"
+cmd = "luanti"
+
+[app.0ad]
+name = "0 A.D."
+category = "games"
+desc = "Estrategia histórica en tiempo real."
+tags = "estrategia"
+pacman = "0ad"
+flatpak = "com.play0ad.zeroad"
+cmd = "0ad"
+
+[app.wesnoth]
+name = "Battle for Wesnoth"
+category = "games"
+desc = "Estrategia por turnos de fantasía."
+tags = "estrategia"
+pacman = "wesnoth"
+flatpak = "org.wesnoth.Wesnoth"
+cmd = "wesnoth"
+
+[app.xonotic]
+name = "Xonotic"
+category = "games"
+desc = "Juego de disparos rápido."
+tags = "acción"
+flatpak = "org.xonotic.Xonotic"
+
+[app.veloren]
+name = "Veloren"
+category = "games"
+desc = "Aventura y rol en mundo abierto."
+tags = "rol,aventura"
+flatpak = "net.veloren.airshipper"
+
+[app.chess]
+name = "Ajedrez (GNOME Chess)"
+category = "games"
+desc = "Ajedrez contra el ordenador o amigos."
+tags = "tablero"
+pacman = "gnome-chess"
+flatpak = "org.gnome.Chess"
+cmd = "gnome-chess"
+
+[app.aisleriot]
+name = "Solitarios (AisleRiot)"
+category = "games"
+desc = "Más de 80 solitarios de cartas."
+tags = "cartas"
+pacman = "aisleriot"
+flatpak = "org.gnome.Aisleriot"
+cmd = "sol"
+
+[app.mines]
+name = "Buscaminas"
+category = "games"
+desc = "El clásico buscaminas."
+tags = "clásicos"
+pacman = "gnome-mines"
+flatpak = "org.gnome.Mines"
+cmd = "gnome-mines"
+
+[app.sudoku]
+name = "Sudoku"
+category = "games"
+desc = "Sudokus de todos los niveles."
+tags = "puzles"
+pacman = "gnome-sudoku"
+flatpak = "org.gnome.Sudoku"
+cmd = "gnome-sudoku"
+
+[app.mangohud]
+name = "MangoHud"
+category = "games"
+desc = "Muestra FPS y temperaturas al jugar."
+tags = "rendimiento"
+pacman = "mangohud"
+cmd = "mangohud"
+
+[app.gamemode]
+name = "GameMode"
+category = "games"
+desc = "Más rendimiento mientras juegas (ya en el modo juego de Lily)."
+tags = "rendimiento"
+pacman = "gamemode"
+cmd = "gamemoded"
+
+[app.protonup]
+name = "ProtonUp-Qt"
+category = "games"
+desc = "Instala versiones de Proton y Wine-GE."
+tags = "steam,wine"
+flatpak = "net.davidotek.pupgui2"
+
+[app.geogebra]
+name = "GeoGebra"
+category = "education"
+desc = "Matemáticas: geometría, álgebra y gráficas."
+tags = "matemáticas"
+flatpak = "org.geogebra.GeoGebra"
+
+[app.gcompris]
+name = "GCompris"
+category = "education"
+desc = "Más de 100 actividades para niños."
+tags = "niños"
+pacman = "gcompris-qt"
+flatpak = "org.kde.gcompris"
+cmd = "gcompris-qt"
+
+[app.stellarium]
+name = "Stellarium"
+category = "education"
+desc = "Un planetario en tu ordenador."
+tags = "astronomía"
+pacman = "stellarium"
+flatpak = "org.stellarium.Stellarium"
+cmd = "stellarium"
+
+[app.anki]
+name = "Anki"
+category = "education"
+desc = "Memoriza con tarjetas y repaso espaciado."
+tags = "estudiar,idiomas"
+flatpak = "net.ankiweb.Anki"
+
+[app.kalzium]
+name = "Kalzium"
+category = "education"
+desc = "Tabla periódica interactiva."
+tags = "química"
+pacman = "kalzium"
+flatpak = "org.kde.kalzium"
+cmd = "kalzium"
+
+[app.marble]
+name = "Marble"
+category = "education"
+desc = "Globo terráqueo y mapas."
+tags = "geografía,mapas"
+pacman = "marble"
+flatpak = "org.kde.marble"
+cmd = "marble"
+
+[app.scratch]
+name = "Scratch"
+category = "education"
+desc = "Aprende a programar con bloques."
+tags = "programación,niños"
+flatpak = "edu.mit.Scratch"
+
+[app.tuxtype]
+name = "Tux Typing"
+category = "education"
+desc = "Aprende mecanografía jugando."
+tags = "mecanografía,niños"
+flatpak = "com.tux4kids.tuxtype"
+
+[app.octave]
+name = "GNU Octave"
+category = "education"
+desc = "Cálculo numérico compatible con MATLAB."
+tags = "matemáticas,ciencia"
+pacman = "octave"
+flatpak = "org.octave.Octave"
+cmd = "octave"
+
+[app.zotero]
+name = "Zotero"
+category = "education"
+desc = "Gestiona tus referencias y bibliografía."
+tags = "investigación"
+flatpak = "org.zotero.Zotero"
+
+[app.qgis]
+name = "QGIS"
+category = "education"
+desc = "Sistema de información geográfica."
+tags = "mapas,ciencia"
+pacman = "qgis"
+flatpak = "org.qgis.qgis"
+cmd = "qgis"
+
+[app.filelight]
+name = "Filelight"
+category = "system"
+desc = "Qué ocupa el disco, en un gráfico."
+tags = "disco"
+pacman = "filelight"
+flatpak = "org.kde.filelight"
+cmd = "filelight"
+
+[app.baobab]
+name = "Analizador de disco"
+category = "system"
+desc = "Qué carpetas ocupan más."
+tags = "disco"
+pacman = "baobab"
+flatpak = "org.gnome.baobab"
+cmd = "baobab"
+
+[app.impression]
+name = "Impression"
+category = "system"
+desc = "Graba ISOs en memorias USB."
+tags = "usb,arranque"
+flatpak = "io.gitlab.adhami3310.Impression"
+
+[app.mission-center]
+name = "Mission Center"
+category = "system"
+desc = "Monitor del sistema al estilo de Windows."
+tags = "monitor"
+flatpak = "io.missioncenter.MissionCenter"
+cmd = "missioncenter"
+
+[app.cpu-x]
+name = "CPU-X"
+category = "system"
+desc = "Detalles del procesador, placa y memoria (como CPU-Z)."
+tags = "hardware"
+pacman = "cpu-x"
+flatpak = "io.github.thetumultuousunicornofdarkness.cpu-x"
+cmd = "cpu-x"
+
+[app.deja-dup]
+name = "Copias (Déjà Dup)"
+category = "system"
+desc = "Copias de seguridad sencillas."
+tags = "copias"
+pacman = "deja-dup"
+flatpak = "org.gnome.DejaDup"
+cmd = "deja-dup"
+
+[app.kdeconnect]
+name = "KDE Connect"
+category = "system"
+desc = "El móvil y el ordenador conectados."
+tags = "móvil"
+pacman = "kdeconnect"
+cmd = "kdeconnect-app"
+
+[app.warehouse]
+name = "Warehouse"
+category = "system"
+desc = "Gestiona tus apps de Flatpak."
+tags = "flatpak"
+flatpak = "io.github.flattool.Warehouse"
+
+[app.gearlever]
+name = "Gear Lever"
+category = "system"
+desc = "Integra AppImages en el menú."
+tags = "appimage"
+flatpak = "it.mijorus.gearlever"
+
+[app.veracrypt]
+name = "VeraCrypt"
+category = "system"
+desc = "Cifra discos y carpetas."
+tags = "seguridad,cifrado"
+pacman = "veracrypt"
+cmd = "veracrypt"
+
+[app.wireshark]
+name = "Wireshark"
+category = "system"
+desc = "Analiza el tráfico de la red."
+tags = "red"
+pacman = "wireshark-qt"
+cmd = "wireshark"
+
+[app.cups-config]
+name = "Impresoras (system-config-printer)"
+category = "system"
+desc = "Añade y configura impresoras."
+tags = "impresoras"
+pacman = "system-config-printer"
+cmd = "system-config-printer"
+
+[app.ark]
+name = "Ark"
+category = "utility"
+desc = "Comprime y descomprime ZIP, RAR, 7z y más."
+tags = "comprimir"
+pacman = "ark"
+flatpak = "org.kde.ark"
+cmd = "ark"
+
+[app.peazip]
+name = "PeaZip"
+category = "utility"
+desc = "Compresor con muchos formatos."
+tags = "comprimir"
+flatpak = "io.github.peazip.PeaZip"
+
+[app.spectacle]
+name = "Spectacle"
+category = "utility"
+desc = "Capturas de pantalla de KDE."
+tags = "capturas"
+pacman = "spectacle"
+flatpak = "org.kde.spectacle"
+cmd = "spectacle"
+
+[app.kcalc]
+name = "Calculadora (KCalc)"
+category = "utility"
+desc = "Calculadora científica."
+tags = "calculadora"
+pacman = "kcalc"
+flatpak = "org.kde.kcalc"
+cmd = "kcalc"
+
+[app.qalculate]
+name = "Qalculate!"
+category = "utility"
+desc = "Calculadora potentísima, con unidades y monedas."
+tags = "calculadora"
+pacman = "qalculate-qt"
+flatpak = "io.github.Qalculate.qalculate-qt"
+cmd = "qalculate-qt"
+
+[app.dialect]
+name = "Dialect"
+category = "utility"
+desc = "Traductor de textos."
+tags = "traductor,idiomas"
+pacman = "dialect"
+flatpak = "app.drey.Dialect"
+cmd = "dialect"
+
+[app.clocks]
+name = "Relojes"
+category = "utility"
+desc = "Alarmas, temporizador y relojes del mundo."
+tags = "tiempo"
+pacman = "gnome-clocks"
+flatpak = "org.gnome.clocks"
+cmd = "gnome-clocks"
+
+[app.weather]
+name = "Tiempo"
+category = "utility"
+desc = "El tiempo de tu ciudad."
+tags = "tiempo"
+pacman = "gnome-weather"
+flatpak = "org.gnome.Weather"
+cmd = "gnome-weather"
+
+[app.charmap]
+name = "Mapa de caracteres"
+category = "utility"
+desc = "Busca e inserta símbolos y emoji."
+tags = "texto"
+pacman = "gucharmap"
+cmd = "gucharmap"
+
+[app.fsearch]
+name = "FSearch"
+category = "utility"
+desc = "Busca archivos al instante."
+tags = "buscar"
+flatpak = "io.github.cboxdoerfer.FSearch"
+cmd = "fsearch"
+
+[app.localsend]
+name = "LocalSend"
+category = "utility"
+desc = "Envía archivos al móvil o a otro PC por la red."
+tags = "compartir,móvil"
+flatpak = "org.localsend.localsend_app"
+
+[app.warpinator]
+name = "Warpinator"
+category = "utility"
+desc = "Comparte archivos en tu red local."
+tags = "compartir"
+flatpak = "org.x.Warpinator"
+cmd = "warpinator"
+
+[app.metadata-cleaner]
+name = "Metadata Cleaner"
+category = "utility"
+desc = "Borra los datos ocultos de tus archivos."
+tags = "privacidad"
+flatpak = "fr.romainvigier.MetadataCleaner"
+
+[app.pdfarranger]
+name = "PDF Arranger"
+category = "utility"
+desc = "Une, separa y gira páginas de PDF."
+tags = "pdf"
+pacman = "pdfarranger"
+flatpak = "com.github.jeromerobert.pdfarranger"
+cmd = "pdfarranger"
+
+[app.textpieces]
+name = "Text Pieces"
+category = "utility"
+desc = "Transforma texto: Base64, JSON, mayúsculas…"
+tags = "texto"
+flatpak = "io.gitlab.liferooter.TextPieces"
+
+[app.authenticator]
+name = "Authenticator"
+category = "utility"
+desc = "Códigos de verificación en dos pasos."
+tags = "seguridad,contraseñas"
+flatpak = "com.belmoussaoui.Authenticator"
+
+[app.pika]
+name = "Pika Backup"
+category = "utility"
+desc = "Copias de seguridad sencillas y cifradas."
+tags = "copias"
+pacman = "pika-backup"
+flatpak = "org.gnome.World.PikaBackup"
+cmd = "pika-backup"

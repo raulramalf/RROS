@@ -258,9 +258,11 @@ Item {
             radius: 2
             color: dm.containsMouse ? Th.hover : "transparent"
             Rectangle { color: Th.edge; x: tb.v ? 4 : 0; y: tb.v ? 0 : 4; width: tb.v ? parent.width - 8 : 1; height: tb.v ? 1 : parent.height - 8 }
+            Accessible.role: Accessible.Button
+            Accessible.name: "Mostrar el escritorio"
             MouseArea {
                 id: dm; anchors.fill: parent; hoverEnabled: true
-                onClicked: Sh.detached(["qdbus6", "org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component.invokeShortcut", "Show Desktop"])
+                onClicked: Tk.showDesktop()
             }
         }
     }

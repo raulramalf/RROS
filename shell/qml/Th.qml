@@ -18,7 +18,7 @@ QtObject {
     property color glassStrong: rgba(pal.surface, dark ? 0.94 : 0.97)
     // barra de tareas translúcida sobre el desenfoque de KWin, así toma el tono del fondo; sin efectos (Lite o una
     // gráfica sin aceleración) no hay desenfoque y va casi opaca para que se lea bien
-    property color barColor: rgba(pal.surface, v("ui.effects", "basic") === "off" ? (dark ? 0.92 : 0.94) : (dark ? 0.68 : 0.74))
+    property color barColor: rgba(pal.surface, v("ui.effects", "basic") === "off" || soft ? (dark ? 0.92 : 0.94) : (dark ? 0.68 : 0.74))
     property color edge: dark ? Qt.rgba(1, 1, 1, 0.12) : rgba(pal.text, 0.16)
     property color hover: rgba(pal.text, dark ? 0.10 : 0.08)
     property color pressed: rgba(pal.text, dark ? 0.16 : 0.13)
@@ -69,7 +69,9 @@ QtObject {
     property bool taskbar: false
     property bool clock24: b("ui.clock_24h", true)
     property bool batteryPct: b("ui.show_battery_percent", true)
-    property bool animations: b("ui.animations", true) && v("ui.effects", "basic") !== "off"
+    // sin aceleración gráfica (máquina virtual sin 3D) todo lo dibuja la CPU: fuera animaciones, escenas y cristal
+    readonly property bool soft: Sh.softRender
+    property bool animations: b("ui.animations", true) && v("ui.effects", "basic") !== "off" && !soft
     property int anim: animations ? 180 : 0
     property string wallpaper: "/usr/share/wallpapers/Lily/lirio.jpg"
     property string wallpaperVideo: v("ui.wallpaper_video", "")

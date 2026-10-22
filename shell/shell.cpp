@@ -8,6 +8,9 @@
 #include <QGuiApplication>
 #include <QIcon>
 #include <QJSEngine>
+#include <QOffscreenSurface>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
 #include <QProcess>
 #include <QQmlEngine>
 #include <QQuickWindow>
@@ -40,6 +43,36 @@ bool Shell::live() const
 {
 	QFile cmd(QStringLiteral("/proc/cmdline"));
 	return cmd.open(QIODevice::ReadOnly) && cmd.readAll().contains("archisobasedir");
+}
+
+bool Shell::softRender() const
+{
+	return detectSoftRender();
+}
+
+bool Shell::detectSoftRender()
+{
+	// RROS_SOFT_RENDER=1|0 lo fuerza (pruebas); si no, se mira qué dibuja OpenGL: llvmpipe/softpipe son la CPU
+	static int cached = -1;
+	if (cached < 0) {
+		const QByteArray e = qgetenv("RROS_SOFT_RENDER");
+		if (!e.isEmpty()) {
+			cached = e == "1";
+		} else {
+			cached = 0;
+			QOpenGLContext ctx;
+			QOffscreenSurface surf;
+			surf.create();
+			if (ctx.create() && ctx.makeCurrent(&surf)) {
+				const QByteArray r = reinterpret_cast<const char *>(ctx.functions()->glGetString(GL_RENDERER));
+				cached = r.contains("llvmpipe") || r.contains("softpipe") || r.contains("Software Rasterizer");
+				ctx.doneCurrent();
+			} else {
+				cached = 1;   // sin OpenGL: Qt dibuja por software
+			}
+		}
+	}
+	return cached == 1;
 }
 
 bool Shell::layerShell() const

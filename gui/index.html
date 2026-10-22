@@ -1,4 +1,4 @@
-<title>RROS Ajustes</title>
+<title>Lily Ajustes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -219,7 +219,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
 
 <div class="app">
   <aside>
-    <div class="brand">RROS Ajustes<small id="ver"></small></div>
+    <div class="brand">Lily Ajustes<small id="ver"></small></div>
     <nav id="nav" aria-label="Secciones"></nav>
   </aside>
   <main>
@@ -269,7 +269,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
   }
   function api(path, body) {
     if (window.RROS_MOCK) return Promise.resolve(window.RROS_MOCK(path, body));
-    var opt = { headers: { "X-RROS-Token": TOKEN } };
+    var opt = { headers: { "X-Lily-Token": TOKEN } };
     if (body) {
       opt.method = "POST";
       opt.headers["Content-Type"] = "application/x-www-form-urlencoded";
@@ -341,7 +341,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     }
     nav.appendChild(h("div", { class: "grp", text: "Empezar" }));
     item("welcome", "Bienvenida");
-    if (S.live) item("install", "Instalar RROS");
+    if (S.live) item("install", "Instalar Lily");
     nav.appendChild(h("div", { class: "grp", text: "Apariencia" }));
     item("desktop", "Escritorio y fondo");
     item("themes", "Temas y colores");
@@ -510,13 +510,13 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     ["tiling", "Mosaico", "Las ventanas se reparten la pantalla solas; rápido con el teclado y sin solaparse."],
     ["hybrid", "Pestañas", "Cada ventana ocupa todo el escritorio y cambias entre ellas como en un navegador."]];
   function drawWelcome(root) {
-    root.appendChild(h("h1", { text: "Bienvenido a RROS" }));
+    root.appendChild(h("h1", { text: "Bienvenido a Lily" }));
     root.appendChild(h("p", { class: "sub", text: "Tres cosas para empezar: cómo quieres las ventanas, los atajos básicos y dónde está cada cosa. Vuelve aquí cuando quieras con Super + F1 (Super es la tecla de Windows)." }));
     if (S.live) {
       root.appendChild(h("div", { class: "card", style: "padding:16px;margin-bottom:16px" },
-        h("b", { text: "Estás probando RROS sin instalar" }),
+        h("b", { text: "Estás probando Lily sin instalar" }),
         h("p", { class: "sub", style: "margin:4px 0 10px", text: "Nada se guarda al apagar. Cuando quieras, instálalo en el disco (puede convivir con Windows)." }),
-        h("button", { class: "btn", type: "button", text: "Instalar RROS", onclick: function () { go("install"); } })));
+        h("button", { class: "btn", type: "button", text: "Instalar Lily", onclick: function () { go("install"); } })));
     }
     root.appendChild(h("h2", { text: "Elige tu escritorio" }));
     drawDesktopStyles(root);
@@ -607,9 +607,9 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     root.appendChild(bar);
   }
   function drawInstall(root) {
-    root.appendChild(h("h1", { text: "Instalar RROS" }));
+    root.appendChild(h("h1", { text: "Instalar Lily" }));
     if (!S.live) {
-      root.appendChild(h("p", { class: "sub", text: "RROS ya está instalado en este equipo. El instalador solo está en el sistema live (la ISO o la memoria USB)." }));
+      root.appendChild(h("p", { class: "sub", text: "Lily ya está instalado en este equipo. El instalador solo está en el sistema live (la ISO o la memoria USB)." }));
       return;
     }
     if (INS.status === null) {
@@ -618,7 +618,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
       return;
     }
     if (INS.step === "progress") return drawInstallProgress(root);
-    root.appendChild(h("p", { class: "sub", text: "Cuatro pasos y RROS queda en el disco. Puede ir junto a Windows (en el espacio libre) y cifrado. Mientras instalas puedes seguir usando el sistema." }));
+    root.appendChild(h("p", { class: "sub", text: "Cuatro pasos y Lily queda en el disco. Puede ir junto a Windows (en el espacio libre) y cifrado. Mientras instalas puedes seguir usando el sistema." }));
     var ol = h("ol", { class: "steps", "aria-label": "Pasos" });
     INS_STEPS.forEach(function (n, i) { ol.appendChild(h("li", { class: i === INS.step ? "on" : i < INS.step ? "done" : "", "aria-current": i === INS.step ? "step" : null, text: (i + 1) + ". " + n })); });
     root.appendChild(ol);
@@ -650,7 +650,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     var D = INS.disks;
     root.appendChild(h("div", { class: "wrapline", style: "margin-bottom:12px" },
       h("span", { class: "pill", text: "Arranque: " + (D.firmware === "uefi" ? "UEFI" : "BIOS (antiguo)") }),
-      h("span", { class: "pill", text: "RROS " + D.profile + " necesita " + (D.min_mb / 1024).toFixed(0) + " GB" }),
+      h("span", { class: "pill", text: "Lily " + D.profile + " necesita " + (D.min_mb / 1024).toFixed(0) + " GB" }),
       h("button", { class: "btn ghost small", type: "button", text: "Volver a buscar", onclick: function () { INS.disks = null; drawPage(); } })));
     if (D.error) root.appendChild(h("div", { class: "empty", text: D.error }));
     if (!D.disks.length && !D.error) root.appendChild(h("div", { class: "empty", text: "No hay ningún disco donde instalar." }));
@@ -670,7 +670,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
         return h("label", { class: "opt" + (why ? " off" : ""), for: id }, r, h("span", null, h("b", { text: label }), why ? h("small", { text: why }) : null));
       }
       card.appendChild(opt("alongside", d.systems ? "Instalar junto a " + d.systems + " (en el espacio libre, sin borrar nada)" : "Instalar en el espacio libre (sin borrar nada)", d.alongside));
-      card.appendChild(opt("wipe", "Borrar todo el disco e instalar RROS", d.wipe));
+      card.appendChild(opt("wipe", "Borrar todo el disco e instalar Lily", d.wipe));
       if (d.windows && d.alongside && /espacio libre/.test(d.alongside))
         card.appendChild(h("p", { class: "sub", style: "margin:8px 0 0", text: "Para instalar junto a Windows, libera antes espacio desde Windows: Administración de discos → clic derecho en (C:) → Reducir volumen. Deja al menos " + (D.min_mb / 1024).toFixed(0) + " GB sin asignar, reinicia con esta memoria y vuelve aquí." }));
       if (d.bitlocker) card.appendChild(h("p", { class: "sub", style: "margin:8px 0 0", text: "Windows usa BitLocker: ten a mano su clave de recuperación (cuenta Microsoft → Dispositivos); puede pedirla la primera vez que arranques Windows." }));
@@ -741,7 +741,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     if (st.done && st.ok) pct = 100;
     var box = h("div", { class: "card pad", id: "ins-progress" });
     if (st.done && st.ok) {
-      box.appendChild(h("b", { text: "RROS está instalado" }));
+      box.appendChild(h("b", { text: "Lily está instalado" }));
       box.appendChild(h("p", { class: "sub", style: "margin:4px 0 10px", text: "Reinicia y quita la memoria USB (o la ISO) cuando se apague la pantalla." + (INS.f.encrypt ? " Al encender te pedirá la contraseña del cifrado." : "") }));
       box.appendChild(h("button", { class: "btn", type: "button", text: "Reiniciar ahora", onclick: function () { api("/api/reboot", {}).then(function (r) { if (!r.ok) toast(r.error, true); }); } }));
     } else if (st.done) {
@@ -811,7 +811,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     if (key !== wpKey) { WP_THUMB = {}; wpKey = key; }
     function show(url) { box.style.background = "center/cover no-repeat url(" + url + ")"; }
     if (WP_THUMB[style]) show(WP_THUMB[style]);
-    else fetch("/api/wallpaper_preview?style=" + style, { headers: { "X-RROS-Token": TOKEN } }).then(function (r) { return r.ok ? r.blob() : null; })
+    else fetch("/api/wallpaper_preview?style=" + style, { headers: { "X-Lily-Token": TOKEN } }).then(function (r) { return r.ok ? r.blob() : null; })
       .then(function (b) { if (b) { WP_THUMB[style] = URL.createObjectURL(b); show(WP_THUMB[style]); } }).catch(function () {});
     return box;
   }
@@ -820,7 +820,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     "ui.layout", "ui.tiling_layout", "ui.workspaces", "ui.dock", "input.gestures", "ui.panel_position", "panel.style", "ui.panel_size", "panel.taskbar"];
   function drawDesktop(root) {
     root.appendChild(h("h1", { text: "Escritorio y fondo" }));
-    root.appendChild(h("p", { class: "sub", text: "El escritorio de RROS es Hyprland: animaciones, esquinas redondeadas, desenfoque y sombras, con barra de tareas y fondo. Si el equipo no tiene aceleración gráfica (máquinas virtuales), se usa sway, más sencillo, con los mismos ajustes." }));
+    root.appendChild(h("p", { class: "sub", text: "El escritorio de Lily es Hyprland: animaciones, esquinas redondeadas, desenfoque y sombras, con barra de tareas y fondo. Si el equipo no tiene aceleración gráfica (máquinas virtuales), se usa sway, más sencillo, con los mismos ajustes." }));
     root.appendChild(h("h2", { text: "Estilo" }));
     drawDesktopStyles(root);
     root.appendChild(h("h2", { text: "Fondo de pantalla" }));
@@ -844,7 +844,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     var rows2 = h("div", { class: "card rows" });
     DESK_KEYS.forEach(function (k) { var o = keyObj(k); if (o) rows2.appendChild(settingRow(o)); });
     root.appendChild(rows2);
-    root.appendChild(h("p", { class: "sub", text: "¿Algo que no esté aquí? Tus propias líneas de Hyprland van en ~/.config/hypr/personal.conf (RROS no lo toca)." }));
+    root.appendChild(h("p", { class: "sub", text: "¿Algo que no esté aquí? Tus propias líneas de Hyprland van en ~/.config/hypr/personal.conf (Lily no lo toca)." }));
   }
 
   /* ---------- accesibilidad ---------- */
@@ -1107,7 +1107,7 @@ pre.log { font-family: var(--font-mono); font-size: 11.5px; background: var(--su
     d.style.cssText = "--p-bg:" + p.bg + ";--p-surface:" + p.surface + ";--p-text:" + p.text + ";--p-muted:" + p.muted + ";--p-border:" + p.border + ";--p-accent:" + p.accent + ";--p-green:" + p.green +
       ";--gap:" + val("ui.gap", 8) + "px;--bw:" + val("ui.border_width", 2) + "px;--rad:" + (full ? val("ui.corner_radius", 8) : 0) + "px";
     var ws = h("div", { class: "ws" }); [1, 2, 3, 4].forEach(function (i) { ws.appendChild(h("i", { class: i === 1 ? "on" : "", text: String(i) })); });
-    d.appendChild(h("div", { class: "panel" }, ws, h("span", { text: "12:30" }), h("span", { class: "pf", text: "RROS " + S.profile })));
+    d.appendChild(h("div", { class: "panel" }, ws, h("span", { text: "12:30" }), h("span", { class: "pf", text: "Lily " + S.profile })));
     d.appendChild(h("div", { class: "area" },
       h("div", { class: "w f" }, h("div", { class: "t", text: "foot — terminal" }), h("div", { class: "c" }, h("span", { class: "a", text: "rros ~ ➜ rros theme list" }), h("span", { class: "g", text: "* " + S.current.theme }), h("span", { class: "m", text: "  nord  dracula  gruvbox…" }))),
       h("div", { class: "w" }, h("div", { class: "t", text: "ajustes" }), h("div", { class: "c" }, h("span", { text: "ui.gap = " + val("ui.gap", 8) }), h("span", { class: "m", text: "esquinas " + (full ? val("ui.corner_radius", 8) + " px" : "rectas (sway)") })))));

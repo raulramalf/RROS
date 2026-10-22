@@ -19,6 +19,8 @@ font_mono = "JetBrains Mono"
 font_size = 10
 scale = 100
 wallpaper_style = "ondas"
+# fondo de imagen de Lily (si falta el archivo, se usa el generado con wallpaper_style)
+wallpaper = "/usr/share/wallpapers/Lily/lirio.jpg"
 wallpaper_video = ""
 wallpaper_live = "petalos"
 wallpaper_pause_battery = true
@@ -36,7 +38,7 @@ workspaces = 4
 hot_corners = true
 # estilo «rros» (Fusión): barra de tareas abajo de borde a borde, siempre visible, con inicio, buscador,
 # las aplicaciones en el centro, la bandeja y el reloj (el dock 3D, en el estilo Dock)
-cursor_theme = "RROS-Lirio"
+cursor_theme = "Lily-Lirio"
 taskbar_style = "rros"
 taskbar_align = "auto"
 taskbar_size = 52

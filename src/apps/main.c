@@ -1,4 +1,4 @@
-/* rros-apps: tienda de aplicaciones de RROS (pacman o apt, según la base, y Flatpak). Nunca usa una shell.
+/* rros-apps: tienda de aplicaciones de Lily (pacman o apt, según la base, y Flatpak). Nunca usa una shell.
  * RROS_PKG=pacman|apt fuerza el gestor de paquetes (pruebas). */
 #include <ctype.h>
 #include <errno.h>
@@ -703,7 +703,7 @@ static int cmd_search_all(const char *q)
 		return 2;
 	}
 	putchar('[');
-	/* primero lo del catálogo de RROS (probado), luego Flathub y luego los repositorios de Arch */
+	/* primero lo del catálogo de Lily (probado), luego Flathub y luego los repositorios de Arch */
 	for (size_t i = 0; i < napps; i++) {
 		const struct app *a = &apps[i];
 

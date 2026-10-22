@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Escribe la identidad de RROS en un rootfs: os-release, lsb-release, issue.
+# Escribe la identidad de Lily en un rootfs: os-release, lsb-release, issue.
 # uso: apply-identity.sh RAIZ PERFIL [BASE]   (BASE: ubuntu, por defecto, o arch)
 # En Arch os-release pertenece al paquete «filesystem»: aquí solo se guarda /etc/rros/identity y lo
 # escribe /usr/libexec/rros-arch-setup (hook de pacman) tras instalar o actualizar paquetes.
@@ -44,11 +44,11 @@ UBUNTU_CODENAME=noble
 OSR
 fi
 cat > "$root/etc/lsb-release" <<LSB
-DISTRIB_ID=RROS
+DISTRIB_ID=Lily
 DISTRIB_RELEASE=$version
 DISTRIB_CODENAME=${codename,,}
-DISTRIB_DESCRIPTION="RROS $version ($codename)"
+DISTRIB_DESCRIPTION="Lily $version ($codename)"
 LSB
-printf 'RROS %s (%s) \\n \\l\n\n' "$version" "$codename" > "$root/etc/issue"
-printf 'RROS %s (%s)\n' "$version" "$codename" > "$root/etc/issue.net"
-echo "rros-$profile" > "$root/etc/hostname"
+printf 'Lily %s (%s) \\n \\l\n\n' "$version" "$codename" > "$root/etc/issue"
+printf 'Lily %s (%s)\n' "$version" "$codename" > "$root/etc/issue.net"
+echo "lily-$profile" > "$root/etc/hostname"

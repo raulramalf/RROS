@@ -327,7 +327,7 @@ QPixmap IconProvider::requestPixmap(const QString &id, QSize *size, const QSize 
 		icon = QIcon::fromTheme(id);
 	if (icon.isNull())
 		icon = QIcon::fromTheme(id.toLower());
-	// los iconos de RROS van también dentro del programa (sin tema instalado: pruebas)
+	// los iconos de Lily van también dentro del programa (sin tema instalado: pruebas)
 	if (icon.isNull()) {
 		static const QHash<QString, QString> own{ { QStringLiteral("rros"), QStringLiteral("app-rros") },
 							  { QStringLiteral("rros-settings"), QStringLiteral("app-ajustes") },

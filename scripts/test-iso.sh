@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Arranca la ISO de RROS en QEMU y comprueba que el sistema funciona.
+# Arranca la ISO de Lily en QEMU y comprueba que el sistema funciona.
 #   test-iso.sh PERFIL selftest     arranque por consola serie con el autotest (rros.selftest)
 #   test-iso.sh PERFIL install      instala en un disco virtual (rros.installtest), arranca desde él y pasa el autotest
 #   test-iso.sh PERFIL screenshot   arranca con GRUB y guarda una captura del escritorio
@@ -7,7 +7,7 @@
 #            COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
 #   En screenshot: FIRMWARE=bios|uefi|secboot (secboot = UEFI con Secure Boot y las claves de Microsoft,
 #   como un PC con Windows) y MEDIA=cd|usb (la ISO grabada en una memoria USB)
-#   BASE=arch para la ISO de Arch (ISO=build/rros-arch-PERFIL.iso)
+#   BASE=arch para la ISO de Arch (ISO=build/lily-PERFIL.iso)
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
 
@@ -90,7 +90,7 @@ verdict() {   # verdict LOG MARCA QUÉ
 	if grep -aq "${2}_OK" "$1"; then
 		log "$3: CORRECTO"
 	else
-		# la consola sin el ruido de systemd al arrancar y apagar: quedan los errores y lo de RROS
+		# la consola sin el ruido de systemd al arrancar y apagar: quedan los errores y lo de Lily
 		echo "--- consola serie (sin las líneas de estado de systemd) ---"
 		tr -d '\r' < "$1" | grep -av -E '\[ *(OK|DEPEND) *\]|^ *(Starting|Stopping|Unmounting|Mounting) ' | tail -n 150
 		die "$3: falló o no terminó (mira $1)"

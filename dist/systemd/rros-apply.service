@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS: aplicar perfil y ajustes (swap, zram, disco, red, servicios, seguridad)
+Description=Lily: aplicar perfil y ajustes (swap, zram, disco, red, servicios, seguridad)
 After=rros-firstboot.service local-fs.target
 ConditionPathExists=/etc/rros/profile
 

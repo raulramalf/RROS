@@ -1,9 +1,9 @@
 /* rros-new: crea archivos y proyectos a partir de plantillas.
  *   rros-new                                  asistente (elige plantilla, nombre y carpeta)
- *   rros-new lista                            plantillas disponibles (de RROS y tuyas)
+ *   rros-new lista                            plantillas disponibles (de Lily y tuyas)
  *   rros-new PLANTILLA NOMBRE [--dir CARPETA] [--force] [--abrir]
  *   rros-new exportar CARPETA                 copia las plantillas a una carpeta (p. ej. ~/Plantillas)
- * Plantillas de RROS: $RROS_TEMPLATES_DIR o /usr/share/rros/templates (plantillas.toml).
+ * Plantillas de Lily: $RROS_TEMPLATES_DIR o /usr/share/rros/templates (plantillas.toml).
  * Plantillas tuyas: cualquier archivo de tu carpeta de plantillas (XDG_TEMPLATES_DIR, ~/Plantillas). */
 #include <dirent.h>
 #include <errno.h>
@@ -126,7 +126,7 @@ static void load(void)
 	}
 	rros_conf_free(&c);
 
-	/* plantillas del usuario (las que ya son de RROS, copiadas por exportar, no se repiten) */
+	/* plantillas del usuario (las que ya son de Lily, copiadas por exportar, no se repiten) */
 	find_userdir();
 	{
 		DIR *d = opendir(userdir);
@@ -419,7 +419,7 @@ static void list_json(void)
 
 static void list(void)
 {
-	printf("Plantillas de RROS (rros-new PLANTILLA NOMBRE):\n");
+	printf("Plantillas de Lily (rros-new PLANTILLA NOMBRE):\n");
 	for (int i = 0; i < ntpl; i++) {
 		if (tpls[i].user)
 			continue;

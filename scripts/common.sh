@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
-# Funciones comunes de los scripts de build de RROS.
+# Funciones comunes de los scripts de build de Lily.
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)

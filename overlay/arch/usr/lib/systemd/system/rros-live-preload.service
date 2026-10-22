@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS: lee de antemano las aplicaciones del sistema live (más rápidas al abrirlas)
+Description=Lily: lee de antemano las aplicaciones del sistema live (más rápidas al abrirlas)
 ConditionKernelCommandLine=archisobasedir
 After=graphical.target
 

@@ -254,7 +254,7 @@ int rros_theme_new(const char *name, const char *base, char *err, size_t en)
 		snprintf(err, en, "no se pudo crear %s", path);
 		return -1;
 	}
-	fprintf(f, "# Tema propio de RROS. Cambia los colores (#RRGGBB) y aplica con: rros theme use %s\n", name);
+	fprintf(f, "# Tema propio de Lily. Cambia los colores (#RRGGBB) y aplica con: rros theme use %s\n", name);
 	fprintf(f, "# Lo que no definas se hereda de '%s'.\n[theme]\nbase = \"%s\"\n\n", base, base);
 #define V(k) fprintf(f, "%s = \"%s\"\n", #k, dark.k)
 	fputs("[colors.dark]\n", f);

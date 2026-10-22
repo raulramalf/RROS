@@ -2,7 +2,7 @@
 
 ## 1. En una máquina virtual (VirtualBox, QEMU, GNOME Boxes)
 Descarga la ISO de la última ejecución en verde del workflow **Arch** (pestaña *Actions* → *Artifacts* →
-`rros-arch-lite-iso`, un .zip con la ISO; hay que haber iniciado sesión en GitHub). Para Standard o Pro: *Run
+`lily-lite-iso`, un .zip con la ISO; hay que haber iniciado sesión en GitHub). Para Standard o Pro: *Run
 workflow* y elige la edición.
 
 **VirtualBox**

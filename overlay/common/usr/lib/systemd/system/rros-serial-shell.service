@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS depuración: consola de administrador en el puerto serie (solo con rros.serialshell)
+Description=Lily depuración: consola de administrador en el puerto serie (solo con rros.serialshell)
 ConditionKernelCommandLine=rros.serialshell
 Conflicts=serial-getty@ttyS0.service
 After=systemd-user-sessions.service

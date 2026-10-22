@@ -174,7 +174,7 @@ void rros_hex_rgb(const char *hex, int *r, int *g, int *b)
 /* ---- estilos de escritorio ---- */
 
 const struct rros_desktop_preset rros_desktop_presets[] = {
-	{ "rros", "Fusión", "La de RROS: barra de tareas abajo, de borde a borde y siempre visible, con el botón de inicio, "
+	{ "rros", "Fusión", "La de Lily: barra de tareas abajo, de borde a borde y siempre visible, con el botón de inicio, "
 	  "el buscador, tus aplicaciones en el centro, la bandeja y el reloj. Las ventanas no quedan debajo.",
 	  { { "ui.taskbar_style", "rros" }, { "ui.taskbar_align", "auto" }, { "ui.taskbar_labels", "false" },
 	    { "ui.taskbar_search", "true" }, { "ui.dock_hiding", "never" }, { "ui.global_menu", "false" } } },
@@ -184,7 +184,7 @@ const struct rros_desktop_preset rros_desktop_presets[] = {
 	{ "isla", "Isla", "Barra de tareas flotante y redondeada, separada del borde, con las aplicaciones en el centro.",
 	  { { "ui.taskbar_style", "isla" }, { "ui.taskbar_align", "auto" }, { "ui.taskbar_labels", "false" },
 	    { "ui.taskbar_search", "false" }, { "ui.global_menu", "false" } } },
-	{ "moderno", "Dock", "Barra fina arriba con el menú RROS, la aplicación activa, la bandeja y el reloj, y un dock abajo "
+	{ "moderno", "Dock", "Barra fina arriba con el menú Lily, la aplicación activa, la bandeja y el reloj, y un dock abajo "
 	  "(2D o 3D) con tus aplicaciones y el Launchpad.",
 	  { { "ui.taskbar_style", "dock" }, { "ui.dock", "true" }, { "ui.dock_position", "bottom" },
 	    { "ui.dock_hiding", "never" }, { "ui.panel_position", "top" }, { "panel.style", "flat" } } },

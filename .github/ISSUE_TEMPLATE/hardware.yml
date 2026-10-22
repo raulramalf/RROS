@@ -1,12 +1,12 @@
 name: Informe de hardware
-description: Cuenta cómo funciona RROS en tu PC (live o instalado). Sirve aunque todo vaya bien.
+description: Cuenta cómo funciona Lily en tu PC (live o instalado). Sirve aunque todo vaya bien.
 title: "[hardware] Marca y modelo del equipo"
 labels: ["hardware"]
 body:
   - type: markdown
     attributes:
       value: |
-        Gracias por probar RROS en un equipo real. La guía está en [docs/PROBAR-EN-PC.md](https://github.com/raulramalf/RROS/blob/main/docs/PROBAR-EN-PC.md).
+        Gracias por probar Lily en un equipo real. La guía está en [docs/PROBAR-EN-PC.md](https://github.com/raulramalf/RROS/blob/main/docs/PROBAR-EN-PC.md).
         Abre una terminal (Super + Intro), ejecuta `rros informe` y pega abajo lo que muestra. No incluye números de serie, direcciones MAC ni nombres.
   - type: input
     id: equipo
@@ -78,4 +78,4 @@ body:
     attributes:
       label: Versión de la ISO
       description: El nombre del archivo o la salida de `rros version`
-      placeholder: "rros-lite.iso de 2026-10-17 / RROS 0.2.0 (Aurora)"
+      placeholder: "rros-lite.iso de 2026-10-17 / Lily 0.2.0 (Aurora)"

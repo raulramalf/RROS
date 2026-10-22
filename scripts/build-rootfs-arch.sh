@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Construye el rootfs de RROS sobre Arch Linux (pacstrap). Requiere root y arch-install-scripts.
+# Construye el rootfs de Lily sobre Arch Linux (pacstrap). Requiere root y arch-install-scripts.
 # uso: build-rootfs-arch.sh PERFIL
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"

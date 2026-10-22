@@ -76,10 +76,10 @@ export XDG_DATA_HOME=$T/xdgdata XDG_STATE_HOME=$T/xdgstate
 for f in kwinrc kdeglobals kcminputrc kxkbrc powerdevilrc plasmarc; do
 	[ -s "$XDG_CONFIG_HOME/$f" ] || fail "rros-theme no generó $f"
 done
-for f in konsole/RROS.profile konsole/RROS.colorscheme aurorae/themes/RROS/decoration.svg; do
+for f in konsole/Lily.profile konsole/Lily.colorscheme aurorae/themes/Lily/decoration.svg; do
 	[ -s "$XDG_DATA_HOME/$f" ] || fail "rros-theme no generó $f"
 done
-ls "$XDG_DATA_HOME"/color-schemes/RROS-*.colors >/dev/null || fail "esquema de colores de Plasma"
+ls "$XDG_DATA_HOME"/color-schemes/Lily-*.colors >/dev/null || fail "esquema de colores de Plasma"
 grep -q 'blurEnabled=false' "$XDG_CONFIG_HOME/kwinrc" || fail "Lite sin desenfoque"
 grep -q 'AnimationDurationFactor=0' "$XDG_CONFIG_HOME/kdeglobals" || fail "Lite sin animaciones"
 "$B/rros-config" -p lite set ui.dock_style 3d
@@ -92,7 +92,7 @@ grep -q '^clave=1' "$XDG_CONFIG_HOME/kwinrc" || fail "rros-theme borró ajustes 
 # alternar oscuro/claro
 "$B/rros-theme" -p lite toggle >/dev/null
 eq "$("$B/rros-config" -p lite get ui.color_scheme)" light
-grep -q 'Color=250,245,239' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "tema claro"
+grep -q 'Color=250,245,239' "$XDG_DATA_HOME/konsole/Lily.colorscheme" || fail "tema claro"
 "$B/rros-theme" -p lite toggle >/dev/null
 eq "$("$B/rros-config" -p lite get ui.color_scheme)" dark
 # ficha y diagnóstico
@@ -300,7 +300,7 @@ export RROS_THEMES_DIR=$T/themes
 "$B/rros-theme" -p standard list | gq '^\* lirio' || fail "tema por defecto"
 "$B/rros-theme" -p standard use nord >/dev/null
 "$B/rros-theme" -p standard list | gq '^\* nord' || fail "rros-theme use"
-grep -q 'Color=46,52,64' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "el tema llega a la terminal"
+grep -q 'Color=46,52,64' "$XDG_DATA_HOME/konsole/Lily.colorscheme" || fail "el tema llega a la terminal"
 if "$B/rros-theme" use no-existe 2>/dev/null; then fail "tema inexistente debía fallar"; fi
 "$B/rros-theme" -p standard cycle >/dev/null
 "$B/rros-theme" -p standard list | gq '^\* dracula' || fail "rros-theme cycle"
@@ -309,7 +309,7 @@ if "$B/rros-theme" new miotema 2>/dev/null; then fail "new debía negarse a pisa
 if "$B/rros-theme" new nord 2>/dev/null; then fail "new debía negarse con nombre incluido"; fi
 sed -i 's/^bg = "#2e3440"/bg = "#101820"/' "$RROS_THEMES_DIR/miotema.toml"
 "$B/rros-theme" -p standard use miotema >/dev/null
-grep -q 'Color=16,24,32' "$XDG_DATA_HOME/konsole/RROS.colorscheme" || fail "tema propio aplicado"
+grep -q 'Color=16,24,32' "$XDG_DATA_HOME/konsole/Lily.colorscheme" || fail "tema propio aplicado"
 "$B/rros-theme" -p standard list | gq 'miotema *propio' || fail "tema propio en la lista"
 
 "$B/rros-config" set keybind.nav 'Mod+Shift+b firefox'
@@ -460,7 +460,7 @@ RROS_ROOT=$DR "$B/rros-installer" plan --disk /dev/nvme0n1 --alongside --uefi -p
 echo "/dev/nvme0n1p3 /cdrom ntfs ro 0 0" > "$DR/proc/self/mounts"
 if RROS_ROOT=$DR "$B/rros-installer" plan --disk nvme0n1 --uefi -p lite >/dev/null 2>&1; then fail "plan acepta el disco del live"; fi
 
-# --- rros-settings api: lo que usa la aplicación RROS Ajustes (sin servidor ni navegador) ---
+# --- rros-settings api: lo que usa la aplicación Lily Ajustes (sin servidor ni navegador) ---
 export RROS_NO_APPLY=1
 st=$("$B/rros-settings" api GET /api/state) || fail "api state"
 python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["keys"] and d["desktops"] and d["themes"], d.keys()' <<<"$st" || fail "api state: JSON"

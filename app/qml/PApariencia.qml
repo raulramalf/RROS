@@ -18,7 +18,7 @@ RPage {
         })
     }
     onShown: {
-        var st = ["aurora", "ondas", "degradado", "circulos"]
+        var st = ["aurora", "ondas", "degradado", "circulos", "petalos", "dunas", "malla", "cristal", "topografico", "seda"]
         st.forEach(function (s) {
             Ui.api("GET", "/api/wallpaper_preview?style=" + s, {}, function (r) {
                 if (r && r.ok) { var x = p.previews; x[s] = "file://" + r.path + "?" + Date.now(); p.previews = x }
@@ -114,6 +114,84 @@ RPage {
     }
 
     Section { text: "Fondo de pantalla" }
+    // vista previa: el escritorio en pequeño con la barra de tareas. Al pasar el ratón por un fondo se ve aquí
+    // antes de elegirlo; con un clic se pone.
+    property string hoverWall: ""
+    readonly property string curWall: Ui.v("ui.wallpaper") !== "" ? "file://" + Ui.v("ui.wallpaper") : (p.previews[Ui.v("ui.wallpaper_style")] || "")
+    property var lilyWalls: []
+    function loadWalls() {
+        var dir = "/usr/share/wallpapers/Lily"
+        p.lilyWalls = Sys.readFile(dir + "/fondos.txt").split("\n").filter(function (l) { return l !== "" }).map(function (l) {
+            var x = l.split("|"); return { path: dir + "/" + x[0], thumb: dir + "/miniaturas/" + x[0], name: x[1], tone: x[2] } })
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 18
+        Rectangle {
+            id: pv
+            Layout.preferredWidth: 400; Layout.preferredHeight: 250
+            radius: 14; color: Ui.pal.bg; clip: true
+            border.color: Ui.line
+            Image {
+                anchors { fill: parent; margins: 1 }
+                source: p.hoverWall !== "" ? p.hoverWall : p.curWall
+                fillMode: Image.PreserveAspectCrop; asynchronous: true; sourceSize: Qt.size(800, 500)
+                Behavior on source { enabled: false }
+            }
+            // ventana de ejemplo
+            Rectangle {
+                x: 70; y: 44; width: 200; height: 120; radius: 7
+                color: Ui.dark ? "#ee1d0b12" : "#f4fbf7f2"; border.color: "#30ffffff"
+                Row { anchors { right: parent.right; top: parent.top; margins: 8 } spacing: 5
+                      Repeater { model: 3; Rectangle { width: 7; height: 7; radius: 3.5; color: index === 2 ? "#e5484d" : Ui.muted; opacity: 0.8 } } }
+                Column { x: 12; y: 26; spacing: 7
+                         Repeater { model: [150, 120, 160, 90]; Rectangle { width: modelData; height: 6; radius: 3; color: Ui.muted; opacity: 0.35 } } }
+            }
+            // barra de tareas en pequeño, como la de verdad (translúcida y del color del tema)
+            Rectangle {
+                anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 1 }
+                height: 24; color: Ui.dark ? "#cc1a0a10" : "#d8fbf6f1"
+                Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: "#26ffffff" }
+                Rectangle { x: 8; anchors.verticalCenter: parent.verticalCenter; width: 15; height: 15; radius: 7.5; color: Ui.accent
+                            Image { anchors.centerIn: parent; source: "qrc:/icons/app-rros.png"; sourceSize: Qt.size(13, 13) } }
+                Row { anchors.centerIn: parent; spacing: 5
+                      Repeater { model: ["#3b82f6", "#f97316", Ui.accent, "#22c55e", "#8b5cf6"]; Rectangle { width: 13; height: 13; radius: 4; color: modelData } } }
+                Txt { anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter } text: Qt.formatTime(new Date(), "HH:mm"); font.pixelSize: 9 }
+            }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Txt { text: p.hoverWall !== "" ? "Vista previa" : "Tu escritorio"; font.weight: Font.DemiBold; font.pixelSize: Ui.fs + 2 }
+            Txt { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: Ui.muted
+                  text: "Pasa el ratón por un fondo para verlo aquí y haz clic para ponerlo. La barra de tareas toma el color del tema." }
+        }
+    }
+    Section { text: "Fondos de Lily" }
+    Flow {
+        Layout.fillWidth: true
+        spacing: 12
+        Repeater {
+            model: p.lilyWalls
+            ColumnLayout {
+                spacing: 4
+                Rectangle {
+                    property bool on: Ui.v("ui.wallpaper") === modelData.path
+                    width: 168; height: 105; radius: 10; color: Ui.card; clip: true
+                    border.width: on ? 3 : 1; border.color: on ? Ui.accent : (wm.containsMouse ? Ui.muted : Ui.line)
+                    Image { anchors { fill: parent; margins: parent.on ? 3 : 1 } source: "file://" + modelData.thumb; fillMode: Image.PreserveAspectCrop; asynchronous: true }
+                    Rectangle { visible: parent.on; anchors { right: parent.right; top: parent.top; margins: 8 } width: 20; height: 20; radius: 10; color: Ui.accent
+                                Txt { anchors.centerIn: parent; text: "✓"; color: Ui.accentText; font.pixelSize: 12; font.weight: Font.Bold } }
+                    MouseArea {
+                        id: wm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onContainsMouseChanged: p.hoverWall = containsMouse ? "file://" + modelData.path : ""
+                        onClicked: Ui.setKey("ui.wallpaper", modelData.path)
+                    }
+                }
+                Txt { text: modelData.name; font.pixelSize: Ui.fs - 2; color: Ui.muted; Layout.alignment: Qt.AlignHCenter }
+            }
+        }
+    }
     Card {
         SRow {
             title: "Fondo generado con los colores del tema"
@@ -126,7 +204,7 @@ RPage {
             Layout.topMargin: 0
             spacing: 10
             Repeater {
-                model: [["aurora", "Aurora"], ["ondas", "Ondas"], ["degradado", "Degradado"], ["circulos", "Círculos"], ["liso", "Liso"]]
+                model: [["aurora", "Aurora"], ["ondas", "Ondas"], ["degradado", "Degradado"], ["circulos", "Círculos"], ["petalos", "Pétalos"], ["dunas", "Dunas"], ["malla", "Malla"], ["cristal", "Cristal"], ["topografico", "Topográfico"], ["seda", "Seda"], ["liso", "Liso"]]
                 ColumnLayout {
                     spacing: 4
                     Rectangle {
@@ -138,7 +216,8 @@ RPage {
                         clip: true
                         Image { anchors.fill: parent; anchors.margins: 2; source: p.previews[modelData[0]] || ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
                         MouseArea {
-                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor; hoverEnabled: true
+                            onContainsMouseChanged: p.hoverWall = containsMouse ? (p.previews[modelData[0]] || "") : ""
                             onClicked: { if (Ui.v("ui.wallpaper") !== "") Ui.unsetKey("ui.wallpaper"); Ui.setKey("ui.wallpaper_style", modelData[0]) }
                         }
                     }
@@ -255,7 +334,7 @@ RPage {
     property var fonts: Qt.fontFamilies().filter(function (f) { return !/emoji|symbol|unifont|opensymbol|^dejavu math|^noto (sans|serif) (?!mono)[a-z]+ ?[a-z]*$/i.test(f) || /^noto (sans|serif)$/i.test(f) })
     property var monoFonts: Qt.fontFamilies().filter(function (f) { return /mono|code|courier|consol|hack|fira code|jetbrains/i.test(f) })
     property var cursors: []
-    Component.onCompleted: { loadExtras(); cursorsLoad() }
+    Component.onCompleted: { loadExtras(); cursorsLoad(); loadWalls() }
     function cursorsLoad() { Sys.run(["sh", "-c", "for d in /usr/share/icons/*/cursors \"$HOME\"/.local/share/icons/*/cursors; do [ -d \"$d\" ] && t=${d%/cursors} && n=$(sed -n 's/^Name=//p' \"$t/index.theme\" 2>/dev/null | head -1) && p=$(ls \"$t\"/preview*.png 2>/dev/null | head -1) && echo \"${t##*/}|${n:-${t##*/}}|$p\"; done"], function (r) {
         p.cursors = r.out.split("\n").filter(function (l) { return l !== "" }).map(function (l) { var x = l.split("|"); return { id: x[0], name: x[1], preview: x[2] || "" } })
     }) }
@@ -297,23 +376,46 @@ RPage {
             model: p.cursors
             Rectangle {
                 property bool on: Ui.v("ui.cursor_theme") === modelData.id
-                width: 150; height: 112; radius: 12
-                color: Ui.card
+                width: 220; height: 116; radius: 12
+                color: cm.containsMouse ? Ui.cardHover : Ui.card
                 border.width: on ? 3 : 1
                 border.color: on ? Ui.accent : Ui.line
+                // muestra con la flecha, la mano y el de espera, sobre un fondo neutro para verlos bien
+                Rectangle {
+                    anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 10 }
+                    width: 196; height: 62; radius: 8; color: Ui.dark ? "#2a1a1f" : "#ece5df"
+                }
                 Image {
-                    anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 14 }
-                    width: 48; height: 48; fillMode: Image.PreserveAspectFit
+                    anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 16 }
+                    width: 180; height: 50; fillMode: Image.PreserveAspectFit; smooth: true
                     source: modelData.preview !== "" ? "file://" + modelData.preview : ""
                     visible: modelData.preview !== ""
                 }
                 Txt { anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 12 }
                       text: modelData.name; font.weight: Font.DemiBold; font.pixelSize: Ui.fs - 1 }
-                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Ui.setKey("ui.cursor_theme", modelData.id) }
+                Rectangle { visible: parent.on; anchors { right: parent.right; top: parent.top; margins: 6 } width: 20; height: 20; radius: 10; color: Ui.accent
+                            Txt { anchors.centerIn: parent; text: "✓"; color: Ui.accentText; font.pixelSize: 12; font.weight: Font.Bold } }
+                MouseArea { id: cm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: { Ui.setKey("ui.cursor_theme", modelData.id); Ui.toast("Puntero «" + modelData.name + "»: ya está puesto en todo el sistema", false) } }
             }
         }
     }
     Card {
+        SRow {
+            title: "Pruébalo"
+            subtitle: "Pasa el ratón por cada cuadro para ver el puntero que se pone en cada caso"
+            RowLayout {
+                spacing: 6
+                Repeater {
+                    model: [["Normal", Qt.ArrowCursor], ["Enlace", Qt.PointingHandCursor], ["Texto", Qt.IBeamCursor], ["Mover", Qt.SizeAllCursor], ["Espera", Qt.BusyCursor]]
+                    Rectangle {
+                        width: 64; height: 40; radius: 8; color: tm.containsMouse ? Ui.cardHover : "transparent"; border.color: Ui.line
+                        Txt { anchors.centerIn: parent; text: modelData[0]; font.pixelSize: Ui.fs - 2 }
+                        MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: modelData[1] }
+                    }
+                }
+            }
+        }
         KeyRow { k: "ui.cursor_size"; title: "Tamaño del puntero"; unit: " px"; step: 4 }
         KeyRow { k: "ui.transparency"; title: "Transparencia de menús y ventanas sin foco"; unit: " %"; step: 5; separator: false }
     }

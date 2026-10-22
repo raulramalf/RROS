@@ -57,7 +57,7 @@ const struct rros_key rros_schema[] = {
 	B("ui.dim_inactive", "Oscurecer un poco las ventanas sin foco"),
 	I("ui.corner_radius", 0, 32, "Radio de esquinas (px)"),
 	E("ui.taskbar_style", "rros|clasica|isla|dock|doble|lateral",
-	  "Barra de tareas: Fusión (la de RROS), Clásica, Isla flotante, Dock con barra superior, Doble o Lateral"),
+	  "Barra de tareas: Fusión (la de Lily), Clásica, Isla flotante, Dock con barra superior, Doble o Lateral"),
 	E("ui.taskbar_align", "auto|centro|izquierda", "Aplicaciones de la barra de tareas: en el centro o a la izquierda"),
 	I("ui.taskbar_size", 36, 72, "Alto de la barra de tareas (px)"),
 	B("ui.taskbar_labels", "Nombre de cada ventana junto a su icono en la barra de tareas"),

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Vista previa (preview.png) de cada tema de cursor de RROS: flecha, mano y espera en fila, para RROS Ajustes.
+"""Vista previa (preview.png) de cada tema de cursor de Lily: flecha, mano y espera en fila, para Lily Ajustes.
 Lee los propios archivos Xcursor. uso: cursor-preview.py DIR_TEMA..."""
 import struct
 import sys

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Iconos propios de RROS (SVG): las aplicaciones del sistema y las secciones de RROS Ajustes.
+"""Iconos propios de Lily (SVG): las aplicaciones del sistema y las secciones de Lily Ajustes.
 El logotipo (rros, rros-symbolic y app-rros) sale de docs/brand/rros-logo.svg con make-logo.py.
 
 Todas siguen el mismo dibujo: un cuadrado redondeado con un degradado, un brillo arriba y el símbolo en blanco.
-Las aplicaciones que no son de RROS (Firefox, Dolphin...) usan su propio logotipo: aquí no se dibujan.
+Las aplicaciones que no son de Lily (Firefox, Dolphin...) usan su propio logotipo: aquí no se dibujan.
 
 uso: make-icons.py  (escribe en overlay/arch/usr/share/icons/hicolor/scalable/apps y en app/icons)
 """
@@ -29,7 +29,7 @@ def gear(cx=50, cy=50, r1=27, r2=20, teeth=8, hole=9):
 
 
 GLYPHS = {
-    # --- aplicaciones de RROS ---
+    # --- aplicaciones de Lily ---
     "ajustes": gear(),
     "tienda": f'<path {W} d="M28 42h44l-3.5 31a5 5 0 0 1-5 4.4H36.5a5 5 0 0 1-5-4.4z"/>'
               f'<path {S} d="M39 44V36a11 11 0 0 1 22 0v8"/>',

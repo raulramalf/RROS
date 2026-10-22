@@ -33,7 +33,7 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.shadows` | booleano | true / false | Sombras de ventanas |
 | `ui.dim_inactive` | booleano | true / false | Oscurecer un poco las ventanas sin foco |
 | `ui.corner_radius` | entero | 0 – 32 | Radio de esquinas (px) |
-| `ui.taskbar_style` | opción | rros|clasica|isla|dock|doble|lateral | Barra de tareas: Fusión (la de RROS), Clásica, Isla flotante, Dock con barra superior, Doble o Lateral |
+| `ui.taskbar_style` | opción | rros|clasica|isla|dock|doble|lateral | Barra de tareas: Fusión (la de Lily), Clásica, Isla flotante, Dock con barra superior, Doble o Lateral |
 | `ui.taskbar_align` | opción | auto|centro|izquierda | Aplicaciones de la barra de tareas: en el centro o a la izquierda |
 | `ui.taskbar_size` | entero | 36 – 72 | Alto de la barra de tareas (px) |
 | `ui.taskbar_labels` | booleano | true / false | Nombre de cada ventana junto a su icono en la barra de tareas |

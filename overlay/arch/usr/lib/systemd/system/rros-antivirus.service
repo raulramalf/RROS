@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS: análisis antivirus programado
+Description=Lily: análisis antivirus programado
 After=clamav-freshclam.service
 ConditionPathExists=/usr/bin/clamscan
 

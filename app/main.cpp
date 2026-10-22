@@ -1,4 +1,4 @@
-// RROS Ajustes: ventana nativa de ajustes del sistema. Con --bienvenida abre el asistente del primer inicio.
+// Lily Ajustes: ventana nativa de ajustes del sistema. Con --bienvenida abre el asistente del primer inicio.
 #include <QCommandLineParser>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -11,17 +11,17 @@
 
 int main(int argc, char *argv[])
 {
-	// controles propios de RROS: no dependen del estilo de la plataforma
+	// controles propios de Lily: no dependen del estilo de la plataforma
 	QQuickStyle::setStyle(QStringLiteral("Basic"));
 	QGuiApplication app(argc, argv);
 	app.setApplicationName(QStringLiteral("rros-ajustes"));
-	app.setApplicationDisplayName(QStringLiteral("RROS Ajustes"));
-	app.setOrganizationName(QStringLiteral("RROS"));
+	app.setApplicationDisplayName(QStringLiteral("Lily Ajustes"));
+	app.setOrganizationName(QStringLiteral("Lily"));
 	app.setDesktopFileName(QStringLiteral("rros-settings"));
 	app.setWindowIcon(QIcon::fromTheme(QStringLiteral("rros-settings"), QIcon(QStringLiteral(":/icons/app-ajustes.svg"))));
 
 	QCommandLineParser cli;
-	cli.setApplicationDescription(QStringLiteral("Ajustes de RROS"));
+	cli.setApplicationDescription(QStringLiteral("Ajustes de Lily"));
 	cli.addHelpOption();
 	QCommandLineOption page(QStringList{ QStringLiteral("pagina"), QStringLiteral("page") },
 				QStringLiteral("Página con la que se abre (red, sonido, tienda...)"), QStringLiteral("PÁGINA"));

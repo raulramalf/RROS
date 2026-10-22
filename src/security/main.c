@@ -433,7 +433,7 @@ static void audit(const struct rros_conf *eff)
 		snprintf(c->detail, sizeof c->detail, crypt ? "El sistema está en un volumen cifrado (LUKS)." :
 			 "El disco no está cifrado: quien se lleve el equipo puede leer tus archivos.");
 		if (!crypt)
-			snprintf(c->fix, sizeof c->fix, "el instalador de RROS aún no cifra; cifra tu carpeta o usa LUKS al instalar");
+			snprintf(c->fix, sizeof c->fix, "el instalador de Lily aún no cifra; cifra tu carpeta o usa LUKS al instalar");
 	}
 
 	/* arranque seguro */
@@ -562,7 +562,7 @@ static int cmd_audit(const struct rros_conf *eff, int json)
 		puts("]}");
 		return 0;
 	}
-	printf("RROS · seguridad   puntuación %d/100   nivel: %s\n\n", score(), lvl);
+	printf("Lily · seguridad   puntuación %d/100   nivel: %s\n\n", score(), lvl);
 	for (int i = 0; i < nchecks; i++) {
 		static const char *sym[] = { "✓", "!", "✗", "·" }, *plain[] = { "[ok]", "[!] ", "[x] ", "[i] " };
 		static const char *col[] = { "\033[32m", "\033[33m", "\033[31m", "\033[36m" };

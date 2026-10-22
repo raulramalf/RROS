@@ -1,4 +1,4 @@
-/* KDE Plasma: lo que RROS escribe en los archivos de configuración de KDE a partir de rros-config.
+/* KDE Plasma: lo que Lily escribe en los archivos de configuración de KDE a partir de rros-config.
  *  - el guion de plasmashell que crea la barra superior y el dock;
  *  - las ediciones de kwinrc, kdeglobals, kcminputrc, powerdevilrc... (se mezclan con lo que ya hay);
  *  - el perfil de Konsole, los atajos propios, las reglas de ventanas y los programas de inicio. */
@@ -16,7 +16,7 @@
 
 const char *const rros_kde_files[] = { "kdeglobals", "kwinrc", "kcminputrc", "kxkbrc", "kscreenlockerrc", "powerdevilrc",
 				       "plasmaparc", "plasmarc", "baloofilerc", "ksmserverrc", "konsolerc", "kwinrulesrc",
-				       "kglobalshortcutsrc", NULL };
+				       "kglobalshortcutsrc", "gtk-3.0/settings.ini", "gtk-4.0/settings.ini", NULL };
 
 const char *rros_desktoptheme(const struct rros_theme *t)
 {
@@ -60,7 +60,7 @@ void rros_render_plasma_layout(const struct rros_theme *t, const struct rros_pal
 	int focus = pill && !classic;   /* estilo «Enfoque»: reloj en el centro */
 
 	(void)p; (void)c;
-	fprintf(f, "// %s: barra y dock de RROS. Lo ejecuta plasmashell (rros-theme escritorio).\n", RROS_GENERATED);
+	fprintf(f, "// %s: barra y dock de Lily. Lo ejecuta plasmashell (rros-theme escritorio).\n", RROS_GENERATED);
 	fputs("panels().forEach(function (p) { p.remove(); });\n\n", f);
 
 	/* --- barra --- */
@@ -288,11 +288,16 @@ static void input(struct edits *s, const struct rros_theme *t)
 
 	put(s, "kcminputrc", "Mouse", "cursorTheme", "%s", t->cursor_theme);
 	put(s, "kcminputrc", "Mouse", "cursorSize", "%d", t->cursor_size);
+	/* aplicaciones GTK (Firefox, GIMP…): el mismo puntero */
+	put(s, "gtk-3.0/settings.ini", "Settings", "gtk-cursor-theme-name", "%s", t->cursor_theme);
+	put(s, "gtk-3.0/settings.ini", "Settings", "gtk-cursor-theme-size", "%d", t->cursor_size);
+	put(s, "gtk-4.0/settings.ini", "Settings", "gtk-cursor-theme-name", "%s", t->cursor_theme);
+	put(s, "gtk-4.0/settings.ini", "Settings", "gtk-cursor-theme-size", "%d", t->cursor_size);
 	put(s, "kcminputrc", "Keyboard", "RepeatDelay", "%d", t->repeat_delay);
 	put(s, "kcminputrc", "Keyboard", "RepeatRate", "%d", t->repeat_rate);
 	/* 0 encendido, 1 apagado */
 	put(s, "kcminputrc", "Keyboard", "NumLock", "%d", t->numlock ? 0 : 1);
-	/* valores por defecto para todos los ratones y paneles táctiles (los de cada aparato los cambia RROS Ajustes) */
+	/* valores por defecto para todos los ratones y paneles táctiles (los de cada aparato los cambia Lily Ajustes) */
 	put(s, "kcminputrc", "Libinput][Defaults][Touchpad", "TapToClick", "%s", tf(t->tap_to_click));
 	put(s, "kcminputrc", "Libinput][Defaults][Touchpad", "NaturalScroll", "%s", tf(t->natural_scroll));
 	put(s, "kcminputrc", "Libinput][Defaults][Touchpad", "DisableWhileTyping", "%s", tf(t->dwt));
@@ -348,7 +353,7 @@ static void other(struct edits *s, const struct rros_theme *t)
 	/* cada sesión empieza limpia: el inicio es más rápido */
 	put(s, "ksmserverrc", "General", "loginMode", "emptySession");
 	put(s, "ksmserverrc", "General", "confirmLogout", "false");
-	put(s, "konsolerc", "Desktop Entry", "DefaultProfile", "RROS.profile");
+	put(s, "konsolerc", "Desktop Entry", "DefaultProfile", "Lily.profile");
 }
 
 static void rules(struct edits *s, const struct rros_conf *c)
@@ -357,7 +362,7 @@ static void rules(struct edits *s, const struct rros_conf *c)
 	size_t used = 0;
 	int count = 0;
 
-	/* las reglas de RROS se llaman rros-ID; las demás (las que haga el usuario en KDE) no se tocan */
+	/* las reglas de Lily se llaman rros-ID; las demás (las que haga el usuario en KDE) no se tocan */
 	del_group(s, "kwinrulesrc", "rros-*");
 	for (size_t i = 0; i < c->n; i++) {
 		const struct rros_kv *kv = &c->items[i];
@@ -367,7 +372,7 @@ static void rules(struct edits *s, const struct rros_conf *c)
 		if (strncmp(kv->key, "rule.", 5) || rros_rule_parse(kv->val, &r))
 			continue;
 		snprintf(g, sizeof g, "rros-%.40s", kv->key + 5);
-		put(s, "kwinrulesrc", g, "Description", "RROS: %s", kv->key + 5);
+		put(s, "kwinrulesrc", g, "Description", "Lily: %s", kv->key + 5);
 		if (r.by_title) {
 			put(s, "kwinrulesrc", g, "title", "%s", r.match);
 			put(s, "kwinrulesrc", g, "titlematch", "2");
@@ -683,13 +688,13 @@ void rros_render_konsole_profile(const struct rros_theme *t, const struct rros_p
 				 FILE *f)
 {
 	(void)p; (void)c;
-	fprintf(f, "# %s. Cambia la terminal en RROS Ajustes o con «rros config set term.<clave>».\n", RROS_GENERATED);
-	fprintf(f, "[Appearance]\nColorScheme=RROS\nFont=%s,%d,-1,5,400,0,0,0,0,0,0,0,0,0,0,1\n\n", t->font_mono,
+	fprintf(f, "# %s. Cambia la terminal en Lily Ajustes o con «rros config set term.<clave>».\n", RROS_GENERATED);
+	fprintf(f, "[Appearance]\nColorScheme=Lily\nFont=%s,%d,-1,5,400,0,0,0,0,0,0,0,0,0,0,1\n\n", t->font_mono,
 		t->font_size + 1);
 	/* forma del cursor: 0 bloque, 1 barra, 2 subrayado */
 	fprintf(f, "[Cursor Options]\nCursorShape=%d\n\n",
 		!strcmp(t->term_cursor, "beam") ? 1 : !strcmp(t->term_cursor, "underline") ? 2 : 0);
-	fprintf(f, "[General]\nName=RROS\nParent=FALLBACK/\nTerminalMargin=%d\nTerminalCenter=false\n\n", t->term_padding);
+	fprintf(f, "[General]\nName=Lily\nParent=FALLBACK/\nTerminalMargin=%d\nTerminalCenter=false\n\n", t->term_padding);
 	fprintf(f, "[Scrolling]\nHistoryMode=%d\nHistorySize=%d\n", t->term_scrollback ? 1 : 0, t->term_scrollback);
 }
 
@@ -720,7 +725,7 @@ void rros_render_konsole_colors(const struct rros_theme *t, const struct rros_pa
 		snprintf(n, sizeof n, "Color%dIntense", i);
 		kcolor(f, n, i == 0 ? p->muted : base[i]);
 	}
-	fprintf(f, "[General]\nDescription=RROS (%s)\nOpacity=%.2f\nBlur=%s\n", t->theme,
+	fprintf(f, "[General]\nDescription=Lily (%s)\nOpacity=%.2f\nBlur=%s\n", t->theme,
 		1.0 - t->transparency / 200.0, tf(t->blur && t->transparency > 0));
 }
 
@@ -767,7 +772,7 @@ int rros_write_launchers(const struct rros_conf *c, const char *apps_dir, const 
 		if (!strncmp(kv->key, "keybind.", 8) &&
 		    rros_keybind_parse(kv->val, combo, sizeof combo, cmd, sizeof cmd) == 0) {
 			snprintf(path, sizeof path, "%s/rros-kb-%.40s.desktop", apps_dir, kv->key + 8);
-			snprintf(name, sizeof name, "Atajo de RROS: %.40s", kv->key + 8);
+			snprintf(name, sizeof name, "Atajo de Lily: %.40s", kv->key + 8);
 			bad |= rros_mkdir_parents(path) || write_desktop(path, name, cmd, 1);
 		} else if (!strncmp(kv->key, "autostart.", 10) && kv->val[0]) {
 			snprintf(path, sizeof path, "%s/rros-auto-%.40s.desktop", autostart_dir, kv->key + 10);

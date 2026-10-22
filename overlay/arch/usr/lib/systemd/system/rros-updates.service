@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS: descargar las actualizaciones (se instalan con «rros apps update»)
+Description=Lily: descargar las actualizaciones (se instalan con «rros apps update»)
 Documentation=https://github.com/raulramalf/RROS/blob/main/docs/SEGURIDAD.md
 Wants=network-online.target
 After=network-online.target

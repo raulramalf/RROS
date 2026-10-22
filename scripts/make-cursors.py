@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Temas de cursores de RROS, dibujados con Pillow y escritos en formato Xcursor sin xcursorgen.
+"""Temas de cursores de Lily, dibujados con Pillow y escritos en formato Xcursor sin xcursorgen.
 
 Tres variantes con la paleta Lirio:
-  RROS-Lirio    flecha marfil con borde vino fino y la punta en rojo lirio.
-  RROS-Marfil   flecha vino con borde marfil: se ve bien sobre fondos claros y oscuros.
-  RROS-Grafito  grafito neutro con borde blanco.
+  Lily-Lirio    flecha marfil con borde vino fino y la punta en rojo lirio.
+  Lily-Marfil   flecha vino con borde marfil: se ve bien sobre fondos claros y oscuros.
+  Lily-Grafito  grafito neutro con borde blanco.
 
 Cada cursor se dibuja en una rejilla de 32 unidades, a 4x de resolución, y se reduce con LANCZOS
 para suavizar los bordes. El contorno sale de dilatar la silueta, así tiene el mismo grosor en todas
 las formas, y la sombra es esa silueta difuminada. Los de espera giran (12 fotogramas, 50 ms).
 
 uso: make-cursors.py [--check] [--sheet DIR]
-  (escribe overlay/arch/usr/share/icons/RROS-{Lirio,Marfil,Grafito})
+  (escribe overlay/arch/usr/share/icons/Lily-{Lirio,Marfil,Grafito})
   --check   relee cada archivo y comprueba tamaños, puntos activos y fotogramas
   --sheet   guarda en DIR una hoja de muestra PNG por tema (32 y 64, fondo claro y oscuro)
 """
@@ -32,14 +32,14 @@ FRAMES = 12       # fotogramas de los cursores de espera
 DELAY = 50        # ms por fotograma
 
 THEMES = {
-    "RROS-Lirio": dict(
-        name="RROS Lirio", comment="Cursores marfil con borde vino y punta rojo lirio",
+    "Lily-Lirio": dict(
+        name="Lily Lirio", comment="Cursores marfil con borde vino y punta rojo lirio",
         fill="#f6ecdf", line="#140609", accent="#c8243c", mark="#f6ecdf", shadow=0.42),
-    "RROS-Marfil": dict(
-        name="RROS Marfil", comment="Cursores vino con borde marfil, muy visibles en cualquier fondo",
+    "Lily-Marfil": dict(
+        name="Lily Marfil", comment="Cursores vino con borde marfil, muy visibles en cualquier fondo",
         fill="#140609", line="#f6ecdf", accent="#d9304a", mark="#f6ecdf", shadow=0.38),
-    "RROS-Grafito": dict(
-        name="RROS Grafito", comment="Cursores grafito neutros con borde blanco",
+    "Lily-Grafito": dict(
+        name="Lily Grafito", comment="Cursores grafito neutros con borde blanco",
         fill="#34353a", line="#ffffff", accent="#c8243c", mark="#ffffff", shadow=0.40),
 }
 

@@ -1,4 +1,4 @@
-/* KDE Plasma: esquema de colores (.colors) desde la paleta de RROS. Lo aplica plasma-apply-colorscheme, y así
+/* KDE Plasma: esquema de colores (.colors) desde la paleta de Lily. Lo aplica plasma-apply-colorscheme, y así
  * el tema llega a las ventanas, los paneles, el dock, las barras de título y las aplicaciones Qt y KDE. */
 #include "theme.h"
 #include "rros_profile.h"
@@ -70,8 +70,8 @@ void rros_render_kde_colors(const struct rros_theme *t, const struct rros_palett
 	sscanf(col, "%d,%d,%d", &r, &g, &b);
 	snprintf(raised, sizeof raised, "#%02x%02x%02x", r, g, b);
 
-	fprintf(f, "# %s. No lo edites: cambia el tema con «rros theme» o en RROS Ajustes.\n", RROS_GENERATED);
-	fprintf(f, "[General]\nColorScheme=RROS\nName=RROS (%s)\nshadeSortColumn=true\n\n", t->theme);
+	fprintf(f, "# %s. No lo edites: cambia el tema con «rros theme» o en Lily Ajustes.\n", RROS_GENERATED);
+	fprintf(f, "[General]\nColorScheme=Lily\nName=Lily (%s)\nshadeSortColumn=true\n\n", t->theme);
 	fprintf(f, "[KDE]\ncontrast=4\n\n");
 	fprintf(f, "[ColorEffects:Disabled]\nColor=56,56,56\nColorAmount=0\nColorEffect=0\nContrastAmount=0.65\n"
 		   "ContrastEffect=1\nIntensityAmount=0.1\nIntensityEffect=2\n\n");
@@ -206,12 +206,12 @@ int rros_write_aurorae(const char *dir, const struct rros_theme *t, const struct
 		 "TitleHeight=16\nButtonWidth=16\nButtonHeight=16\nButtonSpacing=6\nButtonMarginTop=0\n"
 		 "ExplicitButtonSpacer=10\nPaddingTop=0\nPaddingBottom=0\nPaddingLeft=0\nPaddingRight=0\n",
 		 RROS_GENERATED, r, g, b, r2, g2, b2);
-	snprintf(path, sizeof path, "%s/RROSrc", dir);
-	if (rros_mkdir_parents(path) || write_file(dir, "RROSrc", text))
+	snprintf(path, sizeof path, "%s/Lilyrc", dir);
+	if (rros_mkdir_parents(path) || write_file(dir, "Lilyrc", text))
 		return -1;
 	if (write_file(dir, "metadata.desktop",
-		       "[Desktop Entry]\nName=RROS\nComment=Barras de título de RROS, con los botones a la izquierda\n"
-		       "X-KDE-PluginInfo-Author=RROS\nX-KDE-PluginInfo-Name=RROS\nX-KDE-PluginInfo-Version=1.0\n"
+		       "[Desktop Entry]\nName=Lily\nComment=Barras de título de Lily, con los botones a la izquierda\n"
+		       "X-KDE-PluginInfo-Author=Lily\nX-KDE-PluginInfo-Name=Lily\nX-KDE-PluginInfo-Version=1.0\n"
 		       "X-KDE-PluginInfo-License=GPL\nX-KDE-PluginInfo-EnabledByDefault=true\n"))
 		return -1;
 	snprintf(path, sizeof path, "%s/decoration.svg", dir);

@@ -208,7 +208,7 @@ int main(void)
 	from_text(&t, "[term]\nscrollback = 20000\ncursor = \"beam\"\npadding = 4\n");
 	s = render(rros_render_konsole_profile, &t);
 	CHECK(strstr(s, "HistorySize=20000") && strstr(s, "CursorShape=1") && strstr(s, "TerminalMargin=4") &&
-	      strstr(s, "ColorScheme=RROS"));
+	      strstr(s, "ColorScheme=Lily"));
 	free(s);
 
 	/* ---- atajos y reglas del usuario ---- */
@@ -235,7 +235,7 @@ int main(void)
 		CHECK(rros_ini_apply(path, "kwinrulesrc", ed, n) == 0);
 		txt = slurp(path);
 		CHECK(txt && strstr(txt, "rules=mia,rros-mpv,rros-vid") && strstr(txt, "count=3") && strstr(txt, "[mia]") &&
-		      !strstr(txt, "rros-viejo") && strstr(txt, "[rros-mpv]\nDescription=RROS: mpv"));
+		      !strstr(txt, "rros-viejo") && strstr(txt, "[rros-mpv]\nDescription=Lily: mpv"));
 		free(txt);
 		/* las claves que ya están se cambian en su sitio; las demás, al final de su grupo */
 		snprintf(path, sizeof path, "%s/kwinrc", dir);
@@ -319,14 +319,14 @@ int main(void)
 		free(s);
 		rros_theme_palette(&t, &pal);
 		CHECK(mkdtemp(dir) != NULL);
-		snprintf(path, sizeof path, "%s/RROS", dir);
+		snprintf(path, sizeof path, "%s/Lily", dir);
 		CHECK(rros_write_aurorae(path, &t, &pal) == 0);
-		snprintf(path, sizeof path, "%s/RROS/decoration.svg", dir);
+		snprintf(path, sizeof path, "%s/Lily/decoration.svg", dir);
 		svg = slurp(path);
 		CHECK(svg && strstr(svg, "id=\"decoration-topleft\"") && strstr(svg, "id=\"decoration-inactive-bottomright\"") &&
 		      strstr(svg, "fill=\"#220d13\""));
 		free(svg);
-		snprintf(path, sizeof path, "%s/RROS/close.svg", dir);
+		snprintf(path, sizeof path, "%s/Lily/close.svg", dir);
 		CHECK(access(path, R_OK) == 0);
 		snprintf(path, sizeof path, "rm -rf '%s'", dir);
 		CHECK(system(path) == 0);

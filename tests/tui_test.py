@@ -68,7 +68,7 @@ def wait_conf(text, present=True, timeout=6.0):
 
 
 pump(0.6)
-check(b"RROS Ajustes" in screen, "cabecera visible")
+check(b"Lily Ajustes" in screen, "cabecera visible")
 check("Interfaz".encode() in screen, "categoría Interfaz visible")
 
 # buscar una clave y cambiarla con las flechas: iconos del dock del perfil standard = 48

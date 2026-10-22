@@ -16,6 +16,8 @@ Flickable {
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+    // capturas de la documentación: LILY_SCROLL=600 baja la página antes de guardar la imagen
+    Timer { interval: 900; running: shotPath !== "" && Sys.env("LILY_SCROLL") !== ""; onTriggered: page.contentY = Number(Sys.env("LILY_SCROLL")) }
 
     ColumnLayout {
         id: wrap

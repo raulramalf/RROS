@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RROS Escritorio</title>
+<title>Lily Escritorio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Escritorio web de RROS, con el aspecto del escritorio Plasma de RROS: barra de menús arriba, dock abajo,
+/* Escritorio web de Lily, con el aspecto del escritorio Plasma de Lily: barra de menús arriba, dock abajo,
    ventanas con los botones de semáforo a la izquierda. Los colores son las paletas reales de rros-theme. */
 :root {
   --bg: #0b1020; --surface: #141c38; --text: #e6ecff; --muted: #8a96bd; --border: #26305a;
@@ -176,9 +176,9 @@ iframe.full { border: 0; width: 100%; height: 100%; display: block; background: 
 </style>
 </head>
 <body>
-<div id="desktop" aria-label="Escritorio de RROS">
+<div id="desktop" aria-label="Escritorio de Lily">
   <div id="menubar" role="menubar"></div>
-  <div id="hint">Escritorio de RROS en el navegador: abre aplicaciones desde el dock, arrastra las ventanas por su barra, usa los botones de colores para cerrar, minimizar o maximizar. <b>Ctrl + Espacio</b> busca aplicaciones.</div>
+  <div id="hint">Escritorio de Lily en el navegador: abre aplicaciones desde el dock, arrastra las ventanas por su barra, usa los botones de colores para cerrar, minimizar o maximizar. <b>Ctrl + Espacio</b> busca aplicaciones.</div>
   <div id="icons"></div>
   <div id="dock" role="toolbar" aria-label="Dock"></div>
   <div id="toasts" aria-live="polite"></div>
@@ -212,20 +212,20 @@ var APPS = {
   calc:   { name: "Calculadora", icon: ico("#7a7f8c", "#3c4048", '<rect x="18" y="13" width="28" height="11" rx="2" fill="#dfe3ec"/><g fill="#ff9f0a"><circle cx="22" cy="32" r="3"/><circle cx="32" cy="32" r="3"/><circle cx="42" cy="32" r="3"/><circle cx="22" cy="42" r="3"/><circle cx="32" cy="42" r="3"/><circle cx="42" cy="42" r="3"/></g>'), w: 300, h: 450, fixed: true },
   store:  { name: "Tienda", icon: ico("#36d1dc", "#5b86e5", '<path d="M18 24h28l-3 22H21z" fill="#fff"/><path d="M25 24a7 7 0 0 1 14 0" stroke="#fff" stroke-width="3.5" fill="none"/>'), w: 640, h: 500 },
   prefs:  { name: "Preferencias", icon: ico("#9aa3b5", "#5d6577", '<circle cx="32" cy="32" r="13" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="6 4.2"/><circle cx="32" cy="32" r="6" fill="#fff"/>'), w: 720, h: 500 },
-  ajustes:{ name: "RROS Ajustes", icon: ico("#7c5cff", "#22d3ee", '<path d="M22 46V18h12.5c6 0 9.5 3.3 9.5 8.4 0 3.9-2.1 6.6-5.6 7.7L44.5 46h-6.3l-5.6-11.2H27.6V46z M27.6 30.3h6.4c2.8 0 4.4-1.4 4.4-3.8s-1.6-3.8-4.4-3.8h-6.4z" fill="#fff"/>'), w: 980, h: 640 },
+  ajustes:{ name: "Lily Ajustes", icon: ico("#7c5cff", "#22d3ee", '<path d="M22 46V18h12.5c6 0 9.5 3.3 9.5 8.4 0 3.9-2.1 6.6-5.6 7.7L44.5 46h-6.3l-5.6-11.2H27.6V46z M27.6 30.3h6.4c2.8 0 4.4-1.4 4.4-3.8s-1.6-3.8-4.4-3.8h-6.4z" fill="#fff"/>'), w: 980, h: 640 },
   viewer: { name: "Visor de imágenes", icon: ico("#4ade80", "#16a34a", '<rect x="15" y="17" width="34" height="30" rx="3" fill="#fff"/><circle cx="25" cy="27" r="4" fill="#fbbf24"/><path d="M18 44l10-10 7 7 5-4 6 7z" fill="#16a34a"/>'), w: 720, h: 460, hidden: true },
-  about:  { name: "Acerca de RROS", icon: LOGO, w: 360, h: 380, fixed: true, hidden: true },
+  about:  { name: "Acerca de Lily", icon: LOGO, w: 360, h: 380, fixed: true, hidden: true },
   trash:  { name: "Papelera", icon: ico("#c9ced9", "#8f97a8", '<path d="M22 22h20l-2 24H24z" fill="#fff"/><path d="M19 21h26M28 17h8" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>'), w: 620, h: 420 }
 };
 var DOCK = ["files", "web", "term", "edit", "calc", "store", "prefs", "ajustes"];
 
 // sistema de archivos virtual (se guarda en este navegador)
 var FS_DEFAULT = {
-  "Documentos": { "Bienvenida.txt": "Bienvenido a RROS.\n\nEsto es el escritorio de RROS funcionando en el navegador:\n- Arrastra las ventanas por su barra de título.\n- Los botones de colores cierran (rojo), minimizan (ámbar) y maximizan (verde).\n- Ctrl + Espacio abre el buscador.\n- En la terminal, escribe «ayuda».\n\nEl sistema de verdad (Arch Linux con Plasma) se instala desde la ISO.\n",
+  "Documentos": { "Bienvenida.txt": "Bienvenido a Lily.\n\nEsto es el escritorio de Lily funcionando en el navegador:\n- Arrastra las ventanas por su barra de título.\n- Los botones de colores cierran (rojo), minimizan (ámbar) y maximizan (verde).\n- Ctrl + Espacio abre el buscador.\n- En la terminal, escribe «ayuda».\n\nEl sistema de verdad (Arch Linux con Plasma) se instala desde la ISO.\n",
                   "Lista de la compra.txt": "- pan\n- leche\n- café\n- fruta\n" },
   "Descargas": {},
   "Imágenes": { "aurora.jpg": "@img:aurora-aurora", "ondas.jpg": "@img:aurora-ondas", "círculos.jpg": "@img:dracula-circulos", "degradado.jpg": "@img:nord-degradado" },
-  "Música": {}, "Vídeos": {}, "Escritorio": { "Notas.txt": "Ideas para RROS:\n- tema propio\n- más fondos\n" }
+  "Música": {}, "Vídeos": {}, "Escritorio": { "Notas.txt": "Ideas para Lily:\n- tema propio\n- más fondos\n" }
 };
 var state = { theme: "aurora", wp: "aurora", dockSize: 50, fs: null, trash: {}, installed: {} };
 try { var sv = JSON.parse(localStorage.getItem("rros-web") || "null"); if (sv) for (var k in sv) state[k] = sv[k]; } catch (e) {}
@@ -429,19 +429,19 @@ function mbtn(label, cls, items) {
 function renderMenubar() {
   var mb = $("#menubar"), w = focused, app = w ? APPS[w.app].name : "Archivos";
   mb.textContent = "";
-  mb.appendChild(mbtn(LOGO + '<span class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden">Menú RROS</span>', "", [
-    ["Acerca de RROS", function () { openApp("about"); }],
+  mb.appendChild(mbtn(LOGO + '<span class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden">Menú Lily</span>', "", [
+    ["Acerca de Lily", function () { openApp("about"); }],
     "-",
     ["Preferencias del sistema…", function () { openApp("prefs"); }],
     ["Tienda de aplicaciones…", function () { openApp("store"); }],
-    ["RROS Ajustes…", function () { openApp("ajustes"); }],
+    ["Lily Ajustes…", function () { openApp("ajustes"); }],
     "-",
     ["Forzar salida de todas las ventanas", function () { wins.slice().forEach(closeWin); }],
     ["Reiniciar el escritorio", function () { location.reload(); }],
     ["Borrar mis archivos y preferencias", function () { try { localStorage.removeItem("rros-web"); } catch (e) {} location.reload(); }]
   ]));
   mb.appendChild(mbtn(esc(app), "app", [
-    ["Acerca de " + app, function () { toast(app, "Aplicación de RROS"); }],
+    ["Acerca de " + app, function () { toast(app, "Aplicación de Lily"); }],
     "-",
     ["Ocultar " + app, w ? function () { minimize(w); } : null, "Ctrl M"],
     ["Salir de " + app, w ? function () { wins.filter(function (o) { return o.app === w.app; }).forEach(closeWin); } : null, "Ctrl Q"]
@@ -470,7 +470,7 @@ function renderMenubar() {
   }));
   mb.appendChild(mbtn("Ayuda", "opt", [
     ["Atajos del escritorio", function () { toast("Atajos", "Ctrl+Espacio buscar · Ctrl+W cerrar · Ctrl+M minimizar · doble clic en la barra: maximizar"); }],
-    ["Guía de RROS (GitHub)", function () { openApp("web", "https://github.com/raulramalf/RROS"); }]
+    ["Guía de Lily (GitHub)", function () { openApp("web", "https://github.com/raulramalf/RROS"); }]
   ]));
   mb.appendChild(el("div", "spacer"));
   mb.appendChild(mbtn('<svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><path d="M8 11.5l2.3-2.6a3.2 3.2 0 0 0-4.6 0zM3.4 6.6a6.6 6.6 0 0 1 9.2 0l1.4-1.6a8.7 8.7 0 0 0-12 0zM.4 3.3a10.8 10.8 0 0 1 15.2 0L15 2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>', "st opt", [
@@ -672,7 +672,7 @@ BUILD.calc = function (w) {
 };
 
 var PAGES = {
-  "rros://inicio": '<h1>Bienvenido a RROS</h1><p>Esta es la página de inicio del navegador. En el sistema de verdad, Firefox navega por Internet; aquí, dentro de una página web, solo puede mostrar páginas propias.</p><ul><li><a data-go="rros://novedades">Novedades de RROS</a></li><li><a data-go="rros://atajos">Atajos del escritorio</a></li><li><a href="https://github.com/raulramalf/RROS" target="_blank" rel="noopener">Código en GitHub (se abre en otra pestaña)</a></li></ul>',
+  "rros://inicio": '<h1>Bienvenido a Lily</h1><p>Esta es la página de inicio del navegador. En el sistema de verdad, Firefox navega por Internet; aquí, dentro de una página web, solo puede mostrar páginas propias.</p><ul><li><a data-go="rros://novedades">Novedades de Lily</a></li><li><a data-go="rros://atajos">Atajos del escritorio</a></li><li><a href="https://github.com/raulramalf/RROS" target="_blank" rel="noopener">Código en GitHub (se abre en otra pestaña)</a></li></ul>',
   "rros://novedades": '<h1>Novedades</h1><ul><li>Escritorio KDE Plasma con barra de menús arriba y dock, como macOS.</li><li>Barras de título con botones de semáforo y los colores del tema.</li><li>Instalador con cifrado del disco, probado en BIOS y UEFI.</li><li>Tienda con las aplicaciones de Arch Linux y Flathub.</li></ul><p><a data-go="rros://inicio">← Volver</a></p>',
   "rros://atajos": '<h1>Atajos</h1><table><tr><td>Ctrl + Espacio</td><td>Buscar aplicaciones y archivos</td></tr><tr><td>Ctrl + W</td><td>Cerrar la ventana</td></tr><tr><td>Ctrl + M</td><td>Minimizar</td></tr><tr><td>Doble clic en la barra</td><td>Maximizar o restaurar</td></tr></table><p><a data-go="rros://inicio">← Volver</a></p>'
 };
@@ -751,7 +751,7 @@ BUILD.prefs = function (w, sectionArg) {
     } else if (sec === "sonido") {
       s.innerHTML = '<h3>Sonido</h3><label>Volumen <input type="range" id="vol" min="0" max="100" value="60"></label><p class="crumb">PipeWire en el sistema real.</p>';
     } else {
-      s.innerHTML = '<h3>Acerca de</h3><p>RROS 0.2.0 «Aurora» · base Arch Linux · escritorio KDE Plasma.</p><button class="btn pri" id="ab">Más información</button>';
+      s.innerHTML = '<h3>Acerca de</h3><p>Lily 0.2.0 «Aurora» · base Arch Linux · escritorio KDE Plasma.</p><button class="btn pri" id="ab">Más información</button>';
       $("#ab", s).onclick = function () { openApp("about"); };
     }
   }
@@ -760,11 +760,11 @@ BUILD.prefs = function (w, sectionArg) {
 };
 
 BUILD.ajustes = function (w) {
-  w.body.innerHTML = '<iframe class="full" src="ajustes.html" title="RROS Ajustes"></iframe>';
+  w.body.innerHTML = '<iframe class="full" src="ajustes.html" title="Lily Ajustes"></iframe>';
 };
 
 BUILD.about = function (w) {
-  w.body.innerHTML = '<div class="about">' + LOGO.replace('class="logo"', "") + '<h2 style="margin:4px 0 0">RROS</h2><div class="crumb">Versión 0.2.0 «Aurora»</div>' +
+  w.body.innerHTML = '<div class="about">' + LOGO.replace('class="logo"', "") + '<h2 style="margin:4px 0 0">Lily</h2><div class="crumb">Versión 0.2.0 «Aurora»</div>' +
     '<table><tr><td>Base</td><td>Arch Linux</td></tr><tr><td>Escritorio</td><td>KDE Plasma (Wayland)</td></tr><tr><td>Perfil</td><td>Standard</td></tr><tr><td>Memoria</td><td>8 GB</td></tr><tr><td>Tema</td><td>' + THEMES[state.theme].name + '</td></tr></table>' +
     '<p class="crumb" style="max-width:30ch">Esto es una demostración en el navegador. El sistema se instala desde la ISO.</p></div>';
 };
@@ -803,7 +803,7 @@ BUILD.term = function (w) {
     abrir: function (a) { var p = resolve(a[0] || ""); if (readFile(p) === null && !dirAt(p)) return '<span class="c-red">abrir: no existe: ' + esc(a[0] || "") + "</span>"; openPath(p); return null; },
     "xdg-open": function (a) { return CMDS.abrir(a); },
     "rros-fetch": function () { var t = THEMES[state.theme];
-      return '<span class="c-acc">   ▄▄▄▄▄▄   </span>  <b>rros</b>@rros\n<span class="c-acc">  ██▀▀▀▀██  </span>  <span class="c-cy">SO</span>         RROS 0.2.0 (Aurora)\n<span class="c-acc">  ██▄▄▄▄█▀  </span>  <span class="c-cy">Base</span>       Arch Linux\n' +
+      return '<span class="c-acc">   ▄▄▄▄▄▄   </span>  <b>rros</b>@rros\n<span class="c-acc">  ██▀▀▀▀██  </span>  <span class="c-cy">SO</span>         Lily 0.2.0 (Aurora)\n<span class="c-acc">  ██▄▄▄▄█▀  </span>  <span class="c-cy">Base</span>       Arch Linux\n' +
         '<span class="c-acc">  ██  ▀██▄  </span>  <span class="c-cy">Escritorio</span> KDE Plasma (Wayland)\n<span class="c-acc">  ▀▀    ▀▀  </span>  <span class="c-cy">Tema</span>       ' + t.name + " · fondo " + WPS[state.wp] + "\n              <span class=\"c-cy\">Terminal</span>   Konsole"; },
     neofetch: function () { return CMDS["rros-fetch"](); },
     rros: function (a) {
@@ -887,7 +887,7 @@ applyTheme();
 renderMenubar();
 renderDock();
 renderIcons();
-setTimeout(function () { toast("Bienvenido a RROS", "Abre las aplicaciones desde el dock o con Ctrl + Espacio."); }, 600);
+setTimeout(function () { toast("Bienvenido a Lily", "Abre las aplicaciones desde el dock o con Ctrl + Espacio."); }, 600);
 </script>
 </body>
 </html>

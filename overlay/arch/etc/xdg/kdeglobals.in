@@ -1,7 +1,7 @@
-# Valores por defecto de RROS para Plasma y las aplicaciones de KDE (cada usuario los cambia en Preferencias del
+# Valores por defecto de Lily para Plasma y las aplicaciones de KDE (cada usuario los cambia en Preferencias del
 # sistema). build-iso-arch.sh añade al final los colores del tema Aurora: rros-theme los rehace al iniciar sesión.
 [General]
-ColorScheme=RROS
+ColorScheme=Lily
 font=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 menuFont=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 toolBarFont=Inter,9,-1,5,400,0,0,0,0,0,0,0,0,0,0,1

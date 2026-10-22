@@ -1,5 +1,5 @@
 #!/bin/sh
-# Inicio de sesión: la bienvenida de RROS y, la primera vez, carpetas del usuario, plantillas, marcadores y Flathub.
+# Inicio de sesión: la bienvenida de Lily y, la primera vez, carpetas del usuario, plantillas, marcadores y Flathub.
 flag="${XDG_CONFIG_HOME:-$HOME/.config}/rros/.primer-inicio"
 # la bienvenida (aspecto, dock y escritorio; en el live, instalar): hasta que se complete una vez, y siempre en el live
 seen="${XDG_CONFIG_HOME:-$HOME/.config}/rros/.bienvenida-vista"
@@ -34,5 +34,5 @@ fi
 # Flathub para la tienda de aplicaciones (necesita red; si no hay, se reintenta al instalar)
 (rros-apps setup >/dev/null 2>&1) &
 touch "$flag"
-notify-send -i rros "Bienvenido a RROS" "Super: todas las aplicaciones · Alt+Espacio: buscar · el menú RROS, arriba a la izquierda" 2>/dev/null
+notify-send -i rros "Bienvenido a Lily" "Super: todas las aplicaciones · Alt+Espacio: buscar · el menú Lily, arriba a la izquierda" 2>/dev/null
 exit 0

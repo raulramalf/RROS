@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS live: inicio de sesión automático en tty1
+Description=Lily live: inicio de sesión automático en tty1
 ConditionKernelCommandLine=archisobasedir
 After=systemd-user-sessions.service rros-live-user.service
 Wants=rros-live-user.service

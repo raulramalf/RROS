@@ -1,4 +1,4 @@
-// RROS Shell: el escritorio de RROS. Barra superior, dock, Launchpad, centro de control, notificaciones, avisos de
+// Lily Shell: el escritorio de Lily. Barra superior, dock, Launchpad, centro de control, notificaciones, avisos de
 // volumen y brillo, y el fondo, cada uno en su capa de Wayland sobre KWin.
 //   rros-shell              el escritorio (lo arranca la sesión, en lugar de plasmashell)
 //   rros-shell --demo       todo en una ventana, para probarlo y hacer capturas
@@ -22,12 +22,12 @@ int main(int argc, char *argv[])
 	QQuickStyle::setStyle(QStringLiteral("Basic"));
 	QGuiApplication app(argc, argv);
 	app.setApplicationName(QStringLiteral("rros-shell"));
-	app.setOrganizationName(QStringLiteral("RROS"));
+	app.setOrganizationName(QStringLiteral("Lily"));
 	app.setDesktopFileName(QStringLiteral("rros-shell"));
 	app.setQuitOnLastWindowClosed(false);
 
 	QCommandLineParser cli;
-	cli.setApplicationDescription(QStringLiteral("El escritorio de RROS"));
+	cli.setApplicationDescription(QStringLiteral("El escritorio de Lily"));
 	cli.addHelpOption();
 	QCommandLineOption demo(QStringLiteral("demo"), QStringLiteral("Todo en una ventana (pruebas)"));
 	QCommandLineOption shot(QStringLiteral("captura"), QStringLiteral("Con --demo: guarda una captura y sale"), QStringLiteral("PNG"));

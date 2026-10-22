@@ -1,12 +1,12 @@
 #!/bin/sh
-# Ajustes de RROS sobre Arch que no pueden venir como archivos: identidad (os-release es de «filesystem»),
+# Ajustes de Lily sobre Arch que no pueden venir como archivos: identidad (os-release es de «filesystem»),
 # idiomas y servicios. Lo lanza el hook de pacman zz-rros.hook (al construir la ISO y en cada actualización).
 set -u
 # shellcheck disable=SC1091,SC2154  # lo escribe apply-identity.sh al construir
 . /etc/rros/identity 2>/dev/null || { echo "rros-arch-setup: falta /etc/rros/identity" >&2; exit 0; }
 cat > /usr/lib/os-release <<OSR
-NAME="RROS"
-PRETTY_NAME="RROS $RROS_VERSION ($RROS_CODENAME, $RROS_PROFILE)"
+NAME="Lily"
+PRETTY_NAME="Lily $RROS_VERSION ($RROS_CODENAME, $RROS_PROFILE)"
 ID=rros
 ID_LIKE=arch
 BUILD_ID=rolling

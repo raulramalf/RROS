@@ -1,4 +1,4 @@
-# RROS: ficha del sistema al abrir una sesión de login interactiva.
+# Lily: ficha del sistema al abrir una sesión de login interactiva.
 case $- in *i*) ;; *) return 0 ;; esac
 [ -n "${RROS_WELCOMED:-}" ] && return 0
 export RROS_WELCOMED=1

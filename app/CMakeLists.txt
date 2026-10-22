@@ -1,4 +1,4 @@
-# RROS Ajustes: la aplicación nativa (Qt 6 Quick) de ajustes, tienda, bienvenida e instalador de RROS.
+# Lily Ajustes: la aplicación nativa (Qt 6 Quick) de ajustes, tienda, bienvenida e instalador de Lily.
 cmake_minimum_required(VERSION 3.16)
 project(rros-ajustes LANGUAGES CXX)
 

@@ -1,18 +1,18 @@
 #!/bin/sh
-# Prueba de instalación (CI): instala RROS sin preguntas en el disco de rros.installtest=DISCO (por defecto
+# Prueba de instalación (CI): instala Lily sin preguntas en el disco de rros.installtest=DISCO (por defecto
 # /dev/vda), cifrado si también está rros.installtest.cifrado, para UEFI con rros.installtest.uefi, y deja
 # escrito el veredicto en la consola. Después test-iso.sh arranca desde ese disco con el
 # autotest. Lo lanza rros-installtest.service solo con rros.installtest en la línea del kernel.
 set -u
 disk=$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^rros\.installtest=//p')
 [ -n "$disk" ] || disk=/dev/vda
-echo "=== RROS installtest: $disk ==="
+echo "=== Lily installtest: $disk ==="
 pw=/run/rros-installtest.pw
 (umask 077 && printf 'prueba-rros\n' > "$pw")
 set --
 grep -qw rros.installtest.cifrado /proc/cmdline && set -- --encrypt --passphrase-file "$pw"
 grep -qw rros.installtest.uefi /proc/cmdline && set -- "$@" --uefi
-if rros-install --disk "$disk" --user rros --fullname "Prueba RROS" --hostname rros-prueba --password-file "$pw" \
+if rros-install --disk "$disk" --user rros --fullname "Prueba Lily" --hostname rros-prueba --password-file "$pw" \
 	--timezone Europe/Madrid --cmdline "console=ttyS0 rros.selftest" --yes "$@"; then
 	sync
 	echo "RROS_INSTALL_OK"

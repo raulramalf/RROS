@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tema de escritorio de Plasma de RROS: el fondo de la barra, el dock, los menús emergentes y los avisos.
+"""Tema de escritorio de Plasma de Lily: el fondo de la barra, el dock, los menús emergentes y los avisos.
 
 Dos variantes, que rros-theme elige con ui.dock_style:
   rros     2D: plano, translúcido, esquinas redondeadas y un borde fino.
@@ -213,15 +213,15 @@ def dialog(three_d, solid=False, R=12):
 
 def metadata(id_, name, desc):
     return json.dumps({
-        "KPlugin": {"Authors": [{"Name": "RROS"}], "Description": desc, "Id": id_, "License": "GPL-2.0+",
+        "KPlugin": {"Authors": [{"Name": "Lily"}], "Description": desc, "Id": id_, "License": "GPL-2.0+",
                     "Name": name, "Version": "1.0", "Website": "https://github.com/raulramalf/RROS"},
         "X-Plasma-API-Minimum-Version": "6.0",
     }, ensure_ascii=False, indent=2) + "\n"
 
 
 def main():
-    for id_, name, three_d, desc in (("rros", "RROS", False, "Barra y dock planos y translúcidos (2D)"),
-                                     ("rros-3d", "RROS 3D", True, "Barra y dock con brillo, bisel y canto, como un estante de cristal (3D)")):
+    for id_, name, three_d, desc in (("rros", "Lily", False, "Barra y dock planos y translúcidos (2D)"),
+                                     ("rros-3d", "Lily 3D", True, "Barra y dock con brillo, bisel y canto, como un estante de cristal (3D)")):
         d = os.path.join(OUT, id_)
         for sub in ("widgets", "dialogs", "solid/widgets", "solid/dialogs"):
             os.makedirs(os.path.join(d, sub), exist_ok=True)

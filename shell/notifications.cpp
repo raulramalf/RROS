@@ -71,10 +71,10 @@ QStringList Notifications::GetCapabilities()
 
 QString Notifications::GetServerInformation(QString &vendor, QString &version, QString &spec_version)
 {
-	vendor = QStringLiteral("RROS");
+	vendor = QStringLiteral("Lily");
 	version = QStringLiteral("1.1");
 	spec_version = QStringLiteral("1.2");
-	return QStringLiteral("RROS Shell");
+	return QStringLiteral("Lily Shell");
 }
 
 void Notifications::dismiss(uint id)

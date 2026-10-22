@@ -3,13 +3,13 @@
     "KPlugin": {
         "Authors": [
             {
-                "Name": "RROS"
+                "Name": "Lily"
             }
         ],
-        "Description": "El escritorio de RROS: barra fina arriba con el menú RROS y un dock con Launchpad, en 2D o 3D",
+        "Description": "El escritorio de Lily: barra fina arriba con el menú Lily y un dock con Launchpad, en 2D o 3D",
         "Id": "org.rros.desktop",
         "License": "GPL-2.0+",
-        "Name": "RROS",
+        "Name": "Lily",
         "Version": "1.0",
         "Website": "https://github.com/raulramalf/RROS"
     },

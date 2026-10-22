@@ -1,4 +1,4 @@
-# Aplicaciones por defecto de RROS sobre Arch (las de KDE). Cada usuario puede cambiarlas en ~/.config/mimeapps.list
+# Aplicaciones por defecto de Lily sobre Arch (las de KDE). Cada usuario puede cambiarlas en ~/.config/mimeapps.list
 [Default Applications]
 x-scheme-handler/http=firefox.desktop
 x-scheme-handler/https=firefox.desktop

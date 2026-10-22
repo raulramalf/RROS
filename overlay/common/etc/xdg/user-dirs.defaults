@@ -1,4 +1,4 @@
-# Carpetas del usuario de RROS (xdg-user-dirs-update las crea en el primer inicio de sesión).
+# Carpetas del usuario de Lily (xdg-user-dirs-update las crea en el primer inicio de sesión).
 # TEMPLATES (Plantillas) alimenta el menú «Crear documento» del gestor de archivos y `rros-new`.
 DESKTOP=Escritorio
 DOWNLOAD=Descargas

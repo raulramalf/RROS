@@ -8,7 +8,7 @@ sin riesgo y para contar qué funciona, de forma que cada informe sirva para arr
 
 ## 1. Lo que necesitas
 
-- La ISO (`rros-arch-lite.iso`). Se descarga de los artefactos del workflow **Arch** de GitHub Actions o se
+- La ISO (`lily-lite.iso`). Se descarga de los artefactos del workflow **Arch** de GitHub Actions o se
   genera con [BUILD.md](BUILD.md). (La ISO de la base Ubuntu, `rros-lite.iso`, sigue sirviendo y es la única que
   arranca con Secure Boot.)
 - Una memoria USB de 4 GB o más (se borra entera).

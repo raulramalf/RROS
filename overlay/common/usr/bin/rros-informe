@@ -1,5 +1,5 @@
 #!/bin/sh
-# rros-informe (`rros informe`): informe de hardware para contar cómo funciona RROS en un PC real.
+# rros-informe (`rros informe`): informe de hardware para contar cómo funciona Lily en un PC real.
 # Lo que se prueba a mano (Wi-Fi, sonido, suspensión...) va en la plantilla de GitHub; esto recoge lo
 # que el sistema sabe solo. No incluye números de serie, direcciones MAC, UUID ni nombres de usuario o equipo.
 #   rros informe               lo muestra y lo guarda en ~/rros-informe-FECHA.md
@@ -40,11 +40,11 @@ report() {
 		fw="BIOS (Legacy/CSM)"
 		sb="no aplica"
 	fi
-	echo "# Informe de hardware de RROS"
+	echo "# Informe de hardware de Lily"
 	echo
 	echo "| | |"
 	echo "|---|---|"
-	echo "| RROS | ${PRETTY_NAME:-?} · perfil $(rd /etc/rros/profile) · live: $live |"
+	echo "| Lily | ${PRETTY_NAME:-?} · perfil $(rd /etc/rros/profile) · live: $live |"
 	echo "| Kernel | $(uname -r) |"
 	echo "| Equipo | $(rd /sys/class/dmi/id/sys_vendor) $(rd /sys/class/dmi/id/product_name) $(rd /sys/class/dmi/id/product_version) |"
 	echo "| Placa | $(rd /sys/class/dmi/id/board_vendor) $(rd /sys/class/dmi/id/board_name) |"

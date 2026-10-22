@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# rros-antivirus: el antivirus de RROS sobre ClamAV. Lo usan RROS Ajustes (Seguridad) y el análisis programado.
+# rros-antivirus: el antivirus de Lily sobre ClamAV. Lo usan Lily Ajustes (Seguridad) y el análisis programado.
 #   rros-antivirus estado [--json]              protección, firmas, último análisis, cuarentena
 #   rros-antivirus analizar rapido|completo|RUTA  analiza; escribe «PROGRESO n», «AMENAZA ruta|nombre» y al final
 #                                               «RESULTADO {json}»

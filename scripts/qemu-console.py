@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mantiene encendida una VM de RROS (con consola serie de administrador) para depurar sin reiniciar.
+"""Mantiene encendida una VM de Lily (con consola serie de administrador) para depurar sin reiniciar.
 
   qemu-console.py start            arranca la VM en segundo plano (tarda varios minutos sin KVM)
   qemu-console.py start --disk F   además conecta el disco virtual F (qcow2; se crea de DISK_GB GB si no existe)

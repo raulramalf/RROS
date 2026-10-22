@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS: buscar y descargar actualizaciones cada día
+Description=Lily: buscar y descargar actualizaciones cada día
 
 [Timer]
 OnBootSec=15min

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Aspecto de RROS para Plasma en todo el sistema (sobre una raíz ya preparada): fondo, esquema de colores, barras
+# Aspecto de Lily para Plasma en todo el sistema (sobre una raíz ya preparada): fondo, esquema de colores, barras
 # de título, la barra y el dock de la primera vez y el fondo del menú de arranque, generados por rros-theme con el
 # tema Lirio oscuro (los colores del logotipo).
-# Así el primer arranque ya se ve como RROS; al iniciar sesión, rros-theme lo rehace con el tema de cada usuario.
+# Así el primer arranque ya se ve como Lily; al iniciar sesión, rros-theme lo rehace con el tema de cada usuario.
 # uso: plasma-defaults.sh RAIZ PERFIL
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
@@ -14,23 +14,23 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 run() { HOME=$tmp XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data RROS_USER_CONF=$tmp/u.toml RROS_PLASMA_TEST=1 "$@"; }
 
-wp=$root/usr/share/wallpapers/RROS
+wp=$root/usr/share/wallpapers/LilyClasico
 mkdir -p "$wp/contents/images" "$root/usr/share/color-schemes" "$root/usr/share/aurorae/themes" \
 	"$root/usr/share/grub/themes/rros"
 run "$RROS/rros-theme" -p "$profile" wallpaper --style aurora --size 1920x1080 --out "$wp/contents/images/1920x1080.png" >/dev/null
 cat > "$wp/metadata.json" <<'JSON'
-{ "KPlugin": { "Id": "RROS", "Name": "RROS", "Authors": [ { "Name": "RROS" } ], "License": "CC-BY-SA-4.0" } }
+{ "KPlugin": { "Id": "Lily", "Name": "Lily", "Authors": [ { "Name": "Lily" } ], "License": "CC-BY-SA-4.0" } }
 JSON
 run "$RROS/rros-theme" -p "$profile" apply --quiet
-cp "$tmp"/data/color-schemes/RROS-*.colors "$root/usr/share/color-schemes/RROS.colors"
-rm -rf "$root/usr/share/aurorae/themes/RROS"
-cp -r "$tmp/data/aurorae/themes/RROS" "$root/usr/share/aurorae/themes/RROS"
-# kdeglobals: los valores de RROS más los colores (sin el grupo [General] del esquema, que ya está)
+cp "$tmp"/data/color-schemes/Lily-*.colors "$root/usr/share/color-schemes/Lily.colors"
+rm -rf "$root/usr/share/aurorae/themes/Lily"
+cp -r "$tmp/data/aurorae/themes/Lily" "$root/usr/share/aurorae/themes/Lily"
+# kdeglobals: los valores de Lily más los colores (sin el grupo [General] del esquema, que ya está)
 if [ -f "$root/etc/xdg/kdeglobals.in" ]; then
 	{
 		cat "$root/etc/xdg/kdeglobals.in"
 		echo
-		awk '/^\[/ { keep = ($0 !~ /^\[General\]/) } keep' "$root/usr/share/color-schemes/RROS.colors"
+		awk '/^\[/ { keep = ($0 !~ /^\[General\]/) } keep' "$root/usr/share/color-schemes/Lily.colors"
 	} > "$root/etc/xdg/kdeglobals"
 	rm -f "$root/etc/xdg/kdeglobals.in"
 fi
@@ -46,12 +46,12 @@ cp "$tmp/render/plasma/layout.js" "$root/etc/skel/.local/state/rros/plasma-layou
 	cat "$tmp/render/plasma/layout.js"
 	cat <<'JS'
 
-// --- fondo de RROS (rros-theme pone después el del tema de cada usuario) ---
+// --- fondo de Lily (rros-theme pone después el del tema de cada usuario) ---
 desktops().forEach(function (d) {
     d.wallpaperPlugin = "org.kde.image";
     d.currentConfigGroup = ["Wallpaper", "org.kde.image", "General"];
-    d.writeConfig("Image", "file:///usr/share/wallpapers/RROS/contents/images/1920x1080.png");
+    d.writeConfig("Image", "file:///usr/share/wallpapers/LilyClasico/contents/images/1920x1080.png");
 });
 JS
 } > "$lnf/org.kde.plasma.desktop-layout.js"
-log "aspecto de Plasma de RROS escrito en $root"
+log "aspecto de Plasma de Lily escrito en $root"

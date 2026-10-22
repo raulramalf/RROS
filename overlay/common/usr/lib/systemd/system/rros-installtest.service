@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS: prueba de instalación en un disco virtual (solo con rros.installtest en la línea del kernel)
+Description=Lily: prueba de instalación en un disco virtual (solo con rros.installtest en la línea del kernel)
 ConditionKernelCommandLine=rros.installtest
 After=multi-user.target rros-apply.service rros-live-user.service
 

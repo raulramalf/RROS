@@ -3,7 +3,7 @@
 (el icono) y docs/brand/lily-flor.svg (solo la flor; la dibuja scripts/make-lily.py).
 
 - PNG (el logo lleva una foto y filtros que no todos los visores de SVG dibujan): iconos del tema hicolor,
-  RROS Ajustes y RROS Shell (app/icons/app-rros.png), pantalla de carga, inicio de sesión (SDDM) y GRUB.
+  Lily Ajustes y Lily Shell (app/icons/app-rros.png), pantalla de carga, inicio de sesión (SDDM) y GRUB.
 - Una versión de una sola tinta con las letras del logo (RR/OS), para la barra superior y los tamaños pequeños:
   app/icons/app-rros-mono.svg y el icono simbólico rros-symbolic.svg.
 

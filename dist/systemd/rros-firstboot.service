@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS: seleccionar perfil de hardware en el primer arranque
+Description=Lily: seleccionar perfil de hardware en el primer arranque
 ConditionPathExists=!/etc/rros/profile
 After=local-fs.target
 Before=display-manager.service

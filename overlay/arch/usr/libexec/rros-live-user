@@ -6,7 +6,7 @@ if ! id rros >/dev/null 2>&1; then
 	for g in wheel audio video input storage optical lp network rfkill users; do
 		getent group "$g" >/dev/null 2>&1 && groups="$groups,$g"
 	done
-	useradd -m -s /bin/bash -c "RROS" -G "${groups#,}" rros
+	useradd -m -s /bin/bash -c "Lily" -G "${groups#,}" rros
 	passwd -d rros >/dev/null
 	printf 'rros ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/00-rros-live
 	chmod 440 /etc/sudoers.d/00-rros-live
@@ -21,10 +21,10 @@ printf '[Autologin]\nUser=rros\nSession=plasma.desktop\nRelogin=false\n' > /etc/
 # Ajustes, la Tienda y el instalador piden permiso con polkit: en el live, el usuario rros no necesita contraseña
 mkdir -p /etc/polkit-1/rules.d
 cat > /etc/polkit-1/rules.d/49-rros-live.rules <<'RULES'
-// solo en el sistema live (RROS lo escribe al arrancar desde la ISO)
+// solo en el sistema live (Lily lo escribe al arrancar desde la ISO)
 polkit.addRule(function (action, subject) {
     if (subject.user == "rros") return polkit.Result.YES;
 });
 RULES
-# «Instalar RROS» en el Launchpad y en el menú, solo en el live
+# «Instalar Lily» en el Launchpad y en el menú, solo en el live
 cp /usr/share/rros/live/rros-install.desktop /usr/share/applications/ 2>/dev/null || true

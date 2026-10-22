@@ -23,7 +23,7 @@ cpu_idle() {
 	echo "info: procesador en reposo $(awk -v b="$(($1 - b1))" -v i="$(($2 - i1))" 'BEGIN { if (b + i > 0) printf "%.1f", 100 * b / (b + i); else print 0 }') % ocupado (media de 10 s, $(nproc) hilos)"
 }
 
-echo "=== RROS selftest ==="
+echo "=== Lily selftest ==="
 # shellcheck source=/dev/null
 . /etc/os-release
 check "identidad: ID=rros ($PRETTY_NAME)" test "$ID" = rros
@@ -50,30 +50,30 @@ done
 for desk in $desks; do
 	check "lanzador: $desk.desktop" test -e "/usr/share/applications/$desk.desktop"
 done
-# lo propio de RROS: iconos, tema de escritorio 2D y 3D, menú RROS, carga, inicio de sesión y arranque
+# lo propio de Lily: iconos, tema de escritorio 2D y 3D, menú Lily, carga, inicio de sesión y arranque
 check "antivirus: motor, rros-antivirus y análisis programado" sh -c "command -v clamscan && rros-antivirus estado --json | grep -q '\"motor\":true' && test -f /usr/lib/systemd/system/rros-antivirus.timer"
 check "directivas: pam_pwquality en passwd" grep -q pam_pwquality /etc/pam.d/passwd
-check "cursores de RROS" test -e /usr/share/icons/RROS-Lirio/cursors/default
-check "logotipo de RROS (PNG)" test -s /usr/share/icons/hicolor/256x256/apps/rros.png
-check "logotipo de RROS para la barra" test -s /usr/share/icons/hicolor/scalable/apps/rros-symbolic.svg
+check "cursores de Lily" test -e /usr/share/icons/Lily-Lirio/cursors/default
+check "logotipo de Lily (PNG)" test -s /usr/share/icons/hicolor/256x256/apps/rros.png
+check "logotipo de Lily para la barra" test -s /usr/share/icons/hicolor/scalable/apps/rros-symbolic.svg
 for icon in rros-settings rros-apps rros-install rros-welcome rros-launchpad rros-updates; do
 	check "icono propio: $icon" test -s "/usr/share/icons/hicolor/scalable/apps/$icon.svg"
 done
-check "tema de escritorio RROS (2D)" test -s /usr/share/plasma/desktoptheme/rros/widgets/panel-background.svg
-check "tema de escritorio RROS 3D" test -s /usr/share/plasma/desktoptheme/rros-3d/solid/widgets/panel-background.svg
-check "menú RROS de la barra (plasmoide)" test -s /usr/share/plasma/plasmoids/org.rros.menu/contents/ui/main.qml
-check "pantalla de carga de RROS" test -s /usr/share/plasma/look-and-feel/org.rros.desktop/contents/splash/Splash.qml
-check "inicio de sesión de RROS (SDDM)" sh -c 'test -s /usr/share/sddm/themes/rros/Main.qml && grep -q "^Current=rros" /etc/sddm.conf.d/10-rros.conf'
-check "menú de arranque de RROS (GRUB)" test -s /usr/share/grub/themes/rros/background.png
-check "RROS Ajustes: la API responde" as_user "rros-settings api GET /api/state | grep -q '\"keys\"'"
-check "RROS Ajustes: sin servidor web" sh -c '! rros-settings web --no-open 2>/dev/null'
+check "tema de escritorio Lily (2D)" test -s /usr/share/plasma/desktoptheme/rros/widgets/panel-background.svg
+check "tema de escritorio Lily 3D" test -s /usr/share/plasma/desktoptheme/rros-3d/solid/widgets/panel-background.svg
+check "menú Lily de la barra (plasmoide)" test -s /usr/share/plasma/plasmoids/org.rros.menu/contents/ui/main.qml
+check "pantalla de carga de Lily" test -s /usr/share/plasma/look-and-feel/org.rros.desktop/contents/splash/Splash.qml
+check "inicio de sesión de Lily (SDDM)" sh -c 'test -s /usr/share/sddm/themes/rros/Main.qml && grep -q "^Current=rros" /etc/sddm.conf.d/10-rros.conf'
+check "menú de arranque de Lily (GRUB)" test -s /usr/share/grub/themes/rros/background.png
+check "Lily Ajustes: la API responde" as_user "rros-settings api GET /api/state | grep -q '\"keys\"'"
+check "Lily Ajustes: sin servidor web" sh -c '! rros-settings web --no-open 2>/dev/null'
 
 check "NetworkManager activo" systemctl is-active --quiet NetworkManager
 check "polkit activo (o disponible)" sh -c 'systemctl is-active --quiet polkit || test -x /usr/bin/pkexec'
 check "snap no instalado" sh -c '! test -e /usr/bin/snap'
 check "rros-apply se ejecutó" systemctl is-active --quiet rros-apply
 check "zram como swap" sh -c 'swapon --show | grep -q zram'
-check "identidad: os-release de RROS" grep -q '^ID=rros' /etc/os-release
+check "identidad: os-release de Lily" grep -q '^ID=rros' /etc/os-release
 
 check "rros doctor (usuario)" as_user "rros doctor"
 # si falla, enseña el diagnóstico completo en el registro para saber qué parte
@@ -92,7 +92,7 @@ check "kernel endurecido (kptr_restrict = 2)" test "$(sysctl -n kernel.kptr_rest
 check "kernel endurecido (protected_regular = 2)" test "$(sysctl -n fs.protected_regular 2>/dev/null)" = 2
 # el aislamiento que usa Flatpak: crear un espacio de nombres como usuario
 check "aislamiento de aplicaciones (bwrap) como usuario" as_user "bwrap --ro-bind / / --dev /dev --proc /proc true"
-check "sudo: configuración de RROS válida" sh -c 'visudo -cqf /etc/sudoers.d/rros'
+check "sudo: configuración de Lily válida" sh -c 'visudo -cqf /etc/sudoers.d/rros'
 # shellcheck disable=SC2016
 check "rros-security: auditoría" sh -c 'rros-security --json | grep -q "\"score\""'
 # dispositivos y archivos
@@ -101,20 +101,20 @@ check "rros-devices: ve la tarjeta de red" sh -c 'rros-devices lista red --json 
 check "rros-new: crea un script ejecutable" as_user "cd /tmp && rm -f rros-selftest.sh && rros-new bash rros-selftest >/dev/null && test -x /tmp/rros-selftest.sh"
 check "primer inicio: carpetas en español y plantillas" as_user "rros-first-login; test -d ~/Documentos && test -f ~/Plantillas/'Script de Bash.sh'"
 if [ "$BASE" = arch ]; then
-	# Plasma: SDDM (con inicio automático en el live) y la sesión del usuario con la distribución de RROS
+	# Plasma: SDDM (con inicio automático en el live) y la sesión del usuario con la distribución de Lily
 	check "pantalla de inicio de sesión (SDDM) activa" systemctl is-active --quiet sddm
 	if [ "$LIVE" -eq 1 ]; then
 		check "live: inicio automático en Plasma" grep -qs '^User=rros' /etc/sddm.conf.d/20-rros-live.conf
 		i=0
 		while ! pgrep -u rros -x rros-shell >/dev/null 2>&1 && [ "$i" -lt 150 ]; do sleep 2; i=$((i + 2)); done
-		check "escritorio de RROS arrancado (RROS Shell, ${i} s)" pgrep -u rros -x rros-shell
+		check "escritorio de Lily arrancado (Lily Shell, ${i} s)" pgrep -u rros -x rros-shell
 		check "KWin en marcha (compositor Wayland)" pgrep -u rros -x kwin_wayland
 		check "plasmashell no se usa" sh -c '! pgrep -u rros -x plasmashell'
 		bus="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u rros)/bus"
 		sleep 4
 		owners=$(su rros -c "$bus qdbus6" 2>/dev/null)
-		check "RROS Shell en el bus de la sesión (org.rros.Shell)" sh -c "echo '$owners' | grep -qx ' *org.rros.Shell'"
-		check "avisos de las aplicaciones en RROS Shell" sh -c "su rros -c '$bus qdbus6 org.freedesktop.Notifications /org/freedesktop/Notifications org.freedesktop.Notifications.GetServerInformation' | grep -q 'RROS'"
+		check "Lily Shell en el bus de la sesión (org.rros.Shell)" sh -c "echo '$owners' | grep -qx ' *org.rros.Shell'"
+		check "avisos de las aplicaciones en Lily Shell" sh -c "su rros -c '$bus qdbus6 org.freedesktop.Notifications /org/freedesktop/Notifications org.freedesktop.Notifications.GetServerInformation' | grep -q 'Lily'"
 		# lo que dijo el shell (errores de QML, avisos de Wayland), para el registro de la CI
 		journalctl -b _UID="$(id -u rros)" --no-pager 2>/dev/null | grep -E 'rros-shell' | grep -viE 'MESA' | tail -n 30 | sed 's/^/diag: /'
 		# las ventanas que ve KWin (capas del shell incluidas), con un guion de KWin que escribe en el registro
@@ -124,7 +124,7 @@ if [ "$BASE" = arch ]; then
 		[ -n "$sid" ] && su rros -c "$bus qdbus6 org.kde.KWin /Scripting/Script$sid org.kde.kwin.Script.run" >/dev/null 2>&1
 		sleep 1
 		journalctl -b _UID="$(id -u rros)" --no-pager 2>/dev/null | grep -F 'ventana:' | tail -n 20 | sed 's/^/diag: /'
-		check "RROS Shell dibuja el fondo y la barra de tareas" sh -c "j=\$(journalctl -b _UID=$(id -u rros) --no-pager 2>/dev/null); for c in rros-fondo rros-tareas; do echo \"\$j\" | grep -q \"capa \$c/[a-z]* dibujada\" || exit 1; done"
+		check "Lily Shell dibuja el fondo y la barra de tareas" sh -c "j=\$(journalctl -b _UID=$(id -u rros) --no-pager 2>/dev/null); for c in rros-fondo rros-tareas; do echo \"\$j\" | grep -q \"capa \$c/[a-z]* dibujada\" || exit 1; done"
 		if ! pgrep -u rros -x rros-shell >/dev/null 2>&1; then   # para saber por qué: sesión y registro de SDDM
 			{
 				echo "--- sesiones ---"; loginctl list-sessions --no-legend 2>&1 | head -5
@@ -137,11 +137,11 @@ if [ "$BASE" = arch ]; then
 			} | sed 's/^/diag: /'   # test-iso.sh muestra estas líneas
 		fi
 		# shellcheck disable=SC2016  # lo expande el sh de dentro
-		check "bienvenida abierta (RROS Ajustes)" sh -c 'i=0; while ! pgrep -u rros -x rros-ajustes >/dev/null && [ $i -lt 30 ]; do sleep 1; i=$((i+1)); done; pgrep -u rros -x rros-ajustes'
+		check "bienvenida abierta (Lily Ajustes)" sh -c 'i=0; while ! pgrep -u rros -x rros-ajustes >/dev/null && [ $i -lt 30 ]; do sleep 1; i=$((i+1)); done; pgrep -u rros -x rros-ajustes'
 		i=0
-		while ! ls ~rros/.local/share/color-schemes/RROS-*.colors >/dev/null 2>&1 && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
-		check "colores y barras de título del tema de RROS aplicados al iniciar sesión" sh -c 'ls ~rros/.local/share/color-schemes/RROS-*.colors && test -f ~rros/.local/share/aurorae/themes/RROS/decoration.svg'
-		check "tema de escritorio RROS en uso" grep -qsE '^name=rros' ~rros/.config/plasmarc
+		while ! ls ~rros/.local/share/color-schemes/Lily-*.colors >/dev/null 2>&1 && [ "$i" -lt 60 ]; do sleep 2; i=$((i + 2)); done
+		check "colores y barras de título del tema de Lily aplicados al iniciar sesión" sh -c 'ls ~rros/.local/share/color-schemes/Lily-*.colors && test -f ~rros/.local/share/aurorae/themes/Lily/decoration.svg'
+		check "tema de escritorio Lily en uso" grep -qsE '^name=rros' ~rros/.config/plasmarc
 		renderer=$(su rros -c "$bus qdbus6 org.kde.KWin /KWin supportInformation" 2>/dev/null | sed -n 's/^OpenGL renderer string: //p' | head -1)
 		echo "info: KWin dibuja con: ${renderer:-desconocido}"
 		case $renderer in *llvmpipe* | *softpipe*)
@@ -163,7 +163,7 @@ if [ "$LIVE" -eq 0 ]; then
 	check "instalado: la raíz está en /etc/fstab" grep -qE '^[^#[:space:]]+[[:space:]]+/[[:space:]]' /etc/fstab
 	check "instalado: GRUB con la entrada de Lily" sh -c 'grep -q Lily /boot/grub/grub.cfg'
 	check "instalado: zona horaria de la instalación" sh -c 'readlink /etc/localtime | grep -q Europe/Madrid'
-	check "instalado: GRUB con el tema de RROS" grep -q 'GRUB_THEME=.*rros' /etc/default/grub
+	check "instalado: GRUB con el tema de Lily" grep -q 'GRUB_THEME=.*rros' /etc/default/grub
 	if [ -d /sys/firmware/efi ]; then
 		check "instalado: arranque UEFI (partición EFI montada, con GRUB)" sh -c 'mountpoint -q /boot/efi && test -e /boot/efi/EFI/BOOT/BOOTX64.EFI'
 	fi
@@ -186,11 +186,11 @@ if [ "$BASE" = arch ]; then
 	check "sudo: el grupo wheel administra" sh -c 'visudo -cqf /etc/sudoers.d/10-rros-wheel'
 	check "instalador: cifrado en el initramfs (hook sd-encrypt)" test -e /usr/lib/initcpio/install/sd-encrypt
 	check "zona horaria configurada (sin preguntas de systemd-firstboot)" sh -c 'test -e /etc/localtime && systemctl is-enabled systemd-firstboot.service 2>/dev/null | grep -q masked'
-	check "Plasma: aspecto de RROS (paquete, colores, barras de título, fondo)" sh -c 'test -f /usr/share/plasma/look-and-feel/org.rros.desktop/contents/layouts/org.kde.plasma.desktop-layout.js && grep -q "Colors:Window" /etc/xdg/kdeglobals && test -f /usr/share/aurorae/themes/RROS/close.svg && test -s /usr/share/wallpapers/RROS/contents/images/1920x1080.png'
+	check "Plasma: aspecto de Lily (paquete, colores, barras de título, fondo)" sh -c 'test -f /usr/share/plasma/look-and-feel/org.rros.desktop/contents/layouts/org.kde.plasma.desktop-layout.js && grep -q "Colors:Window" /etc/xdg/kdeglobals && test -f /usr/share/aurorae/themes/Lily/close.svg && test -s /usr/share/wallpapers/LilyClasico/contents/images/1920x1080.png'
 	check "AppArmor activo (lsm= en el arranque)" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
 	check "AppArmor: perfiles cargados" sh -c 'systemctl is-active --quiet apparmor && grep -q . /sys/kernel/security/apparmor/profiles'
 	check "actualizaciones: descarga diaria (rros-updates.timer)" sh -c 'command -v checkupdates >/dev/null && systemctl is-enabled --quiet rros-updates.timer'
-	check "faillock: límite de intentos de RROS" grep -q '^deny = ' /etc/security/faillock.conf
+	check "faillock: límite de intentos de Lily" grep -q '^deny = ' /etc/security/faillock.conf
 	check "live: el sistema a copiar está montado" sh -c '! grep -q archisobasedir /proc/cmdline || test -d /run/archiso/airootfs/etc'
 	if [ "$LIVE" -eq 0 ]; then
 		check "instalado: initramfs propio (sin los hooks de archiso)" sh -c '! test -e /etc/mkinitcpio.conf.d/archiso.conf && lsinitcpio /boot/initramfs-linux.img | grep -q "usr/lib/systemd/systemd" && ! lsinitcpio /boot/initramfs-linux.img | grep -q hooks/archiso'
@@ -203,11 +203,11 @@ if [ "$BASE" = arch ]; then
 	fi
 fi
 
-# escritorio: el tema de RROS se aplica a Plasma, con fondo
+# escritorio: el tema de Lily se aplica a Plasma, con fondo
 check "rros-theme apply (usuario)" as_user "rros-theme apply --quiet"
 check "fondo de pantalla generado" as_user "ls ~/.local/share/rros/fondos/*.png"
 check "Plasma: efectos, entrada y energía escritos" as_user "grep -q '^blurEnabled=' ~/.config/kwinrc && grep -q RepeatDelay ~/.config/kcminputrc && test -s ~/.config/powerdevilrc"
-check "terminal: perfil y colores de RROS" as_user "test -s ~/.local/share/konsole/RROS.profile && test -s ~/.local/share/konsole/RROS.colorscheme"
+check "terminal: perfil y colores de Lily" as_user "test -s ~/.local/share/konsole/Lily.profile && test -s ~/.local/share/konsole/Lily.colorscheme"
 
 # medidas (informativas, no cuentan): memoria usada con el escritorio arrancado y tamaño del sistema
 echo "info: memoria usada $(awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {printf "%d MB de %d MB", (t-a)/1024, t/1024}' /proc/meminfo)"

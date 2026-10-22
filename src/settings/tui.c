@@ -268,7 +268,7 @@ static void draw(struct ui *u)
 
 	fputs("\033[H\033[2J", stdout);
 	accent();
-	printf("\033[1m RROS Ajustes\033[0m  perfil %s  ·  %s\n", u->m.profile, "los cambios se guardan al instante");
+	printf("\033[1m Lily Ajustes\033[0m  perfil %s  ·  %s\n", u->m.profile, "los cambios se guardan al instante");
 	printf("\033[90m%.*s\033[0m\n", u->cols_n, "────────────────────────────────────────────────────────────────────────────────────────────────────────────────────");
 	for (i = 0; i < list_h; i++) {
 		size_t ci = (size_t)i, ri = u->scroll + (size_t)i;

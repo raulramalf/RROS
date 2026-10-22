@@ -1,4 +1,4 @@
-/* rros-fetch: ficha del sistema con la identidad de RROS y su presupuesto de recursos. */
+/* rros-fetch: ficha del sistema con la identidad de Lily y su presupuesto de recursos. */
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,7 +63,7 @@ static void os_name(char *out, size_t n)
 	FILE *f = fopen("/etc/os-release", "r");
 	char line[256];
 
-	snprintf(out, n, "RROS %s (%s) - desarrollo", RROS_VERSION, RROS_CODENAME);
+	snprintf(out, n, "Lily %s (%s) - desarrollo", RROS_VERSION, RROS_CODENAME);
 	if (!f)
 		return;
 	while (fgets(line, sizeof line, f)) {
@@ -75,7 +75,7 @@ static void os_name(char *out, size_t n)
 				v++;
 			if (*v && v[strlen(v) - 1] == '"')
 				v[strlen(v) - 1] = '\0';
-			if (*v && strstr(v, "RROS"))
+			if (*v && strstr(v, "Lily"))
 				snprintf(out, n, "%s", v);
 		}
 	}
@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 	row("Uptime", "%s", up);
 	row("CPU", "%s (%d)", hw.cpu_model[0] ? hw.cpu_model : "desconocida", hw.cpus);
 	row("GPU", "%s", rros_gpu_name(hw.gpu));
-	row("Escritorio", "%s", getenv("SWAYSOCK") ? "RROS Shell (Wayland)" : "consola");
+	row("Escritorio", "%s", getenv("SWAYSOCK") ? "Lily Shell (Wayland)" : "consola");
 	row("Tema", "%s (%s) · acento %s", themebuf, rros_conf_get(&eff, "ui.color_scheme") ?
 	    rros_conf_get(&eff, "ui.color_scheme") : "dark", acc);
 	if (ram_used >= 0 && ram_limit > 0) {

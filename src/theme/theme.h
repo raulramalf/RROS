@@ -1,4 +1,4 @@
-/* Generador del escritorio RROS sobre KDE Plasma: colores, barras de título, paneles y dock, efectos, entrada,
+/* Generador del escritorio Lily sobre KDE Plasma: colores, barras de título, paneles y dock, efectos, entrada,
  * energía, sonido, terminal, atajos, reglas de ventanas y el fondo. */
 #ifndef RROS_THEME_H
 #define RROS_THEME_H
@@ -62,7 +62,7 @@ int rros_theme_set_color(const char *name, const char *variant, const char *key,
 
 typedef void (*rros_render_fn)(const struct rros_theme *, const struct rros_palette *,
 			       const struct rros_conf *, FILE *);
-/* KDE Plasma: esquema de colores (~/.local/share/color-schemes/RROS-*.colors) */
+/* KDE Plasma: esquema de colores (~/.local/share/color-schemes/Lily-*.colors) */
 void rros_render_kde_colors(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
 /* KDE Plasma: guion de plasmashell que crea la barra superior y el dock según la configuración */
 void rros_render_plasma_layout(const struct rros_theme *, const struct rros_palette *, const struct rros_conf *, FILE *);
@@ -94,7 +94,7 @@ extern const char *const rros_kde_files[];
 int rros_write_launchers(const struct rros_conf *c, const char *apps_dir, const char *autostart_dir);
 /* Nombre del tema de escritorio de Plasma según el dock: "rros" (2D) o "rros-3d". */
 const char *rros_desktoptheme(const struct rros_theme *t);
-/* KDE Plasma: tema de barras de título (Aurorae) «RROS» en dir, con los colores del tema. 0 ok. */
+/* KDE Plasma: tema de barras de título (Aurorae) «Lily» en dir, con los colores del tema. 0 ok. */
 int rros_write_aurorae(const char *dir, const struct rros_theme *t, const struct rros_palette *p);
 
 /* Fondo de pantalla: el elegido (ui.wallpaper) o uno generado con la paleta (ui.wallpaper_style).

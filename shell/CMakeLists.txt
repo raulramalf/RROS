@@ -1,4 +1,4 @@
-# RROS Shell: el escritorio de RROS (barra, dock, Launchpad, centro de control, notificaciones y fondo) en Qt Quick.
+# Lily Shell: el escritorio de Lily (barra, dock, Launchpad, centro de control, notificaciones y fondo) en Qt Quick.
 # Funciona sobre KWin (Wayland) en lugar de plasmashell. Las piezas de KDE son opcionales al compilar: sin ellas
 # se compila igual y el modo --demo dibuja todo en una ventana (pruebas y capturas).
 cmake_minimum_required(VERSION 3.16)
@@ -43,5 +43,5 @@ if(KF6GlobalAccel_FOUND)
     target_link_libraries(rros-shell PRIVATE KF6::GlobalAccel)
     target_compile_definitions(rros-shell PRIVATE HAVE_GLOBALACCEL)
 endif()
-message(STATUS "RROS Shell: LayerShellQt=${LayerShellQt_FOUND} KWindowSystem=${KF6WindowSystem_FOUND} GlobalAccel=${KF6GlobalAccel_FOUND}")
+message(STATUS "Lily Shell: LayerShellQt=${LayerShellQt_FOUND} KWindowSystem=${KF6WindowSystem_FOUND} GlobalAccel=${KF6GlobalAccel_FOUND}")
 install(TARGETS rros-shell RUNTIME DESTINATION bin)

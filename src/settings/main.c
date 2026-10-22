@@ -1,4 +1,4 @@
-/* rros-settings: ajustes de RROS. Abre la aplicación RROS Ajustes, la versión de terminal o responde a la API. */
+/* rros-settings: ajustes de Lily. Abre la aplicación Lily Ajustes, la versión de terminal o responde a la API. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +9,7 @@
 static void usage(FILE *out)
 {
 	fputs("uso: rros-settings [COMANDO]\n"
-	      "  open [PÁGINA]       abre RROS Ajustes (la aplicación; sin pantalla, la versión de terminal)\n"
+	      "  open [PÁGINA]       abre Lily Ajustes (la aplicación; sin pantalla, la versión de terminal)\n"
 	      "PÁGINA: general, apariencia, escritorio, red, bluetooth, sonido, pantalla, energia, raton, teclado,\n"
 	      "        tienda, seguridad, dispositivos, actualizaciones, accesibilidad, avanzado, instalar, bienvenida\n"
 	      "  tui [--no-apply]    interfaz de terminal (ideal en Lite o por SSH)\n"
@@ -47,7 +47,7 @@ static int open_best(const char *page)
 		char *args[] = { "konsole", "-e", "rros-settings", "tui", NULL };
 
 		if (run_tool("konsole", args, 0) == 127) {
-			fputs("rros-settings: no está RROS Ajustes ni hay terminal; usa `rros-settings tui`\n", stderr);
+			fputs("rros-settings: no está Lily Ajustes ni hay terminal; usa `rros-settings tui`\n", stderr);
 			return 1;
 		}
 		return 0;

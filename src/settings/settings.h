@@ -1,4 +1,4 @@
-/* rros-settings: modelo común de la versión de terminal y de la aplicación RROS Ajustes. */
+/* rros-settings: modelo común de la versión de terminal y de la aplicación Lily Ajustes. */
 #ifndef RROS_SETTINGS_H
 #define RROS_SETTINGS_H
 

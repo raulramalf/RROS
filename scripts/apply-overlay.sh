@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Aplica la capa de RROS sobre un rootfs ya instalado: overlay + identidad.
+# Aplica la capa de Lily sobre un rootfs ya instalado: overlay + identidad.
 # uso: apply-overlay.sh RAIZ PERFIL BASE   (BASE: arch)
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
@@ -12,9 +12,9 @@ check_profile "$profile"
 
 cp -a "$ROOT_DIR/overlay/common/." "$root/"
 [ -d "$ROOT_DIR/overlay/$base" ] && cp -a "$ROOT_DIR/overlay/$base/." "$root/"
-# Arch: aspecto de RROS para Plasma en todo el sistema (fondo, colores, barras de título, inicio de sesión)
+# Arch: aspecto de Lily para Plasma en todo el sistema (fondo, colores, barras de título, inicio de sesión)
 [ "$base" = arch ] && "$ROOT_DIR/scripts/plasma-defaults.sh" "$root" "$profile"
 "$ROOT_DIR/scripts/apply-identity.sh" "$root" "$profile" "$base"
 mkdir -p "$root/etc/rros"
 echo "$profile" > "$root/etc/rros/profile"
-log "capa RROS aplicada ($base, $profile)"
+log "capa Lily aplicada ($base, $profile)"

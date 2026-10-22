@@ -1,4 +1,4 @@
-/* rros-hwdetect: detecta el hardware y propone un perfil RROS. */
+/* rros-hwdetect: detecta el hardware y propone un perfil Lily. */
 #include <stdio.h>
 #include <string.h>
 

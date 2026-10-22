@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Arranca una ISO de RROS en QEMU con RAM acotada al perfil.
+# Arranca una ISO de Lily en QEMU con RAM acotada al perfil.
 # uso: run-qemu.sh PERFIL [--uefi]
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"

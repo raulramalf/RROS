@@ -1,4 +1,4 @@
-// Menú RROS de la barra superior, como el menú de la manzana de macOS
+// Menú Lily de la barra superior, como el menú de la manzana de macOS
 import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.plasmoid
@@ -12,7 +12,7 @@ PlasmoidItem {
     property bool live: false
 
     preferredRepresentation: compactRepresentation
-    toolTipMainText: "RROS"
+    toolTipMainText: "Lily"
     toolTipSubText: "Este equipo, ajustes y apagar"
     Plasmoid.icon: "rros-symbolic"
 
@@ -61,7 +61,7 @@ PlasmoidItem {
         Item_ { text: "Ajustes…"; icon.name: "rros-settings"; cmd: "rros-ajustes" }
         Item_ { text: "Tienda…"; icon.name: "rros-apps"; cmd: "rros-ajustes --pagina tienda" }
         Item_ { text: "Actualizaciones…"; icon.name: "rros-updates"; cmd: "rros-ajustes --pagina actualizaciones" }
-        Item_ { visible: root.live; text: "Instalar RROS…"; icon.name: "rros-install"; cmd: "rros-ajustes --pagina instalar" }
+        Item_ { visible: root.live; text: "Instalar Lily…"; icon.name: "rros-install"; cmd: "rros-ajustes --pagina instalar" }
         PlasmaComponents3.MenuSeparator { Layout.fillWidth: true }
         Item_ { text: "Forzar salida…"; icon.name: "process-stop"; cmd: "qdbus6 org.kde.KWin /KWin killWindow" }
         Item_ { text: "Monitor del sistema"; icon.name: "utilities-system-monitor"; cmd: "plasma-systemmonitor" }

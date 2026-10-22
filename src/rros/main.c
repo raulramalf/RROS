@@ -87,7 +87,7 @@ static int doctor(void)
 	       "no se pudo medir la RAM");
 
 	report(access("/usr/bin/snap", F_OK) != 0 ? 1 : 2,
-	       access("/usr/bin/snap", F_OK) != 0 ? "sin snap" : "snap presente (RROS no lo usa)");
+	       access("/usr/bin/snap", F_OK) != 0 ? "sin snap" : "snap presente (Lily no lo usa)");
 	report(!rros_conf_get_bool(&eff, "privacy.telemetry", 0) ? 1 : 2,
 	       !rros_conf_get_bool(&eff, "privacy.telemetry", 0) ? "telemetría desactivada" :
 	       "telemetría activada");
@@ -98,7 +98,7 @@ static int doctor(void)
 static void usage(void)
 {
 	fputs("Lily " RROS_VERSION " (" RROS_CODENAME ")\n"
-	      "uso: rros COMANDO [argumentos]\n"
+	      "uso: lily COMANDO [argumentos]   (rros sigue funcionando igual)\n"
 	      "  info      ficha del sistema          (rros-fetch)\n"
 	      "  config    personalización            (rros-config)\n"
 	      "  theme     tema del escritorio        (rros-theme)\n"
@@ -110,8 +110,8 @@ static void usage(void)
 	      "  new       crear archivos y proyectos desde plantillas (rros-new; también `rros nuevo`)\n"
 	      "  budget    presupuesto de RAM/disco   (rros-budget)\n"
 	      "  hw        hardware y perfil          (rros-hwdetect)\n"
-	      "  install   instala RROS en un disco   (rros-install; `install plan` solo calcula)\n"
-	      "  informe   informe de hardware para contar cómo va RROS en tu PC (rros-informe)\n"
+	      "  install   instala Lily en un disco   (rros-install; `install plan` solo calcula)\n"
+	      "  informe   informe de hardware para contar cómo va Lily en tu PC (rros-informe)\n"
 	      "  doctor    diagnóstico del sistema\n"
 	      "  version\n"
 	      "\n"

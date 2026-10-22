@@ -258,7 +258,7 @@ int model_state_json(const struct model *m, struct sbuf *o)
 
 	rros_theme_from_conf(&th, &m->eff);
 	rros_theme_palette(&th, &cur);
-	/* sistema live (la ISO): la interfaz ofrece instalar RROS */
+	/* sistema live (la ISO): la interfaz ofrece instalar Lily */
 	sb_printf(o, "{\"live\":%s,", model_is_live() ? "true" : "false");
 	sb_printf(o, "\"version\":\"%s\",\"codename\":\"%s\",\"profile\":", RROS_VERSION, RROS_CODENAME);
 	sb_json(o, m->profile);

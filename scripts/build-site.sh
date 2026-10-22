@@ -2,7 +2,7 @@
 # Genera la web estática de demostración (site/) que se puede publicar en Vercel, Netlify o GitHub Pages:
 #   site/index.html        portada
 #   site/escritorio.html   simulación del escritorio (se edita a mano)
-#   site/ajustes.html      RROS Ajustes con un servidor simulado (de scripts/build-gui-demo.sh)
+#   site/ajustes.html      Lily Ajustes con un servidor simulado (de scripts/build-gui-demo.sh)
 #   site/fondos/*.jpg      los fondos reales que genera rros-theme, por tema y estilo
 # Requiere haber compilado (make) y python3 con Pillow para pasar los fondos a JPEG.
 # shellcheck source=common.sh

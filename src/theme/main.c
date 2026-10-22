@@ -1,4 +1,4 @@
-/* rros-theme: genera la configuración del escritorio RROS desde rros-config. */
+/* rros-theme: genera la configuración del escritorio Lily desde rros-config. */
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -18,10 +18,10 @@ struct target {
 	rros_render_fn fn;
 };
 
-/* archivos enteros que escribe RROS (relativos a ~/.local/share, o a la carpeta de «render») */
+/* archivos enteros que escribe Lily (relativos a ~/.local/share, o a la carpeta de «render») */
 static const struct target targets[] = {
-	{ "konsole/RROS.profile", rros_render_konsole_profile },
-	{ "konsole/RROS.colorscheme", rros_render_konsole_colors },
+	{ "konsole/Lily.profile", rros_render_konsole_profile },
+	{ "konsole/Lily.colorscheme", rros_render_konsole_colors },
 };
 
 static void usage(void)
@@ -201,7 +201,7 @@ static int in_plasma(void)
 	return desk && strstr(desk, "KDE") && !getenv("RROS_PLASMA_TEST");
 }
 
-/* RROS Shell (barra, dock, Launchpad...) en lugar de plasmashell: lee la configuración y el fondo por su cuenta.
+/* Lily Shell (barra, dock, Launchpad...) en lugar de plasmashell: lee la configuración y el fondo por su cuenta.
  * RROS_SHELL=0|1 lo fuerza (pruebas). */
 static int rros_shell(void)
 {
@@ -343,7 +343,7 @@ static void plasma_colors(const struct rros_theme *t, const struct rros_palette 
 	for (; *col; col++)
 		for (const char *q = *col; *q; q++)
 			h = (h ^ (unsigned char)*q) * 16777619UL;
-	snprintf(name, sizeof name, "RROS-%08lx", h & 0xffffffffUL);
+	snprintf(name, sizeof name, "Lily-%08lx", h & 0xffffffffUL);
 	snprintf(path, sizeof path, "%s/%s.colors", dir, name);
 	if (rros_mkdir_parents(path) || !(f = fopen(path, "w"))) {
 		fprintf(stderr, "rros-theme: no se pudo escribir %s\n", path);
@@ -351,10 +351,10 @@ static void plasma_colors(const struct rros_theme *t, const struct rros_palette 
 	}
 	rros_render_kde_colors(t, p, c, f);
 	fclose(f);
-	/* fuera los esquemas de RROS anteriores */
+	/* fuera los esquemas de Lily anteriores */
 	if ((d = opendir(dir))) {
 		while ((e = readdir(d)))
-			if (!strncmp(e->d_name, "RROS-", 5) && strlen(e->d_name) > 7 &&
+			if (!strncmp(e->d_name, "Lily-", 5) && strlen(e->d_name) > 7 &&
 			    !strcmp(e->d_name + strlen(e->d_name) - 7, ".colors") && strncmp(e->d_name, name, strlen(name))) {
 				char old[1400];
 
@@ -363,7 +363,7 @@ static void plasma_colors(const struct rros_theme *t, const struct rros_palette 
 			}
 		closedir(d);
 	}
-	snprintf(path, sizeof path, "%s/aurorae/themes/RROS", data);
+	snprintf(path, sizeof path, "%s/aurorae/themes/Lily", data);
 	if (rros_write_aurorae(path, t, p) != 0)
 		fputs("rros-theme: no se pudo escribir el tema de las barras de título\n", stderr);
 	snprintf(kg, sizeof kg, "%s/kdeglobals", cfg);
@@ -374,6 +374,24 @@ static void plasma_colors(const struct rros_theme *t, const struct rros_palette 
 		if (run(argv, NULL, 0) != 0 && !quiet)
 			fputs("rros-theme: aviso: plasma-apply-colorscheme falló\n", stderr);
 	}
+}
+
+/* el puntero para todo lo que no lee kcminputrc: aplicaciones GTK y X11 (~/.icons/default), las que arrancan
+ * después (XCURSOR_THEME en environment.d). GTK va en las ediciones de plasma.c. KWin lo cambia al momento en plasma_reload */
+static void cursor_files(const struct rros_theme *t, const char *cfg)
+{
+	const char *h = getenv("HOME");
+	char path[1100], text[600];
+
+	if (h && *h) {
+		snprintf(path, sizeof path, "%s/.icons/default/index.theme", h);
+		snprintf(text, sizeof text, "[Icon Theme]\nName=Default\nComment=Puntero elegido en Ajustes de Lily\nInherits=%s\n",
+			 t->cursor_theme);
+		write_text(path, text);
+	}
+	snprintf(path, sizeof path, "%s/environment.d/lily-cursor.conf", cfg);
+	snprintf(text, sizeof text, "XCURSOR_THEME=%s\nXCURSOR_SIZE=%d\n", t->cursor_theme, t->cursor_size);
+	write_text(path, text);
 }
 
 /* Plasma vuelve a leer lo que ha cambiado */
@@ -389,7 +407,7 @@ static void plasma_reload(const struct rros_theme *t, const char *old_theme, con
 	char wpfile[1100], prev[400];
 
 	snprintf(wpfile, sizeof wpfile, "%s/wallpaper", st);
-	/* RROS Shell vigila este archivo: el fondo cambia en cuanto se escribe */
+	/* Lily Shell vigila este archivo: el fondo cambia en cuanto se escribe */
 	if (rros_shell() && wallpaper[0]) {
 		read_file(wpfile, prev, sizeof prev);
 		if (strcmp(prev, wallpaper))
@@ -451,6 +469,7 @@ static int cmd_apply_ex(const char *profile, int quiet, int force_layout)
 	ensure_wallpaper(&t, &p, wp, sizeof wp);
 	plasma_colors(&t, &p, &c, data, cfg, quiet);
 	plasma_layout(&t, &p, &c, force_layout);
+	cursor_files(&t, cfg);
 	plasma_reload(&t, old_theme, wp, st);
 	if (rc == 0 && !quiet)
 		printf("tema aplicado: %s (%s, acento %s, dock %s%s)\n", t.theme, t.dark ? "oscuro" : "claro", p.accent,
@@ -744,14 +763,14 @@ int main(int argc, char **argv)
 		} else {
 			i = 1;
 		}
-		snprintf(path, sizeof path, "%s/kde/RROS.colors", out);
+		snprintf(path, sizeof path, "%s/kde/Lily.colors", out);
 		if (rros_mkdir_parents(path) == 0 && (f = fopen(path, "w"))) {
 			rros_render_kde_colors(&t, &p, &conf, f);
 			fclose(f);
 		} else {
 			i = 1;
 		}
-		snprintf(path, sizeof path, "%s/aurorae/RROS", out);
+		snprintf(path, sizeof path, "%s/aurorae/Lily", out);
 		i |= rros_write_aurorae(path, &t, &p) != 0;
 		rros_conf_free(&conf);
 		return i;

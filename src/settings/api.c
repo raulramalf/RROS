@@ -1,4 +1,4 @@
-/* rros-settings api: la parte de RROS Ajustes que lee y cambia el sistema. La usa la aplicación nativa
+/* rros-settings api: la parte de Lily Ajustes que lee y cambia el sistema. La usa la aplicación nativa
  * (rros-ajustes): «rros-settings api MÉTODO RUTA [CUERPO]» escribe la respuesta (JSON) en la salida estándar.
  * El cuerpo va como un formulario (clave=valor&...). Sin servidor ni navegador: nada escucha en la red. */
 #include <ctype.h>

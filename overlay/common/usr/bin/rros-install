@@ -1,8 +1,8 @@
 #!/bin/bash
-# rros-install: instala RROS en un disco desde el sistema live. El asistente gráfico (RROS Ajustes →
-# Instalar RROS) llama a este mismo programa.
+# rros-install: instala Lily en un disco desde el sistema live. El asistente gráfico (Lily Ajustes →
+# Instalar Lily) llama a este mismo programa.
 #   rros-install                       asistente en modo texto
-#   rros-install --disk /dev/vda --user ana --hostname rros --password-file F --yes
+#   rros-install --disk /dev/vda --user ana --hostname lily --password-file F --yes
 #   rros-install --disk /dev/nvme0n1 --alongside --encrypt ...   junto a Windows y cifrado
 #   rros-install --disk /dev/vda --dry-run     muestra lo que haría sin tocar el disco
 # El esquema de particiones lo calcula `rros-installer plan`.
@@ -21,9 +21,9 @@ uso: rros-install [opciones]
                         (p. ej. junto a Windows; disco GPT). Reutiliza su partición EFI.
   --encrypt             cifra el sistema con LUKS2 (se pide la contraseña del disco al arrancar)
   --passphrase-file F   primera línea = contraseña del cifrado (si falta, se pregunta)
-  --user NOMBRE         usuario a crear (por defecto: rros)
+  --user NOMBRE         usuario a crear (por defecto: lily)
   --fullname TEXTO      nombre completo del usuario (opcional)
-  --hostname NOMBRE     nombre del equipo (por defecto: rros)
+  --hostname NOMBRE     nombre del equipo (por defecto: lily)
   --password-file RUTA  primera línea = contraseña del usuario (si falta, se pregunta)
   --profile PERFIL      lite, standard o pro (por defecto: el perfil activo)
   --bios | --uefi       firmware de arranque (por defecto: el del equipo actual)
@@ -58,7 +58,7 @@ step() {
 	[ -z "$progress" ] || printf '%s/%s %s\n' "$1" "$STEPS" "$2" > "$progress"
 }
 
-disk="" user=rros fullname="" host=rros pwfile="" ppfile="" profile="" fw="" extra="" src="" keymap=es
+disk="" user=rros fullname="" host=lily pwfile="" ppfile="" profile="" fw="" extra="" src="" keymap=es
 tz=Etc/UTC locale=es_ES.UTF-8 progress="" alongside=0 encrypt=0 dry=0 yes=0
 args=("$@")
 while [ $# -gt 0 ]; do
@@ -138,7 +138,7 @@ plan_args=(--disk "$disk" "--$fw" -p "$profile")
 mode="borrar todo el disco"
 [ "$alongside" -eq 0 ] || mode="junto a lo que ya hay (espacio libre)"
 [ "$encrypt" -eq 0 ] || mode="$mode, cifrado"
-echo "Instalación de RROS"
+echo "Instalación de Lily"
 echo "  disco:    $disk ($(lsblk -dno SIZE "$disk" | tr -d ' '))   firmware: $fw   perfil: $profile"
 echo "  modo:     $mode"
 echo "  usuario:  $user   equipo: $host   teclado: $keymap   idioma: $locale   zona horaria: $tz"
@@ -476,14 +476,14 @@ if [ "$base" = arch ]; then
 		# el kernel de Arch trae AppArmor pero no lo activa: hay que nombrarlo en la lista de LSM
 		echo 'GRUB_CMDLINE_LINUX="lsm=landlock,lockdown,yama,integrity,apparmor,bpf"'
 		echo 'GRUB_DISABLE_RECOVERY=true'
-		# el menú con el tema de RROS (fondo, logotipo y la entrada elegida en una píldora)
+		# el menú con el tema de Lily (fondo, logotipo y la entrada elegida en una píldora)
 		echo 'GRUB_GFXMODE=auto'
 		echo 'GRUB_THEME="/usr/share/grub/themes/rros/theme.txt"'
 		echo "GRUB_DISABLE_OS_PROBER=$([ "$alongside" -eq 1 ] && echo false || echo true)"
 	} > "$target/etc/default/grub"
 else
 cat > "$target/etc/default/grub" <<'EOF'
-# Edita y ejecuta: sudo update-grub (los valores de RROS están en /etc/default/grub.d/)
+# Edita y ejecuta: sudo update-grub (los valores de Lily están en /etc/default/grub.d/)
 GRUB_DEFAULT=0
 GRUB_DISABLE_RECOVERY=true
 EOF
@@ -501,7 +501,7 @@ mkdir -p "$target/etc/default/grub.d"
 } > "$target/etc/default/grub.d/zz-rros-install.cfg"
 fi
 if [ "$fw" = uefi ]; then
-	in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=RROS --recheck ||
+	in_target grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Lily --recheck ||
 		echo "aviso: no se pudo registrar la entrada en la NVRAM; se usa la ruta de arranque por defecto"
 	# la ruta por defecto (EFI/BOOT/BOOTX64.EFI) ayuda con firmwares que olvidan la NVRAM, pero si hay
 	# otro sistema en el disco es la suya: no se toca
@@ -531,7 +531,7 @@ others=$(grep -c "^menuentry .*osprober" "$target/boot/grub/grub.cfg" || true)
 sync
 step 7 "Listo"
 created=()
-log "listo: RROS instalado en $disk. Apaga, quita la ISO (o la memoria USB) y arranca desde el disco."
+log "listo: Lily instalado en $disk. Apaga, quita la ISO (o la memoria USB) y arranca desde el disco."
 echo "Usuario: $user   (se inicia sesión en tty1 y el escritorio arranca solo)"
 [ "$root_crypt" -eq 0 ] || echo "Al arrancar se pide la contraseña del cifrado del disco."
 [ "${others:-0}" -eq 0 ] || echo "El menú de arranque incluye $others sistema(s) más (p. ej. Windows)."

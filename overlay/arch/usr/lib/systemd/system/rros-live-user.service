@@ -1,5 +1,5 @@
 [Unit]
-Description=RROS live: crea el usuario «rros» (sin contraseña, administrador)
+Description=Lily live: crea el usuario «rros» (sin contraseña, administrador)
 ConditionKernelCommandLine=archisobasedir
 Before=display-manager.service sddm.service systemd-user-sessions.service
 After=systemd-sysusers.service

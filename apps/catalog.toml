@@ -1,4 +1,4 @@
-# Catálogo de aplicaciones de RROS. `rros apps install ID` instala con el gestor de paquetes del sistema
+# Catálogo de aplicaciones de Lily. `rros apps install ID` instala con el gestor de paquetes del sistema
 # (pacman en Arch, apt en Ubuntu) o con Flatpak (Flathub) si no hay paquete.
 # Campos: name, category, desc, pacman (paquetes de Arch, separados por comas), apt (paquete de Ubuntu),
 #         flatpak (id en Flathub), shipped (perfiles que ya la traen), cmd (programa que se lanza).

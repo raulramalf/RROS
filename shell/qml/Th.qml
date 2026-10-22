@@ -69,7 +69,7 @@ QtObject {
     property bool batteryPct: b("ui.show_battery_percent", true)
     property bool animations: b("ui.animations", true) && v("ui.effects", "basic") !== "off"
     property int anim: animations ? 180 : 0
-    property string wallpaper: "/usr/share/wallpapers/RROS/contents/images/1920x1080.png"
+    property string wallpaper: "/usr/share/wallpapers/Lily/lirio.jpg"
     property string wallpaperVideo: v("ui.wallpaper_video", "")
     property string wallpaperLive: v("ui.wallpaper_live", "off")
     property bool pauseOnBattery: b("ui.wallpaper_pause_battery", true)

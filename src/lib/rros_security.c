@@ -114,7 +114,7 @@ void rros_render_nftables(FILE *f, const struct rros_secpol *p)
 
 	fputs("#!/usr/sbin/nft -f\n"
 	      "# Generado por rros-apply. No lo edites: usa `rros-security abrir PUERTO` o la clave\n"
-	      "# security.firewall_allow. Solo toca la tabla de RROS; las de otros programas se respetan.\n\n"
+	      "# security.firewall_allow. Solo toca la tabla de Lily; las de otros programas se respetan.\n\n"
 	      "table inet rros\ndelete table inet rros\n\n", f);
 	if (!p->firewall) {
 		fputs("# Cortafuegos desactivado (security.firewall = false): no se filtra nada.\n", f);

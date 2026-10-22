@@ -13,7 +13,7 @@ RPage {
     property var disks: null
     property var status: null
     property var f: ({ locale: "es_ES.UTF-8", keymap: "es", timezone: "Europe/Madrid", disk: "", mode: "", encrypt: false,
-                       passphrase: "", passphrase2: "", fullname: "", user: "", password: "", password2: "", hostname: "rros", confirm: false })
+                       passphrase: "", passphrase2: "", fullname: "", user: "", password: "", password2: "", hostname: "lily", confirm: false })
     readonly property var steps: ["Idioma", "Disco", "Usuario", "Resumen"]
 
     function setF(k, v) { var x = f; x[k] = v; f = x }

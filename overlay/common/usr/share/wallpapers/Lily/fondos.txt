@@ -1,0 +1,9 @@
+lirio.jpg|Lirio|oscuro
+seda.jpg|Seda|oscuro
+crepusculo.jpg|Crepúsculo|oscuro
+oceano.jpg|Océano|oscuro
+bosque.jpg|Bosque|claro
+dunas.jpg|Dunas|claro
+marfil.jpg|Marfil|claro
+seda-clara.jpg|Seda clara|claro
+bruma.jpg|Bruma|claro

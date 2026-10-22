@@ -1,4 +1,4 @@
-// Lo que el escritorio de RROS necesita del sistema: capas de Wayland (barra, dock, fondo...), ejecutar
+// Lo que el escritorio de Lily necesita del sistema: capas de Wayland (barra, dock, fondo...), ejecutar
 // programas, leer archivos, vigilar los ajustes, las teclas de volumen y su servicio de D-Bus.
 #pragma once
 
@@ -84,7 +84,7 @@ private:
 	Shell *m_shell;
 };
 
-// image://icon/NOMBRE (tema de iconos, con los de RROS como respaldo)
+// image://icon/NOMBRE (tema de iconos, con los de Lily como respaldo)
 class IconProvider : public QQuickImageProvider
 {
 public:

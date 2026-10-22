@@ -21,13 +21,13 @@ SAN := -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-fr
 
 all: $(BINS)
 
-# RROS Ajustes (Qt 6 Quick): la aplicación de ajustes, tienda, bienvenida e instalador
+# Lily Ajustes (Qt 6 Quick): la aplicación de ajustes, tienda, bienvenida e instalador
 APP := build/app/rros-ajustes
 app:
 	cmake -S app -B build/app -DCMAKE_BUILD_TYPE=Release >/dev/null
 	cmake --build build/app -j$$(nproc)
 
-# RROS Shell (Qt 6 Quick): el escritorio (barra, dock, Launchpad, centro de control, avisos). SHELL_FULL=ON exige
+# Lily Shell (Qt 6 Quick): el escritorio (barra, dock, Launchpad, centro de control, avisos). SHELL_FULL=ON exige
 # LayerShellQt, KWindowSystem y KGlobalAccel (la ISO); sin ellas solo sirve el modo --demo
 SHELL_BIN := build/shell/rros-shell
 SHELL_FULL ?= OFF
@@ -66,6 +66,7 @@ install: $(BINS)
 	install -d $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(PREFIX)/share/rros/profiles \
 	           $(DESTDIR)$(PREFIX)/lib/systemd/system $(DESTDIR)/etc/rros
 	install -m 755 $(BINS) $(DESTDIR)$(PREFIX)/bin/
+	ln -sf rros $(DESTDIR)$(PREFIX)/bin/lily
 	install -m 644 profiles/*.toml $(DESTDIR)$(PREFIX)/share/rros/profiles/
 	install -d $(DESTDIR)$(PREFIX)/share/rros/apps
 	install -m 644 apps/catalog.toml $(DESTDIR)$(PREFIX)/share/rros/apps/catalog.toml

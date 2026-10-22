@@ -2,13 +2,13 @@
   "KPlugin": {
     "Authors": [
       {
-        "Name": "RROS"
+        "Name": "Lily"
       }
     ],
     "Description": "Barra y dock con brillo, bisel y canto, como un estante de cristal (3D)",
     "Id": "rros-3d",
     "License": "GPL-2.0+",
-    "Name": "RROS 3D",
+    "Name": "Lily 3D",
     "Version": "1.0",
     "Website": "https://github.com/raulramalf/RROS"
   },

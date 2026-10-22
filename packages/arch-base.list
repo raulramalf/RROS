@@ -76,7 +76,7 @@ usbguard                # directiva: bloquear USB nuevos
 libpwquality            # directiva: contraseñas
 libnotify               # avisos del antivirus en el escritorio (notify-send)
 
-# --- escritorio: KDE Plasma (Wayland) con el aspecto de RROS (barra arriba, dock 2D o 3D, menú RROS) ---
+# --- escritorio: KDE Plasma (Wayland) con el aspecto de Lily (barra arriba, dock 2D o 3D, menú Lily) ---
 plasma-desktop
 plasma-workspace
 kwin
@@ -100,10 +100,10 @@ appmenu-gtk-module      # menú global también para las aplicaciones GTK
 ffmpegthumbs
 kdegraphics-thumbnailers
 phonon-qt6-vlc
-qt6-svg                 # RROS Ajustes y RROS Shell: iconos SVG
+qt6-svg                 # Lily Ajustes y Lily Shell: iconos SVG
 qt6-multimedia          # fondos en vídeo (Lily Shell)
 qt6-multimedia-ffmpeg
-layer-shell-qt          # RROS Shell: barra, dock y avisos en sus capas de Wayland
+layer-shell-qt          # Lily Shell: barra, dock y avisos en sus capas de Wayland
 kwindowsystem
 kglobalaccel
 qt6-wayland
@@ -123,14 +123,14 @@ ttf-opensans
 ttf-ibm-plex
 cantarell-fonts
 ttf-dejavu
-capitaine-cursors       # otro puntero, además de los de RROS (Lirio, Marfil, Grafito) y Breeze
+capitaine-cursors       # otro puntero, además de los de Lily (Lirio, Marfil, Grafito) y Breeze
 
 # --- accesibilidad ---
 orca
 espeak-ng
 speech-dispatcher
 
-# --- aplicaciones (las de KDE, que siguen el tema de RROS; Firefox con su logotipo) ---
+# --- aplicaciones (las de KDE, que siguen el tema de Lily; Firefox con su logotipo) ---
 firefox
 firefox-i18n-es-es
 dolphin

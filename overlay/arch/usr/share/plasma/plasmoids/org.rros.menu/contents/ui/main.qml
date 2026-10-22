@@ -14,7 +14,7 @@ PlasmoidItem {
     preferredRepresentation: compactRepresentation
     toolTipMainText: "Lily"
     toolTipSubText: "Este equipo, ajustes y apagar"
-    Plasmoid.icon: "rros-symbolic"
+    Plasmoid.icon: "rros"
 
     P5Support.DataSource {
         id: exe
@@ -41,7 +41,7 @@ PlasmoidItem {
             anchors.centerIn: parent
             width: Math.min(parent.height * 0.62, Kirigami.Units.iconSizes.smallMedium)
             height: width
-            source: "rros-symbolic"
+            source: "rros"
             active: compact.containsMouse || root.expanded
         }
     }

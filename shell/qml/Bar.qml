@@ -39,7 +39,7 @@ Item {
             id: logo
             implicitWidth: 34
             onClicked: Ux.toggle("menu", bar.anchorX(logo), bar.menuY())
-            Image { anchors.centerIn: parent; source: Th.dark ? "qrc:/icons/app-rros-mono.svg" : "qrc:/icons/app-rros-mono-dark.svg"; sourceSize: Qt.size(44, 44); width: 20; height: 20 }
+            Image { anchors.centerIn: parent; source: "qrc:/icons/app-rros.png"; sourceSize: Qt.size(48, 48); width: 22; height: 22; smooth: true; mipmap: true }
         }
         Txt {
             Layout.leftMargin: 6

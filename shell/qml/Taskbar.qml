@@ -98,19 +98,9 @@ Item {
             Layout.preferredWidth: tb.t - 10; Layout.preferredHeight: tb.t - 10
             Layout.alignment: Qt.AlignCenter
             radius: width / 2
-            // un toque del acento siempre: el inicio se encuentra a la primera aunque la barra sea oscura
-            color: sm2.pressed ? Th.pressed : (Ux.open === "start" || sm2.containsMouse) ? Th.hover
-                 : Qt.rgba(Qt.color(Th.accent).r, Qt.color(Th.accent).g, Qt.color(Th.accent).b, 0.18)
+            // solo la foto del lirio, sin fondo ni aro; al pasar el ratón se aclara un poco
+            color: "transparent"
             border.width: 0
-            // halo del color del acento al pasar el ratón o con el menú abierto
-            Rectangle {
-                anchors.centerIn: parent
-                width: parent.width + 4; height: width; radius: width / 2
-                color: "transparent"; border.width: 2
-                border.color: Qt.rgba(Qt.color(Th.accent).r, Qt.color(Th.accent).g, Qt.color(Th.accent).b, 0.55)
-                opacity: Ux.open === "start" || sm2.containsMouse ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: 120 } }
-            }
             Accessible.role: Accessible.Button
             Accessible.name: "Inicio"
             activeFocusOnTab: true
@@ -122,10 +112,11 @@ Item {
             Image {
                 anchors.centerIn: parent
                 source: "qrc:/icons/app-rros.png"
-                width: parent.width - 2; height: width
+                width: parent.width; height: width
                 sourceSize: Qt.size(96, 96)
                 smooth: true; mipmap: true
-                scale: sm2.pressed ? 0.92 : 1
+                opacity: sm2.containsMouse || Ux.open === "start" ? 1 : 0.92
+                scale: sm2.pressed ? 0.92 : (sm2.containsMouse ? 1.06 : 1)
                 Behavior on scale { NumberAnimation { duration: 90 } }
             }
             MouseArea { id: sm2; anchors.fill: parent; hoverEnabled: true; onClicked: tb.openAt("start", start) }

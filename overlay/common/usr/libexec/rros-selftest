@@ -35,7 +35,7 @@ echo "sistema: $([ "$LIVE" -eq 1 ] && echo live || echo instalado)"
 check "usuario 'rros'" id rros
 # el nombre del equipo, del kernel (Arch no trae la orden hostname)
 host=$(cat /proc/sys/kernel/hostname)
-check "nombre de equipo: $host" sh -c "case '$host' in rros*) true ;; *) false ;; esac"
+check "nombre de equipo: $host" sh -c "case '$host' in lily*) true ;; *) false ;; esac"
 check "kernel $(uname -r)" test -n "$(uname -r)"
 
 BASE=arch
@@ -205,7 +205,7 @@ fi
 
 # escritorio: el tema de Lily se aplica a Plasma, con fondo
 check "rros-theme apply (usuario)" as_user "rros-theme apply --quiet"
-check "fondo de pantalla generado" as_user "ls ~/.local/share/rros/fondos/*.png"
+check "fondo de pantalla de Lily puesto" as_user "w=\$(cat ~/.local/state/rros/wallpaper) && test -s \"\$w\""
 check "Plasma: efectos, entrada y energía escritos" as_user "grep -q '^blurEnabled=' ~/.config/kwinrc && grep -q RepeatDelay ~/.config/kcminputrc && test -s ~/.config/powerdevilrc"
 check "terminal: perfil y colores de Lily" as_user "test -s ~/.local/share/konsole/Lily.profile && test -s ~/.local/share/konsole/Lily.colorscheme"
 

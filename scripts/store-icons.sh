@@ -6,16 +6,43 @@
 set -u
 cat=${1:?catálogo}; out=${2:?destino}
 mkdir -p "$out"
-sw=/usr/share/swcatalog/icons
+sw=/usr/share/swcatalog
+# AppStream de Arch: en el XML de cada repositorio, el paquete (<pkgname>) y su icono guardado (<icon type="cached">);
+# el archivo está en icons/CARPETA/TAMAÑO/. Sale una línea «paquete|ruta del icono» por paquete.
+map=$(mktemp)
+if [ -d "$sw/xml" ] && command -v python3 >/dev/null; then
+	python3 - "$sw" > "$map" <<'PY' || true
+import glob, gzip, os, sys
+import xml.etree.ElementTree as ET
+sw = sys.argv[1]
+# los iconos pueden estar en cualquier carpeta de icons/ (una por repositorio): se buscan por nombre
+dirs = sorted(glob.glob(f"{sw}/icons/*/"))
+for x in sorted(glob.glob(f"{sw}/xml/*.xml.gz")):
+    for c in ET.parse(gzip.open(x)).getroot().iter("component"):
+        pkg = c.findtext("pkgname")
+        if not pkg:
+            continue
+        best = None
+        for ic in c.findall("icon"):
+            if ic.get("type") != "cached" or not ic.text:
+                continue
+            for size in ("128x128", "64x64"):
+                for d in dirs:
+                    f = f"{d}{size}/{ic.text.strip()}"
+                    if os.path.isfile(f) and (best is None or best[0] < int(size.split("x")[0])):
+                        best = (int(size.split("x")[0]), f)
+        if best:
+            print(f"{pkg}|{best[1]}")
+PY
+fi
 n=0 miss=0
 while IFS='|' read -r id pkg fp cmd; do
 	f="$out/$id.png"
 	[ -s "$f" ] && continue
 	src=""
 	for name in "$pkg" "$cmd"; do
-		if [ -z "$name" ] || [ ! -d "$sw" ]; then continue; fi
-		src=$(find "$sw" -path '*/128x128/*' \( -name "${name}_*.png" -o -name "${name}.png" \) 2>/dev/null | head -1)
-		[ -n "$src" ] || src=$(find "$sw" -path '*/64x64/*' \( -name "${name}_*.png" -o -name "${name}.png" \) 2>/dev/null | head -1)
+		[ -n "$name" ] || continue
+		src=$(awk -F'|' -v p="$name" '$1 == p { print $2; exit }' "$map")
 		[ -n "$src" ] && break
 	done
 	if [ -n "$src" ]; then
@@ -30,5 +57,6 @@ done < <(awk '
 	/^flatpak *=/ { v = $0; sub(/^[^"]*"/, "", v); sub(/".*/, "", v); fp = v }
 	/^cmd *=/ { v = $0; sub(/^[^"]*"/, "", v); sub(/".*/, "", v); cmd = v }
 	END { if (id != "") print id "|" pkg "|" fp "|" cmd }' "$cat")
+rm -f "$map"
 echo "store-icons: $n iconos guardados, $miss sin icono (se verá la inicial)"
 exit 0

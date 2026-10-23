@@ -32,6 +32,7 @@ jobs:
       - name: Iconos de la Tienda
         run: |
           pacman -S --noconfirm --needed archlinux-appstream-data curl python-pillow
+          ls /usr/share/swcatalog /usr/share/swcatalog/xml /usr/share/swcatalog/icons; ls /usr/share/swcatalog/icons/*/
           scripts/store-icons.sh apps/catalog.toml build/iconos-tienda | tee build/iconos.log
           total=$(grep -c '^\[app\.' apps/catalog.toml); n=$(find build/iconos-tienda -name '*.png' -size +0 | wc -l)
           # que sean PNG de verdad (no una página de error) y una hoja con todos para verlos

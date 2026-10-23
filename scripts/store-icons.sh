@@ -46,7 +46,12 @@ while IFS='|' read -r id pkg fp cmd; do
 		[ -n "$src" ] && break
 	done
 	if [ -n "$src" ]; then
-		cp "$src" "$f"
+		# Arch guarda muchos iconos en JPEG XL aunque se llamen .png (empiezan por FF 0A o por la caja «JXL »):
+		# se pasan a PNG de verdad para que los lea cualquier programa
+		case $(head -c 12 "$src" | od -An -tx1 | tr -d ' \n') in
+		ff0a* | 0000000c4a584c20*) djxl "$src" "$f" >/dev/null 2>&1 || rm -f "$f" ;;
+		*) cp "$src" "$f" ;;
+		esac
 	elif [ -n "$fp" ]; then
 		curl -fsL --max-time 20 -o "$f" "https://dl.flathub.org/repo/appstream/x86_64/icons/128x128/$fp.png" || rm -f "$f"
 	fi

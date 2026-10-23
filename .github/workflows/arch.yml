@@ -31,7 +31,7 @@ jobs:
       # los iconos de la Tienda que se guardan en la ISO: deben salir casi todos (AppStream de Arch y Flathub)
       - name: Iconos de la Tienda
         run: |
-          pacman -S --noconfirm --needed archlinux-appstream-data curl python-pillow
+          pacman -S --noconfirm --needed archlinux-appstream-data curl python-pillow libjxl
           ls /usr/share/swcatalog /usr/share/swcatalog/xml /usr/share/swcatalog/icons; ls /usr/share/swcatalog/icons/*/
           scripts/store-icons.sh apps/catalog.toml build/iconos-tienda | tee build/iconos.log
           total=$(grep -c '^\[app\.' apps/catalog.toml); n=$(find build/iconos-tienda -name '*.png' -size +0 | wc -l)
@@ -84,7 +84,7 @@ jobs:
       - name: ISO con archiso (contenedor Arch)
         run: |
           docker run --rm --privileged -v "$PWD:/rros" -w /rros -e PROFILE archlinux:latest bash -ec '
-            pacman -Syu --noconfirm --needed archiso base-devel git python cmake qt6-base qt6-declarative qt6-svg qt6-wayland extra-cmake-modules layer-shell-qt kwindowsystem kglobalaccel archlinux-appstream-data curl
+            pacman -Syu --noconfirm --needed archiso base-devel git python cmake qt6-base qt6-declarative qt6-svg qt6-wayland extra-cmake-modules layer-shell-qt kwindowsystem kglobalaccel archlinux-appstream-data curl libjxl
             make WERROR=1
             make app
             make shell SHELL_FULL=ON

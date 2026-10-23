@@ -45,7 +45,8 @@ jobs:
               try:
                   im = Image.open(f).convert("RGBA"); im.thumbnail((64, 64))
                   sheet.alpha_composite(im, ((i % 16) * 72 + 4, (i // 16) * 72 + 4))
-              except Exception:
+              except Exception as e:
+                  if not bad: print("primer fallo:", f, repr(e), open(f, "rb").read(16))
                   bad.append(os.path.basename(f))
           sheet.save("build/iconos-tienda-hoja.png")
           print("no son imágenes:", bad); assert not bad

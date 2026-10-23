@@ -475,6 +475,36 @@ case $("$B/rros-settings" api GET /api/nada || true) in *'ruta desconocida'*) ;;
 if "$B/rros-settings" api GET /api/state x y 2>/dev/null; then fail "api con argumentos de más"; fi
 unset RROS_NO_APPLY
 
+# --- rros-max-hz: cada pantalla a su frecuencia más alta con la misma resolución (JSON con el formato real de
+#     kscreen-doctor -j; la que ya está al máximo o tiene refreshRate null no se toca) ---
+if command -v jq >/dev/null 2>&1; then
+	mkdir -p "$T/hzbin"
+	cat > "$T/hz.json" <<'JSON'
+{"outputs":[
+ {"name":"DP-1","enabled":true,"connected":true,"currentModeId":"1","modes":[
+  {"id":"1","refreshRate":60.0,"size":{"width":2560,"height":1440}},
+  {"id":"2","refreshRate":119.98,"size":{"width":2560,"height":1440}},
+  {"id":"3","refreshRate":165.0,"size":{"width":1920,"height":1080}}]},
+ {"name":"Virtual-1","enabled":true,"connected":true,"currentModeId":"7","modes":[
+  {"id":"7","refreshRate":null,"size":{"width":1280,"height":800}}]},
+ {"name":"HDMI-1","enabled":false,"connected":true,"currentModeId":"4","modes":[
+  {"id":"4","refreshRate":30.0,"size":{"width":1920,"height":1080}},{"id":"5","refreshRate":60.0,"size":{"width":1920,"height":1080}}]}]}
+JSON
+	printf '#!/bin/sh
+[ "$1" = -j ] && { cat "%s"; exit 0; }
+echo "$*" >> "%s"
+' "$T/hz.json" "$T/hz-calls.txt" > "$T/hzbin/kscreen-doctor"
+	printf '#!/bin/sh
+[ "$2" = display.max_refresh ] && echo "${HZ_ON:-true}"
+' > "$T/hzbin/rros-config"
+	chmod +x "$T/hzbin/kscreen-doctor" "$T/hzbin/rros-config"
+	PATH=$T/hzbin:$PATH overlay/common/usr/libexec/rros-max-hz >/dev/null
+	eq "$(cat "$T/hz-calls.txt")" "output.DP-1.mode.2"
+	rm -f "$T/hz-calls.txt"
+	HZ_ON=false PATH=$T/hzbin:$PATH overlay/common/usr/libexec/rros-max-hz >/dev/null
+	[ ! -e "$T/hz-calls.txt" ] || fail "rros-max-hz con display.max_refresh = false"
+fi
+
 # --- interfaces: rros-settings (TUI en un pty) ---
 if command -v python3 >/dev/null 2>&1; then
 	python3 tests/tui_test.py || fail "TUI"

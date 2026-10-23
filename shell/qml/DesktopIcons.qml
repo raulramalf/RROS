@@ -7,7 +7,9 @@ import "."
 
 Item {
     id: dk
-    property string dir: Sh.desktopDir()
+    // LILY_DESKTOP (pruebas): otra carpeta como escritorio, también en el modo demo
+    readonly property string testDir: Sh.env("LILY_DESKTOP")
+    property string dir: testDir !== "" ? testDir : Sh.desktopDir()
     property bool show: true
     property var items: []
     property var sel: ({})          // ruta -> true
@@ -19,7 +21,7 @@ Item {
     readonly property int rows: Math.max(1, Math.floor((height - padTop - 12 - (Th.vertical ? 0 : Th.tbReserve) - (Th.dock ? Th.dockIcon + 40 : 0)) / ch))
     signal backgroundMenu(real x, real y)
 
-    function load() { items = demoMode ? demoItems() : Sh.entries(dir); var s = {}; for (var k in sel) if (Sh.exists(k)) s[k] = true; sel = s }
+    function load() { items = demoMode && testDir === "" ? demoItems() : Sh.entries(dir); var s = {}; for (var k in sel) if (Sh.exists(k)) s[k] = true; sel = s }
     function demoItems() {
         return [{ path: "/demo/Proyectos", name: "Proyectos", dir: true, suffix: "" }, { path: "/demo/Fotos del viaje", name: "Fotos del viaje", dir: true, suffix: "" },
                 { path: "/demo/informe.pdf", name: "informe.pdf", dir: false, suffix: "pdf" }, { path: "/demo/notas.txt", name: "notas.txt", dir: false, suffix: "txt" },
@@ -67,7 +69,7 @@ Item {
         return "qrc:/icons/fm-texto.svg"
     }
 
-    Component.onCompleted: { if (!demoMode) { Sh.run(["mkdir", "-p", "--", dir], function () { Sh.watch(dk.dir); dk.load() }) } else load() }
+    Component.onCompleted: { if (!demoMode || testDir !== "") { Sh.run(["mkdir", "-p", "--", dir], function () { Sh.watch(dk.dir); dk.load() }) } else load() }
     Connections { target: Sh; function onFileChanged(p) { if (p === dk.dir) dk.load() } }
     Connections { target: Ux; function onFileAction(a, paths) {
         if (a === "open") paths.forEach(function (p) { var e = dk.items.filter(function (x) { return x.path === p })[0]; if (e) dk.open(e) })
@@ -161,7 +163,7 @@ Item {
                 width: 52; height: 52
                 anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 8 }
                 Image { id: thumb; anchors.fill: parent; visible: ic.isImg && status === Image.Ready; asynchronous: true
-                        source: ic.isImg && !demoMode ? "file://" + modelData.path : ""; sourceSize: Qt.size(104, 104); fillMode: Image.PreserveAspectFit }
+                        source: ic.isImg && (!demoMode || dk.testDir !== "") ? "file://" + modelData.path : ""; sourceSize: Qt.size(104, 104); fillMode: Image.PreserveAspectFit }
                 Image { id: icoImg; anchors.fill: parent; visible: !thumb.visible; source: dk.icon(modelData); sourceSize: Qt.size(104, 104); smooth: true }
             }
             Text {

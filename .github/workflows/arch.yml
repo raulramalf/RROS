@@ -28,6 +28,36 @@ jobs:
         run: scripts/check-packages-arch.sh
       - name: Compilar y pruebas
         run: make WERROR=1 && make test WERROR=1 && make app && make shell SHELL_FULL=ON
+      # los iconos de la Tienda que se guardan en la ISO: deben salir casi todos (AppStream de Arch y Flathub)
+      - name: Iconos de la Tienda
+        run: |
+          pacman -S --noconfirm --needed archlinux-appstream-data curl python-pillow
+          scripts/store-icons.sh apps/catalog.toml build/iconos-tienda | tee build/iconos.log
+          total=$(grep -c '^\[app\.' apps/catalog.toml); n=$(find build/iconos-tienda -name '*.png' -size +0 | wc -l)
+          # que sean PNG de verdad (no una página de error) y una hoja con todos para verlos
+          python3 - <<'PY'
+          import glob, os
+          from PIL import Image
+          fs = sorted(glob.glob("build/iconos-tienda/*.png")); bad = []
+          sheet = Image.new("RGBA", (16 * 72, ((len(fs) + 15) // 16) * 72), (40, 20, 26, 255))
+          for i, f in enumerate(fs):
+              try:
+                  im = Image.open(f).convert("RGBA"); im.thumbnail((64, 64))
+                  sheet.alpha_composite(im, ((i % 16) * 72 + 4, (i // 16) * 72 + 4))
+              except Exception:
+                  bad.append(os.path.basename(f))
+          sheet.save("build/iconos-tienda-hoja.png")
+          print("no son imágenes:", bad); assert not bad
+          PY
+          echo "iconos: $n de $total"; ls build/iconos-tienda | sed 's/\.png$//' | sort > /tmp/con
+          grep '^\[app\.' apps/catalog.toml | sed 's/^\[app\.//; s/\]$//' | sort | comm -23 - /tmp/con | sed 's/^/sin icono: /'
+          [ "$n" -ge $((total * 85 / 100)) ] || { echo "faltan demasiados iconos"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iconos-tienda
+          path: build/iconos-tienda-hoja.png
+          if-no-files-found: ignore
 
   iso:
     needs: comprobar

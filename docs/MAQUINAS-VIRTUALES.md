@@ -73,3 +73,6 @@ GNOME Boxes prefiere qcow2: `qemu-img convert -O qcow2 lily-standard.vmdk lily-s
   de la tabla. Lite va bien hasta con 2 GB; Standard y Pro necesitan más.
 - **El informe para contarnos qué tal va:** en Lily, abre la terminal y escribe `rros-informe`; luego abre un [informe de hardware](https://github.com/raulramalf/RROS/issues/new?template=hardware.yml)
   en GitHub (indica que es una máquina virtual y cuál).
+- **Fluidez y 120 Hz:** al iniciar sesión, Lily pone cada pantalla a la frecuencia más alta que admite (120 Hz o
+  más en un monitor que lo permita; se cambia en Ajustes de Lily → Pantallas → «Frecuencia más alta»). En VirtualBox y
+  VMware la pantalla virtual suele ir a 60 Hz como máximo, así que ahí no se nota.

@@ -490,10 +490,12 @@ if command -v jq >/dev/null 2>&1; then
  {"name":"HDMI-1","enabled":false,"connected":true,"currentModeId":"4","modes":[
   {"id":"4","refreshRate":30.0,"size":{"width":1920,"height":1080}},{"id":"5","refreshRate":60.0,"size":{"width":1920,"height":1080}}]}]}
 JSON
+	# shellcheck disable=SC2016  # el $1 y el $2 son del script falso, no de este
 	printf '#!/bin/sh
 [ "$1" = -j ] && { cat "%s"; exit 0; }
 echo "$*" >> "%s"
 ' "$T/hz.json" "$T/hz-calls.txt" > "$T/hzbin/kscreen-doctor"
+	# shellcheck disable=SC2016
 	printf '#!/bin/sh
 [ "$2" = display.max_refresh ] && echo "${HZ_ON:-true}"
 ' > "$T/hzbin/rros-config"

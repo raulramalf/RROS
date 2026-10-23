@@ -22,6 +22,7 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `ui.wallpaper_video` | texto |  | Fondo en vídeo o GIF (ruta a un .mp4, .webm, .mkv o .gif; vacío = fondo fijo) |
 | `ui.wallpaper_live` | opción | off|petalos|sakura|hojas|nieve|luciernagas|burbujas|estrellas|aurora|lluvia | Escena animada sobre el fondo |
 | `ui.wallpaper_pause_battery` | booleano | true / false | Parar el fondo animado con la batería |
+| `ui.desktop_icons` | booleano | true / false | Mostrar en el escritorio los archivos de la carpeta Escritorio |
 | `ui.wallpaper_style` | opción | aurora|ondas|degradado|circulos|petalos|dunas|malla|cristal|topografico|seda|liso | Fondo generado con los colores del tema (si no eliges una imagen) |
 | `ui.effects` | opción | off|basic|advanced | Nivel de efectos visuales |
 | `ui.animations` | booleano | true / false | Animaciones de ventanas y menús |
@@ -69,6 +70,7 @@ Generado con `rros-config schema --markdown`. Capas: perfil < sistema < usuario.
 | `term.cursor` | opción | block|beam|underline | Forma del cursor de la terminal |
 | `term.padding` | entero | 0 – 40 | Margen interior de la terminal (px) |
 | `display.vrr` | opción | off|auto|on | Frecuencia variable (VRR) |
+| `display.max_refresh` | booleano | true / false | Usar la frecuencia más alta de cada pantalla (120 Hz o más si la admite) |
 | `display.refresh_hz` | entero | 24 – 540 | Frecuencia de refresco preferida (Hz) |
 | `display.rotation` | opción | 0|90|180|270 | Rotación de pantalla |
 | `display.brightness` | entero | 1 – 100 | Brillo inicial (%) |

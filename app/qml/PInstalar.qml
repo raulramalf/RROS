@@ -311,13 +311,35 @@ RPage {
             subtitle: p.status && p.status.done ? (p.status.ok ? "Reinicia y quita la memoria USB (o la ISO)." : p.status.error) : (p.status && p.status.steps ? "Paso " + p.status.step + " de " + p.status.steps : "")
             Btn { visible: p.status && p.status.done && p.status.ok; text: "Reiniciar ahora"; kind: "primary"; onClicked: Ui.api("POST", "/api/reboot", {}, function (r) { if (!r.ok) Ui.toast(r.error, true) }) }
         }
+        // solo la barra (con el porcentaje de la copia dentro de su paso); el registro técnico solo si algo falla
+        readonly property real frac: {
+            var s = p.status
+            if (!s || !s.steps) return 0
+            if (s.done && s.ok) return 1
+            var m = /\((\d+) %\)/.exec(s.text || "")
+            return Math.min(1, (s.step - 1 + (m ? Number(m[1]) / 100 : 0)) / s.steps)
+        }
         Rectangle {
-            Layout.fillWidth: true; Layout.margins: 16; height: 8; radius: 4; color: Ui.track
-            Rectangle { height: 8; radius: 4; color: Ui.accent; width: parent.width * (p.status && p.status.steps ? (p.status.done && p.status.ok ? 1 : (p.status.step - 1) / p.status.steps) : 0) }
+            Layout.fillWidth: true; Layout.margins: 16; Layout.bottomMargin: 4; height: 10; radius: 5; color: Ui.track
+            Rectangle { height: parent.height; radius: 5; color: Ui.accent; width: parent.width * parent.parent.frac
+                        Behavior on width { NumberAnimation { duration: 400 } } }
         }
         Txt {
-            Layout.fillWidth: true; Layout.margins: 16; Layout.topMargin: 0
-            text: p.status && p.status.log ? p.status.log.split("\n").slice(-8).join("\n") : ""
+            Layout.alignment: Qt.AlignRight; Layout.rightMargin: 16; Layout.bottomMargin: 12
+            text: Math.round(parent.frac * 100) + " %"; color: Ui.muted; font.pixelSize: Ui.fs - 2
+        }
+        Txt {
+            property bool open: false
+            visible: p.status !== null && p.status.done === true && !p.status.ok
+            Layout.leftMargin: 16; Layout.bottomMargin: open ? 0 : 12
+            text: open ? "Ocultar los detalles" : "Ver los detalles"; color: Ui.accent; font.pixelSize: Ui.fs - 1
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: parent.open = !parent.open }
+            id: det
+        }
+        Txt {
+            visible: det.visible && det.open
+            Layout.fillWidth: true; Layout.margins: 16; Layout.topMargin: 4
+            text: p.status && p.status.log ? p.status.log.split("\n").slice(-12).join("\n") : ""
             color: Ui.muted; font.family: "JetBrains Mono"; font.pixelSize: 11; wrapMode: Text.WrapAnywhere; elide: Text.ElideNone
         }
     }

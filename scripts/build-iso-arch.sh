@@ -59,6 +59,7 @@ done
 # herramientas y capa de Lily
 make -C "$ROOT_DIR" install DESTDIR="$P/airootfs" PREFIX=/usr >/dev/null
 "$ROOT_DIR/scripts/apply-overlay.sh" "$P/airootfs" "$profile" arch
+"$ROOT_DIR/scripts/store-icons.sh" "$ROOT_DIR/apps/catalog.toml" "$P/airootfs/usr/share/rros/tienda/iconos"
 # /etc/lsb-release es del paquete lsb-release (lo traen open-vm-tools y otros): si ya está, pacman no instala. Lo
 # escribe rros-arch-setup después de instalar los paquetes
 rm -f "$P/airootfs/etc/lsb-release"

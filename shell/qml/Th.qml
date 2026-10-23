@@ -73,9 +73,12 @@ QtObject {
     readonly property bool soft: Sh.softRender
     property bool animations: b("ui.animations", true) && v("ui.effects", "basic") !== "off" && !soft
     property int anim: animations ? 180 : 0
+    // las escenas del fondo van también sin aceleración gráfica (más ligeras): son pocas partículas
+    property bool liveScenes: b("ui.animations", true) && v("ui.effects", "basic") !== "off"
     property string wallpaper: "/usr/share/wallpapers/Lily/lirio.jpg"
     property string wallpaperVideo: v("ui.wallpaper_video", "")
     property string wallpaperLive: v("ui.wallpaper_live", "off")
+    property bool desktopIcons: b("ui.desktop_icons", true)
     property bool pauseOnBattery: b("ui.wallpaper_pause_battery", true)
 
     function stateDir() { return Sh.home + "/.local/state/rros" }
@@ -84,7 +87,8 @@ QtObject {
             try { var s = JSON.parse(r.out); if (s && s.keys) t.st = s } catch (e) {}
         })
         var w = Sh.readFile(stateDir() + "/wallpaper").trim()
-        if (w !== "" && Sh.exists(w)) wallpaper = w
+        if (w === "none") wallpaper = ""
+        else if (w !== "" && Sh.exists(w)) wallpaper = w
     }
     function set(k, val) {
         Sh.run(["rros-settings", "api", "POST", "/api/set", "key=" + encodeURIComponent(k) + "&value=" + encodeURIComponent(val)],

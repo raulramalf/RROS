@@ -82,7 +82,7 @@ int main(void)
 	CHECK(t.dark == 1);
 	CHECK_STR(t.accent, "");
 	CHECK_STR(t.theme, "lirio");
-	CHECK(t.dock == 1 && t.dock_3d == 0 && t.buttons_left == 1 && t.global_menu == 1);
+	CHECK(t.dock == 1 && t.dock_3d == 0 && t.buttons_left == 0 && t.global_menu == 1);
 	CHECK_STR(t.dock_pos, "bottom");
 	CHECK_STR(rros_desktoptheme(&t), "rros");
 
@@ -151,7 +151,7 @@ int main(void)
 		      "hot_corners = false\n");
 	n = edits(&t);
 	CHECK_STR(ev(n, "kwinrc", "org.kde.kdecoration2", "ButtonsOnRight"), "IAX");
-	CHECK_STR(ev(n, "kwinrc", "org.kde.kdecoration2", "ButtonsOnLeft"), "M");
+	CHECK_STR(ev(n, "kwinrc", "org.kde.kdecoration2", "ButtonsOnLeft"), "");
 	CHECK_STR(ev(n, "kwinrc", "Desktops", "Number"), "3");
 	CHECK_STR(ev(n, "kwinrc", "NightColor", "Mode"), "Constant");
 	CHECK_STR(ev(n, "kwinrc", "NightColor", "NightTemperature"), "3500");

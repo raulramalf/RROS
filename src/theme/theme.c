@@ -150,7 +150,7 @@ void rros_theme_from_conf(struct rros_theme *t, const struct rros_conf *c)
 	cfg_enum(c, "ui.dock_position", "bottom", t->dock_pos, sizeof t->dock_pos);
 	cfg_enum(c, "ui.dock_hiding", "dodge", t->dock_hiding, sizeof t->dock_hiding);
 	t->dock_launchpad = rros_conf_get_bool(c, "ui.dock_launchpad", 1);
-	cfg_enum(c, "ui.window_buttons", "left", tmp, sizeof tmp);
+	cfg_enum(c, "ui.window_buttons", "right", tmp, sizeof tmp);
 	t->buttons_left = strcmp(tmp, "right") != 0;
 	t->global_menu = rros_conf_get_bool(c, "ui.global_menu", 1);
 	t->gestures = rros_conf_get_bool(c, "input.gestures", 1);

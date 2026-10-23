@@ -42,6 +42,9 @@ public:
 	Q_INVOKABLE bool setInputProperty(const QString &sysName, const QString &prop, const QVariant &value);
 	Q_INVOKABLE void copyText(const QString &text);
 	Q_INVOKABLE bool saveShot(QObject *window, const QString &path);
+	// icono de una app de la Tienda: el primero de los nombres que se encuentre (tema de iconos, hicolor, AppStream de
+	// Arch o de Flathub) como URL para Image; si no hay ninguno y tiene id de Flathub, el icono de Flathub por internet
+	Q_INVOKABLE QString appIcon(const QStringList &names, const QString &flatpak) const;
 
 private:
 	void finish(class QProcess *p, const QJSValue &cb);

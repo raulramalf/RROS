@@ -21,10 +21,15 @@ RPage {
         })
     }
     function update() {
-        working = true; log = ""
-        Sys.stream(["pkexec", "rros-apps", "update"], function (l) { p.log = l }, function (code) {
+        working = true; log = "Preparando…"
+        // sin las líneas de pacman: la fase y el porcentaje («( 3/40) …» de pacman)
+        Sys.stream(["pkexec", "rros-apps", "update"], function (l) {
+            var m = /\(\s*(\d+)\s*\/\s*(\d+)\s*\)/.exec(l)
+            var ph = /descarg|download|retriev/i.test(l) ? "Descargando" : /instal|upgrad|actualiz/i.test(l) ? "Instalando" : ""
+            if (ph !== "") p.log = ph + "…" + (m ? "  " + Math.round(100 * Number(m[1]) / Number(m[2])) + " %" : "")
+        }, function (code) {
             p.working = false
-            Ui.toast(code === 0 ? "Sistema al día" : "La actualización no terminó: " + p.log, code !== 0)
+            Ui.toast(code === 0 ? "Sistema al día" : "La actualización no terminó", code !== 0)
             p.check()
         })
     }

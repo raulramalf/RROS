@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Temas de cursores de Lily, dibujados con Pillow y escritos en formato Xcursor sin xcursorgen.
 
-Tres variantes con la paleta Lirio:
+Varias variantes de color (las tres primeras, con la paleta Lirio):
   Lily-Lirio    flecha marfil con borde vino fino y la punta en rojo lirio.
   Lily-Marfil   flecha vino con borde marfil: se ve bien sobre fondos claros y oscuros.
   Lily-Grafito  grafito neutro con borde blanco.
@@ -11,7 +11,7 @@ para suavizar los bordes. El contorno sale de dilatar la silueta, así tiene el 
 las formas, y la sombra es esa silueta difuminada. Los de espera giran (12 fotogramas, 50 ms).
 
 uso: make-cursors.py [--check] [--sheet DIR]
-  (escribe overlay/arch/usr/share/icons/Lily-{Lirio,Marfil,Grafito})
+  (escribe overlay/arch/usr/share/icons/Lily-*)
   --check   relee cada archivo y comprueba tamaños, puntos activos y fotogramas
   --sheet   guarda en DIR una hoja de muestra PNG por tema (32 y 64, fondo claro y oscuro)
 """
@@ -41,6 +41,24 @@ THEMES = {
     "Lily-Grafito": dict(
         name="Lily Grafito", comment="Cursores grafito neutros con borde blanco",
         fill="#34353a", line="#ffffff", accent="#c8243c", mark="#ffffff", shadow=0.40),
+    "Lily-Oceano": dict(
+        name="Lily Océano", comment="Cursores azul noche con borde blanco y punta turquesa",
+        fill="#12324f", line="#ffffff", accent="#22b8cf", mark="#ffffff", shadow=0.40),
+    "Lily-Menta": dict(
+        name="Lily Menta", comment="Cursores blancos con borde verde bosque y punta menta",
+        fill="#f4fbf6", line="#0f3d2a", accent="#2fbf71", mark="#f4fbf6", shadow=0.40),
+    "Lily-Lavanda": dict(
+        name="Lily Lavanda", comment="Cursores lavanda con borde morado oscuro",
+        fill="#e6dcff", line="#2a1650", accent="#8b5cf6", mark="#e6dcff", shadow=0.40),
+    "Lily-Ambar": dict(
+        name="Lily Ámbar", comment="Cursores negros con borde blanco y punta ámbar",
+        fill="#1b1b1f", line="#ffffff", accent="#f59e0b", mark="#ffffff", shadow=0.40),
+    "Lily-Sakura": dict(
+        name="Lily Sakura", comment="Cursores rosa claro con borde ciruela",
+        fill="#ffe1ec", line="#4a1030", accent="#ec4899", mark="#ffe1ec", shadow=0.40),
+    "Lily-Nieve": dict(
+        name="Lily Nieve", comment="Cursores blancos clásicos con borde negro y punta azul",
+        fill="#ffffff", line="#000000", accent="#3b82f6", mark="#ffffff", shadow=0.45),
 }
 
 

@@ -43,6 +43,11 @@ Window {
             else if (openWhat === "control") Ux.toggle("control", w.width - 90, Th.topBar ? Th.barH + 4 : -1)
             else if (openWhat === "menu") Ux.toggle("menu", 8, Th.barH + 4)
             else if (openWhat === "calendar") Ux.toggle("calendar", Th.vertical ? Th.tbH + 8 : w.width - 10, Th.topBar ? Th.barH + 4 : -1)
+            else if (openWhat === "avisos") {
+                Notifs.Notify("Tienda", 0, "rros-apps", "VLC instalada", "Ya la tienes en el Launchpad.", [], {}, 0)
+                Notifs.Notify("Actualizaciones", 0, "", "Lily está al día", "No hay actualizaciones pendientes.", [], {}, 0)
+                Ux.toggle("notifs", w.width - 10, Th.topBar ? Th.barH + 4 : -1)
+            }
             else if (openWhat === "aviso") Notifs.Notify("Tienda", 0, "rros-apps", "VLC instalada", "Ya la tienes en el Launchpad.", [], {}, 0)
             else if (openWhat === "zoom") dock.hoverPos = dock.restCenter(3)
             if (shotPath !== "") shot.start()

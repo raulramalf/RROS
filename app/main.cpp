@@ -41,6 +41,10 @@ int main(int argc, char *argv[])
 	app.setApplicationDisplayName(QStringLiteral("Lily Ajustes"));
 	app.setOrganizationName(QStringLiteral("Lily"));
 	app.setDesktopFileName(QStringLiteral("rros-settings"));
+	// sin tema de iconos (fuera de Plasma) se buscan en Breeze y en hicolor, así la Tienda ve los de cada app
+	if (QIcon::themeName().isEmpty() || QIcon::themeName() == QLatin1String("hicolor"))
+		QIcon::setThemeName(QStringLiteral("breeze-dark"));
+	QIcon::setFallbackThemeName(QStringLiteral("hicolor"));
 	app.setWindowIcon(QIcon::fromTheme(QStringLiteral("rros-settings"), QIcon(QStringLiteral(":/icons/app-ajustes.svg"))));
 
 	QCommandLineParser cli;

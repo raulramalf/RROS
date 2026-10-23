@@ -43,6 +43,10 @@ Item {
         visible: Ux.open === "calendar"
         x: ov.menuX(width, true); y: ov.menuTop(height)
     }
+    NotifPop {
+        visible: Ux.open === "notifs"
+        x: ov.menuX(width, true); y: ov.menuTop(height)
+    }
     MenuList {
         id: dmenu
         visible: Ux.open === "dockmenu"
@@ -69,8 +73,21 @@ Item {
     MenuList {
         visible: Ux.open === "desktopmenu"
         x: ov.clampX(Ux.ax, width); y: Math.min(Ux.ay, ov.height - height - 8)
-        entries: [["Cambiar el fondo…", "rros-ajustes --pagina apariencia"], ["Barra de tareas y escritorio…", "rros-ajustes --pagina escritorio"],
+        entries: [["Carpeta nueva", "@carpeta"], ["Mostrar el escritorio", "@escritorio"], ["-"], ["Cambiar el fondo…", "rros-ajustes --pagina apariencia"], ["Barra de tareas y escritorio…", "rros-ajustes --pagina escritorio"],
                   ["Pantallas…", "rros-ajustes --pagina pantalla"], ["-"], ["Abrir una terminal", "konsole"], ["Archivos", "dolphin"]]
-        onPicked: function (a) { Sh.detached(a.split(" ")) }
+        onPicked: function (a) {
+            if (a === "@escritorio") Tk.showDesktop()
+            else if (a === "@carpeta") Ux.fileAction("newfolder", [])
+            else Sh.detached(a.split(" "))
+        }
+    }
+    // menú de los archivos del escritorio (uno o varios elegidos)
+    MenuList {
+        visible: Ux.open === "filemenu"
+        property var d: Ux.data || ({ paths: [] })
+        x: ov.clampX(Ux.ax, width); y: Math.min(Ux.ay, ov.height - height - 8)
+        entries: [["Abrir", "open"], ["Mostrar en Archivos", "show"], ["Copiar la ruta", "copypath"], ["-"],
+                  [d.paths && d.paths.length > 1 ? "Mover " + d.paths.length + " elementos a la papelera" : "Mover a la papelera", "trash"]]
+        onPicked: function (a) { Ux.fileAction(a, d.paths || []) }
     }
 }

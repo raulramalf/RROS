@@ -107,6 +107,7 @@ RPage {
         KeyRow { k: "ui.blur"; title: "Desenfoque detrás de menús y paneles"; subtitle: "Solo con efectos «Todos»" }
         KeyRow { k: "ui.blur_strength"; title: "Intensidad del desenfoque" }
         KeyRow { k: "ui.dim_inactive"; title: "Oscurecer las ventanas sin foco" }
+        KeyRow { k: "ui.desktop_icons"; title: "Archivos en el escritorio"; subtitle: "Muestra lo que hay en la carpeta Escritorio; se pueden elegir, abrir y arrastrar" }
         KeyRow { k: "ui.hot_corners"; title: "Esquina activa"; subtitle: "Llevar el ratón arriba a la izquierda muestra todas las ventanas" }
         KeyRow { k: "ui.workspaces"; title: "Escritorios virtuales"; separator: false }
     }

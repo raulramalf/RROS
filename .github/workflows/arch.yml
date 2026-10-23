@@ -52,7 +52,7 @@ jobs:
       - name: ISO con archiso (contenedor Arch)
         run: |
           docker run --rm --privileged -v "$PWD:/rros" -w /rros -e PROFILE archlinux:latest bash -ec '
-            pacman -Syu --noconfirm --needed archiso base-devel git python cmake qt6-base qt6-declarative qt6-svg qt6-wayland extra-cmake-modules layer-shell-qt kwindowsystem kglobalaccel
+            pacman -Syu --noconfirm --needed archiso base-devel git python cmake qt6-base qt6-declarative qt6-svg qt6-wayland extra-cmake-modules layer-shell-qt kwindowsystem kglobalaccel archlinux-appstream-data curl
             make WERROR=1
             make app
             make shell SHELL_FULL=ON

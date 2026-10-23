@@ -220,7 +220,12 @@ RPage {
                         MouseArea {
                             anchors.fill: parent; cursorShape: Qt.PointingHandCursor; hoverEnabled: true
                             onContainsMouseChanged: p.hoverWall = containsMouse ? p.stylePreview(modelData[0]) : ""
-                            onClicked: { if (Ui.v("ui.wallpaper") !== "") Ui.unsetKey("ui.wallpaper"); Ui.setKey("ui.wallpaper_style", modelData[0]) }
+                            onClicked: {
+                                var st = modelData[0]
+                                // primero se quita «Tu imagen» (taparía el fondo generado) y después se elige el estilo
+                                if (Ui.v("ui.wallpaper") !== "") Ui.unsetKey("ui.wallpaper", function () { Ui.setKey("ui.wallpaper_style", st) })
+                                else Ui.setKey("ui.wallpaper_style", st)
+                            }
                         }
                     }
                     Txt { text: modelData[1]; font.pixelSize: Ui.fs - 2; color: Ui.muted; Layout.alignment: Qt.AlignHCenter }
@@ -281,7 +286,7 @@ RPage {
     Card {
         SRow {
             title: "Compartir tu tema"
-            subtitle: "Colores, acento, fondo, escena animada, puntero, letra y diseño de la barra en un archivo .lilytema"
+            subtitle: "Colores, acento, fondo, escena animada, puntero y letra en un archivo .lilytema"
             separator: false
             RowLayout {
                 Btn { text: "Importar…"; onClicked: themeIn.open() }
@@ -305,7 +310,7 @@ RPage {
     Card {
         SRow {
             title: "Escena animada"
-            subtitle: "Encima del fondo, con muy poco gasto. Necesita las animaciones activadas; en un equipo o máquina virtual sin aceleración gráfica se paran solas para que todo vaya fluido."
+            subtitle: "Encima del fondo, con muy poco gasto. Funciona también en máquinas virtuales sin aceleración gráfica (con menos partículas)."
         }
         // las escenas, en fichas: un emoji que la resume y su nombre
         Flow {
@@ -387,6 +392,8 @@ RPage {
     Component.onCompleted: { loadExtras(); cursorsLoad(); loadWalls() }
     function cursorsLoad() { Sys.run(["sh", "-c", "for d in /usr/share/icons/*/cursors \"$HOME\"/.local/share/icons/*/cursors; do [ -d \"$d\" ] && t=${d%/cursors} && n=$(sed -n 's/^Name=//p' \"$t/index.theme\" 2>/dev/null | head -1) && p=$(ls \"$t\"/preview*.png 2>/dev/null | head -1) && echo \"${t##*/}|${n:-${t##*/}}|$p\"; done"], function (r) {
         p.cursors = r.out.split("\n").filter(function (l) { return l !== "" }).map(function (l) { var x = l.split("|"); return { id: x[0], name: x[1], preview: x[2] || "" } })
+                             .filter(function (c) { return c.preview !== "" })   // solo los que se pueden ver antes de elegirlos
+                             .sort(function (a, b) { return a.name.localeCompare(b.name) })
     }) }
 
     Section { text: "Letra" }

@@ -69,7 +69,7 @@ Item {
     Emitter {
         system: ps; enabled: lw.scene === "lluvia"; group: "lluvia"
         width: parent.width * 1.2; x: -parent.width * 0.1; y: -20
-        emitRate: 90; lifeSpan: 1600
+        emitRate: Th.soft ? 40 : 90; lifeSpan: 1600
         velocity: AngleDirection { angle: 100; angleVariation: 3; magnitude: 900; magnitudeVariation: 200 }
     }
     ItemParticle {
@@ -111,7 +111,7 @@ Item {
     Emitter {
         system: ps; enabled: lw.scene === "nieve"; group: "nieve"
         width: parent.width * 1.1; x: -parent.width * 0.05; y: -20
-        emitRate: 28; lifeSpan: 20000
+        emitRate: Th.soft ? 14 : 28; lifeSpan: 20000
         velocity: AngleDirection { angle: 92; angleVariation: 12; magnitude: 40; magnitudeVariation: 30 }
     }
     Wander { system: ps; enabled: lw.scene === "nieve"; groups: ["nieve"]; xVariance: 40; pace: 30 }

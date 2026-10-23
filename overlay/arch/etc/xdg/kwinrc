@@ -1,11 +1,11 @@
 # KWin en Lily, valores de todo el sistema hasta que rros-theme escribe los del perfil al iniciar sesión: sin los
 # efectos que cuestan GPU (desenfoque, lámpara mágica), para que el primer arranque no vaya a tirones en equipos
-# modestos ni en máquinas virtuales sin 3D. Botones de las ventanas a la izquierda, como en macOS.
+# modestos ni en máquinas virtuales sin 3D. Botones de las ventanas a la derecha.
 [org.kde.kdecoration2]
 library=org.kde.kwin.aurorae
-theme=__aurorae__svg__RROS
-ButtonsOnLeft=XIA
-ButtonsOnRight=
+theme=__aurorae__svg__Lily
+ButtonsOnLeft=
+ButtonsOnRight=IAX
 BorderSize=None
 BorderSizeAuto=false
 

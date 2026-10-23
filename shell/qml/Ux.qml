@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    property string open: ""          // "", "menu", "control", "calendar", "launchpad", "start", "dockmenu", "desktopmenu"
+    property string open: ""          // "", "menu", "control", "calendar", "notifs", "launchpad", "start", "dockmenu", "desktopmenu", "filemenu"
     property real ax: 0               // punto de anclaje del menú abierto
     property real ay: 0
     property var data: null
@@ -13,4 +13,6 @@ QtObject {
         ax = x || 0; ay = y || 0; data = d || null; open = what
     }
     function close() { open = "" }
+    // lo que se elige en el menú de un archivo del escritorio (lo hace DesktopIcons): open, trash, copypath, show, newfolder
+    signal fileAction(string action, var paths)
 }

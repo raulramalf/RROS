@@ -107,6 +107,13 @@ RPage {
             Slide { from: 1; to: 100; value: Math.max(1, p.bright); onCommitted: function (v) { Ui.run(["brightnessctl", "set", Math.round(v) + "%"], function () {}) } }
         }
     }
+    Section { text: "Fluidez" }
+    Card {
+        KeyRow { k: "display.max_refresh"; title: "Frecuencia más alta"; separator: false
+                 subtitle: "Al iniciar sesión, cada pantalla a su máximo: 120 Hz o más si la admite (en máquinas virtuales suele ser 60 Hz)"
+                 onValueChanged: if (value === "true") Sys.detached(["/usr/libexec/rros-max-hz"]) }
+    }
+
     Section { text: "Luz nocturna" }
     Card {
         KeyRow { k: "ui.night_light"; title: "Luz nocturna"; subtitle: "Colores más cálidos para descansar la vista"; labels: { "off": "Apagada", "auto": "Al anochecer", "on": "Siempre" } }

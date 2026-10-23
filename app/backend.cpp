@@ -5,6 +5,7 @@
 #include <QDBusReply>
 #include <QDir>
 #include <QFile>
+#include <QHash>
 #include <QSaveFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -234,6 +235,70 @@ bool Backend::saveShot(QObject *window, const QString &path)
 {
 	auto *w = qobject_cast<QQuickWindow *>(window);
 	return w && w->grabWindow().save(path);
+}
+
+static QString iconFile(const QString &n)
+{
+	static const char *const sizes[] = { "scalable", "256x256", "128x128", "96x96", "64x64", "48x48" };
+	static const char *const roots[] = { "/usr/share/icons/hicolor", "/var/lib/flatpak/exports/share/icons/hicolor" };
+
+	// los que se guardaron en la imagen al compilarla (scripts/store-icons.sh): se ven sin internet
+	if (const QString f = QStringLiteral("/usr/share/rros/tienda/iconos/%1.png").arg(n); QFile::exists(f))
+		return f;
+
+	for (const char *r : roots)
+		for (const char *s : sizes)
+			for (const char *e : { "svg", "png" }) {
+				const QString f = QStringLiteral("%1/%2/apps/%3.%4").arg(QLatin1String(r), QLatin1String(s), n, QLatin1String(e));
+				if (QFile::exists(f))
+					return f;
+			}
+	for (const char *e : { "svg", "png" }) {
+		const QString f = QStringLiteral("/usr/share/pixmaps/%1.%2").arg(n, QLatin1String(e));
+		if (QFile::exists(f))
+			return f;
+	}
+	for (const char *s : { "128x128", "64x64" }) {
+		const QString f = QStringLiteral("/var/lib/flatpak/appstream/flathub/x86_64/active/icons/%1/%2.png").arg(QLatin1String(s), n);
+		if (QFile::exists(f))
+			return f;
+	}
+	// AppStream de Arch (archlinux-appstream-data): «paquete_icono.png» en cada repositorio
+	const QDir sw(QStringLiteral("/usr/share/swcatalog/icons"));
+	for (const QString &repo : sw.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+		for (const char *s : { "128x128", "64x64" }) {
+			const QDir d(sw.filePath(repo) + QLatin1Char('/') + QLatin1String(s));
+			const QStringList m = d.entryList({ n + QStringLiteral("_*.png"), n + QStringLiteral(".png") }, QDir::Files);
+			if (!m.isEmpty())
+				return d.filePath(m.first());
+		}
+	return {};
+}
+
+QString Backend::appIcon(const QStringList &names, const QString &flatpak) const
+{
+	static QHash<QString, QString> cache;
+	const QString key = names.join(QLatin1Char('|')) + QLatin1Char('#') + flatpak;
+
+	if (auto it = cache.constFind(key); it != cache.constEnd())
+		return *it;
+	QString url;
+	for (const QString &n : names) {
+		if (n.isEmpty() || n.contains(QLatin1Char('/')) || n.contains(QLatin1String("..")))
+			continue;
+		if (QIcon::hasThemeIcon(n)) {
+			url = QStringLiteral("image://icon/") + n;
+			break;
+		}
+		if (const QString f = iconFile(n); !f.isEmpty()) {
+			url = QUrl::fromLocalFile(f).toString();
+			break;
+		}
+	}
+	if (url.isEmpty() && !flatpak.isEmpty() && !flatpak.contains(QLatin1Char('/')))
+		url = QStringLiteral("https://dl.flathub.org/repo/appstream/x86_64/icons/128x128/%1.png").arg(flatpak);
+	cache.insert(key, url);
+	return url;
 }
 
 IconProvider::IconProvider() : QQuickImageProvider(QQuickImageProvider::Pixmap) {}

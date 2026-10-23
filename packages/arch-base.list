@@ -126,7 +126,6 @@ ttf-opensans
 ttf-ibm-plex
 cantarell-fonts
 ttf-dejavu
-capitaine-cursors       # otro puntero, además de los de Lily (Lirio, Marfil, Grafito) y Breeze
 
 # --- accesibilidad ---
 orca
@@ -148,6 +147,7 @@ mpv
 btop
 flatpak
 archlinux-appstream-data # iconos y fichas de las aplicaciones de Arch para la Tienda
+jq                      # lee la configuración de las pantallas (rros-max-hz: la frecuencia más alta)
 zip
 unzip
 7zip

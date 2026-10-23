@@ -1,7 +1,7 @@
 # Paquete de Lily: las herramientas (rros-*), Ajustes de Lily, Lily Shell y la capa del sistema.
 # Lo construye .github/workflows/repo.yml y lo publica en el repositorio [lily] (una «release» de GitHub).
 pkgname=lily
-pkgver=2.0.0
+pkgver=2.1.0
 pkgrel=1
 pkgdesc="Lily: escritorio, ajustes, tienda, antivirus, copias y herramientas"
 arch=(x86_64)

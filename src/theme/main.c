@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <sys/file.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <string.h>
@@ -408,10 +409,13 @@ static void plasma_reload(const struct rros_theme *t, const char *old_theme, con
 
 	snprintf(wpfile, sizeof wpfile, "%s/wallpaper", st);
 	/* Lily Shell vigila este archivo: el fondo cambia en cuanto se escribe */
-	if (rros_shell() && wallpaper[0]) {
+	if (rros_shell()) {
+		/* «none»: fondo liso, del color del tema */
+		const char *w = wallpaper[0] ? wallpaper : "none";
+
 		read_file(wpfile, prev, sizeof prev);
-		if (strcmp(prev, wallpaper))
-			write_text(wpfile, wallpaper);
+		if (strcmp(prev, w))
+			write_text(wpfile, w);
 	}
 	if (!in_plasma())
 		return;
@@ -454,14 +458,26 @@ static int cmd_apply_ex(const char *profile, int quiet, int force_layout)
 	struct rros_theme t;
 	struct rros_conf c;
 	struct rros_palette p;
-	char cfg[1024], data[1024], st[1024], wp[300], old_theme[64], prc[1100];
-	int rc;
+	char cfg[1024], data[1024], st[1024], wp[300], old_theme[64], prc[1100], lk[1100];
+	int rc, lock = -1;
 
-	if (load_theme(&t, &c, profile))
+	/* de uno en uno: Ajustes puede pedir dos cambios seguidos (quitar la imagen y elegir un estilo) y el que
+	 * termine el último debe ser el que lea la configuración final, no uno que la leyó antes */
+	if (state_home(lk, sizeof lk - 16) == 0) {
+		strcat(lk, "/apply.lock");
+		if (rros_mkdir_parents(lk) == 0 && (lock = open(lk, O_CREAT | O_RDWR | O_CLOEXEC, 0600)) >= 0)
+			flock(lock, LOCK_EX);
+	}
+	if (load_theme(&t, &c, profile)) {
+		if (lock >= 0)
+			close(lock);
 		return 1;
+	}
 	if (config_home(cfg, sizeof cfg) || data_home(data, sizeof data) || state_home(st, sizeof st)) {
 		fputs("rros-theme: no se pudo determinar ~/.config\n", stderr);
 		rros_conf_free(&c);
+		if (lock >= 0)
+			close(lock);
 		return 1;
 	}
 	t.soft_render = soft_render();
@@ -479,6 +495,8 @@ static int cmd_apply_ex(const char *profile, int quiet, int force_layout)
 		printf("tema aplicado: %s (%s, acento %s, dock %s%s)\n", t.theme, t.dark ? "oscuro" : "claro", p.accent,
 		       t.dock_3d ? "3D" : "2D", t.soft_render ? ", sin aceleración gráfica: efectos apagados" : "");
 	rros_conf_free(&c);
+	if (lock >= 0)
+		close(lock);
 	return rc;
 }
 

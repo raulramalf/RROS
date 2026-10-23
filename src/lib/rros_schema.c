@@ -45,6 +45,7 @@ const struct rros_key rros_schema[] = {
 	S("ui.wallpaper_video", "Fondo en vídeo o GIF (ruta a un .mp4, .webm, .mkv o .gif; vacío = fondo fijo)"),
 	E("ui.wallpaper_live", "off|petalos|sakura|hojas|nieve|luciernagas|burbujas|estrellas|aurora|lluvia", "Escena animada sobre el fondo"),
 	B("ui.wallpaper_pause_battery", "Parar el fondo animado con la batería"),
+	B("ui.desktop_icons", "Mostrar en el escritorio los archivos de la carpeta Escritorio"),
 	E("ui.wallpaper_style", "aurora|ondas|degradado|circulos|petalos|dunas|malla|cristal|topografico|seda|liso", "Fondo generado con los colores del tema (si no eliges una imagen)"),
 	E("ui.effects", "off|basic|advanced", "Nivel de efectos visuales"),
 	B("ui.animations", "Animaciones de ventanas y menús"),
@@ -101,6 +102,7 @@ const struct rros_key rros_schema[] = {
 
 	/* ---- pantalla ---- */
 	E("display.vrr", "off|auto|on", "Frecuencia variable (VRR)"),
+	B("display.max_refresh", "Usar la frecuencia más alta de cada pantalla (120 Hz o más si la admite)"),
 	I("display.refresh_hz", 24, 540, "Frecuencia de refresco preferida (Hz)"),
 	E("display.rotation", "0|90|180|270", "Rotación de pantalla"),
 	I("display.brightness", 1, 100, "Brillo inicial (%)"),

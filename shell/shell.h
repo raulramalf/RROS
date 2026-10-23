@@ -43,6 +43,10 @@ public:
 	Q_INVOKABLE void watch(const QString &path);
 	Q_INVOKABLE bool saveShot(QObject *window, const QString &path);
 	Q_INVOKABLE void copy(const QString &text);
+	// los archivos del escritorio: la carpeta (XDG_DESKTOP_DIR, «Escritorio») y lo que hay en ella
+	// [{ path, name, dir, suffix, size }]; las entradas .desktop traen además «title» e «icon» (Name e Icon)
+	Q_INVOKABLE QString desktopDir() const;
+	Q_INVOKABLE QVariantList entries(const QString &dir) const;
 	Q_INVOKABLE QString env(const QString &name) const { return qEnvironmentVariable(name.toUtf8().constData()); }
 
 public Q_SLOTS:

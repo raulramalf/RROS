@@ -1,6 +1,7 @@
 // Lily Archivos: gestor de archivos sencillo con lugares a la izquierda, ruta clicable, cuadrícula o lista, búsqueda,
 // carpeta nueva, renombrar y mover a la papelera (gio trash). Abre los archivos con su aplicación (xdg-open) y las
-// imágenes con Lily Fotos.
+// imágenes con Lily Fotos. Selección múltiple (Ctrl, Mayús, Ctrl+A y recuadro arrastrando en un hueco) y arrastrar y
+// soltar: a una carpeta (mover; con Ctrl, copiar), a otra aplicación o desde otra aplicación (se copia aquí).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -21,9 +22,34 @@ ApplicationWindow {
     property string filter: ""
     property bool hidden: false
     property bool grid: true
-    property string sel: ""
+    property string sel: ""          // el último elegido (renombrar)
+    property var picked: ({})        // todos los elegidos: ruta -> true
+    property int anchorIx: -1
 
-    function load() { items = Sys.entries(cwd, hidden); sel = "" }
+    function load() { items = Sys.entries(cwd, hidden); sel = ""; picked = ({}) }
+    function selected() { var out = []; for (var k in picked) out.push(k); return out }
+    function only(p) { var s = {}; if (p !== "") s[p] = true; picked = s; sel = p }
+    function toggleSel(p) { var s = Object.assign({}, picked); if (s[p]) delete s[p]; else s[p] = true; picked = s; sel = s[p] ? p : "" }
+    function rangeSel(a, b) { var s = Object.assign({}, picked), l = view.shown; for (var i = Math.min(a, b); i <= Math.max(a, b); i++) s[l[i].path] = true; picked = s }
+    function selectAll() { var s = {}; view.shown.forEach(function (e) { s[e.path] = true }); picked = s }
+    function uri(p) { return "file://" + encodeURI(p).replace(/#/g, "%23").replace(/\?/g, "%3F") }
+    function dropPaths(drop) {
+        var out = []
+        if (drop.hasUrls) for (var i = 0; i < drop.urls.length; i++) {
+            var u = String(drop.urls[i])
+            if (u.indexOf("file://") === 0) out.push(decodeURIComponent(u.substring(7)))
+        }
+        return out
+    }
+    // mover o copiar dentro de una carpeta, sin sobrescribir; nunca una carpeta dentro de sí misma
+    function transfer(paths, dest, copy) {
+        paths = paths.filter(function (p) { return p !== dest && p.substring(0, p.lastIndexOf("/")) !== dest && dest.indexOf(p + "/") !== 0 })
+        if (!paths.length) return
+        Sys.run(copy ? ["cp", "-r", "-n", "-t", dest, "--"].concat(paths) : ["mv", "-n", "-t", dest, "--"].concat(paths), function (r) {
+            win.load(); Ui.toast(r.code === 0 ? (paths.length === 1 ? "1 elemento " : paths.length + " elementos ") + (copy ? "copiado" : "movido") + (paths.length === 1 ? "" : "s")
+                                              : "No se pudo " + (copy ? "copiar" : "mover"), r.code !== 0)
+        })
+    }
     function go(p) { if (p === cwd) return; back.push(cwd); cwd = p; filter = ""; search.text = ""; load() }
     function up() { var i = cwd.lastIndexOf("/"); if (i > 0) go(cwd.substring(0, i)); else if (cwd !== "/") go("/") }
     function activate(e) {
@@ -54,13 +80,14 @@ ApplicationWindow {
         return (i ? n.toFixed(1) : n) + " " + u[i]
     }
     function trash() {
-        if (sel === "") return
-        Sys.run(["gio", "trash", sel], function () { load(); Ui.toast("Movido a la papelera", false) })
+        var l = selected()
+        if (!l.length) return
+        Sys.run(["gio", "trash", "--"].concat(l), function () { load(); Ui.toast(l.length === 1 ? "Movido a la papelera" : l.length + " elementos a la papelera", false) })
     }
     function newFolder() {
         var n = "Carpeta nueva", i = 2
         while (Sys.exists(cwd + "/" + n)) n = "Carpeta nueva " + i++
-        Sys.makeDir(cwd + "/" + n); load(); sel = cwd + "/" + n; renameField.start()
+        Sys.makeDir(cwd + "/" + n); load(); only(cwd + "/" + n); renameField.start()
     }
 
     Component.onCompleted: { Ui.reload(); load(); if (shotPath !== "") shotT.start() }
@@ -73,6 +100,8 @@ ApplicationWindow {
     Shortcut { sequences: [StandardKey.Delete]; onActivated: win.trash() }
     Shortcut { sequence: StandardKey.Find; onActivated: search.forceActiveFocus() }
     Shortcut { sequence: "F5"; onActivated: win.load() }
+    Shortcut { sequence: StandardKey.SelectAll; enabled: !search.activeFocus && !renameField.activeFocus; onActivated: win.selectAll() }
+    Shortcut { sequence: "Escape"; onActivated: win.only("") }
     Connections { target: Ui; function onToast(text, error) { toastT.text = text; toastT.opacity = 1; toastHide.restart() } }
 
     RowLayout {
@@ -144,25 +173,71 @@ ApplicationWindow {
                 Field { id: search; Layout.preferredWidth: 200; placeholderText: "Buscar aquí"; onTextChanged: win.filter = text.toLowerCase() }
                 Btn { text: win.grid ? "☰" : "▦"; onClicked: win.grid = !win.grid }
                 Btn { text: "Carpeta nueva"; onClicked: win.newFolder() }
-                Btn { text: "Papelera"; kind: "danger"; enabled: win.sel !== ""; onClicked: win.trash() }
+                Btn { text: "Papelera"; kind: "danger"; enabled: win.selected().length > 0; onClicked: win.trash() }
             }
             Rectangle {
                 Layout.fillWidth: true; Layout.fillHeight: true
                 radius: 12; color: Ui.card; border.color: Ui.line
+                // hueco: clic quita la selección; arrastrar dibuja un recuadro que elige lo que toca
+                MouseArea {
+                    id: bandArea
+                    anchors { fill: parent; margins: 10 }
+                    property point a
+                    property bool banding: false
+                    onPressed: function (m) { a = Qt.point(m.x, m.y); banding = false; if (!(m.modifiers & Qt.ControlModifier)) win.only("") }
+                    onPositionChanged: function (m) {
+                        if (!banding && Math.abs(m.x - a.x) + Math.abs(m.y - a.y) < 6) return
+                        banding = true
+                        band.x = Math.min(a.x, m.x) + 10; band.y = Math.min(a.y, m.y) + 10
+                        band.width = Math.abs(m.x - a.x); band.height = Math.abs(m.y - a.y)
+                        var cols = Math.max(1, Math.floor(view.width / view.cellWidth)), s = {}
+                        var bx = band.x - 10, by = band.y - 10 + view.contentY
+                        for (var i = 0; i < view.shown.length; i++) {
+                            var x = (i % cols) * view.cellWidth, y = Math.floor(i / cols) * view.cellHeight
+                            if (x < bx + band.width && x + view.cellWidth - 6 > bx && y < by + band.height && y + view.cellHeight - 4 > by) s[view.shown[i].path] = true
+                        }
+                        win.picked = s
+                    }
+                    onReleased: banding = false
+                    // la rueda del ratón desplaza (la vista no se arrastra con el ratón: arrastrar es seleccionar)
+                    onWheel: function (w) { view.contentY = Math.max(0, Math.min(view.contentHeight - view.height, view.contentY - w.angleDelta.y)) }
+                }
+                // lo que llega de otra aplicación se copia a esta carpeta
+                DropArea {
+                    anchors.fill: parent
+                    keys: ["text/uri-list"]
+                    onDropped: function (drop) {
+                        if (drop.source && drop.source.fileItem) { drop.accept(Qt.IgnoreAction); return }
+                        var ps = win.dropPaths(drop)
+                        if (ps.length) { win.transfer(ps, win.cwd, true); drop.accept(Qt.CopyAction) }
+                    }
+                }
+                Item { id: dragProxy }
                 GridView {
                     id: view
                     anchors { fill: parent; margins: 10 }
                     clip: true
+                    interactive: false
                     readonly property var shown: win.items.filter(function (e) { return win.filter === "" || e.name.toLowerCase().indexOf(win.filter) >= 0 })
                     model: shown
                     cellWidth: win.grid ? 118 : width
                     cellHeight: win.grid ? 112 : 36
-                    ScrollBar.vertical: ScrollBar {}
                     delegate: Rectangle {
+                        id: cell
+                        readonly property bool fileItem: true
+                        readonly property bool on: win.picked[modelData.path] === true
                         width: view.cellWidth - 6; height: view.cellHeight - 4
                         radius: 9
-                        color: win.sel === modelData.path ? Qt.rgba(Qt.color(Ui.accent).r, Qt.color(Ui.accent).g, Qt.color(Ui.accent).b, 0.3)
-                                                          : em.containsMouse ? Ui.cardHover : "transparent"
+                        color: on ? Qt.rgba(Qt.color(Ui.accent).r, Qt.color(Ui.accent).g, Qt.color(Ui.accent).b, 0.3)
+                                  : (em.containsMouse || fdrop.containsDrag) ? Ui.cardHover : "transparent"
+                        border.color: fdrop.containsDrag ? Ui.accent : "transparent"
+                        Drag.active: em.drag.active
+                        Drag.dragType: Drag.Automatic
+                        Drag.supportedActions: Qt.MoveAction | Qt.CopyAction | Qt.LinkAction
+                        Drag.proposedAction: Qt.MoveAction
+                        Drag.mimeData: ({ "text/uri-list": win.selected().map(win.uri).join("\r\n") + "\r\n" })
+                        Drag.imageSource: "qrc:/icons/" + win.icon(modelData) + ".svg"
+                        Drag.onDragFinished: function () { win.load() }
                         readonly property bool isImg: win.imgs.indexOf(modelData.suffix) >= 0 && modelData.size < 20000000
                         // cuadrícula: miniatura o icono arriba y nombre debajo
                         Column {
@@ -189,16 +264,49 @@ ApplicationWindow {
                         }
                         MouseArea {
                             id: em; anchors.fill: parent; hoverEnabled: true
-                            onClicked: win.sel = modelData.path
+                            drag.target: dragProxy
+                            drag.threshold: 8
+                            onPressed: function (m) {
+                                if (m.modifiers & Qt.ControlModifier) win.toggleSel(modelData.path)
+                                else if ((m.modifiers & Qt.ShiftModifier) && win.anchorIx >= 0) win.rangeSel(win.anchorIx, index)
+                                else if (!cell.on) win.only(modelData.path)
+                                else win.sel = modelData.path
+                                if (!(m.modifiers & Qt.ShiftModifier)) win.anchorIx = index
+                            }
+                            onReleased: function (m) {
+                                if (!drag.active && !(m.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) && win.selected().length > 1) win.only(modelData.path)
+                            }
                             onDoubleClicked: win.activate(modelData)
+                            onWheel: function (w) { view.contentY = Math.max(0, Math.min(view.contentHeight - view.height, view.contentY - w.angleDelta.y)) }
+                        }
+                        // soltar sobre una carpeta: dentro de ella (mover; con Ctrl o desde otra aplicación, copiar)
+                        DropArea {
+                            id: fdrop
+                            anchors.fill: parent
+                            enabled: modelData.dir
+                            keys: ["text/uri-list"]
+                            onDropped: function (d) {
+                                var ps = win.dropPaths(d)
+                                if (!ps.length || ps.indexOf(modelData.path) >= 0) return
+                                var copy = d.proposedAction === Qt.CopyAction || !(d.source && d.source.fileItem)
+                                win.transfer(ps, modelData.path, copy)
+                                d.accept(copy ? Qt.CopyAction : Qt.MoveAction)
+                            }
                         }
                     }
                     Txt { anchors.centerIn: parent; visible: view.count === 0; color: Ui.muted
                           text: win.filter !== "" ? "Nada coincide con «" + win.filter + "»" : "Carpeta vacía" }
+                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                }
+                Rectangle {
+                    id: band
+                    visible: bandArea.banding
+                    color: Qt.rgba(Qt.color(Ui.accent).r, Qt.color(Ui.accent).g, Qt.color(Ui.accent).b, 0.16)
+                    border.color: Ui.accent; radius: 3
                 }
             }
             RowLayout {
-                Txt { text: view.count + (view.count === 1 ? " elemento" : " elementos") + (win.hidden ? " · con ocultos" : ""); color: Ui.muted; font.pixelSize: Ui.fs - 1; Layout.fillWidth: true }
+                Txt { text: view.count + (view.count === 1 ? " elemento" : " elementos") + (win.selected().length > 1 ? " · " + win.selected().length + " elegidos" : "") + (win.hidden ? " · con ocultos" : ""); color: Ui.muted; font.pixelSize: Ui.fs - 1; Layout.fillWidth: true }
                 // renombrar el elemento elegido (F2)
                 Field {
                     id: renameField

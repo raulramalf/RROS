@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# rros-tema: temas completos de Lily (colores, acento, fondo, escena animada, puntero, letra y diseño de la barra) en
-# un archivo .lilytema para compartirlos.
+# rros-tema: temas completos de Lily (colores, acento, fondo, escena animada, puntero y letra) en un archivo .lilytema
+# para compartirlos. Solo cambian el aspecto: la barra de tareas y el resto de ajustes se quedan como estén.
 #   rros-tema exportar ARCHIVO.lilytema [NOMBRE]
 #   rros-tema importar ARCHIVO.lilytema
 #   rros-tema lista | aplicar NOMBRE        los incluidos (/usr/share/rros/temas)
 set -u
-KEYS=(ui.theme ui.color_scheme ui.accent ui.wallpaper_style ui.wallpaper_live ui.cursor_theme ui.font ui.font_size
-      ui.taskbar_style ui.taskbar_align ui.taskbar_size ui.corner_radius ui.transparency)
+KEYS=(ui.theme ui.color_scheme ui.accent ui.wallpaper_style ui.wallpaper_live ui.cursor_theme ui.font)
 DIR=/usr/share/rros/temas
 importar() {
 	local f=$1 k v n=0
@@ -15,6 +14,9 @@ importar() {
 		k=${k// /}; v=${v#"${v%%[![:space:]]*}"}; v=${v#\"}; v=${v%\"}
 		case " ${KEYS[*]} " in *" $k "*) rros-config set "$k" "$v" >/dev/null && n=$((n + 1)) ;; esac   # solo claves conocidas
 	done < <(grep -E '^[a-z_.]+ *=' "$f")
+	# el fondo del tema se ve: una imagen o un vídeo propios lo taparían
+	rros-config unset ui.wallpaper >/dev/null 2>&1
+	rros-config unset ui.wallpaper_video >/dev/null 2>&1
 	rros-theme apply --quiet >/dev/null 2>&1
 	echo "Tema aplicado ($n ajustes)"
 }

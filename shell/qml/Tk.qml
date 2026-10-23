@@ -23,15 +23,22 @@ QtObject {
     // «mostrar el escritorio» de Lily: minimiza solo las ventanas de aplicaciones (no las capas de Lily Shell, que
     // es lo que hacía el de KWin y dejaba la pantalla en negro) y, la segunda vez, devuelve las que minimizó
     property var hidden: []
+    // las filas del modelo cambian al minimizar: cada ventana se busca de nuevo (por app y título) justo antes de tocarla
     function showDesktop() {
-        var open = list.filter(function (w) { return !w.minimized })
-        if (open.length > 0) {
-            hidden = open.map(function (w) { return w.row })
-            open.forEach(function (w) { toggleMinimized(w.row) })
-        } else {
-            hidden.forEach(function (r) { if (list.some(function (w) { return w.row === r && w.minimized })) toggleMinimized(r) })
-            hidden = []
-        }
+        if (!model) return
+        refresh()
+        var key = function (w) { return w.appId + "\u0001" + w.title }
+        var own = function (w) { return /^(rros-shell|org\.rros\.shell|plasmashell)$/i.test(w.appId) }
+        var open = list.filter(function (w) { return !w.minimized && !own(w) })
+        var todo, back = open.length === 0
+        if (!back) { hidden = open.map(key); todo = hidden.slice() }
+        else { todo = hidden; hidden = [] }
+        todo.forEach(function (k) {
+            var l = model.snapshot()
+            for (var i = 0; i < l.length; i++)
+                if (key(l[i]) === k && l[i].minimized === back) { model.toggleMin(l[i].row); break }
+        })
+        later.restart()
     }
     function windowsOf(appId) {
         var out = []

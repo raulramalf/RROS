@@ -229,6 +229,24 @@ Item {
                 Glyph { visible: Sy.battery >= 0; name: "battery"; width: 22; height: 16; level: Sy.battery / 100; flag: Sy.charging }
             }
         }
+        // ---- avisos (la campana): abre el centro de avisos, no el calendario ----
+        TbButton {
+            id: bellBtn
+            visible: !Th.topBar
+            active: Ux.open === "notifs"
+            Layout.preferredWidth: tb.v ? tb.t - 8 : tb.t - 10
+            Layout.preferredHeight: tb.v ? tb.t - 8 : tb.t - 10
+            radius: height / 2
+            onClicked: tb.openAt("notifs", bellBtn)
+            tip: "Avisos"
+            Glyph { anchors.centerIn: parent; name: "bell" }
+            Rectangle {
+                visible: Notifs.count > 0
+                width: Math.max(15, bn.implicitWidth + 7); height: 15; radius: 7.5; color: Th.accent
+                anchors { right: parent.right; top: parent.top; rightMargin: 1; topMargin: 1 }
+                Txt { id: bn; anchors.centerIn: parent; text: Notifs.count; color: Th.onAccent; font.pixelSize: 9; font.weight: Font.Bold }
+            }
+        }
         TbButton {
             id: clock
             visible: !Th.topBar
@@ -237,32 +255,12 @@ Item {
             Layout.preferredHeight: tb.v ? 46 : tb.t - 10
             radius: tb.v ? 7 : height / 2
             onClicked: tb.openAt("calendar", clock)
-            tip: "Calendario y avisos"
+            tip: "Calendario"
             Column {
                 anchors.centerIn: parent
                 spacing: 0
                 Txt { id: ct; text: tb.now; font.pixelSize: 12; font.weight: Font.DemiBold; anchors.horizontalCenter: parent.horizontalCenter }
                 Txt { id: cd; text: tb.date; font.pixelSize: 11; color: Th.muted; anchors.horizontalCenter: parent.horizontalCenter }
-            }
-            Rectangle {
-                visible: Notifs.count > 0
-                width: 7; height: 7; radius: 3.5; color: Th.accent
-                anchors { right: parent.right; top: parent.top; margins: 4 }
-            }
-        }
-        // ---- mostrar el escritorio (la esquina, como en Windows) ----
-        Rectangle {
-            Layout.preferredWidth: tb.v ? tb.t - 8 : 8
-            Layout.preferredHeight: tb.v ? 8 : tb.t - 8
-            Layout.alignment: Qt.AlignCenter
-            radius: 2
-            color: dm.containsMouse ? Th.hover : "transparent"
-            Rectangle { color: Th.edge; x: tb.v ? 4 : 0; y: tb.v ? 0 : 4; width: tb.v ? parent.width - 8 : 1; height: tb.v ? 1 : parent.height - 8 }
-            Accessible.role: Accessible.Button
-            Accessible.name: "Mostrar el escritorio"
-            MouseArea {
-                id: dm; anchors.fill: parent; hoverEnabled: true
-                onClicked: Tk.showDesktop()
             }
         }
     }

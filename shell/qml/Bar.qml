@@ -78,7 +78,7 @@ Item {
         }
         BarButton {
             id: bell
-            onClicked: Ux.toggle("calendar", bar.anchorR(bell), bar.menuY())
+            onClicked: Ux.toggle("notifs", bar.anchorR(bell), bar.menuY())
             Glyph { anchors.centerIn: parent; name: "bell" }
             Rectangle {
                 visible: Notifs.count > 0

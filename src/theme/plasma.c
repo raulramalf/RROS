@@ -229,9 +229,9 @@ static void kwin(struct edits *s, const struct rros_theme *t)
 	put(s, "kwinrc", "NightColor", "Mode", "%s", !strcmp(t->night_light, "on") ? "Constant" : "Automatic");
 	put(s, "kwinrc", "NightColor", "NightTemperature", "%d", t->night_temp);
 	put(s, "kwinrc", "org.kde.kdecoration2", "library", "org.kde.kwin.aurorae");
-	put(s, "kwinrc", "org.kde.kdecoration2", "theme", "__aurorae__svg__RROS");
+	put(s, "kwinrc", "org.kde.kdecoration2", "theme", "__aurorae__svg__Lily");
 	/* X cerrar, I minimizar, A maximizar; M menú de la ventana */
-	put(s, "kwinrc", "org.kde.kdecoration2", "ButtonsOnLeft", "%s", t->buttons_left ? "XIA" : "M");
+	put(s, "kwinrc", "org.kde.kdecoration2", "ButtonsOnLeft", "%s", t->buttons_left ? "XIA" : "");
 	put(s, "kwinrc", "org.kde.kdecoration2", "ButtonsOnRight", "%s", t->buttons_left ? "" : "IAX");
 	put(s, "kwinrc", "org.kde.kdecoration2", "BorderSize", "None");
 	put(s, "kwinrc", "org.kde.kdecoration2", "BorderSizeAuto", "false");
@@ -289,6 +289,11 @@ static void input(struct edits *s, const struct rros_theme *t)
 	put(s, "kcminputrc", "Mouse", "cursorTheme", "%s", t->cursor_theme);
 	put(s, "kcminputrc", "Mouse", "cursorSize", "%d", t->cursor_size);
 	/* aplicaciones GTK (Firefox, GIMP…): el mismo puntero */
+	/* las apps GTK con barra de título propia, con los botones en el mismo sitio que las demás */
+	put(s, "gtk-3.0/settings.ini", "Settings", "gtk-decoration-layout", "%s",
+	    t->buttons_left ? "close,minimize,maximize:" : ":minimize,maximize,close");
+	put(s, "gtk-4.0/settings.ini", "Settings", "gtk-decoration-layout", "%s",
+	    t->buttons_left ? "close,minimize,maximize:" : ":minimize,maximize,close");
 	put(s, "gtk-3.0/settings.ini", "Settings", "gtk-cursor-theme-name", "%s", t->cursor_theme);
 	put(s, "gtk-3.0/settings.ini", "Settings", "gtk-cursor-theme-size", "%d", t->cursor_size);
 	put(s, "gtk-4.0/settings.ini", "Settings", "gtk-cursor-theme-name", "%s", t->cursor_theme);

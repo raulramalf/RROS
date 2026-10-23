@@ -1,4 +1,4 @@
-// Fondo de escritorio (limpio: sin iconos). Clic derecho: menú del escritorio.
+// Fondo de escritorio con los archivos de la carpeta Escritorio encima. Clic derecho: menú del escritorio.
 import QtQuick
 import "."
 
@@ -23,16 +23,14 @@ Rectangle {
     }
     Loader {
         anchors.fill: parent
-        active: Th.wallpaperLive !== "off" && Th.animations
+        active: Th.wallpaperLive !== "off" && Th.liveScenes
         source: "LiveWall.qml"
         onLoaded: item.scene = Qt.binding(function () { return Th.wallpaperLive })
     }
-    MouseArea {
+    // los archivos de ~/Escritorio (con su menú, selección y arrastrar); clic derecho en un hueco: menú del escritorio
+    DesktopIcons {
         anchors.fill: parent
-        acceptedButtons: Qt.RightButton | Qt.LeftButton
-        onClicked: function (m) {
-            if (m.button === Qt.RightButton) Ux.toggle("desktopmenu", m.x, m.y)
-            else Ux.close()
-        }
+        show: Th.desktopIcons
+        onBackgroundMenu: function (x, y) { Ux.toggle("desktopmenu", x, y) }
     }
 }

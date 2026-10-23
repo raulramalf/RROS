@@ -65,27 +65,49 @@ RPage {
         if (tab === "actualizaciones") { loadingTab = true; json(["pendientes"], function (v) { p.pending = v; p.loadingTab = false }) }
     }
     // a: { origen, id, name, ... }
+    // progreso de lo que se instala: solo una frase y una barra, nunca las líneas de pacman o Flatpak (rutas, comandos)
+    property real progress: -1      // 0..1, o -1 si aún no se sabe (barra en movimiento)
+    property string lastLine: ""    // la última línea, solo para el aviso si falla
+    function feed(line, install) {
+        p.lastLine = line
+        var m = /\(\s*(\d+)\s*\/\s*(\d+)\s*\)/.exec(line), pc = /(\d{1,3})\s?%/.exec(line)
+        var phase = /descarg|download|retriev|recibiendo|fetching/i.test(line) ? "Descargando…"
+                  : /instal|upgrad|actualiz|deploy/i.test(line) ? (install ? "Instalando…" : "Actualizando…")
+                  : /remov|quitando|desinstal|borrando/i.test(line) ? "Quitando…"
+                  : /check|comprob|verific|resolv|integr|conflict|key|clave/i.test(line) ? "Comprobando…" : ""
+        if (phase !== "") p.log = phase
+        // pacman: «( 3/12) instalando x»; Flatpak: «… 45%». La fase de descarga va de 0 a 60 %, la instalación de 60 a 100 %
+        if (m) p.progress = Math.max(p.progress, 0.6 + 0.4 * Number(m[1]) / Math.max(1, Number(m[2])))
+        else if (pc) p.progress = Math.max(p.progress, (p.log === "Descargando…" ? 0.6 : 1) * Math.min(100, Number(pc[1])) / 100)
+    }
     function act(a, install) {
         var argv = a.origen === "rros" ? ["pkexec", "rros-apps", install ? "install" : "remove", a.id]
                  : ["pkexec", "rros-apps", (install ? "instalar-" : "quitar-") + (a.origen === "flathub" ? "flatpak" : "paquete"), a.id]
-        working = a.origen + "/" + a.id; log = install ? "Preparando…" : "Quitando…"
-        Sys.stream(argv, function (line) { p.log = line }, function (code) {
-            p.working = ""
+        working = a.origen + "/" + a.id; log = install ? "Preparando…" : "Quitando…"; progress = -1; lastLine = ""
+        Sys.stream(argv, function (line) { p.feed(line, install) }, function (code) {
+            p.working = ""; p.progress = -1
             if (code === 0) Ui.toast(a.name + (install ? " instalada" : " quitada"), false)
             else if (code === 126 || code === 127) Ui.toast("Hace falta la contraseña de un administrador", true)
-            else Ui.toast("No se pudo: " + p.log, true)
+            else Ui.toast("No se pudo " + (install ? "instalar " : "quitar ") + a.name + (p.lastLine ? ": " + p.lastLine.slice(0, 120) : ""), true)
             p.refresh(); if (p.q.length >= 2) p.search(); p.loadTab()
             if (p.detail && p.detail.id === a.id) p.detail = Object.assign({}, p.detail, { installed: install && code === 0 ? true : (!install && code === 0 ? false : p.detail.installed) })
         })
     }
     function updateAll() {
         working = "*"; log = "Actualizando…"
-        Sys.stream(["pkexec", "rros-apps", "update"], function (l) { p.log = l }, function (code) {
-            p.working = ""; Ui.toast(code === 0 ? "Todo al día" : "No se pudo actualizar: " + p.log, code !== 0); p.loadTab()
+        progress = -1
+        Sys.stream(["pkexec", "rros-apps", "update"], function (l) { p.feed(l, false) }, function (code) {
+            p.working = ""; p.progress = -1; Ui.toast(code === 0 ? "Todo al día" : "No se pudo actualizar", code !== 0); p.loadTab()
         })
     }
-    function iconOf(a) { return "image://icon/" + (a.icon || a.cmd || a.id) }
-    function catalogItem(a) { return { origen: "rros", id: a.id, name: a.name, desc: a.desc, version: "", icon: a.installed ? (a.cmd || a.id) : (a.flatpak || a.cmd || a.id), installed: a.installed, shipped: a.shipped, cmd: a.cmd, category: a.category, tags: a.tags || "" } }
+    // icono de la app: tema, hicolor, AppStream de Arch o de Flathub; si no hay, una ficha con su inicial
+    function iconOf(a) {
+        if (!a) return ""
+        var pk = String(a.pacman || "").split(",")[0]
+        return Sys.appIcon([a.cmd || "", a.icon || "", pk, a.flatpak || "", a.id || "", String(a.id || "").split(".").pop().toLowerCase()],
+                           a.flatpak || (a.origen === "flathub" ? a.id : ""))
+    }
+    function catalogItem(a) { return { origen: "rros", id: a.id, name: a.name, desc: a.desc, version: "", icon: a.cmd || a.id, pacman: a.pacman || "", flatpak: a.flatpak || "", installed: a.installed, shipped: a.shipped, cmd: a.cmd, category: a.category, tags: a.tags || "" } }
     onShown: if (apps.length === 0) refresh()
     onTabChanged: loadTab()
 
@@ -122,13 +144,14 @@ RPage {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 18
-                Image { source: p.detail ? p.iconOf(p.detail) : ""; sourceSize: Qt.size(96, 96); Layout.preferredWidth: 96; Layout.preferredHeight: 96 }
+                AppIco { app: p.detail; size: 96 }
                 ColumnLayout {
                     spacing: 4
                     Layout.fillWidth: true
                     Txt { text: p.detail ? p.detail.name : ""; font.pixelSize: 22; font.weight: Font.Bold }
                     Txt { text: p.detail ? p.srcName[p.detail.origen] + (p.detail.version ? " · " + p.detail.version : "") : ""; color: Ui.accent; font.pixelSize: Ui.fs - 1 }
                     Txt { text: p.detail ? (p.working === p.detail.origen + "/" + p.detail.id ? p.log : p.detail.desc) : ""; color: Ui.muted; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                    Bar { visible: p.detail !== null && p.working === p.detail.origen + "/" + p.detail.id; Layout.fillWidth: true; Layout.maximumWidth: 360 }
                 }
                 ColumnLayout {
                     Btn {
@@ -209,7 +232,7 @@ RPage {
         RowLayout {
             anchors { fill: parent; margins: 24 }
             spacing: 22
-            Image { source: parent.parent.hero ? p.iconOf(parent.parent.hero) : ""; sourceSize: Qt.size(96, 96); Layout.preferredWidth: 96; Layout.preferredHeight: 96 }
+            AppIco { app: parent.parent.hero; size: 96 }
             ColumnLayout {
                 Layout.fillWidth: true
                 Txt { text: "Destacada"; color: "#ffffffcc"; font.pixelSize: Ui.fs - 1; font.weight: Font.DemiBold }
@@ -259,7 +282,7 @@ RPage {
                 RowLayout {
                     anchors { fill: parent; margins: 14 }
                     spacing: 14
-                    Image { source: p.iconOf(modelData); sourceSize: Qt.size(56, 56); Layout.preferredWidth: 56; Layout.preferredHeight: 56; asynchronous: true }
+                    AppIco { app: modelData; size: 56 }
                     ColumnLayout {
                         spacing: 2
                         Layout.fillWidth: true
@@ -267,6 +290,7 @@ RPage {
                         Txt { text: p.working === modelData.origen + "/" + modelData.id ? p.log
                                   : p.tab === "actualizaciones" && modelData.desc ? modelData.desc + "  →  " + modelData.version : modelData.desc
                               color: Ui.muted; font.pixelSize: Ui.fs - 1; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight; Layout.fillWidth: true }
+                        Bar { visible: p.working === modelData.origen + "/" + modelData.id; Layout.fillWidth: true }
                         RowLayout {
                             spacing: 6
                             Rectangle {
@@ -290,5 +314,53 @@ RPage {
                 }
             }
         }
+    }
+
+    // icono de una app; mientras carga o si no tiene, una ficha redondeada del color de su categoría con la inicial
+    component AppIco: Item {
+        id: ai
+        property var app: null
+        property int size: 56
+        Layout.preferredWidth: size; Layout.preferredHeight: size
+        implicitWidth: size; implicitHeight: size
+        readonly property var tints: ({ internet: "#2f80ed", office: "#2e9e6a", media: "#d9304a", graphics: "#a855f7",
+                                        dev: "#475569", games: "#f59e0b", utility: "#0ea5a4", system: "#64748b", education: "#16a34a" })
+        readonly property color tint: (app && tints[app.category]) || Ui.accent
+        Rectangle {
+            anchors.fill: parent; anchors.margins: ai.size * 0.06
+            radius: width * 0.24
+            visible: ico.status !== Image.Ready
+            gradient: Gradient {
+                GradientStop { position: 0; color: Qt.lighter(ai.tint, 1.3) }
+                GradientStop { position: 1; color: ai.tint }
+            }
+            Txt { anchors.centerIn: parent; color: "white"; font.pixelSize: parent.width * 0.48; font.weight: Font.Bold
+                  text: ai.app && ai.app.name ? ai.app.name.charAt(0).toUpperCase() : "" }
+        }
+        Image {
+            id: ico
+            anchors.fill: parent
+            source: p.iconOf(ai.app)
+            sourceSize: Qt.size(ai.size * 2, ai.size * 2)
+            fillMode: Image.PreserveAspectFit
+            asynchronous: true; smooth: true; mipmap: true
+        }
+    }
+
+    // barra de progreso: se llena con el porcentaje; si aún no lo hay, un tramo que va y viene
+    component Bar: Rectangle {
+        implicitHeight: 6; radius: 3; color: Ui.field; clip: true
+        Rectangle {
+            height: parent.height; radius: 3; color: Ui.accent
+            width: p.progress >= 0 ? parent.width * p.progress : parent.width * 0.3
+            Behavior on width { enabled: p.progress >= 0; NumberAnimation { duration: 250 } }
+            SequentialAnimation on x {
+                running: p.progress < 0 && parent.visible; loops: Animation.Infinite
+                NumberAnimation { from: -parent.width * 0.3; to: parent.width; duration: 1200; easing.type: Easing.InOutQuad }
+            }
+            Binding on x { when: p.progress >= 0; value: 0 }
+        }
+        Txt { visible: p.progress >= 0; anchors { right: parent.right; bottom: parent.top; bottomMargin: 2 }
+              text: Math.round(p.progress * 100) + " %"; font.pixelSize: 10; color: Ui.muted }
     }
 }

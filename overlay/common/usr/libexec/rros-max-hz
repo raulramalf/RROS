@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Al iniciar sesión, cada pantalla a la frecuencia más alta que admite con su resolución actual (120 Hz, 144 Hz…),
+# para que el escritorio y las animaciones vayan tan fluidos como permita la pantalla. Se desactiva con
+# display.max_refresh = false (Ajustes de Lily → Pantallas). En una máquina virtual suele no haber más de 60 Hz.
+set -u
+[ "$(rros-config get display.max_refresh 2>/dev/null || echo true)" = false ] && exit 0
+command -v kscreen-doctor >/dev/null && command -v jq >/dev/null || exit 0
+json=$(kscreen-doctor -j 2>/dev/null) || exit 0
+jq -r '.outputs[] | select(.enabled and .connected) as $o
+	| ($o.modes[] | select(.id == $o.currentModeId)) as $c
+	| [$o.modes[] | select(.size.width == $c.size.width and .size.height == $c.size.height)]
+	| max_by(.refreshRate) as $b
+	| select($b.refreshRate > $c.refreshRate + 0.5)
+	| "output.\($o.name).mode.\($b.id)"' <<<"$json" 2>/dev/null |
+while read -r arg; do
+	kscreen-doctor "$arg" >/dev/null 2>&1 && echo "rros-max-hz: $arg"
+done
+exit 0

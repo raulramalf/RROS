@@ -162,8 +162,9 @@ static void frame(FILE *f, const char *prefix, int x0, const char *fill, const c
 	(void)line;
 }
 
-/* botón redondo: color propio con la ventana activa, gris con la inactiva; el símbolo aparece al pasar por encima */
-static int button(const char *dir, const char *name, const char *color, const char *glyph, const struct rros_palette *p)
+/* botón de la barra de título: el símbolo siempre visible, en el color del texto, sobre un círculo suave que se
+ * marca al pasar el ratón; el de cerrar se pone rojo con el símbolo blanco. Cada estado ocupa una celda de 28x24. */
+static int button(const char *dir, const char *name, int danger, const char *glyph, const struct rros_palette *p)
 {
 	char path[900];
 	FILE *f;
@@ -172,18 +173,24 @@ static int button(const char *dir, const char *name, const char *color, const ch
 	snprintf(path, sizeof path, "%s/%s.svg", dir, name);
 	if (!(f = fopen(path, "w")))
 		return -1;
-	fputs("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"16\" viewBox=\"0 0 80 16\">\n", f);
+	fputs("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"140\" height=\"24\" viewBox=\"0 0 140 24\">\n", f);
 	for (int i = 0; i < 5; i++) {
-		int x = i * 16;
-		const char *fill = i >= 3 ? p->border : color;
+		int x = i * 28;
+		const char *bg = "none", *fg = i >= 3 ? p->muted : p->text;
+		double op = 0;
 
-		fprintf(f, "<g id=\"%s-center\"><rect x=\"%d\" y=\"0\" width=\"16\" height=\"16\" fill=\"none\"/>"
-			   "<circle cx=\"%d\" cy=\"8\" r=\"6\" fill=\"%s\"%s/>", state[i], x, x + 8, fill,
-			i == 2 ? " opacity=\"0.75\"" : "");
-		if (i == 1 || i == 2)
-			fprintf(f, "<path transform=\"translate(%d,0)\" d=\"%s\" stroke=\"#000000\" stroke-opacity=\"0.55\" "
-				   "stroke-width=\"1.4\" stroke-linecap=\"round\" fill=\"none\"/>", x, glyph);
-		fputs("</g>\n", f);
+		if (i == 1 || i == 2) {
+			bg = danger ? "#e5484d" : p->text;
+			op = danger ? (i == 2 ? 0.8 : 1) : (i == 2 ? 0.22 : 0.13);
+			if (danger)
+				fg = "#ffffff";
+		}
+		fprintf(f, "<g id=\"%s-center\"><rect x=\"%d\" y=\"0\" width=\"28\" height=\"24\" fill=\"none\"/>", state[i], x);
+		if (op > 0)
+			fprintf(f, "<circle cx=\"%d\" cy=\"12\" r=\"11\" fill=\"%s\" fill-opacity=\"%.2f\"/>", x + 14, bg, op);
+		fprintf(f, "<path transform=\"translate(%d,0)\" d=\"%s\" stroke=\"%s\" stroke-opacity=\"%s\" stroke-width=\"1.5\" "
+			   "stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\"/></g>\n",
+			x, glyph, fg, i == 4 ? "0.45" : "1");
 	}
 	fputs("</svg>\n", f);
 	return fclose(f);
@@ -201,16 +208,16 @@ int rros_write_aurorae(const char *dir, const struct rros_theme *t, const struct
 	snprintf(text, sizeof text,
 		 "# %s\n[General]\nActiveTextColor=%d,%d,%d\nInactiveTextColor=%d,%d,%d\nTitleAlignment=Center\n"
 		 "TitleVerticalAlignment=Center\nAnimation=120\nUseTextShadow=false\nShadow=true\nHaloActive=false\n"
-		 "HaloInactive=false\n\n[Layout]\nBorderLeft=0\nBorderRight=0\nBorderBottom=0\nTitleEdgeTop=8\n"
-		 "TitleEdgeBottom=8\nTitleEdgeLeft=12\nTitleEdgeRight=12\nTitleBorderLeft=10\nTitleBorderRight=10\n"
-		 "TitleHeight=16\nButtonWidth=16\nButtonHeight=16\nButtonSpacing=6\nButtonMarginTop=0\n"
+		 "HaloInactive=false\n\n[Layout]\nBorderLeft=0\nBorderRight=0\nBorderBottom=0\nTitleEdgeTop=6\n"
+		 "TitleEdgeBottom=6\nTitleEdgeLeft=8\nTitleEdgeRight=8\nTitleBorderLeft=10\nTitleBorderRight=10\n"
+		 "TitleHeight=24\nButtonWidth=28\nButtonHeight=24\nButtonSpacing=4\nButtonMarginTop=0\n"
 		 "ExplicitButtonSpacer=10\nPaddingTop=0\nPaddingBottom=0\nPaddingLeft=0\nPaddingRight=0\n",
 		 RROS_GENERATED, r, g, b, r2, g2, b2);
 	snprintf(path, sizeof path, "%s/Lilyrc", dir);
 	if (rros_mkdir_parents(path) || write_file(dir, "Lilyrc", text))
 		return -1;
 	if (write_file(dir, "metadata.desktop",
-		       "[Desktop Entry]\nName=Lily\nComment=Barras de título de Lily, con los botones a la izquierda\n"
+		       "[Desktop Entry]\nName=Lily\nComment=Barras de título de Lily\n"
 		       "X-KDE-PluginInfo-Author=Lily\nX-KDE-PluginInfo-Name=Lily\nX-KDE-PluginInfo-Version=1.0\n"
 		       "X-KDE-PluginInfo-License=GPL\nX-KDE-PluginInfo-EnabledByDefault=true\n"))
 		return -1;
@@ -223,11 +230,11 @@ int rros_write_aurorae(const char *dir, const struct rros_theme *t, const struct
 	fputs("</svg>\n", f);
 	if (fclose(f))
 		return -1;
-	/* rojo, ámbar y verde como en macOS, con los símbolos de cerrar, minimizar y maximizar */
-	if (button(dir, "close", "#ff5f57", "M5.2,5.2 L10.8,10.8 M10.8,5.2 L5.2,10.8", p) ||
-	    button(dir, "minimize", "#febc2e", "M4.8,8 H11.2", p) ||
-	    button(dir, "maximize", "#28c840", "M8,4.8 V11.2 M4.8,8 H11.2", p) ||
-	    button(dir, "restore", "#28c840", "M5.2,10.8 L10.8,5.2", p))
+	/* cerrar (rojo al pasar el ratón), minimizar, maximizar y restaurar (dos ventanas superpuestas) */
+	if (button(dir, "close", 1, "M9.5,7.5 L18.5,16.5 M18.5,7.5 L9.5,16.5", p) ||
+	    button(dir, "minimize", 0, "M9,12.5 H19", p) ||
+	    button(dir, "maximize", 0, "M10.5,7.5 H17.5 Q19.5,7.5 19.5,9.5 V14.5 Q19.5,16.5 17.5,16.5 H10.5 Q8.5,16.5 8.5,14.5 V9.5 Q8.5,7.5 10.5,7.5 Z", p) ||
+	    button(dir, "restore", 0, "M8.5,10 H16 V17 H8.5 Z M11,10 V7.5 H19 V14.5 H16", p))
 		return -1;
 	return 0;
 }

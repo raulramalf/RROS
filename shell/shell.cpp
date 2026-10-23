@@ -5,6 +5,7 @@
 #include <QDBusConnection>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QJSEngine>
@@ -243,6 +244,48 @@ bool Shell::saveShot(QObject *window, const QString &path)
 {
 	auto *w = qobject_cast<QQuickWindow *>(window);
 	return w && w->grabWindow().save(path);
+}
+
+QString Shell::desktopDir() const
+{
+	const QString d = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+	if (!d.isEmpty() && d != QDir::homePath() && QFileInfo(d).isDir())
+		return d;
+	for (const char *n : { "Escritorio", "Desktop" })
+		if (QFileInfo(QDir::home().filePath(QLatin1String(n))).isDir())
+			return QDir::home().filePath(QLatin1String(n));
+	return QDir::home().filePath(QStringLiteral("Escritorio"));
+}
+
+QVariantList Shell::entries(const QString &dir) const
+{
+	QVariantList out;
+	const QFileInfoList l = QDir(dir).entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot,
+							QDir::DirsFirst | QDir::Name | QDir::IgnoreCase | QDir::LocaleAware);
+	for (const QFileInfo &fi : l) {
+		QVariantMap m{ { QStringLiteral("path"), fi.absoluteFilePath() }, { QStringLiteral("name"), fi.fileName() },
+			       { QStringLiteral("dir"), fi.isDir() }, { QStringLiteral("suffix"), fi.suffix().toLower() },
+			       { QStringLiteral("size"), fi.size() } };
+		if (fi.suffix() == QLatin1String("desktop")) {
+			QFile f(fi.absoluteFilePath());
+			if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+				bool main = false;
+				while (!f.atEnd()) {
+					const QString line = QString::fromUtf8(f.readLine()).trimmed();
+					if (line.startsWith(QLatin1Char('[')))
+						main = line == QLatin1String("[Desktop Entry]");
+					else if (main && line.startsWith(QLatin1String("Name=")) && !m.contains(QStringLiteral("title")))
+						m.insert(QStringLiteral("title"), line.mid(5));
+					else if (main && line.startsWith(QLatin1String("Name[es]=")))
+						m.insert(QStringLiteral("title"), line.mid(9));
+					else if (main && line.startsWith(QLatin1String("Icon=")))
+						m.insert(QStringLiteral("icon"), line.mid(5));
+				}
+			}
+		}
+		out.append(m);
+	}
+	return out;
 }
 
 void Shell::copy(const QString &text)

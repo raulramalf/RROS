@@ -2,7 +2,7 @@
 Type=Application
 Name=Lily: tema y fondo
 Comment=Aplica a Plasma los colores, las barras de título y el fondo del tema de Lily
-Exec=sh -c 'rros-first-login; rros-theme apply --quiet'
+Exec=sh -c 'rros-first-login; rros-theme apply --quiet; /usr/libexec/rros-max-hz'
 OnlyShowIn=KDE;
 NoDisplay=true
 X-KDE-autostart-phase=1

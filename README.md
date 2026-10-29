@@ -17,6 +17,8 @@ puede fijar a mano).
 - **Requisitos:** 2 GB de RAM, procesador de 64 bits con 2 núcleos y **15 GB de disco**. En cualquier nivel Lily en
   reposo usa **como mucho 2 GB de RAM** y el sistema instalado ocupa menos de 15 GB (la CI lo mide en cada versión,
   en una máquina de 2 GB).
+- **Tope de memoria:** abras lo que abras, Lily **nunca pasa de 4 GB de RAM** (aplicaciones y escritorio hasta 3 GB,
+  servicios del sistema hasta 1 GB; al acercarse comprime en la zram y, si hace falta, cierra la app que más gasta).
 - **Fluidez:** zram (memoria comprimida), systemd-oomd (cierra lo que agota la memoria antes de que el equipo se
   congele), planificador de disco según SSD o disco duro, red con BBR, la pantalla a su frecuencia más alta y nada en
   marcha que no haga falta.

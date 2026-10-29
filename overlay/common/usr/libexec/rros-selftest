@@ -33,6 +33,8 @@ echo "info: $(rros-nivel 2>/dev/null | tr '\n' ' ')"
 # shellcheck disable=SC2016  # se evalúa dentro del sh -c
 check "nivel ajustado a este equipo ($(rros-hwdetect --profile 2>/dev/null))" sh -c '[ -s /etc/rros/nivel ] || [ "$(cat /etc/rros/profile)" = "$(rros-hwdetect --profile)" ]'
 check "systemd-oomd en marcha (evita que el equipo se congele sin memoria)" systemctl is-active --quiet systemd-oomd
+# shellcheck disable=SC2016  # se evalúa dentro del sh -c
+check "tope de RAM: aplicaciones 3 GB + sistema 1 GB = nunca más de 4 GB" sh -c '[ "$(systemctl show -P MemoryMax user.slice)" = 3221225472 ] && [ "$(systemctl show -P MemoryMax system.slice)" = 1073741824 ]'
 # sistema live (ISO) o instalado en un disco
 LIVE=0
 grep -q 'archisobasedir=' /proc/cmdline && LIVE=1

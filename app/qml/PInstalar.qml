@@ -15,7 +15,7 @@ RPage {
     property var f: ({ locale: "es_ES.UTF-8", keymap: "es", timezone: "Europe/Madrid", disk: "", mode: "", encrypt: false,
                        passphrase: "", passphrase2: "", fullname: "", user: "", password: "", password2: "", hostname: "lily", confirm: false })
     readonly property var steps: ["Idioma", "Disco", "Usuario", "Aplicaciones", "Resumen"]
-    // aplicaciones: las que trae la edición (se pueden quitar) y las del catálogo para añadir (al tener Internet)
+    // aplicaciones: las que trae Lily (se pueden quitar) y las del catálogo para añadir (al tener Internet)
     property var catalog: []
     property var quitar: []
     property var anadir: []
@@ -110,7 +110,7 @@ RPage {
         Layout.fillWidth: true
         Note { visible: p.disks === null; text: "Buscando discos…" }
         Note { visible: p.disks !== null && !!p.disks.error; text: p.disks ? p.disks.error || "" : ""; kind: "error" }
-        Txt { visible: p.disks !== null; color: Ui.muted; text: p.disks ? "Arranque " + (p.disks.firmware === "uefi" ? "UEFI" : "BIOS") + " · Lily " + p.disks.profile + " necesita " + Math.round(p.disks.min_mb / 1024) + " GB" : "" }
+        Txt { visible: p.disks !== null; color: Ui.muted; text: p.disks ? "Arranque " + (p.disks.firmware === "uefi" ? "UEFI" : "BIOS") + " · Lily necesita " + Math.round(p.disks.min_mb / 1024) + " GB" : "" }
         Repeater {
             model: p.disks ? p.disks.disks : []
             Card {
@@ -205,7 +205,7 @@ RPage {
         visible: Sys.live && p.step === 3 && !(p.status && p.status.started)
         spacing: 12
         Layout.fillWidth: true
-        Txt { text: "Las que trae tu edición"; font.weight: Font.DemiBold; font.pixelSize: Ui.fs + 1 }
+        Txt { text: "Las que trae Lily"; font.weight: Font.DemiBold; font.pixelSize: Ui.fs + 1 }
         Txt { text: "Desmarca las que no quieras: se quitan al instalar, sin necesidad de Internet."; color: Ui.muted; wrapMode: Text.WordWrap; Layout.fillWidth: true }
         Flow {
             Layout.fillWidth: true
@@ -282,7 +282,7 @@ RPage {
             SRow { title: "Usuario"; subtitle: p.f.fullname + " · " + p.f.user + " · equipo " + p.f.hostname }
             SRow { title: "Idioma y teclado"; subtitle: p.f.locale + " · " + p.f.keymap + " · " + p.f.timezone }
             SRow { title: "Aplicaciones"; separator: false
-                   subtitle: (p.quitar.length ? "Se quitan: " + p.quitar.join(", ") + ". " : "Todas las de tu edición. ")
+                   subtitle: (p.quitar.length ? "Se quitan: " + p.quitar.join(", ") + ". " : "Todas las que trae Lily. ")
                            + (p.anadir.length ? "Se añaden al tener Internet: " + p.anadir.join(", ") : "") }
         }
         Card {

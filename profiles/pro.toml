@@ -1,10 +1,11 @@
-# Perfil Pro: equipos con 8 GB de RAM, 4 núcleos y GPU (integrada moderna o dedicada). Todos los efectos:
-# desenfoque, lámpara mágica, transparencias y el dock en 3D.
+# Nivel «máximo» de Lily (una sola edición): lo elige solo en equipos con 6 GB de RAM o más, 4 hilos y gráfica.
+# Todos los efectos (desenfoque, transparencias, dock en 3D), pero sin servicios que se coman la memoria: también
+# aquí Lily en reposo cabe en 2 GB.
 [profile]
 name = "pro"
 min_ram_mb = 6144
-max_idle_ram_mb = 3072
-max_disk_gb = 20
+max_idle_ram_mb = 2048
+max_disk_gb = 13
 
 [build]
 libc = "glibc"
@@ -79,7 +80,7 @@ swappiness = 60
 [services]
 bluetooth = true
 printing = true
-indexer = true
+indexer = false
 location = false
 flatpak = true
 
@@ -108,7 +109,7 @@ login_attempts = 10
 sudo_timeout_minutes = 5
 core_dumps = false
 # antivirus (ClamAV): el tiempo real usa ~1 GB de RAM, por eso solo va encendido en Pro
-av_realtime = true
+av_realtime = false
 av_schedule = "diario"
 av_action = "cuarentena"
 av_updates = true

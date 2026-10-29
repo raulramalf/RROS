@@ -9,12 +9,6 @@ name: Arch
 on:
   push:
   workflow_dispatch:
-    inputs:
-      profile:
-        description: Perfil de hardware
-        type: choice
-        options: [todas, lite, standard, pro]
-        default: todas
 
 jobs:
   comprobar:
@@ -65,16 +59,11 @@ jobs:
     needs: comprobar
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[iso-arch]')
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        profile: ${{ fromJSON((inputs.profile == '' || inputs.profile == null || inputs.profile == 'todas') && '["lite","standard","pro"]' || format('["{0}"]', inputs.profile)) }}
     env:
-      PROFILE: ${{ matrix.profile }}
-      # la RAM mínima de cada edición (profiles/*.toml)
-      RAM_MB: ${{ matrix.profile == 'pro' && '6144' || matrix.profile == 'standard' && '4096' || '2048' }}
-      # disco de las pruebas de instalación: el instalador pide max_disk_gb del perfil (lite 10, standard 14, pro 20)
-      DISK_GB: ${{ matrix.profile == 'pro' && '32' || matrix.profile == 'standard' && '24' || '16' }}
+      # una sola edición: la ISO «lily», probada en el equipo más modesto que admite (2 GB de RAM, disco de 16 GB)
+      PROFILE: lily
+      RAM_MB: '2048'
+      DISK_GB: '18'
     steps:
       - name: Espacio en disco (fuera lo que no se usa del runner)
         run: |
@@ -95,10 +84,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 qemu-utils xorriso ovmf
           sudo chmod a+rw /dev/kvm || true
-          BASE=arch ISO="$PWD/build/lily-$PROFILE.iso" OUT="$PWD/build/test-arch-$PROFILE" \
+          BASE=arch ISO="$PWD/build/lily.iso" OUT="$PWD/build/test-arch-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" selftest
       # la captura real del escritorio, también en el registro (en base64, entre marcas) para poder verla sin
       # descargar artefactos
+      # el mismo sistema en un equipo con más memoria y procesadores: tiene que subir de nivel solo (rros-nivel)
+      - name: Ajuste automático en un equipo con 6 GB y 4 procesadores
+        run: |
+          RAM_MB=6144 CPUS=4 BASE=arch ISO="$PWD/build/lily.iso" OUT="$PWD/build/test-arch-6gb" \
+            scripts/test-iso.sh lily selftest
+          grep -E "nivel|memoria usada" build/test-arch-6gb/serial.log | tail -5
       - name: Captura del escritorio
         if: always()
         run: |
@@ -111,46 +106,47 @@ jobs:
       # la ISO se publica si el live pasa su autotest, aunque después falle la prueba de instalación
       - uses: actions/upload-artifact@v4
         with:
-          name: lily-${{ env.PROFILE }}-iso
-          path: build/lily-${{ env.PROFILE }}.iso
+          name: lily-iso
+          path: build/lily.iso
           if-no-files-found: error
       - name: Instalación en un disco virtual y arranque desde él
         run: |
-          BASE=arch ISO="$PWD/build/lily-$PROFILE.iso" OUT="$PWD/build/test-arch-install-$PROFILE" \
+          BASE=arch ISO="$PWD/build/lily.iso" OUT="$PWD/build/test-arch-install-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" install
       - name: Instalación para UEFI y arranque con OVMF
         run: |
-          FIRMWARE=uefi BASE=arch ISO="$PWD/build/lily-$PROFILE.iso" OUT="$PWD/build/test-arch-uefi-$PROFILE" \
+          FIRMWARE=uefi BASE=arch ISO="$PWD/build/lily.iso" OUT="$PWD/build/test-arch-uefi-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" install
       - name: Instalación cifrada (LUKS2) y arranque con la contraseña del disco
         run: |
-          CRYPT=1 BASE=arch ISO="$PWD/build/lily-$PROFILE.iso" OUT="$PWD/build/test-arch-cifrado-$PROFILE" \
+          CRYPT=1 BASE=arch ISO="$PWD/build/lily.iso" OUT="$PWD/build/test-arch-cifrado-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" install
       # máquina virtual con Lily instalado (usuario y contraseña «lily»): se importa en VirtualBox o VMware, o se
       # arranca con QEMU. Antes se borran los discos de las pruebas para dejar sitio
       - name: Máquina virtual lista para usar
         run: |
           rm -f build/test-arch-*-"$PROFILE"/disco.qcow2
-          BASE=arch ISO="$PWD/build/lily-$PROFILE.iso" OUT="$PWD/build/vm-$PROFILE" \
+          BASE=arch ISO="$PWD/build/lily.iso" OUT="$PWD/build/vm-$PROFILE" \
             scripts/test-iso.sh "$PROFILE" vm
       - uses: actions/upload-artifact@v4
         with:
-          name: lily-${{ env.PROFILE }}-virtualbox
-          path: build/vm-${{ env.PROFILE }}/lily-${{ env.PROFILE }}.vdi
+          name: lily-virtualbox
+          path: build/vm-lily/lily.vdi
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: lily-${{ env.PROFILE }}-vmware-qemu
-          path: build/vm-${{ env.PROFILE }}/lily-${{ env.PROFILE }}.vmdk
+          name: lily-vmware-qemu
+          path: build/vm-lily/lily.vmdk
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lily-${{ env.PROFILE }}-selftest-log
+          name: lily-selftest-log
           path: |
             build/test-arch-${{ env.PROFILE }}/serial.log
             build/test-arch-${{ env.PROFILE }}/escritorio.png
             build/test-arch-install-${{ env.PROFILE }}/*.log
             build/test-arch-cifrado-${{ env.PROFILE }}/*.log
             build/test-arch-uefi-${{ env.PROFILE }}/*.log
+            build/test-arch-6gb/serial.log
           if-no-files-found: ignore

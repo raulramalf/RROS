@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # Construye la ISO de Lily sobre Arch Linux con archiso (mkarchiso). Requiere root y un sistema Arch con
 # los paquetes archiso y base-devel (en CI: el contenedor archlinux, ver .github/workflows/arch.yml).
-# uso: build-iso-arch.sh PERFIL
+# uso: build-iso-arch.sh [lily]   (una sola edición: se ajusta a cada equipo al arrancar)
 # Variables: EXTRA_CMDLINE  parámetros extra del kernel en el menú (ISOs de prueba)
-#            ISO_OUT        ruta de la ISO (por defecto build/lily-PERFIL.iso)
+#            ISO_OUT        ruta de la ISO (por defecto build/lily.iso)
 # Del perfil «releng» de archiso solo se toma el arranque (syslinux, systemd-boot, GRUB) y el initramfs del
 # live; los paquetes, la capa y la identidad son de Lily. La identidad la aplica el hook de pacman
 # zz-rros.hook al instalar los paquetes (os-release pertenece al paquete «filesystem»).
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
 
-profile=${1:?uso: $0 PERFIL}
+profile=${1:-lily}
 check_profile "$profile"
 need_root
 need_cmd mkarchiso pacman
@@ -18,12 +18,14 @@ need_cmd mkarchiso pacman
 [ -x "$ROOT_DIR/build/app/rros-ajustes" ] || die "compila Lily Ajustes con 'make app' (necesita cmake, qt6-base y qt6-declarative)"
 [ -x "$ROOT_DIR/build/shell/rros-shell" ] || die "compila Lily Shell con 'make shell SHELL_FULL=ON' (necesita además layer-shell-qt, kwindowsystem y kglobalaccel)"
 releng=/usr/share/archiso/configs/releng
+version=$(sed -n 's/^#define RROS_VERSION "\(.*\)"/\1/p' "$ROOT_DIR/src/lib/rros_version.h")
 [ -d "$releng" ] || die "falta archiso ($releng)"
 extra=${EXTRA_CMDLINE:-}
 [[ $extra =~ ^[A-Za-z0-9_=,.:\ /-]*$ ]] || die "EXTRA_CMDLINE con caracteres no permitidos"
 P=$ROOT_DIR/build/archiso-$profile
 work=$ROOT_DIR/build/archiso-work-$profile
-iso=${ISO_OUT:-$ROOT_DIR/build/lily-$profile.iso}
+name=$([ "$profile" = lily ] && echo lily || echo "lily-$profile")
+iso=${ISO_OUT:-$ROOT_DIR/build/$name.iso}
 
 rm -rf "${P:?}" "${work:?}"
 mkdir -p "$P/airootfs"
@@ -47,9 +49,9 @@ for l in "$releng"/airootfs/etc/systemd/system/*.wants/*; do
 	case $(readlink "$l") in *pacman-init.service | *etc-pacman.d-gnupg.mount) keep "${l#"$releng"/airootfs/}" ;; esac
 done
 
-# paquetes: base de Lily + perfil + lo que necesita el live
+# paquetes: base de Lily + las apps de la imagen + lo que necesita el live
 {
-	read_list "$ROOT_DIR/packages/arch-base.list" "$ROOT_DIR/packages/arch-$profile.list" "$ROOT_DIR/packages/arch-live.list" | tr ' ' '\n'
+	read_list "$ROOT_DIR/packages/arch-base.list" "$ROOT_DIR/packages/arch-lily.list" "$ROOT_DIR/packages/arch-live.list" | tr ' ' '\n'
 	# lo que usan las entradas del menú de releng (memtest, consola UEFI)
 	echo memtest86+
 	echo memtest86+-efi
@@ -71,10 +73,10 @@ rm -f "$P/airootfs/etc/lsb-release"
 	cat <<EOF
 
 # --- Lily ---
-iso_name="lily-$profile"
-iso_label="RROS_${profile^^}"
+iso_name="$name"
+iso_label="LILY"
 iso_publisher="Lily <https://github.com/raulramalf/RROS>"
-iso_application="Lily 2.0 ($profile): probar e instalar"
+iso_application="Lily $version: probar e instalar"
 airootfs_image_type="squashfs"
 airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '${SQUASH_LEVEL:-15}' '-b' '1M')
 file_permissions=(
@@ -89,7 +91,7 @@ log "$(grep -c '"0:0:755"' "$P/profiledef.sh") archivos ejecutables en file_perm
 # lector de pantalla (accessibility=on: rros-live-user activa Orca). cow_spacesize=50%: lo que se escribe en el
 # live (aplicaciones de la Tienda incluidas) puede ocupar hasta la mitad de la RAM, no solo 256 MB. Las entradas nuevas copian la primera de
 # releng para no depender del formato de cada versión de archiso.
-seguro="Lily 2.0 ($profile) - modo seguro (gráficos básicos)"
+seguro="Lily $version - modo seguro (gráficos básicos)"
 ayuda_seguro="Sin el controlador de la tarjeta gráfica: si la pantalla se queda negra o congelada."
 f=$P/syslinux/archiso_sys-linux.cfg
 if [ -f "$f" ]; then
@@ -119,7 +121,7 @@ fi
 find "$P/syslinux" "$P/efiboot" "$P/grub" -type f \( -name '*.cfg' -o -name '*.conf' \) 2>/dev/null | while read -r f; do
 	sed -i -e "s/^Boot the .* with speakup screen reader\./Arranca Lily con el lector de pantalla Orca./" \
 		-e "s/^It allows you to install .* with speech feedback\./Puedes probarlo e instalarlo con voz./" \
-		-e "s/Arch Linux install medium/Lily 2.0 ($profile)/g" \
+		-e "s/Arch Linux install medium/Lily $version/g" \
 		-e "s/ with speakup screen reader/ con lector de pantalla/g" -e "s/ with ^speech/ con ^lector de pantalla/g" \
 		-e "s/ with speech$/ con lector de pantalla/" \
 		-e "s/^Boot the .*/Arranca Lily: pruébalo sin tocar el disco y, si te gusta, instálalo./" \
@@ -140,13 +142,13 @@ find "$P/syslinux" "$P/efiboot" "$P/grub" -type f \( -name '*.cfg' -o -name '*.c
 done
 # fondo del menú BIOS: el de Lily, generado con los colores del tema (vesamenu: 640x480)
 if [ -f "$P/syslinux/splash.png" ]; then
-	HOME=$P/tmp-home XDG_DATA_HOME=$P/tmp-home "$RROS/rros-theme" -p "$profile" wallpaper --style aurora --size 640x480 \
+	HOME=$P/tmp-home XDG_DATA_HOME=$P/tmp-home "$RROS/rros-theme" -p "$(tier_of "$profile")" wallpaper --style aurora --size 640x480 \
 		--out "$P/syslinux/splash.png" >/dev/null || log "aviso: no se pudo generar el fondo del menú"
 	rm -rf "${P:?}/tmp-home"
 fi
 
 log "mkarchiso -> $iso"
 mkarchiso -v -w "$work" -o "$ROOT_DIR/build/iso-out-$profile" "$P"
-mv "$ROOT_DIR"/build/iso-out-"$profile"/lily-"$profile"-*.iso "$iso"
+mv "$ROOT_DIR"/build/iso-out-"$profile"/"$name"-*.iso "$iso"
 rm -rf "${work:?}" "$ROOT_DIR/build/iso-out-$profile"
 ls -lh "$iso"

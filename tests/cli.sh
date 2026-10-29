@@ -61,7 +61,7 @@ eq "$("$B/rros-config" -f profiles/lite.toml get ui.effects)" off
 # budget
 mkdir "$T/rootfs" && head -c 3000000 /dev/zero > "$T/rootfs/f"
 "$B/rros-budget" disk "$T/rootfs" -p lite | gq 'status=ok' || fail "budget disk ok"
-mkdir -p "$T/fakeroot/proc" && printf 'MemTotal: 4194304 kB\nMemAvailable: 1048576 kB\n' > "$T/fakeroot/proc/meminfo"
+mkdir -p "$T/fakeroot/proc" && printf 'MemTotal: 4194304 kB\nMemAvailable: 2621440 kB\n' > "$T/fakeroot/proc/meminfo"
 printf 'processor : 0\nprocessor : 1\nprocessor : 2\nprocessor : 3\n' > "$T/fakeroot/proc/cpuinfo"
 RROS_ROOT=$T/fakeroot "$B/rros-budget" ram -p pro | gq 'status=ok' || fail "budget ram pro"
 if RROS_ROOT=$T/fakeroot "$B/rros-budget" ram -p lite >/dev/null; then fail "budget ram lite debía superar"; fi
@@ -409,7 +409,8 @@ for a in json.load(sys.stdin):
 
 # --- instalador: la parte que no toca discos (plan y validación de argumentos) ---
 INST=$PWD/overlay/common/usr/bin/rros-install
-inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 14 --bios -p lite)
+inst_out=$(PATH=$B:$PATH "$INST" plan --disk-gb 16 --bios -p lite)
+if PATH=$B:$PATH "$INST" plan --disk-gb 14 --bios -p lite >/dev/null 2>&1; then fail "rros-install plan: 14 GB no llegan a los 15 GB que necesita Lily"; fi
 case $inst_out in *rros-root*ext4*) ;; *) fail "rros-install plan" ;; esac
 if PATH=$B:$PATH "$INST" --user 'Mal Usuario' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un usuario no válido"; fi
 if PATH=$B:$PATH "$INST" --hostname 'a;b' --disk /dev/null --dry-run 2>/dev/null; then fail "rros-install acepta un nombre de equipo no válido"; fi
@@ -443,7 +444,7 @@ python3 -c '
 import json,sys
 j=json.load(sys.stdin)
 d=j["disks"][0]
-assert j["firmware"]=="uefi" and j["min_mb"]==12288, j
+assert j["firmware"]=="uefi" and j["min_mb"]==15360, j
 assert d["path"]=="/dev/nvme0n1" and d["systems"]=="Windows" and d["windows"], d
 assert d["esp"]=="nvme0n1p1" and d["free_mb"]==102400-1-117-61440, d
 assert d["wipe"]=="" and d["alongside"]=="" and d["alongside_crypt"]=="", d
@@ -506,6 +507,20 @@ echo "$*" >> "%s"
 	HZ_ON=false PATH=$T/hzbin:$PATH overlay/common/usr/libexec/rros-max-hz >/dev/null
 	[ ! -e "$T/hz-calls.txt" ] || fail "rros-max-hz con display.max_refresh = false"
 fi
+
+# --- rros-nivel: una sola edición que elige su nivel según el equipo (o el que se fije a mano) ---
+mkdir -p "$T/nivel/etc" "$T/nivel/bin"
+# shellcheck disable=SC2016  # el ${NIVEL_HW} es del detector falso
+printf '#!/bin/sh\necho "${NIVEL_HW:-pro}"\n' > "$T/nivel/bin/hw"; chmod +x "$T/nivel/bin/hw"
+NV="env RROS_ETC=$T/nivel/etc RROS_HWDETECT=$T/nivel/bin/hw overlay/common/usr/bin/rros-nivel"
+$NV aplicar >/dev/null; eq "$(cat "$T/nivel/etc/profile")" pro
+NIVEL_HW=lite $NV aplicar >/dev/null; eq "$(cat "$T/nivel/etc/profile")" lite
+NIVEL_HW=nada $NV aplicar >/dev/null; eq "$(cat "$T/nivel/etc/profile")" lite
+$NV fijar equilibrado >/dev/null; eq "$(cat "$T/nivel/etc/profile")" standard
+$NV aplicar >/dev/null; eq "$(cat "$T/nivel/etc/profile")" standard
+$NV fijar automatico >/dev/null; eq "$(cat "$T/nivel/etc/profile")" pro
+if $NV fijar turbo 2>/dev/null; then fail "rros-nivel acepta un modo no válido"; fi
+$NV | gq 'modo: automático' || fail "rros-nivel: modo"
 
 # --- interfaces: rros-settings (TUI en un pty) ---
 if command -v python3 >/dev/null 2>&1; then

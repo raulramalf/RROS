@@ -1,7 +1,7 @@
 # Catálogo de aplicaciones de Lily. `rros apps install ID` instala con el gestor de paquetes del sistema
 # (pacman en Arch, apt en Ubuntu) o con Flatpak (Flathub) si no hay paquete.
 # Campos: name, category, desc, pacman (paquetes de Arch, separados por comas), apt (paquete de Ubuntu),
-#         flatpak (id en Flathub), shipped (perfiles que ya la traen), cmd (programa que se lanza).
+#         flatpak (id en Flathub), shipped (la trae la imagen de Lily: «lite,standard,pro», todos los niveles), cmd (programa que se lanza).
 # Los paquetes de pacman los comprueba la CI de Arch (check-packages-arch.sh) y los de apt, contra Ubuntu 24.04;
 # los ids de Flatpak no se pueden comprobar sin red.
 
@@ -43,7 +43,7 @@ flatpak = "com.brave.Browser"
 
 [app.thunderbird]
 name = "Thunderbird"
-shipped = "standard,pro"
+shipped = "lite,standard,pro"
 category = "internet"
 desc = "Correo, calendario y contactos de Mozilla."
 tags = "correo,calendario"
@@ -115,7 +115,7 @@ tags = "documentos,hojas de cálculo,presentaciones"
 apt = "libreoffice"
 pacman = "libreoffice-fresh,libreoffice-fresh-es"
 flatpak = "org.libreoffice.LibreOffice"
-shipped = "standard,pro"
+shipped = "lite,standard,pro"
 
 [app.abiword]
 name = "AbiWord"
@@ -174,7 +174,7 @@ desc = "Reproduce casi cualquier formato."
 tags = "vídeo,música"
 apt = "vlc"
 pacman = "vlc"
-shipped = "standard,pro"
+shipped = "lite,standard,pro"
 
 [app.elisa]
 name = "Elisa"
@@ -185,7 +185,7 @@ apt = "elisa"
 pacman = "elisa"
 flatpak = "org.kde.elisa"
 cmd = "elisa"
-shipped = "standard,pro"
+shipped = "lite,standard,pro"
 
 [app.audacious]
 name = "Audacious"
@@ -197,7 +197,6 @@ pacman = "audacious"
 
 [app.audacity]
 name = "Audacity"
-shipped = "pro"
 category = "media"
 desc = "Editor de audio."
 tags = "audio,edición"
@@ -206,7 +205,6 @@ pacman = "audacity"
 
 [app.obs]
 name = "OBS Studio"
-shipped = "pro"
 category = "media"
 desc = "Grabación y retransmisión de pantalla."
 tags = "grabar pantalla,streaming"
@@ -216,7 +214,6 @@ flatpak = "com.obsproject.Studio"
 
 [app.kdenlive]
 name = "Kdenlive"
-shipped = "pro"
 category = "media"
 desc = "Editor de vídeo."
 tags = "vídeo,edición"
@@ -256,11 +253,9 @@ desc = "Edición de imágenes."
 tags = "retoque,fotos"
 apt = "gimp"
 pacman = "gimp"
-shipped = "pro"
 
 [app.inkscape]
 name = "Inkscape"
-shipped = "pro"
 category = "graphics"
 desc = "Dibujo vectorial."
 tags = "dibujo,diseño"
@@ -326,7 +321,7 @@ desc = "Control de versiones."
 tags = "git"
 apt = "git"
 pacman = "git"
-shipped = "standard,pro"
+shipped = "lite,standard,pro"
 
 [app.python]
 name = "Python 3 y pip"
@@ -369,7 +364,7 @@ tags = "disco"
 apt = "partitionmanager"
 pacman = "partitionmanager"
 cmd = "partitionmanager"
-shipped = "pro"
+shipped = "lite,standard,pro"
 
 [app.gparted]
 name = "GParted"
@@ -1608,7 +1603,7 @@ cmd = "qgis"
 
 [app.filelight]
 name = "Filelight"
-shipped = "standard,pro"
+shipped = "lite,standard,pro"
 category = "system"
 desc = "Qué ocupa el disco, en un gráfico."
 tags = "disco"
@@ -1660,7 +1655,7 @@ cmd = "deja-dup"
 
 [app.kdeconnect]
 name = "KDE Connect"
-shipped = "standard,pro"
+shipped = "lite,standard,pro"
 category = "system"
 desc = "El móvil y el ordenador conectados."
 tags = "móvil"

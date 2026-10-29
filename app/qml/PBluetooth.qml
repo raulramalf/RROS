@@ -67,7 +67,7 @@ RPage {
     Note {
         visible: !p.service
         kind: "warn"
-        text: "El servicio de Bluetooth está apagado en esta edición (ahorra memoria). Actívalo para usarlo; pedirá la contraseña de administrador."
+        text: "El servicio de Bluetooth está apagado en este nivel (ahorra memoria). Actívalo para usarlo; pedirá la contraseña de administrador."
     }
     Card {
         visible: !p.service

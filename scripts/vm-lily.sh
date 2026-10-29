@@ -1,20 +1,15 @@
 #!/usr/bin/env bash
 # Arranca Lily en QEMU (en Linux), con ventana, aceleración y portapapeles compartido.
-#   vm-lily.sh lily-standard.vmdk     la máquina virtual ya instalada (usuario y contraseña «lily»)
-#   vm-lily.sh lily-pro.iso           la ISO: sistema en vivo e instalador (crea al lado un disco lily-pro.disco.qcow2)
-# Variables: RAM_MB (por defecto, la de la edición: lite 3072, standard 4096, pro 6144), CPUS (2), UEFI=1
+#   vm-lily.sh lily.vmdk              la máquina virtual ya instalada (usuario y contraseña «lily»)
+#   vm-lily.sh lily.iso               la ISO: sistema en vivo e instalador (crea al lado un disco lily.disco.qcow2)
+# Variables: RAM_MB (4096; Lily funciona desde 2048 y se ajusta sola a la RAM y procesadores que le des), CPUS (2), UEFI=1
 set -euo pipefail
 
-img=${1:?uso: $0 lily-EDICIÓN.vmdk | lily-EDICIÓN.iso}
+img=${1:?uso: $0 lily.vmdk | lily.iso}
 [ -r "$img" ] || { echo "vm-lily: no encuentro $img" >&2; exit 1; }
 command -v qemu-system-x86_64 >/dev/null || { echo "vm-lily: instala QEMU (paquete qemu-desktop o qemu-system-x86)" >&2; exit 1; }
 
-case $img in
-*pro*) ram=6144 ;;
-*standard*) ram=4096 ;;
-*) ram=3072 ;;
-esac
-ram=${RAM_MB:-$ram}
+ram=${RAM_MB:-4096}
 
 # shellcheck disable=SC2054  # las comas son de las opciones de QEMU
 args=(-m "$ram" -smp "${CPUS:-2}" -vga virtio -display gtk,gl=on -nic user,model=virtio-net-pci

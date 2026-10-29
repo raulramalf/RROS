@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# rros-nivel: Lily es una sola edición que se ajusta a cada equipo. En cada arranque (rros-apply.service) mira la
+# RAM, los procesadores y la gráfica y elige el nivel: ligero, equilibrado o máximo (los perfiles lite, standard y pro:
+# efectos, animaciones, zram, servicios). Si se cambia de equipo o de RAM, al arrancar se ajusta solo.
+#   rros-nivel                       el modo (automático o fijo) y el nivel activo
+#   rros-nivel aplicar               (arranque) escribe el nivel que toca en /etc/rros/profile
+#   rros-nivel fijar MODO            automatico | ligero | equilibrado | maximo (root): lo fija y lo aplica ya
+# Variables (pruebas): RROS_ETC (por defecto /etc/rros), RROS_HWDETECT (el programa que propone el nivel)
+set -u
+etc=${RROS_ETC:-/etc/rros}
+hw=${RROS_HWDETECT:-rros-hwdetect}
+modo() { m=$(cat "$etc/nivel" 2>/dev/null); case $m in lite | standard | pro) echo "$m" ;; *) echo auto ;; esac; }
+nombre() { case $1 in lite) echo ligero ;; standard) echo equilibrado ;; pro) echo máximo ;; *) echo "$1" ;; esac; }
+elegido() {   # el nivel que toca: el fijado o el que propone el hardware (ligero si no se puede saber)
+	local m p
+	m=$(modo)
+	if [ "$m" != auto ]; then echo "$m"; return; fi
+	p=$("$hw" --profile 2>/dev/null)
+	case $p in lite | standard | pro) echo "$p" ;; *) echo lite ;; esac
+}
+case ${1:-} in
+"")
+	act=$(cat "$etc/profile" 2>/dev/null || echo lite)
+	m=$(modo)
+	echo "modo: $([ "$m" = auto ] && echo automático || echo "fijo ($(nombre "$m"))")"
+	echo "nivel: $(nombre "$act") ($act)"
+	echo "propuesto para este equipo: $(nombre "$("$hw" --profile 2>/dev/null || echo lite)")" ;;
+aplicar)
+	n=$(elegido)
+	mkdir -p "$etc"
+	if [ "$(cat "$etc/profile" 2>/dev/null)" != "$n" ]; then
+		echo "$n" > "$etc/profile.tmp" && mv "$etc/profile.tmp" "$etc/profile"
+		echo "rros-nivel: nivel $(nombre "$n") ($n)"
+	fi ;;
+fijar)
+	case ${2:-} in
+	automatico | auto) v=auto ;; ligero | lite) v=lite ;; equilibrado | standard) v=standard ;; maximo | máximo | pro) v=pro ;;
+	*) echo "rros-nivel: modo no válido (automatico, ligero, equilibrado o maximo)" >&2; exit 2 ;;
+	esac
+	[ -w "$etc" ] || { echo "rros-nivel: hace falta ser administrador" >&2; exit 1; }
+	echo "$v" > "$etc/nivel"
+	"$0" aplicar
+	# el sistema (zram, swappiness, servicios) al momento; el escritorio, al volver a entrar o con rros-theme apply
+	[ -n "${RROS_ETC:-}" ] || { rros-apply --services >/dev/null 2>&1; sysctl -q -p /etc/sysctl.d/90-rros-profile.conf 2>/dev/null; }
+	echo "nivel: $(nombre "$(cat "$etc/profile")")" ;;
+*) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

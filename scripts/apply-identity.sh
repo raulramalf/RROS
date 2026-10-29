@@ -51,4 +51,4 @@ DISTRIB_DESCRIPTION="Lily $version ($codename)"
 LSB
 printf 'Lily %s (%s) \\n \\l\n\n' "$version" "$codename" > "$root/etc/issue"
 printf 'Lily %s (%s)\n' "$version" "$codename" > "$root/etc/issue.net"
-echo "lily-$profile" > "$root/etc/hostname"
+echo lily > "$root/etc/hostname"

@@ -42,7 +42,7 @@ Rectangle {
                 }
                 Txt { text: "Bienvenido a Lily"; font.pixelSize: 34; font.weight: Font.Black; Layout.alignment: Qt.AlignHCenter }
                 Txt { text: "Ligero, tuyo y en español. Vamos a dejarlo a tu gusto en un minuto."; color: Ui.muted; font.pixelSize: 15; Layout.alignment: Qt.AlignHCenter }
-                Txt { text: Ui.st ? "Edición " + Ui.st.profile.charAt(0).toUpperCase() + Ui.st.profile.slice(1) + " · Lily " + Ui.st.version : ""; color: Ui.muted; Layout.alignment: Qt.AlignHCenter }
+                Txt { text: Ui.st ? "Lily " + Ui.st.version + " · ajustada a este equipo" : ""; color: Ui.muted; Layout.alignment: Qt.AlignHCenter }
             }
 
             // 1. aspecto

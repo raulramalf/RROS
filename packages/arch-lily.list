@@ -1,7 +1,10 @@
-# Standard: oficina, música, impresión, móviles y carpetas de red, y vídeo acelerado.
+# Lily (una sola edición): lo de la base más oficina, multimedia, impresión, móviles y carpetas de red, y vídeo
+# acelerado. Lo pesado (edición de vídeo, imagen y audio, programación) se instala desde la Tienda o en el paso
+# «Aplicaciones» del instalador. Con la base cabe en 15 GB instalado.
 libreoffice-fresh
 libreoffice-fresh-es
 elisa
+vlc                     # reproductor para cualquier formato
 cups
 print-manager           # impresoras desde los ajustes de KDE
 skanlite                # escáner
@@ -24,4 +27,5 @@ thunderbird-i18n-es-es
 hunspell-es_es          # corrector ortográfico en español (LibreOffice, Firefox, Kate)
 filelight               # qué ocupa el disco, en un gráfico
 kfind                   # buscar archivos
-vlc                     # reproductor para cualquier formato
+partitionmanager        # discos y particiones
+ksystemlog              # registros del sistema

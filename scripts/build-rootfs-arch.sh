@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Construye el rootfs de Lily sobre Arch Linux (pacstrap). Requiere root y arch-install-scripts.
-# uso: build-rootfs-arch.sh PERFIL
+# uso: build-rootfs-arch.sh [lily]
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
 
-profile=${1:?uso: $0 PERFIL}
+profile=${1:-lily}
 out=$ROOT_DIR/build/rootfs-arch-$profile
 
 check_profile "$profile"
@@ -12,7 +12,7 @@ need_root
 need_cmd pacstrap arch-chroot
 [ -x "$RROS/rros-config" ] || die "compila primero con 'make'"
 
-pkgs=$(read_list "$ROOT_DIR/packages/arch-base.list" "$ROOT_DIR/packages/arch-$profile.list")
+pkgs=$(read_list "$ROOT_DIR/packages/arch-base.list" "$ROOT_DIR/packages/arch-lily.list")
 log "pacstrap -> $out"
 rm -rf "${out:?}"
 mkdir -p "$out"
@@ -25,4 +25,4 @@ arch-chroot "$out" systemctl enable rros-firstboot.service rros-apply.service ||
 
 rm -rf "${out:?}"/var/cache/pacman/pkg/* "${out:?}"/usr/share/doc/* "${out:?}"/usr/share/man/* \
        "${out:?}"/usr/share/info/*
-"$RROS/rros-budget" disk "$out" -p "$profile"
+"$RROS/rros-budget" disk "$out" -p "$(tier_of "$profile")"

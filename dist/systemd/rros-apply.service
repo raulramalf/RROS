@@ -1,10 +1,14 @@
 [Unit]
-Description=Lily: aplicar perfil y ajustes (swap, zram, disco, red, servicios, seguridad)
+Description=Lily: ajustarse a este equipo y aplicar los ajustes (swap, zram, disco, red, servicios, seguridad)
 After=rros-firstboot.service local-fs.target
+# antes del inicio de sesión: el escritorio arranca ya con el nivel de este equipo
+Before=display-manager.service
 ConditionPathExists=/etc/rros/profile
 
 [Service]
 Type=oneshot
+# el nivel (ligero, equilibrado o máximo) según la RAM, los procesadores y la gráfica de este equipo
+ExecStartPre=-/usr/bin/rros-nivel aplicar
 ExecStart=/usr/bin/rros-apply --services
 ExecStartPost=-/usr/sbin/sysctl -q -p /etc/sysctl.d/90-rros-profile.conf
 ExecStartPost=-/usr/sbin/sysctl -q -p /etc/sysctl.d/80-rros-security.conf

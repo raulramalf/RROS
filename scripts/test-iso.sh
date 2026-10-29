@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 # Arranca la ISO de Lily en QEMU y comprueba que el sistema funciona.
-#   test-iso.sh PERFIL selftest     arranque por consola serie con el autotest (rros.selftest)
-#   test-iso.sh PERFIL install      instala en un disco virtual (rros.installtest), arranca desde él y pasa el autotest
-#   test-iso.sh PERFIL screenshot   arranca con GRUB y guarda una captura del escritorio
-#   test-iso.sh PERFIL vm           instala la máquina virtual que se publica (usuario y contraseña «lily», todos los
-#                                   controladores) y deja OUT/lily-PERFIL.vdi (VirtualBox) y .vmdk (VMware, QEMU)
-# Variables: RAM_MB (por defecto 2048), TIMEOUT (segundos de cada arranque, 1500), DISK_GB (16), WAIT (segundos antes de la primera captura, 300),
+#   test-iso.sh lily selftest     arranque por consola serie con el autotest (rros.selftest)
+#   test-iso.sh lily install      instala en un disco virtual (rros.installtest), arranca desde él y pasa el autotest
+#   test-iso.sh lily screenshot   arranca con GRUB y guarda una captura del escritorio
+#   test-iso.sh lily vm           instala la máquina virtual que se publica (usuario y contraseña «lily», todos los
+#                                   controladores) y deja OUT/lily.vdi (VirtualBox) y .vmdk (VMware, QEMU)
+# Variables: RAM_MB (por defecto 2048), CPUS (2), TIMEOUT (segundos de cada arranque, 1500), DISK_GB (16), WAIT (segundos antes de la primera captura, 300),
 #            VM_DISK_GB (40, el disco de la máquina virtual), COUNT (nº de capturas, 1) e INTERVAL (segundos entre capturas, 60), OUT (carpeta)
 #   En screenshot: FIRMWARE=bios|uefi|secboot (secboot = UEFI con Secure Boot y las claves de Microsoft,
 #   como un PC con Windows) y MEDIA=cd|usb (la ISO grabada en una memoria USB)
-#   BASE=arch para la ISO de Arch (ISO=build/lily-PERFIL.iso)
+#   BASE=arch para la ISO de Arch (ISO=build/lily.iso)
 # shellcheck source=common.sh
 . "$(dirname "$0")/common.sh"
 
-profile=${1:?uso: $0 PERFIL selftest|install|screenshot|vm}
+profile=${1:?uso: $0 lily selftest|install|screenshot|vm}
 mode=${2:-selftest}
 check_profile "$profile"
+name=$([ "$profile" = lily ] && echo lily || echo "lily-$profile")
 need_cmd qemu-system-x86_64
 iso=${ISO:-$ROOT_DIR/build/rros-$profile.iso}
 iso_dir=$ROOT_DIR/build/iso-$profile
@@ -37,7 +38,7 @@ live_args() {   # live_args TEST
 			die "no se pudo sacar el kernel de $iso"
 		kernel=$out/vmlinuz initrd=$out/initrd
 		label=$(xorriso -indev "$iso" -pvd_info 2>/dev/null | sed -n 's/^Volume Id *: *//p' | tr -d "'")
-		append="archisobasedir=arch archisolabel=${label:-RROS_${profile^^}} lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
+		append="archisobasedir=arch archisolabel=${label:-LILY} lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
 		append+=" console=ttyS0 $1 loglevel=3"
 	else
 		kernel=$iso_dir/casper/vmlinuz initrd=$iso_dir/casper/initrd
@@ -56,7 +57,7 @@ run_serial() {
 	rm -f "$fifo" "$sock"
 	mkfifo "$fifo"
 	exec 3<>"$fifo"
-	qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp 2 -nographic -no-reboot -monitor "unix:$sock,server,nowait" \
+	qemu-system-x86_64 "${accel[@]}" -m "$ram" -smp "${CPUS:-2}" -nographic -no-reboot -monitor "unix:$sock,server,nowait" \
 		"$@" < "$fifo" > "$log" 2>&1 &
 	qpid=$!
 	while kill -0 "$qpid" 2>/dev/null && [ "$waited" -lt "${TIMEOUT:-1500}" ]; do
@@ -156,10 +157,10 @@ case "$mode" in
 			-drive "file=$disk,if=virtio,format=qcow2"
 		verdict "$out/install.log" RROS_INSTALL "instalación de la máquina virtual"
 		# VDI para VirtualBox (su formato propio) y VMDK para VMware y QEMU
-		qemu-img convert -p -O vdi "$disk" "$out/lily-$profile.vdi"
-		qemu-img convert -p -O vmdk -o subformat=monolithicSparse "$disk" "$out/lily-$profile.vmdk"
+		qemu-img convert -p -O vdi "$disk" "$out/$name.vdi"
+		qemu-img convert -p -O vmdk -o subformat=monolithicSparse "$disk" "$out/$name.vmdk"
 		rm -f "$disk"
-		log "máquina virtual lista: $out/lily-$profile.vdi y .vmdk ($(du -h "$out/lily-$profile.vdi" | cut -f1))"
+		log "máquina virtual lista: $out/$name.vdi y .vmdk ($(du -h "$out/$name.vdi" | cut -f1))"
 		;;
 	screenshot)
 		need_cmd python3
@@ -183,7 +184,7 @@ case "$mode" in
 			media=(-cdrom "$iso" -boot d)
 		fi
 		log "arranque por el firmware (${FIRMWARE:-bios}, ${MEDIA:-cd}); captura a los ${WAIT:-300} s"
-		qemu-system-x86_64 "${accel[@]}" "${fwargs[@]}" -m "$ram" -smp 2 "${media[@]}" -vga std -display none \
+		qemu-system-x86_64 "${accel[@]}" "${fwargs[@]}" -m "$ram" -smp "${CPUS:-2}" "${media[@]}" -vga std -display none \
 			-monitor "unix:$sock,server,nowait" -serial "file:$out/serial.log" -no-reboot &
 		qpid=$!
 		trap 'kill "$qpid" 2>/dev/null || true' EXIT

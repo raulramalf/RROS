@@ -28,6 +28,11 @@ echo "=== Lily selftest ==="
 . /etc/os-release
 check "identidad: ID=rros ($PRETTY_NAME)" test "$ID" = rros
 check "perfil activo: $(cat /etc/rros/profile 2>/dev/null)" test -s /etc/rros/profile
+# una sola Lily: el nivel (ligero, equilibrado o máximo) lo pone rros-nivel en el arranque según este equipo
+echo "info: $(rros-nivel 2>/dev/null | tr '\n' ' ')"
+# shellcheck disable=SC2016  # se evalúa dentro del sh -c
+check "nivel ajustado a este equipo ($(rros-hwdetect --profile 2>/dev/null))" sh -c '[ -s /etc/rros/nivel ] || [ "$(cat /etc/rros/profile)" = "$(rros-hwdetect --profile)" ]'
+check "systemd-oomd en marcha (evita que el equipo se congele sin memoria)" systemctl is-active --quiet systemd-oomd
 # sistema live (ISO) o instalado en un disco
 LIVE=0
 grep -q 'archisobasedir=' /proc/cmdline && LIVE=1
@@ -214,12 +219,15 @@ check "rros doctor (usuario)" as_user "rros doctor"
 as_user "NO_COLOR=1 rros doctor" >/dev/null 2>&1 || as_user "NO_COLOR=1 rros doctor; rros-config validate; rros-budget ram" 2>&1 | sed 's/^/diag: /'
 echo "info: sistema instalado $(du -sxm / 2>/dev/null | cut -f1) MB (sin /home ni /tmp)"
 [ "$LIVE" -eq 0 ] && cpu_idle
-# rendimiento medido en cada versión: si empeora por encima del presupuesto de la edición, la CI falla.
+# rendimiento medido en cada versión: si empeora por encima del presupuesto del nivel, la CI falla.
 # RAM en reposo (sistema instalado, sin el live en memoria) frente a max_idle_ram_mb del perfil; arranque < 90 s
 if [ "$LIVE" -eq 0 ]; then
 	used=$(awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {printf "%d", (t-a)/1024}' /proc/meminfo)
 	budget=$(sed -n 's/^max_idle_ram_mb *= *//p' "/usr/share/rros/profiles/$(cat /etc/rros/profile 2>/dev/null || echo lite).toml" | head -1)
 	check "rendimiento: RAM en reposo ${used} MB dentro del presupuesto (${budget:-?} MB)" test "$used" -le "${budget:-99999}"
+	check "rendimiento: RAM en reposo ${used} MB, como mucho 2 GB en cualquier nivel" test "$used" -le 2048
+	disk=$(df -BM --output=used / | tail -1 | tr -dc 0-9)
+	check "espacio: el sistema instalado ocupa ${disk} MB (menos de 15 GB)" test "$disk" -le 15360
 	boot=$(systemd-analyze time 2>/dev/null | sed -n 's/.*= *\([0-9.]*\)s$/\1/p' | head -1)
 	[ -n "$boot" ] && echo "info: arranque ${boot} s (systemd-analyze)"
 	check "rendimiento: arranque en menos de 90 s" sh -c "[ -z '$boot' ] || awk 'BEGIN{exit !($boot < 90)}'"

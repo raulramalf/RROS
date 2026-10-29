@@ -30,11 +30,11 @@ Se construye con archiso en un Arch (o en el contenedor `archlinux`), como root:
 ```
 pacman -S --needed archiso base-devel cmake qt6-base qt6-declarative
 make && make app
-sudo scripts/build-iso-arch.sh lite           # build/lily-lite.iso
-BASE=arch ISO=build/lily-lite.iso scripts/test-iso.sh lite selftest   # autotest del live en QEMU
-BASE=arch ISO=build/lily-lite.iso scripts/test-iso.sh lite install    # instala en un disco virtual y lo arranca
-CRYPT=1 BASE=arch ISO=build/lily-lite.iso scripts/test-iso.sh lite install          # cifrado
-FIRMWARE=uefi BASE=arch ISO=build/lily-lite.iso scripts/test-iso.sh lite install   # UEFI (OVMF)
+sudo scripts/build-iso-arch.sh                # build/lily.iso (una sola edición)
+BASE=arch ISO=build/lily.iso scripts/test-iso.sh lily selftest   # autotest del live en QEMU
+BASE=arch ISO=build/lily.iso scripts/test-iso.sh lily install    # instala en un disco virtual y lo arranca
+CRYPT=1 BASE=arch ISO=build/lily.iso scripts/test-iso.sh lily install          # cifrado
+FIRMWARE=uefi BASE=arch ISO=build/lily.iso scripts/test-iso.sh lily install   # UEFI (OVMF)
 ```
 Sin un Arch a mano lo hace GitHub Actions: workflow **Arch** (*Run workflow*, o `[iso-arch]` en el mensaje de un
 commit). Comprueba que todos los paquetes existen (`scripts/check-packages-arch.sh`, también los de la Tienda),

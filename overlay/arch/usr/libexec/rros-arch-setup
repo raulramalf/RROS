@@ -6,15 +6,15 @@ set -u
 . /etc/rros/identity 2>/dev/null || { echo "rros-arch-setup: falta /etc/rros/identity" >&2; exit 0; }
 cat > /usr/lib/os-release <<OSR
 NAME="Lily"
-PRETTY_NAME="Lily $RROS_VERSION ($RROS_CODENAME, $RROS_PROFILE)"
+PRETTY_NAME="Lily $RROS_VERSION ($RROS_CODENAME)"
 ID=rros
 ID_LIKE=arch
 BUILD_ID=rolling
 VERSION_ID=$RROS_VERSION
 VERSION="$RROS_VERSION ($RROS_CODENAME)"
 VERSION_CODENAME=$RROS_CODENAME_LC
-VARIANT="$RROS_PROFILE"
-VARIANT_ID=$RROS_PROFILE
+VARIANT="Lily"
+VARIANT_ID=lily
 HOME_URL="$RROS_HOME"
 SUPPORT_URL="$RROS_HOME/issues"
 BUG_REPORT_URL="$RROS_HOME/issues"
@@ -39,7 +39,7 @@ command -v rros-apply >/dev/null 2>&1 && rros-apply >/dev/null 2>&1
 # esperando: el live trae todo puesto y el instalador y Ajustes se encargan del resto
 systemctl mask systemd-firstboot.service >/dev/null 2>&1
 # servicios (solo los que estén instalados)
-for s in NetworkManager bluetooth nftables apparmor systemd-timesyncd sddm rros-firstboot rros-apply rros-live-user rros-live-preload rros-installtest vboxservice vmtoolsd qemu-guest-agent \
+for s in NetworkManager bluetooth nftables apparmor systemd-timesyncd systemd-oomd sddm rros-firstboot rros-apply rros-live-user rros-live-preload rros-installtest vboxservice vmtoolsd qemu-guest-agent \
 	rros-selftest rros-serial-shell; do
 	[ -e "/usr/lib/systemd/system/$s.service" ] && systemctl enable "$s.service" >/dev/null 2>&1
 done

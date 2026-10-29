@@ -95,7 +95,7 @@ ApplicationWindow {
                     ColumnLayout {
                         spacing: 0
                         Txt { text: "Ajustes de Lily"; font.weight: Font.Bold; font.pixelSize: 15 }
-                        Txt { text: Ui.st ? "Lily " + Ui.st.version + " · " + Ui.st.profile : ""; color: Ui.muted; font.pixelSize: 11 }
+                        Txt { text: Ui.st ? "Lily " + Ui.st.version + " · nivel " + ({ lite: "ligero", standard: "equilibrado", pro: "máximo" }[Ui.st.profile] || Ui.st.profile) : ""; color: Ui.muted; font.pixelSize: 11 }
                     }
                 }
                 Field {

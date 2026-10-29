@@ -1,9 +1,10 @@
-# Perfil Standard: equipos con 4-8 GB de RAM y 4 hilos. Animaciones rápidas, sin desenfoque, dock plano.
+# Nivel «equilibrado» de Lily (una sola edición): lo elige solo en equipos con 3-6 GB de RAM o menos de 4 hilos.
+# Animaciones rápidas, sin desenfoque, dock plano.
 [profile]
 name = "standard"
-min_ram_mb = 4096
-max_idle_ram_mb = 2048
-max_disk_gb = 14
+min_ram_mb = 3072
+max_idle_ram_mb = 1536
+max_disk_gb = 13
 
 [build]
 libc = "glibc"

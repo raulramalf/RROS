@@ -2,8 +2,8 @@
 
 ## 1. En una máquina virtual (VirtualBox, QEMU, GNOME Boxes)
 Descarga la ISO de la última ejecución en verde del workflow **Arch** (pestaña *Actions* → *Artifacts* →
-`lily-lite-iso`, un .zip con la ISO; hay que haber iniciado sesión en GitHub). Para Standard o Pro: *Run
-workflow* y elige la edición.
+`lily-iso`, un .zip con la ISO; hay que haber iniciado sesión en GitHub). Es una sola versión: se ajusta sola a la
+RAM y los procesadores de cada equipo.
 
 **VirtualBox**
 - Tipo *Linux*, versión *Arch Linux (64-bit)*; 4 GB de RAM (mínimo 2) y 2 procesadores o más; disco de 20 GB.

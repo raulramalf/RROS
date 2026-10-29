@@ -1,28 +1,38 @@
-# Lily 2.0 «Lirio»
+# Lily 3.0 «Lirio»
 
-Sistema operativo ligero, en español y con diseño propio, sobre **Arch Linux** (Wayland). Mezcla lo mejor de Windows y de macOS: una **barra de tareas** siempre visible con menú de inicio, buscador, aplicaciones en el centro, bandeja y reloj (seis diseños: Fusión, Clásica, Isla, Dock, Doble y Lateral), con el acabado y la calma de macOS. El escritorio es **Lily Shell** (Qt Quick); de KDE Plasma solo queda KWin por debajo. Trae **antivirus** (ClamAV con tiempo real, análisis programados y cuarentena) y **directivas de seguridad** personalizables, una **Tienda** con todo Flathub y los repositorios de Arch, y **Ajustes de Lily**, la aplicación de ajustes del sistema. Colores del tema **Lirio**, los del logotipo.
+Sistema operativo ligero, en español y con diseño propio, sobre **Arch Linux** (Wayland). Mezcla lo mejor de Windows y de macOS: una **barra de tareas** siempre visible con menú de inicio, buscador, aplicaciones en el centro, bandeja y reloj (seis diseños: Fusión, Clásica, Isla, Dock, Doble y Lateral), con el acabado y la calma de macOS. El escritorio es **Lily Shell** (Qt Quick); de KDE Plasma solo queda KWin por debajo. Trae **antivirus** (ClamAV con análisis programados, cuarentena y tiempo real opcional) y **directivas de seguridad** personalizables, una **Tienda** con todo Flathub y los repositorios de Arch, y **Ajustes de Lily**, la aplicación de ajustes del sistema. Colores del tema **Lirio**, los del logotipo.
 
-## Ediciones: elige la de tu equipo
+## Una sola versión que se ajusta a cada equipo
 
-| | Lite | Standard | Pro |
+Lily es **una única ISO**. En cada arranque mira la RAM, el procesador y la gráfica y elige su nivel; si cambias de
+equipo o amplías la memoria, se ajusta solo (Ajustes de Lily → General → «Ajuste a este equipo», donde también se
+puede fijar a mano).
+
+| Nivel | Cuándo lo elige | Efectos | RAM en reposo (tope) |
 |---|---|---|---|
-| RAM del equipo | 2–4 GB | 4–8 GB | 8 GB |
-| Procesador | 2 núcleos de 64 bits | 4 hilos | 4 núcleos (8 hilos) y GPU |
-| Disco que ocupa | ≤ 10 GB | ≤ 14 GB | ≤ 20 GB |
-| RAM del sistema en reposo (tope) | 1,3 GB | 2 GB | 3 GB |
-| Efectos | ninguno: todo aparece al instante | animaciones rápidas | todos: desenfoque, lámpara mágica, transparencias |
-| Dock | 2D | 2D | 3D |
-| Aplicaciones | Firefox, archivos, terminal, editor, visores, música y vídeo | + LibreOffice, Thunderbird, Elisa, VLC, corrector en español, impresoras y escáner, móviles | + GIMP, Kdenlive, Inkscape, Audacity, OBS, Code, contenedores (Podman, Distrobox), particiones |
+| **Ligero** | menos de 3 GB de RAM, 1 núcleo o sin gráfica | ninguno: todo aparece al instante | 1,3 GB |
+| **Equilibrado** | 3–6 GB de RAM o menos de 4 hilos | animaciones rápidas | 1,5 GB |
+| **Máximo** | 6 GB o más, 4 hilos y gráfica | todos: desenfoque, transparencias, dock 3D | 2 GB |
+
+- **Requisitos:** 2 GB de RAM, procesador de 64 bits con 2 núcleos y **15 GB de disco**. En cualquier nivel Lily en
+  reposo usa **como mucho 2 GB de RAM** y el sistema instalado ocupa menos de 15 GB (la CI lo mide en cada versión,
+  en una máquina de 2 GB).
+- **Fluidez:** zram (memoria comprimida), systemd-oomd (cierra lo que agota la memoria antes de que el equipo se
+  congele), planificador de disco según SSD o disco duro, red con BBR, la pantalla a su frecuencia más alta y nada en
+  marcha que no haga falta.
+- **Aplicaciones incluidas:** Firefox, archivos, terminal, editor, visores, LibreOffice, Thunderbird, Elisa, VLC,
+  corrector en español, impresoras y escáner, móviles, particiones. Lo pesado (GIMP, Kdenlive, Inkscape, Audacity,
+  OBS, Code, contenedores) se instala desde la **Tienda** o eligiéndolo en el paso «Aplicaciones» del instalador.
 
 Todo se puede cambiar después en Ajustes de Lily (efectos, dock 2D/3D, estilo del escritorio...). Sin aceleración gráfica (una máquina virtual sin 3D), Lily apaga solo los efectos para que vaya fluido. Las medidas reales están en [Estado](#estado).
 
 ## Probarlo
 
 ### En una máquina virtual o en un PC (el sistema completo)
-La ISO la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → la última ejecución en verde → *Artifacts* → `lily-lite-iso`, `lily-standard-iso` o `lily-pro-iso` (un .zip con la ISO dentro), y `lily-EDICIÓN-virtualbox` (VDI) y `lily-EDICIÓN-vmware-qemu` (VMDK) con Lily ya instalado.
+La ISO la construye GitHub Actions: pestaña *Actions* → workflow **Arch** → la última ejecución en verde → *Artifacts* → `lily-iso` (un .zip con la ISO dentro), y `lily-virtualbox` (VDI) y `lily-vmware-qemu` (VMDK) con Lily ya instalado.
 
-- **VirtualBox:** tipo Linux / Arch Linux (64-bit), 4 GB de RAM (mínimo 2), 2 procesadores o más, 20 GB de disco. En *Pantalla*: controlador **VMSVGA**, 128 MB de vídeo y **Habilitar aceleración 3D** (sin ella, Lily va bien pero sin efectos). Si sale *AMD-V/VT-x is disabled*, activa la virtualización en la BIOS del PC ([docs/TRY.md](docs/TRY.md)).
-- **Máquinas virtuales listas para usar** (Lily ya instalado, para VirtualBox, VMware y QEMU) y las tres ediciones (Lite, Standard y Pro): [docs/MAQUINAS-VIRTUALES.md](docs/MAQUINAS-VIRTUALES.md).
+- **VirtualBox:** tipo Linux / Arch Linux (64-bit), 4 GB de RAM (mínimo 2), 2 procesadores o más, 20 GB de disco (mínimo 15). En *Pantalla*: controlador **VMSVGA**, 128 MB de vídeo y **Habilitar aceleración 3D** (sin ella, Lily va bien pero sin efectos). Si sale *AMD-V/VT-x is disabled*, activa la virtualización en la BIOS del PC ([docs/TRY.md](docs/TRY.md)).
+- **Máquinas virtuales listas para usar** (Lily ya instalado, para VirtualBox, VMware y QEMU): [docs/MAQUINAS-VIRTUALES.md](docs/MAQUINAS-VIRTUALES.md).
 - **PC real:** grábala en una memoria USB con balenaEtcher o Rufus (modo DD) y desactiva Secure Boot. Guía: [docs/PROBAR-EN-PC.md](docs/PROBAR-EN-PC.md).
 
 Arranca en el escritorio sin tocar el disco y abre la **bienvenida**; desde ahí (o desde el menú Lily) se instala: junto a Windows en el espacio libre o en todo el disco, con cifrado si quieres.
@@ -51,7 +61,7 @@ La carpeta [`site/`](site/) es una web estática (se publica en Vercel tal cual:
 | Ajustes de Lily (Qt/QML) | ✅ compila en la CI de Arch; todas las páginas abren sin errores (probado con Qt 6.4); red, sonido, Bluetooth y pantallas necesitan el sistema real |
 | Tema 2D/3D, menú Lily, carga, inicio de sesión (SDDM), GRUB | ✅ tema y SDDM revisados con capturas fuera de Plasma; en el sistema, ver la CI |
 | ISO Lite: arranque, autotest, instalación BIOS, UEFI y cifrada | ✅ (142–143 comprobaciones). Medido en QEMU con 2 GB y 2 hilos: live 950 MB de RAM y 1 % de CPU en reposo; instalado 560–600 MB y 3,6–4 %; ocupa 5,2 GB |
-| Hardware real, Secure Boot, ediciones Standard y Pro medidas | ⏳ pendiente |
+| Hardware real y Secure Boot medidos | ⏳ pendiente |
 
 ## Uso rápido
 
@@ -75,7 +85,7 @@ src/            herramientas en C: lib (configuración, esquema, hardware), them
 app/            Ajustes de Lily: aplicación Qt Quick (main.cpp, backend.cpp, qml/, icons/)
 shell/          Lily Shell: el escritorio (barra, dock, Launchpad, centro de control, avisos, fondo)
 overlay/        lo que se añade al sistema: common y arch (tema de escritorio, menú Lily, SDDM, GRUB, iconos)
-profiles/       lite.toml, standard.toml, pro.toml
+profiles/       los tres niveles a los que se ajusta Lily: lite.toml (ligero), standard.toml (equilibrado), pro.toml (máximo)
 packages/       paquetes de Arch por edición
 apps/           catálogo de la Tienda (pacman y Flathub)
 scripts/        ISO (archiso), QEMU, logotipo, iconos y tema de escritorio (make-logo.py, make-icons.py, make-desktoptheme.py)

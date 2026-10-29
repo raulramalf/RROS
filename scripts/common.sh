@@ -14,9 +14,12 @@ log() { echo "==> $*"; }
 need_root() { [ "$(id -u)" -eq 0 ] || die "ejecuta como root (sudo)"; }
 need_cmd() { for c in "$@"; do command -v "$c" >/dev/null || die "falta el comando '$c'"; done; }
 
+# «lily» es la imagen (una sola edición); lite, standard y pro son los niveles a los que se ajusta cada equipo
 check_profile() {
-	case "$1" in lite | standard | pro) ;; *) die "perfil inválido: '$1' (lite|standard|pro)" ;; esac
+	case "$1" in lily | lite | standard | pro) ;; *) die "perfil inválido: '$1' (lily|lite|standard|pro)" ;; esac
 }
+# el nivel con el que se prepara la imagen: el ligero (al arrancar, rros-nivel pone el que toca a cada equipo)
+tier_of() { if [ "$1" = lily ]; then echo lite; else echo "$1"; fi; }
 
 # Lee una clave de un archivo de perfil con rros-config.
 profile_get() { "$RROS/rros-config" -f "$ROOT_DIR/profiles/$1.toml" get "$2"; }

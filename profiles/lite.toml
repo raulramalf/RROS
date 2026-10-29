@@ -1,10 +1,10 @@
-# Perfil Lite: equipos con 2-4 GB de RAM y 2 núcleos (64 bits), sin GPU dedicada. Plasma sin efectos
-# (todo aparece al instante), dock plano y lo justo instalado.
+# Nivel «ligero» de Lily (una sola edición): lo elige solo en equipos con menos de 3 GB de RAM, 1 núcleo o sin
+# gráfica. Plasma sin efectos (todo aparece al instante), dock plano y nada en marcha que no haga falta.
 [profile]
 name = "lite"
 min_ram_mb = 2048
 max_idle_ram_mb = 1280
-max_disk_gb = 10
+max_disk_gb = 13
 
 [build]
 libc = "glibc"

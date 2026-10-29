@@ -31,7 +31,7 @@ uso: rros-install [opciones]
   --locale IDIOMA       idioma del sistema (por defecto: es_ES.UTF-8)
   --timezone ZONA       zona horaria, p. ej. Europe/Madrid (por defecto: UTC)
   --cmdline TEXTO       parámetros extra del kernel (p. ej. "console=ttyS0")
-  --quitar-apps ID,ID   apps del catálogo de Lily que trae la edición y no quieres (se quitan sin Internet)
+  --quitar-apps ID,ID   apps del catálogo que trae Lily y no quieres (se quitan sin Internet)
   --anadir-apps ID,ID   apps del catálogo que se instalan solas la primera vez que haya Internet
   --generic             initramfs con todos los controladores (no solo los de este equipo): para imágenes de
                         máquina virtual o discos que se van a mover a otro ordenador
@@ -274,7 +274,7 @@ done
 [ -n "$root" ] || die "el plan no tiene partición raíz"
 
 # --- sistemas de archivos ---
-# Btrfs en todas las ediciones: subvolúmenes e instantáneas antes de cada actualización, con vuelta atrás desde
+# Btrfs: subvolúmenes e instantáneas antes de cada actualización, con vuelta atrás desde
 # el menú de arranque (snapper + snap-pac + grub-btrfs). ext4 solo si no hay mkfs.btrfs.
 rootfs=btrfs
 command -v mkfs.btrfs >/dev/null || rootfs=ext4

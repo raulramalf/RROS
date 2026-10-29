@@ -284,7 +284,10 @@ what=$rootfs
 step 3 "Formateando ($what)"
 root_fs=$root
 if [ "$root_crypt" -eq 1 ]; then
-	printf '%s' "$passphrase" | cryptsetup luksFormat --type luks2 --batch-mode --label rros-crypt --key-file - "$root"
+	# argon2id con 512 MB como mucho (por defecto usa hasta 1 GB): cabe en equipos de 2 GB y sigue siendo muy lento
+	# de atacar; abrir el disco al arrancar pide la misma memoria, así que tiene que caber con el sistema arrancando
+	printf '%s' "$passphrase" | cryptsetup luksFormat --type luks2 --pbkdf argon2id --pbkdf-memory 524288 --batch-mode \
+		--label rros-crypt --key-file - "$root"
 	printf '%s' "$passphrase" | cryptsetup open --key-file - "$root" rros-root
 	root_fs=/dev/mapper/rros-root
 fi

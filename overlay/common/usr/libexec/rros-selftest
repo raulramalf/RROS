@@ -2,12 +2,12 @@
 # Autotest de arranque: comprueba que el sistema está completo y lo cuenta por la consola.
 # Se activa con el parámetro del kernel `rros.selftest` (ver rros-selftest.service). Vale para el sistema live y
 # para el instalado (la prueba de instalación instala con el usuario «rros» y el equipo «lily-prueba»).
-ok=0 bad=0
+ok=0 bad=0 fallos=""
 # las comprobaciones leen la salida de programas: siempre en inglés, sea cual sea el idioma del sistema
 export LC_ALL=C
 check() { # check "descripción" comando...
 	desc=$1; shift
-	if "$@" >/dev/null 2>&1; then ok=$((ok + 1)); echo "[ok]   $desc"; else bad=$((bad + 1)); echo "[FALLO] $desc"; fi
+	if "$@" >/dev/null 2>&1; then ok=$((ok + 1)); echo "[ok]   $desc"; else bad=$((bad + 1)); fallos="$fallos | $desc"; echo "[FALLO] $desc"; fi
 }
 as_user() { su rros -c "$*"; }
 mkdir -p /tmp/xrd-selftest && chown rros /tmp/xrd-selftest && chmod 700 /tmp/xrd-selftest
@@ -236,5 +236,6 @@ if [ "$LIVE" -eq 0 ]; then
 fi
 sfs=/run/archiso/bootmnt/arch/x86_64/airootfs.sfs
 [ -e "$sfs" ] && echo "info: imagen comprimida del sistema $(du -m "$sfs" | cut -f1) MB"
+[ -z "$fallos" ] || echo "=== fallos:$fallos ==="
 echo "=== resultado: $ok correctas, $bad con fallo ==="
 [ "$bad" -eq 0 ] && echo "RROS_SELFTEST_OK" || echo "RROS_SELFTEST_FAIL"

@@ -89,7 +89,9 @@ run_serial() {
 }
 
 verdict() {   # verdict LOG MARCA QUÉ
-	grep -a -E '^\[(ok|FALLO)\]|=== |^==> |^info: |^diag: ' "$1" | tr -d '\r' || true
+	# sin los códigos de color y los retornos de carro de la consola: si no, una línea «[FALLO]» pegada a un aviso
+	# de systemd no empieza por «[» y se perdía
+	sed -e 's/\x1b\[[0-9;?]*[A-Za-z]//g' -e 's/\r/\n/g' "$1" | grep -a -E '^\[(ok|FALLO)\]|=== |^==> |^info: |^diag: ' || true
 	if grep -aq "${2}_OK" "$1"; then
 		log "$3: CORRECTO"
 	else

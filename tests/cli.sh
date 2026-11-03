@@ -522,6 +522,20 @@ $NV fijar automatico >/dev/null; eq "$(cat "$T/nivel/etc/profile")" pro
 if $NV fijar turbo 2>/dev/null; then fail "rros-nivel acepta un modo no válido"; fi
 $NV | gq 'modo: automático' || fail "rros-nivel: modo"
 
+# --- rros-instantanea: los paquetes de Arch de una fecha, con una semana de rodaje ---
+mkdir -p "$T/inst"
+IN="env RROS_ETC=$T/inst RROS_MIRRORLIST=$T/inst/mirrorlist RROS_ARCH_MIRRORLIST=$PWD/overlay/arch/usr/share/rros/mirrorlist-arch overlay/arch/usr/bin/rros-instantanea"
+RROS_HOY=2026-10-20 $IN avanzar >/dev/null
+gq 'repos/2026/10/13/.repo/os/.arch' < "$T/inst/mirrorlist" || fail "instantánea: hoy menos 7 días"
+RROS_HOY=2026-10-10 $IN avanzar >/dev/null
+gq 'repos/2026/10/13/' < "$T/inst/mirrorlist" || fail "instantánea: nunca hacia atrás"
+$IN avanzar 2026-10-01 >/dev/null; gq 'repos/2026/10/01/' < "$T/inst/mirrorlist" || fail "instantánea: fecha a mano"
+if $IN avanzar 2026-13-40 2>/dev/null; then fail "instantánea acepta una fecha imposible"; fi
+$IN rodaje 0 >/dev/null; gq 'geo.mirror.pkgbuild.com' < "$T/inst/mirrorlist" || fail "instantánea: al día"
+if grep -q archive.archlinux.org "$T/inst/mirrorlist"; then fail "instantánea: al día sigue fijado"; fi
+$IN rodaje 7 >/dev/null; gq 'repos/2026/10/01/' < "$T/inst/mirrorlist" || fail "instantánea: volver al rodaje"
+if $IN rodaje 99 2>/dev/null; then fail "instantánea acepta un rodaje de 99 días"; fi
+
 # --- interfaces: rros-settings (TUI en un pty) ---
 if command -v python3 >/dev/null 2>&1; then
 	python3 tests/tui_test.py || fail "TUI"

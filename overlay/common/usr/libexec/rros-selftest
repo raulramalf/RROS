@@ -61,6 +61,7 @@ done
 check "antivirus: motor, rros-antivirus y análisis programado" sh -c "command -v clamscan && rros-antivirus estado --json | grep -q '\"motor\":true' && test -f /usr/lib/systemd/system/rros-antivirus.timer"
 check "directivas: pam_pwquality en passwd" grep -q pam_pwquality /etc/pam.d/passwd
 check "cursores de Lily" test -e /usr/share/icons/Lily-Lirio/cursors/default
+check "licencias, créditos y privacidad en el sistema" sh -c 'test -s /usr/share/rros/LICENCIAS.md && test -s /usr/share/rros/PRIVACIDAD.md && test -s /usr/share/wallpapers/Lily/CREDITOS.md'
 check "logotipo de Lily (PNG)" test -s /usr/share/icons/hicolor/256x256/apps/rros.png
 check "logotipo de Lily para la barra" test -s /usr/share/icons/hicolor/scalable/apps/rros-symbolic.svg
 for icon in rros-settings rros-apps rros-install rros-welcome rros-launchpad rros-updates; do
@@ -193,6 +194,7 @@ if [ "$BASE" = arch ]; then
 	check "Plasma: aspecto de Lily (paquete, colores, barras de título, fondo)" sh -c 'test -f /usr/share/plasma/look-and-feel/org.rros.desktop/contents/layouts/org.kde.plasma.desktop-layout.js && grep -q "Colors:Window" /etc/xdg/kdeglobals && test -f /usr/share/aurorae/themes/Lily/close.svg && grep -q "theme=__aurorae__svg__Lily" /etc/xdg/kwinrc && test -s /usr/share/wallpapers/LilyClasico/contents/images/1920x1080.png'
 	check "AppArmor activo (lsm= en el arranque)" test "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y
 	check "AppArmor: perfiles cargados" sh -c 'systemctl is-active --quiet apparmor && grep -q . /sys/kernel/security/apparmor/profiles'
+	check "actualizaciones con rodaje: $(rros-instantanea | head -1)" sh -c 'grep -q "^Server = https://archive.archlinux.org/repos/" /etc/pacman.d/mirrorlist && test -s /etc/rros/instantanea'
 	check "actualizaciones: descarga diaria (rros-updates.timer)" sh -c 'command -v checkupdates >/dev/null && systemctl is-enabled --quiet rros-updates.timer'
 	check "faillock: límite de intentos de Lily" grep -q '^deny = ' /etc/security/faillock.conf
 	check "live: el sistema a copiar está montado" sh -c '! grep -q archisobasedir /proc/cmdline || test -d /run/archiso/airootfs/etc'

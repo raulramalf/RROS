@@ -17,6 +17,8 @@ BINS := build/rros-hwdetect build/rros-config build/rros-budget build/rros-insta
         build/rros-security build/rros-devices build/rros-new
 
 TESTS := $(patsubst tests/%.c,build/tests/%,$(wildcard tests/test_*.c))
+# las cabeceras también cuentan: cambiar src/lib/rros_version.h (o cualquier .h) vuelve a compilar los programas
+HDRS := $(wildcard src/*/*.h)
 SAN := -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1
 
 all: $(BINS)
@@ -50,11 +52,11 @@ build/rros-new: src/new/main.c $(LIB_SRC)
 SETTINGS_SRC := $(wildcard src/settings/*.c)
 build/rros-settings: $(SETTINGS_SRC) $(THEME_SRC) $(LIB_SRC)
 
-$(BINS):
+$(BINS): $(HDRS)
 	@mkdir -p build
-	$(CC) $(CFLAGS) -o $@ $^ -lm
+	$(CC) $(CFLAGS) -o $@ $(filter %.c,$^) -lm
 
-build/tests/%: tests/%.c $(LIB_SRC) $(PLAN_SRC) $(THEME_SRC) tests/check.h
+build/tests/%: tests/%.c $(LIB_SRC) $(PLAN_SRC) $(THEME_SRC) tests/check.h $(HDRS)
 	@mkdir -p build/tests
 	$(CC) $(CFLAGS) $(SAN) -Itests -o $@ $< $(LIB_SRC) $(PLAN_SRC) $(THEME_SRC) -lm
 

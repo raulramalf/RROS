@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# rros-instantanea: Lily no instala lo último de Arch el mismo día que sale. Usa los paquetes de una fecha concreta del
+# archivo oficial de Arch (archive.archlinux.org) y cada semana pasa a la fecha de hace N días («rodaje»): lo que
+# llega ya lo ha probado el resto de usuarios de Arch durante esos días, y una actualización rota no llega nunca o
+# llega ya arreglada. Con rodaje 0, los servidores normales de Arch (todo al día).
+#   rros-instantanea                  fecha de los paquetes y rodaje
+#   rros-instantanea avanzar [FECHA]  (root, cada semana) pasa a hoy menos el rodaje, o a FECHA (AAAA-MM-DD)
+#   rros-instantanea rodaje DÍAS      (root) 0 = al día; 7 recomendado; hasta 60
+#   rros-instantanea aplicar          (root) escribe la lista de servidores de pacman con lo guardado
+# Variables (pruebas): RROS_ETC (/etc/rros), RROS_MIRRORLIST (/etc/pacman.d/mirrorlist), RROS_ARCH_MIRRORLIST, RROS_HOY
+set -u
+etc=${RROS_ETC:-/etc/rros}
+conf=$etc/instantanea
+ml=${RROS_MIRRORLIST:-/etc/pacman.d/mirrorlist}
+arch_ml=${RROS_ARCH_MIRRORLIST:-/usr/share/rros/mirrorlist-arch}
+hoy=${RROS_HOY:-$(date -u +%F)}
+val() { sed -n "s/^$1=//p" "$conf" 2>/dev/null | head -1; }
+fecha=$(val fecha); rodaje=$(val rodaje)
+[[ $rodaje =~ ^[0-9]+$ ]] || rodaje=7
+valida() { [[ $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] && date -u -d "$1" +%F >/dev/null 2>&1; }
+guardar() { mkdir -p "$etc" && printf 'fecha=%s\nrodaje=%s\n' "$fecha" "$rodaje" > "$conf.tmp" && mv "$conf.tmp" "$conf"; }
+aplicar() {
+	local tmp=$ml.tmp
+	if [ "$rodaje" -eq 0 ] || ! valida "$fecha"; then
+		cp "$arch_ml" "$tmp" 2>/dev/null || return 1
+	else
+		{
+			echo "# Generado por rros-instantanea: los paquetes de Arch del $fecha (archivo oficial de Arch)."
+			echo "# Para cambiarlo: rros-instantanea (o Ajustes de Lily → Actualizaciones)."
+			echo "Server = https://archive.archlinux.org/repos/${fecha//-//}/\$repo/os/\$arch"
+		} > "$tmp"
+	fi
+	mv "$tmp" "$ml"
+}
+case ${1:-} in
+"")
+	if [ "$rodaje" -eq 0 ]; then echo "paquetes: al día (servidores normales de Arch)"
+	else echo "paquetes de Arch del: ${fecha:-?}"; echo "rodaje: $rodaje días (cada semana pasa a la fecha de hace $rodaje días)"; fi ;;
+avanzar)
+	if [ -n "${2:-}" ]; then valida "$2" || { echo "rros-instantanea: fecha no válida: $2" >&2; exit 2; }; nueva=$2
+	else nueva=$(date -u -d "$hoy - $rodaje days" +%F); fi
+	# nunca hacia atrás: volver a paquetes más viejos dejaría el sistema a medias
+	if [ -z "$fecha" ] || [[ $nueva > $fecha ]] || [ -n "${2:-}" ]; then fecha=$nueva; fi
+	guardar && aplicar && echo "paquetes de Arch del $fecha" ;;
+rodaje)
+	if ! [[ ${2:-} =~ ^[0-9]+$ ]] || [ "$2" -gt 60 ]; then echo "rros-instantanea: rodaje en días, de 0 a 60" >&2; exit 2; fi
+	rodaje=$2
+	[ "$rodaje" -eq 0 ] || [ -n "$fecha" ] || fecha=$(date -u -d "$hoy - $rodaje days" +%F)
+	guardar && aplicar && "$0" ;;
+aplicar) aplicar ;;
+*) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

@@ -63,6 +63,8 @@ ApplicationWindow {
         interval: 1800
         onTriggered: { Sys.saveShot(win, shotPath); Qt.quit() }
     }
+    // --captura sin el servicio de ajustes: la pantalla de espera también se puede capturar
+    Timer { interval: 10000; running: shotPath !== ""; onTriggered: if (!Ui.loaded) { Sys.saveShot(win, shotPath); Qt.quit() } }
     Connections {
         target: Ui
         function onToast(text, error) { toast.show(text, error) }
@@ -158,11 +160,23 @@ ApplicationWindow {
                     onLoaded: if (item.shown) item.shown()
                 }
             }
-            Txt {
-                anchors.centerIn: parent
+            // mientras llega el estado del servicio de ajustes; si tarda, se dice qué pasa y se puede reintentar
+            Rectangle {
+                anchors.fill: parent
                 visible: !Ui.loaded
-                text: "Cargando…"
-                color: Ui.muted
+                color: Ui.window
+                property bool slow: false
+                Timer { interval: 6000; running: !Ui.loaded; onTriggered: parent.slow = true }
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 12
+                    Txt { anchors.horizontalCenter: parent.horizontalCenter; color: Ui.muted
+                          text: parent.parent.slow ? "No responde el servicio de ajustes de Lily (rros-settings)." : "Cargando…" }
+                    Txt { anchors.horizontalCenter: parent.horizontalCenter; visible: parent.parent.slow; color: Ui.muted; font.pixelSize: Ui.fs - 1
+                          text: "Puede estar arrancando todavía. Si sigue así, reinicia la sesión." }
+                    Btn { anchors.horizontalCenter: parent.horizontalCenter; visible: parent.parent.slow; text: "Reintentar"
+                          onClicked: { parent.parent.slow = false; Ui.reload() } }
+                }
             }
         }
     }

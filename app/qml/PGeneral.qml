@@ -1,5 +1,6 @@
 // General: este equipo, la versión de Lily y el nivel al que se ajusta (automático según el hardware, o fijo)
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import "."
 
@@ -124,12 +125,69 @@ RPage {
             Txt { text: "›"; color: Ui.muted; font.pixelSize: 20 }
         }
         SRow {
+            title: "Licencias y créditos"
+            subtitle: "El software libre en el que se basa Lily, las letras y las fotos del lirio"
+            clickable: true
+            onClicked: p.showDoc("Licencias y créditos", "/usr/share/rros/LICENCIAS.md")
+            Txt { text: "›"; color: Ui.muted; font.pixelSize: 20 }
+        }
+        SRow {
+            title: "Privacidad"
+            subtitle: "Lily no envía datos de uso; qué se conecta a internet y para qué"
+            clickable: true
+            onClicked: p.showDoc("Privacidad", "/usr/share/rros/PRIVACIDAD.md")
+            Txt { text: "›"; color: Ui.muted; font.pixelSize: 20 }
+        }
+        SRow {
             title: "Monitor del sistema"
             subtitle: "Procesos, memoria y procesador en tiempo real"
             clickable: true
             separator: false
             onClicked: Sys.detached(["plasma-systemmonitor"])
             Txt { text: "›"; color: Ui.muted; font.pixelSize: 20 }
+        }
+    }
+
+    // documentos del sistema (Markdown) en una ventana dentro de Ajustes
+    // LILY_DOC (pruebas y capturas): abre ese documento al empezar
+    Component.onCompleted: if (Sys.env("LILY_DOC") !== "") showDoc("Licencias y créditos", Sys.env("LILY_DOC"))
+    function showDoc(title, path) {
+        var t = Sys.readFile(path)
+        docPop.title = title
+        docPop.text = t !== "" ? t : "No se encuentra " + path + "."
+        docPop.open()
+    }
+    Popup {
+        id: docPop
+        property string title
+        property string text
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        width: Math.min(parent.width - 80, 820); height: Math.min(parent.height - 80, 640)
+        modal: true; padding: 0
+        background: Rectangle { color: Ui.card; radius: 14; border.color: Ui.line }
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 0
+            RowLayout {
+                Layout.fillWidth: true; Layout.margins: 18
+                Txt { text: docPop.title; font.pixelSize: 18; font.weight: Font.Bold; Layout.fillWidth: true }
+                Btn { text: "Cerrar"; onClicked: docPop.close() }
+            }
+            ScrollView {
+                Layout.fillWidth: true; Layout.fillHeight: true
+                Layout.leftMargin: 22; Layout.rightMargin: 8; Layout.bottomMargin: 18
+                clip: true
+                TextArea {
+                    readOnly: true; selectByMouse: true; wrapMode: Text.Wrap
+                    textFormat: TextEdit.MarkdownText
+                    text: docPop.text
+                    color: Ui.textColor; font.pixelSize: Ui.fs
+                    background: null
+                    palette.link: Ui.accent
+                    onLinkActivated: function (l) { Qt.openUrlExternally(l) }
+                }
+            }
         }
     }
 }

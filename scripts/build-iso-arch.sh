@@ -62,6 +62,11 @@ done
 make -C "$ROOT_DIR" install DESTDIR="$P/airootfs" PREFIX=/usr >/dev/null
 "$ROOT_DIR/scripts/apply-overlay.sh" "$P/airootfs" "$profile" arch
 "$ROOT_DIR/scripts/store-icons.sh" "$ROOT_DIR/apps/catalog.toml" "$P/airootfs/usr/share/rros/tienda/iconos"
+# los paquetes de Arch fijados al día de la compilación (los mismos que lleva la ISO): la Tienda y las actualizaciones
+# usan esa fecha y luego avanzan con una semana de rodaje (rros-instantanea, rros-updates.service)
+RROS_ETC="$P/airootfs/etc/rros" RROS_MIRRORLIST="$P/airootfs/etc/pacman.d/mirrorlist" \
+	RROS_ARCH_MIRRORLIST="$ROOT_DIR/overlay/arch/usr/share/rros/mirrorlist-arch" \
+	"$ROOT_DIR/overlay/arch/usr/bin/rros-instantanea" avanzar "$(date -u +%F)" >/dev/null
 # /etc/lsb-release es del paquete lsb-release (lo traen open-vm-tools y otros): si ya está, pacman no instala. Lo
 # escribe rros-arch-setup después de instalar los paquetes
 rm -f "$P/airootfs/etc/lsb-release"

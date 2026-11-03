@@ -33,7 +33,24 @@ RPage {
             p.check()
         })
     }
-    onShown: if (!checking && pending.length === 0) check()
+    // rodaje: Lily usa los paquetes de Arch de hace una semana (rros-instantanea); «al día», los de hoy
+    property string snapDate: ""
+    property int rodaje: 7
+    function loadSnap() {
+        Sys.run(["rros-instantanea"], function (r) {
+            var f = /del: (\d{4}-\d{2}-\d{2})/.exec(r.out), d = /rodaje: (\d+)/.exec(r.out)
+            p.snapDate = f ? f[1] : ""
+            p.rodaje = /al día/.test(r.out) ? 0 : (d ? Number(d[1]) : 7)
+        })
+    }
+    function setRodaje(n) {
+        Sys.run(["pkexec", "rros-instantanea", "rodaje", String(n)], function (r) {
+            if (r.code !== 0) { Ui.toast(r.code === 126 || r.code === 127 ? "Hace falta la contraseña de un administrador" : "No se pudo cambiar", true); return }
+            p.loadSnap(); p.check()
+        })
+    }
+    function fmtDate(d) { var x = d.split("-"); return x.length === 3 ? Number(x[2]) + "/" + Number(x[1]) + "/" + x[0] : d }
+    onShown: { loadSnap(); if (!checking && pending.length === 0) check() }
 
     Card {
         SRow {
@@ -51,6 +68,25 @@ RPage {
         Repeater {
             model: p.pending.slice(0, 200)
             SRow { title: modelData.name; subtitle: modelData.from + " → " + modelData.to; separator: index < Math.min(p.pending.length, 200) - 1 }
+        }
+    }
+    Section { text: "Ritmo de las actualizaciones" }
+    Card {
+        SRow {
+            title: "Con una semana de rodaje (recomendado)"
+            subtitle: "Lily instala lo que el resto de Arch ya lleva una semana usando: si algo sale roto, no te llega o te llega arreglado." +
+                      (p.rodaje > 0 && p.snapDate !== "" ? "\nAhora: los paquetes de Arch del " + p.fmtDate(p.snapDate) + "." : "")
+            clickable: p.rodaje === 0
+            onClicked: p.setRodaje(7)
+            Txt { visible: p.rodaje > 0; text: "✓"; color: Ui.accent; font.pixelSize: 18 }
+        }
+        SRow {
+            title: "Al día"
+            subtitle: "Todo en cuanto sale en Arch, también las correcciones de seguridad. Más novedades y algo más de riesgo."
+            separator: false
+            clickable: p.rodaje > 0
+            onClicked: p.setRodaje(0)
+            Txt { visible: p.rodaje === 0; text: "✓"; color: Ui.accent; font.pixelSize: 18 }
         }
     }
     Section { text: "Automático" }

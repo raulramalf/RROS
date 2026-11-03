@@ -116,9 +116,11 @@ if [ "$BASE" = arch ]; then
 		check "KWin en marcha (compositor Wayland)" pgrep -u rros -x kwin_wayland
 		check "plasmashell no se usa" sh -c '! pgrep -u rros -x plasmashell'
 		bus="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u rros)/bus"
-		sleep 4
+		# en un equipo de 2 GB sin aceleración gráfica Lily Shell puede tardar en registrarse: hasta 30 s
+		i=0
+		until su rros -c "$bus qdbus6" 2>/dev/null | grep -qx ' *org.rros.Shell' || [ "$i" -ge 30 ]; do sleep 2; i=$((i + 2)); done
 		owners=$(su rros -c "$bus qdbus6" 2>/dev/null)
-		check "Lily Shell en el bus de la sesión (org.rros.Shell)" sh -c "echo '$owners' | grep -qx ' *org.rros.Shell'"
+		check "Lily Shell en el bus de la sesión (org.rros.Shell, ${i} s)" sh -c "echo '$owners' | grep -qx ' *org.rros.Shell'"
 		check "avisos de las aplicaciones en Lily Shell" sh -c "su rros -c '$bus qdbus6 org.freedesktop.Notifications /org/freedesktop/Notifications org.freedesktop.Notifications.GetServerInformation' | grep -q 'Lily'"
 		# lo que dijo el shell (errores de QML, avisos de Wayland), para el registro de la CI
 		journalctl -b _UID="$(id -u rros)" --no-pager 2>/dev/null | grep -E 'rros-shell' | grep -viE 'MESA' | tail -n 30 | sed 's/^/diag: /'
